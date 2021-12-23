@@ -1,0 +1,28 @@
+{
+	"name": "hyper-subtitles",
+	"version": "0.0.0",
+	"description": "",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alexandercerutti/hyper-subtitles.git"
+	},
+	"keywords": [
+		"vtt",
+		"subtitles",
+		"srt"
+	],
+	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/alexandercerutti/hyper-subtitles/issues"
+	},
+	"homepage": "https://github.com/alexandercerutti/hyper-subtitles#readme",
+	"devDependencies": {
+		"@changesets/cli": "^2.19.0",
+		"typescript": "^4.5.4"
+	}
+}
