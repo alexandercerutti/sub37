@@ -47,7 +47,7 @@ export class HSServer {
 		}
 
 		this[intervalSymbol] = [
-			this[createIntervalSymbol](frequencyMs),
+			this[createIntervalSymbol](getCurrentPosition, frequencyMs),
 			getCurrentPosition,
 			frequencyMs,
 		];
@@ -83,7 +83,9 @@ export class HSServer {
 			return;
 		}
 
-		this[intervalSymbol][0] = this[createIntervalSymbol](this[intervalSymbol][2]);
+		const [, getCurrentPosition, frequencyMs] = this[intervalSymbol];
+
+		this[intervalSymbol][0] = this[createIntervalSymbol](getCurrentPosition, frequencyMs);
 	}
 
 	/**
@@ -96,7 +98,7 @@ export class HSServer {
 		this[intervalSymbol] = undefined;
 	}
 
-	private [createIntervalSymbol](frequencyMs: number) {
+	private [createIntervalSymbol](getCurrentPosition: () => number, frequencyMs: number) {
 		return window.setInterval(() => {
 			/**
 			 * @TODO query the [selectedSourceSymbol] and request the next subtitle.
