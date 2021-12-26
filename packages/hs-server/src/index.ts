@@ -25,14 +25,23 @@ export class HSServer {
 
 	/**
 	 * Allows starting the server.
-	 * It will start sending events through the listeners
+	 * It will start sending events through the listeners.
+	 *
+	 * Throws if frequency is explicitly set to a _falsy_ value
+	 * or to a value which is not a number.
 	 *
 	 * @param getCurrentPosition
-	 * @param frequencyMs
+	 * @param frequencyMs - defaults to 250ms
 	 * @returns
 	 */
 
 	public start(getCurrentPosition: () => number, frequencyMs: number = 250) {
+		if (!frequencyMs || typeof frequencyMs !== "number") {
+			throw new Error(
+				"Cannot start subtitles server: a frequency is required to be either be set to a value > 0 or not be set (fallback to 250ms)",
+			);
+		}
+
 		if (this[intervalSymbol]?.[0]) {
 			return;
 		}
