@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "es2016",
+		"module": "ES2015",
+		"declaration": true,
+		"outDir": "lib",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"useUnknownInCatchVariables": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitOverride": true
+	}
+}
