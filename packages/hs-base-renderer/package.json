@@ -1,0 +1,22 @@
+{
+	"name": "hs-base-renderer",
+	"version": "0.1.0",
+	"description": "A base renderer that defines how a renderer should be implemented",
+	"main": "lib/index.js",
+	"devDependencies": {
+		"typescript": "^4.5.4"
+	},
+	"scripts": {
+		"build": "npx tsc"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alexandercerutti/hyper-subtitles.git"
+	},
+	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/alexandercerutti/hyper-subtitles/issues"
+	},
+	"homepage": "https://github.com/alexandercerutti/hyper-subtitles#readme"
+}
