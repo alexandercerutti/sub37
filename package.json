@@ -1,6 +1,5 @@
 {
 	"name": "hyper-subtitles",
-	"version": "0.0.0",
 	"description": "",
 	"private": true,
 	"workspaces": [
