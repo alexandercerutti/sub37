@@ -3,7 +3,6 @@
 		"target": "es2016",
 		"module": "ES2015",
 		"declaration": true,
-		"outDir": "lib",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"noImplicitAny": true,
