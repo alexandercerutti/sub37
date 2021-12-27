@@ -1,5 +1,5 @@
 {
-	"name": "hs-server",
+	"name": "@hsubs/server",
 	"version": "0.1.0",
 	"description": "Server component for subtitles",
 	"main": "lib/index.js",
