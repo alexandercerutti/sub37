@@ -1,3 +1,5 @@
+import type { HSBaseRenderer } from "@hsubs/base-renderer";
+
 const intervalSymbol /********/ = Symbol("hs.s.interval");
 const sourcesSymbol /*********/ = Symbol("hs.s.source");
 const latestIndexSymbol /*****/ = Symbol("hs.s.index");
@@ -18,9 +20,11 @@ export class HSServer {
 	private [sourcesSymbol]: HSSource[];
 	private [selectedSourceSymbol]: HSSource;
 	private [latestIndexSymbol]: number;
+	private renderers: HSBaseRenderer[];
 
-	constructor(sources: HSSource[]) {
+	constructor(sources: HSSource[], renderers: HSBaseRenderer[]) {
 		this[sourcesSymbol] = sources;
+		this.renderers = renderers;
 	}
 
 	/**
