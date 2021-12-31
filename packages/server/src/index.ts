@@ -5,11 +5,8 @@ const sourcesSymbol /*********/ = Symbol("hs.s.source");
 const latestIndexSymbol /*****/ = Symbol("hs.s.index");
 const selectedSourceSymbol /**/ = Symbol("hs.s.langselected");
 const createIntervalSymbol /**/ = Symbol("hs.s.createInterval");
-
-interface HSSource {
-	lang: string;
-	provider: any /** @TODO **/;
-}
+const renderersSymbol /*******/ = Symbol("hs.s.renderers");
+const sessionSymbol /*********/ = Symbol("hs.s.session");
 
 export class HSServer {
 	private [intervalSymbol]: [
@@ -17,14 +14,28 @@ export class HSServer {
 		getCurrentPosition: () => number,
 		frequencyMs: number,
 	];
-	private [sourcesSymbol]: HSSource[];
-	private [selectedSourceSymbol]: HSSource;
 	private [latestIndexSymbol]: number;
-	private renderers: HSBaseRenderer[];
+	private [renderersSymbol]: typeof HSBaseRenderer[];
+	private [sessionSymbol]: HSSession<unknown>;
 
-	constructor(sources: HSSource[], renderers: HSBaseRenderer[]) {
-		this[sourcesSymbol] = sources;
-		this.renderers = renderers;
+	constructor(...renderers: typeof HSBaseRenderer[]) {
+		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
+	}
+
+	public startSession(content: unknown, mimeType: `${"application" | "text"}/${string}`) {
+		let selectedRenderer: HSBaseRenderer = this[renderersSymbol].find(
+			(Renderer) => Renderer.supportedType === mimeType,
+		);
+
+		if (!selectedRenderer) {
+			console.warn(
+				`No renderer supports this content type (${mimeType}}. Engine won't render anything.`,
+			);
+
+			return;
+		}
+
+		this[sessionSymbol] = new HSSession(content, selectedRenderer);
 	}
 
 	/**
@@ -144,8 +155,6 @@ export class HSServer {
 			}
 		}
 
-		if (this[selectedSourceSymbol] === currentSource) {
-			throw new Error("Unable to set language: not found.");
-		}
-	}
+class HSSession<T> {
+	constructor(private content: T, public renderer: HSBaseRenderer) {}
 }
