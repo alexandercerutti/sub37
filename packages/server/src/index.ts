@@ -15,10 +15,10 @@ export class HSServer {
 		frequencyMs: number,
 	];
 	private [latestIndexSymbol]: number;
-	private [renderersSymbol]: typeof HSBaseRenderer[];
+	private [renderersSymbol]: HSBaseRendererConstructor[];
 	private [sessionSymbol]: HSSession<unknown> = null;
 
-	constructor(...renderers: typeof HSBaseRenderer[]) {
+	constructor(...renderers: HSBaseRendererConstructor[]) {
 		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
 	}
 
@@ -34,11 +34,11 @@ export class HSServer {
 	public startSession(content: unknown, mimeType: `${"application" | "text"}/${string}`) {
 		this[sessionSymbol] = null;
 
-		const selectedRenderer: HSBaseRenderer = this[renderersSymbol].find(
+		const Renderer: HSBaseRendererConstructor = this[renderersSymbol].find(
 			(Renderer) => Renderer.supportedType === mimeType,
 		);
 
-		if (!selectedRenderer) {
+		if (!Renderer) {
 			console.warn(
 				`No renderer supports this content type (${mimeType}}. Engine won't render anything.`,
 			);
@@ -46,7 +46,7 @@ export class HSServer {
 			return;
 		}
 
-		this[sessionSymbol] = new HSSession(content, selectedRenderer);
+		this[sessionSymbol] = new HSSession(content, new Renderer());
 	}
 
 	/**
@@ -173,5 +173,5 @@ export class HSServer {
 		}
 
 class HSSession<T> {
-	constructor(private content: T, public renderer: HSBaseRenderer) {}
+	constructor(private content: T, public renderer: InstanceType<HSBaseRendererConstructor>) {}
 }
