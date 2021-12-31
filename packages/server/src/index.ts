@@ -8,6 +8,16 @@ const createIntervalSymbol /**/ = Symbol("hs.s.createInterval");
 const renderersSymbol /*******/ = Symbol("hs.s.renderers");
 const sessionSymbol /*********/ = Symbol("hs.s.session");
 
+interface RawTrack<T> {
+	lang: string;
+	content: T;
+}
+
+interface ProcessedTrack {
+	lang: string;
+	content: any /** @TODO define Entities */;
+}
+
 export class HSServer {
 	private [intervalSymbol]: [
 		interval: number,
@@ -15,10 +25,10 @@ export class HSServer {
 		frequencyMs: number,
 	];
 	private [latestIndexSymbol]: number;
-	private [renderersSymbol]: HSBaseRendererConstructor[];
+	private [renderersSymbol]: HSBaseRendererConstructor<unknown>[];
 	private [sessionSymbol]: HSSession<unknown> = null;
 
-	constructor(...renderers: HSBaseRendererConstructor[]) {
+	constructor(...renderers: HSBaseRendererConstructor<unknown>[]) {
 		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
 	}
 
@@ -31,10 +41,13 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public startSession(content: unknown, mimeType: `${"application" | "text"}/${string}`) {
+	public startSession<C>(
+		rawTracks: RawTrack<C>[],
+		mimeType: `${"application" | "text"}/${string}`,
+	) {
 		this[sessionSymbol] = null;
 
-		const Renderer: HSBaseRendererConstructor = this[renderersSymbol].find(
+		const Renderer: HSBaseRendererConstructor<C> = this[renderersSymbol].find(
 			(Renderer) => Renderer.supportedType === mimeType,
 		);
 
@@ -46,7 +59,7 @@ export class HSServer {
 			return;
 		}
 
-		this[sessionSymbol] = new HSSession(content, new Renderer());
+		this[sessionSymbol] = new HSSession<C>(rawTracks, new Renderer());
 	}
 
 	/**
@@ -163,15 +176,22 @@ export class HSServer {
 			return;
 		}
 
-		const currentSource = this[selectedSourceSymbol];
+class HSSession<T> {
+	private tracks: ProcessedTrack[];
 
-		for (let source of this[sourcesSymbol]) {
-			if (lang === source.lang) {
-				this[selectedSourceSymbol] = source;
-				break;
+	constructor(
+		rawContents: RawTrack<T>[],
+		public renderer: InstanceType<HSBaseRendererConstructor<T>>,
+	) {
+		for (let { lang, content } of rawContents) {
+			try {
+				this.tracks.push({
+					lang,
+					content: renderer.convertToEntities(content),
+				});
+			} catch (err) {
+				console.error(err);
 			}
 		}
-
-class HSSession<T> {
-	constructor(private content: T, public renderer: InstanceType<HSBaseRendererConstructor>) {}
+	}
 }

@@ -1,6 +1,8 @@
-export interface HSBaseRendererConstructor {
+export interface HSBaseRendererConstructor<T> {
 	supportedType: string;
-	new (): HSBaseRenderer;
+	new (): HSBaseRenderer<T>;
 }
 
-export interface HSBaseRenderer {}
+export interface HSBaseRenderer<R> {
+	convertToEntities(rawContent: R): any /** @TODO Define Entities */;
+}
