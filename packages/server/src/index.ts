@@ -1,4 +1,6 @@
-import type { HSBaseRenderer } from "@hsubs/base-renderer";
+import { HSBaseRendererConstructor } from "@hsubs/base-renderer";
+import { RawTrack } from "./model";
+import { HSSession } from "./Session";
 
 const intervalSymbol /********/ = Symbol("hs.s.interval");
 const sourcesSymbol /*********/ = Symbol("hs.s.source");
@@ -7,16 +9,6 @@ const selectedSourceSymbol /**/ = Symbol("hs.s.langselected");
 const createIntervalSymbol /**/ = Symbol("hs.s.createInterval");
 const renderersSymbol /*******/ = Symbol("hs.s.renderers");
 const sessionSymbol /*********/ = Symbol("hs.s.session");
-
-interface RawTrack<T> {
-	lang: string;
-	content: T;
-}
-
-interface ProcessedTrack {
-	lang: string;
-	content: any /** @TODO define Entities */;
-}
 
 export class HSServer {
 	private [intervalSymbol]: [
