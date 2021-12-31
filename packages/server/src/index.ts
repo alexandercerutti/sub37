@@ -16,14 +16,25 @@ export class HSServer {
 	];
 	private [latestIndexSymbol]: number;
 	private [renderersSymbol]: typeof HSBaseRenderer[];
-	private [sessionSymbol]: HSSession<unknown>;
+	private [sessionSymbol]: HSSession<unknown> = null;
 
 	constructor(...renderers: typeof HSBaseRenderer[]) {
 		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
 	}
 
+	/**
+	 * Creates a new subtitles / captions
+	 * distribution session.
+	 *
+	 * @param content
+	 * @param mimeType
+	 * @returns
+	 */
+
 	public startSession(content: unknown, mimeType: `${"application" | "text"}/${string}`) {
-		let selectedRenderer: HSBaseRenderer = this[renderersSymbol].find(
+		this[sessionSymbol] = null;
+
+		const selectedRenderer: HSBaseRenderer = this[renderersSymbol].find(
 			(Renderer) => Renderer.supportedType === mimeType,
 		);
 
@@ -42,6 +53,8 @@ export class HSServer {
 	 * Allows starting the server.
 	 * It will start sending events through the listeners.
 	 *
+	 * Throws if no session have been started.
+	 *
 	 * Throws if frequency is explicitly set to a _falsy_ value
 	 * or to a value which is not a number.
 	 *
@@ -51,6 +64,10 @@ export class HSServer {
 	 */
 
 	public start(getCurrentPosition: () => number, frequencyMs: number = 250) {
+		if (!this[sessionSymbol]) {
+			throw new Error("No session started. Engine won't serve any subtitles.");
+		}
+
 		if (!frequencyMs || typeof frequencyMs !== "number") {
 			throw new Error(
 				"Cannot start subtitles server: a frequency is required to be either be set to a value > 0 or not be set (fallback to 250ms)",
