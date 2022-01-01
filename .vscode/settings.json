@@ -1,4 +1,5 @@
 {
 	"editor.tabSize": 2,
-	"editor.trimAutoWhitespace": true
+	"editor.trimAutoWhitespace": true,
+	"editor.detectIndentation": true
 }
