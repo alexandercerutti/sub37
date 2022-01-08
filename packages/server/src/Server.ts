@@ -38,12 +38,12 @@ export class HSServer {
 		this[sessionSymbol] = null;
 
 		const Renderer: HSBaseRendererConstructor<C> = this[renderersSymbol].find(
-			(Renderer) => Renderer.supportedType === mimeType,
+			(Renderer) => Renderer instanceof HSBaseRenderer && Renderer.supportedType === mimeType,
 		);
 
 		if (!Renderer) {
 			console.warn(
-				`No renderer supports this content type (${mimeType}}. Engine won't render anything.`,
+				`No renderer supports this content type (${mimeType}} or the passed Renderers do not extend "HSBaseRenderer". Engine won't render anything.`,
 			);
 
 			return;
