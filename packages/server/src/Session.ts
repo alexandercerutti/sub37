@@ -1,13 +1,9 @@
 import { HSBaseRendererConstructor } from "@hsubs/base-renderer";
 import type { RawTrack } from "./model";
-
-interface ProcessedTrack {
-	lang: string;
-	content: any /** @TODO define Entities */;
-}
+import { TimelineTree } from "./TimelineTree";
 
 export class HSSession<T> {
-	private tracks: ProcessedTrack[];
+	private timelines: { [lang: string]: TimelineTree };
 
 	constructor(
 		rawContents: RawTrack<T>[],
@@ -15,10 +11,10 @@ export class HSSession<T> {
 	) {
 		for (let { lang, content } of rawContents) {
 			try {
-				this.tracks.push({
-					lang,
-					content: renderer.convertToEntities(content),
-				});
+				const entities = renderer.convertToEntities(content);
+				this.timelines[lang] = new TimelineTree();
+
+				/** @TODO add entities to Timeline */
 			} catch (err) {
 				console.error(err);
 			}
