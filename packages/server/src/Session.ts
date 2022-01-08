@@ -11,7 +11,7 @@ export class HSSession<T> {
 	) {
 		for (let { lang, content } of rawContents) {
 			try {
-				const entities = renderer.convertToEntities(content);
+				const entities = renderer.parse(content);
 				this.timelines[lang] = new TimelineTree();
 
 				/** @TODO add entities to Timeline */
