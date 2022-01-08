@@ -1,4 +1,4 @@
-import { HSBaseRendererConstructor } from "@hsubs/base-renderer";
+import { HSBaseRenderer, HSBaseRendererConstructor } from "@hsubs/base-renderer";
 import { RawTrack } from "./model";
 import { HSSession } from "./Session";
 
