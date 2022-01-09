@@ -3,6 +3,9 @@
 	"version": "0.1.0",
 	"description": "A base renderer that defines how a renderer should be implemented",
 	"main": "lib/index.js",
+	"peerDependencies": {
+		"@hsubs/server": "^0.1.0"
+	},
 	"devDependencies": {
 		"typescript": "^4.5.4"
 	},

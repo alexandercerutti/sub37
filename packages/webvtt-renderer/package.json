@@ -3,6 +3,12 @@
 	"version": "0.1.0",
 	"description": "A subtitles renderer for WebVTT subtitles",
 	"main": "lib/index.js",
+	"peerDependencies": {
+		"@hsubs/server": "^0.1.0"
+	},
+	"dependencies": {
+		"@hsubs/base-renderer": "^0.1.0"
+	},
 	"devDependencies": {},
 	"scripts": {
 		"build": "npx tsc"
