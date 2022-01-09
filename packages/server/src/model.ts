@@ -1,4 +1,4 @@
-export interface RawTrack<T> {
+export interface RawTrack {
 	lang: string;
-	content: T;
+	content: unknown;
 }

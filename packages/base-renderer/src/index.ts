@@ -1,21 +1,21 @@
 import type { CueNode } from "@hsubs/server";
 
-export interface HSBaseRendererConstructor<T> {
+export interface HSBaseRendererConstructor {
 	supportedType: string;
-	new (): HSBaseRenderer<T>;
+	new (): HSBaseRenderer;
 }
 
-export interface HSBaseRenderer<R> {
-	parse(rawContent: R): CueNode[];
+export interface HSBaseRenderer {
+	parse(rawContent: unknown): CueNode[];
 }
 
-export class HSBaseRenderer<R> implements HSBaseRenderer<R> {
+export class HSBaseRenderer implements HSBaseRenderer {
 	/**
 	 * Static property that instructs for which type of subtitles
 	 * this renderer should be used. Must be overridden by Renderers
 	 */
 
-	static get supportedType() {
+	static get supportedType(): string {
 		throw new Error(
 			"Renderer didn't specify any static supportedType property. Renderer will be ignored.",
 		);
@@ -29,7 +29,7 @@ export class HSBaseRenderer<R> implements HSBaseRenderer<R> {
 	 * @param rawContent
 	 */
 
-	parse(rawContent: R): CueNode[] {
+	parse(rawContent: unknown): CueNode[] {
 		throw new Error(
 			"Renderer doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
 		);

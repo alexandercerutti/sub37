@@ -2,13 +2,10 @@ import { HSBaseRendererConstructor } from "@hsubs/base-renderer";
 import type { RawTrack } from "./model";
 import { TimelineTree } from "./TimelineTree";
 
-export class HSSession<T> {
+export class HSSession {
 	private timelines: { [lang: string]: TimelineTree };
 
-	constructor(
-		rawContents: RawTrack<T>[],
-		public renderer: InstanceType<HSBaseRendererConstructor<T>>,
-	) {
+	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
 		for (let { lang, content } of rawContents) {
 			try {
 				const entities = renderer.parse(content);

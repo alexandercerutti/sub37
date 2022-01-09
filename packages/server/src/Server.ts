@@ -15,10 +15,10 @@ export class HSServer {
 		frequencyMs: number,
 	];
 	private [latestIndexSymbol]: number;
-	private [renderersSymbol]: HSBaseRendererConstructor<unknown>[];
-	private [sessionSymbol]: HSSession<unknown> = null;
+	private [renderersSymbol]: HSBaseRendererConstructor[];
+	private [sessionSymbol]: HSSession = null;
 
-	constructor(...renderers: HSBaseRendererConstructor<unknown>[]) {
+	constructor(...renderers: HSBaseRendererConstructor[]) {
 		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
 	}
 
@@ -31,13 +31,10 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public startSession<C>(
-		rawTracks: RawTrack<C>[],
-		mimeType: `${"application" | "text"}/${string}`,
-	) {
+	public startSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
 		this[sessionSymbol] = null;
 
-		const Renderer: HSBaseRendererConstructor<C> = this[renderersSymbol].find(
+		const Renderer: HSBaseRendererConstructor = this[renderersSymbol].find(
 			(Renderer) => Renderer instanceof HSBaseRenderer && Renderer.supportedType === mimeType,
 		);
 
@@ -49,7 +46,7 @@ export class HSServer {
 			return;
 		}
 
-		this[sessionSymbol] = new HSSession<C>(rawTracks, new Renderer());
+		this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
 	}
 
 	/**
