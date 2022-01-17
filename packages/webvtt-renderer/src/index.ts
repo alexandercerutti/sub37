@@ -88,7 +88,41 @@ function evaluateBlock(content: string, start: number, end: number) {
 		return;
 	}
 
-	if (cueMatch !== null) {
-		return createVTTCueFromCueMatch(cueMatch, availableRegions);
+	parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
+}
+
+function parseCue(cueData: {
+	cueid: string;
+	starttime: string;
+	endtime: string;
+	attributes: any;
+	text: string;
+}) {
+	const startTimeMs /**/ = parseTimeMs(cueData.starttime);
+	const endTimeMs /****/ = parseTimeMs(cueData.endtime);
+}
+
+function parseTimeMs(timestring: string) {
+	var timeMatch = timestring.match(
+		/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/,
+	);
+
+	if (!timeMatch) {
+		throw new Error("Time format is not valid. Ignoring cue.");
 	}
+
+	const {
+		groups: { hours, minutes, seconds, milliseconds },
+	} = timeMatch;
+
+	const hoursInSeconds = parseIntFallback(hours) * 60 * 60;
+	const minutesInSeconds = parseIntFallback(minutes) * 60;
+	const parsedSeconds = parseIntFallback(seconds);
+	const parsedMs = parseIntFallback(milliseconds) / 1000;
+
+	return (hoursInSeconds + minutesInSeconds + parsedSeconds + parsedMs) * 1000;
+}
+
+function parseIntFallback(string: string) {
+	return parseInt(string) || 0;
 }
