@@ -66,7 +66,6 @@ function evaluateBlock(content: string, start: number, end: number) {
 	}
 
 	const contentSection = content.substring(start, end);
-
 	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
 
 	if (blockMatch && blockMatch.groups["blocktype"]) {
@@ -83,6 +82,11 @@ function evaluateBlock(content: string, start: number, end: number) {
 	}
 
 	const cueMatch = contentSection.match(CUE_MATCH_REGEX);
+
+	if (!cueMatch) {
+		console.warn("Unknown entity found in VTT:", contentSection);
+		return;
+	}
 
 	if (cueMatch !== null) {
 		return createVTTCueFromCueMatch(cueMatch, availableRegions);
