@@ -2,8 +2,8 @@ import { HSBaseRenderer } from "@hsubs/base-renderer";
 import { CueNode } from "@hsubs/server";
 
 const LF_REGEX = /\n/;
-const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n]*)?WEBVTT(?:\n(.+))?/;
-const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE)\s*)/;
+const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
+const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*/;
 const REGION_ATTRIBUTES_REGEX = /(?:(?<key>[^\s]+):(?<value>[^\s]+))(?:(?:[\r\n]+)|\s+)/g;
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))(?<attributes>.+)?[\r\n]+(?<text>(?:.+[\r\n]*)+)/;
