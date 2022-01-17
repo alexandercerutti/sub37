@@ -14,25 +14,16 @@ export class WebVTTRenderer extends HSBaseRenderer {
 	}
 
 	override parse(rawContent: string): CueNode[] {
+		if (!rawContent) {
+			return [];
+		}
+
 		const cues: CueNode[] = [];
 		const content = rawContent.replace(/\r?\n/g, "\n");
 		const block = {
 			start: 0,
 			cursor: 0,
 		};
-
-		/**
-		 * Navigating headers
-		 */
-
-		do {
-			block.cursor += 1;
-		} while (!LF_REGEX.test(content[block.cursor]) && !LF_REGEX.test(content[block.cursor + 1]));
-
-		evalutateHeaders(content.substring(block.start, block.cursor + 1));
-
-		block.cursor += 3;
-		block.start = block.cursor - 1;
 
 		/**
 		 * Navigating body
@@ -44,10 +35,13 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			 * If so, we ended the block. The same if we reached the string end.
 			 */
 
-			if (LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) {
+			if (
+				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
+				block.cursor === content.length
+			) {
 				console.log("Found block:", content.substring(block.start, block.cursor + 1));
 
-				evalutateBlock(content.substring(block.start, block.cursor + 1));
+				evalutateBlock(content, block.start, block.cursor + 1);
 
 				/** Skipping \n\n and going to the next character */
 				block.cursor += 3;
@@ -57,20 +51,20 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			}
 		} while (block.cursor <= content.length);
 
-		/** Evaluating the last block found */
-		evalutateBlock(content.substring(block.start, block.cursor + 1));
-
 		return cues;
 	}
 }
 
-function evalutateHeaders(content: string) {
-	if (!WEBVTT_HEADER_SECTION.test(content)) {
-		throw new Error("Invalid WebVTT file. It should start with string 'WEBVTT'");
-	}
-}
+function evalutateBlock(content: string, start: number, end: number) {
+	if (start === 0) {
+		/** Parsing Headers */
+		if (!WEBVTT_HEADER_SECTION.test(content)) {
+			throw new Error("Invalid WebVTT file. It should start with string 'WEBVTT'");
+		}
 
-function evalutateBlock(content: string) {
+		return;
+	}
+
 	const blockMatch = content.match(BLOCK_MATCH_REGEX);
 
 	if (blockMatch && blockMatch.groups["blockType"]) {
