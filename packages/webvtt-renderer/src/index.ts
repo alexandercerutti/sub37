@@ -41,7 +41,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			) {
 				console.log("Found block:", content.substring(block.start, block.cursor + 1));
 
-				evalutateBlock(content, block.start, block.cursor + 1);
+				evaluateBlock(content, block.start, block.cursor + 1);
 
 				/** Skipping \n\n and going to the next character */
 				block.cursor += 3;
@@ -55,7 +55,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 	}
 }
 
-function evalutateBlock(content: string, start: number, end: number) {
+function evaluateBlock(content: string, start: number, end: number) {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
