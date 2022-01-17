@@ -65,9 +65,11 @@ function evaluateBlock(content: string, start: number, end: number) {
 		return;
 	}
 
-	const blockMatch = content.match(BLOCK_MATCH_REGEX);
+	const contentSection = content.substring(start, end);
 
-	if (blockMatch && blockMatch.groups["blockType"]) {
+	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
+
+	if (blockMatch && blockMatch.groups["blocktype"]) {
 		switch (blockMatch.groups["blockType"]) {
 			case "REGION":
 				/** @TODO not supported yet */
@@ -80,7 +82,7 @@ function evaluateBlock(content: string, start: number, end: number) {
 		}
 	}
 
-	const cueMatch = content.match(CUE_MATCH_REGEX);
+	const cueMatch = contentSection.match(CUE_MATCH_REGEX);
 
 	if (cueMatch !== null) {
 		return createVTTCueFromCueMatch(cueMatch, availableRegions);
