@@ -13,6 +13,7 @@ const CUE_MATCH_REGEX =
  */
 
 enum BlockType {
+	IGNORED /***/ = 0b0000,
 	HEADER /****/ = 0b0001,
 	REGION /****/ = 0b0010,
 	STYLE /*****/ = 0b0100,
@@ -121,7 +122,7 @@ function evaluateBlock(
 				/** @TODO not supported yet */
 				return [BlockType.STYLE, undefined];
 			case "NOTE":
-				return;
+				return [BlockType.IGNORED, undefined];
 		}
 	}
 
@@ -129,7 +130,7 @@ function evaluateBlock(
 
 	if (!cueMatch) {
 		console.warn("Unknown entity found in VTT:", contentSection);
-		return;
+		return [BlockType.IGNORED, undefined];
 	}
 
 	const cueParsingResult = parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
