@@ -44,6 +44,8 @@ export class WebVTTRenderer extends HSBaseRenderer {
 
 		let blockParsingPhase = BlockType.HEADER;
 
+		const REGION_OR_STYLE = BlockType.REGION | BlockType.STYLE;
+
 		/**
 		 * Navigating body
 		 */
@@ -62,16 +64,23 @@ export class WebVTTRenderer extends HSBaseRenderer {
 
 				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor + 1);
 
-				if (!(blockType & (BlockType.REGION | BlockType.STYLE))) {
+				const isRegionOrStyle = blockType & REGION_OR_STYLE;
+				const isNonCueAllowed = blockParsingPhase & (REGION_OR_STYLE | BlockType.HEADER);
+
+				if (isRegionOrStyle && isNonCueAllowed) {
+					/**
+					 * If we are not parsing yet cues,
+					 * we can save region and styles.
+					 * Otherwise ignore.
+					 */
+
+					blockParsingPhase = blockType;
+				}
+
+				if (blockType & BlockType.CUE) {
 					blockParsingPhase = blockType;
 
 					/** @TODO Use Cue or comment somehow */
-				}
-
-				if (blockParsingPhase !== BlockType.CUE) {
-					blockParsingPhase = blockType;
-
-					/** @TODO Use Region or Style somehow */
 				}
 
 				/** Skipping \n\n and going to the next character */
