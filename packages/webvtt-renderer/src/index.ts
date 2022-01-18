@@ -8,6 +8,13 @@ const REGION_ATTRIBUTES_REGEX = /(?:(?<key>[^\s]+):(?<value>[^\s]+))(?:(?:[\r\n]
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))\s*(?<attributes>.+)?[\r\n]+(?<text>(?:.+[\r\n]*)+)/;
 
+enum BlockType {
+	HEADER /****/ = 0b0001,
+	REGION /****/ = 0b0010,
+	STYLE /*****/ = 0b0100,
+	CUE /*******/ = 0b1000,
+}
+
 export class WebVTTRenderer extends HSBaseRenderer {
 	static override get supportedType() {
 		return "text/vtt";
@@ -55,7 +62,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 	}
 }
 
-function evaluateBlock(content: string, start: number, end: number) {
+function evaluateBlock(content: string, start: number, end: number): [BlockType, unknown /** @TODO change type */ ] {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -69,13 +76,13 @@ function evaluateBlock(content: string, start: number, end: number) {
 	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
 
 	if (blockMatch && blockMatch.groups["blocktype"]) {
-		switch (blockMatch.groups["blockType"]) {
+		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
 				/** @TODO not supported yet */
-				return;
+				return [ BlockType.REGION, undefined ];
 			case "STYLE":
 				/** @TODO not supported yet */
-				return;
+				return [ BlockType.STYLE, undefined ];;
 			case "NOTE":
 				return;
 		}
@@ -88,7 +95,9 @@ function evaluateBlock(content: string, start: number, end: number) {
 		return;
 	}
 
-	parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
+	const cueParsingResult = parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
+
+	return [ BlockType.CUE, cueParsingResult ];
 }
 
 function parseCue(cueData: {
