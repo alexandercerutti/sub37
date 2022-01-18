@@ -17,6 +17,10 @@
 		"noImplicitOverride": true,
 		"moduleResolution": "node",
 		"baseUrl": ".",
+		"lib": [
+			"DOM",
+			"ES2018"
+		],
 		"paths": {
 			"@hsubs/*": ["packages/*/src"]
 		}
