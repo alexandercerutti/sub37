@@ -54,7 +54,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			) {
 				console.log("Found block:", content.substring(block.start, block.cursor + 1));
 
-				const [ blockType, parsedContent ] = evaluateBlock(content, block.start, block.cursor + 1);
+				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor + 1);
 
 				if (!(blockType & (BlockType.REGION | BlockType.STYLE))) {
 					this.blockParsingPhase = blockType;
@@ -80,14 +80,18 @@ export class WebVTTRenderer extends HSBaseRenderer {
 	}
 }
 
-function evaluateBlock(content: string, start: number, end: number): [BlockType, unknown /** @TODO change type */ ] {
+function evaluateBlock(
+	content: string,
+	start: number,
+	end: number,
+): [BlockType, unknown /** @TODO change type */] {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
 			throw new Error("Invalid WebVTT file. It should start with string 'WEBVTT'");
 		}
 
-		return [ BlockType.HEADER, undefined ];
+		return [BlockType.HEADER, undefined];
 	}
 
 	const contentSection = content.substring(start, end);
@@ -97,10 +101,10 @@ function evaluateBlock(content: string, start: number, end: number): [BlockType,
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
 				/** @TODO not supported yet */
-				return [ BlockType.REGION, undefined ];
+				return [BlockType.REGION, undefined];
 			case "STYLE":
 				/** @TODO not supported yet */
-				return [ BlockType.STYLE, undefined ];;
+				return [BlockType.STYLE, undefined];
 			case "NOTE":
 				return;
 		}
@@ -115,7 +119,7 @@ function evaluateBlock(content: string, start: number, end: number): [BlockType,
 
 	const cueParsingResult = parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
 
-	return [ BlockType.CUE, cueParsingResult ];
+	return [BlockType.CUE, cueParsingResult];
 }
 
 function parseCue(cueData: {
