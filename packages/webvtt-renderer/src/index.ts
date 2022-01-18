@@ -8,6 +8,10 @@ const REGION_ATTRIBUTES_REGEX = /(?:(?<key>[^\s]+):(?<value>[^\s]+))(?:(?:[\r\n]
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))\s*(?<attributes>.+)?[\r\n]+(?<text>(?:.+[\r\n]*)+)/;
 
+/**
+ * @see https://www.w3.org/TR/webvtt1/#file-structure
+ */
+
 enum BlockType {
 	HEADER /****/ = 0b0001,
 	REGION /****/ = 0b0010,
@@ -16,6 +20,8 @@ enum BlockType {
 }
 
 export class WebVTTRenderer extends HSBaseRenderer {
+	private blockParsingPhase: BlockType = BlockType.HEADER;
+
 	static override get supportedType() {
 		return "text/vtt";
 	}
@@ -48,7 +54,19 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			) {
 				console.log("Found block:", content.substring(block.start, block.cursor + 1));
 
-				evaluateBlock(content, block.start, block.cursor + 1);
+				const [ blockType, parsedContent ] = evaluateBlock(content, block.start, block.cursor + 1);
+
+				if (blockType & (BlockType.REGION | BlockType.STYLE)) {
+					if (this.blockParsingPhase === BlockType.CUE) {
+						/** ignore */
+					} else {
+						/**
+						 * @TODO Process Parsed Block (somehow)
+						 */
+					}
+				} else {
+					this.blockParsingPhase = blockType;
+				}
 
 				/** Skipping \n\n and going to the next character */
 				block.cursor += 3;
