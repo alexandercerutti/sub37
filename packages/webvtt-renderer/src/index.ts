@@ -43,7 +43,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 		 * and then only CUES and COMMENTS.
 		 */
 
-		let blockParsingPhase = BlockType.HEADER;
+		let latestBlockPhase = BlockType.HEADER;
 
 		const REGION_OR_STYLE = BlockType.REGION | BlockType.STYLE;
 
@@ -66,7 +66,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor + 1);
 
 				const isRegionOrStyle = blockType & REGION_OR_STYLE;
-				const isNonCueAllowed = blockParsingPhase & (REGION_OR_STYLE | BlockType.HEADER);
+				const isNonCueAllowed = latestBlockPhase & (REGION_OR_STYLE | BlockType.HEADER);
 
 				if (isRegionOrStyle && isNonCueAllowed) {
 					/**
@@ -75,11 +75,11 @@ export class WebVTTRenderer extends HSBaseRenderer {
 					 * Otherwise ignore.
 					 */
 
-					blockParsingPhase = blockType;
+					latestBlockPhase = blockType;
 				}
 
 				if (blockType & BlockType.CUE) {
-					blockParsingPhase = blockType;
+					latestBlockPhase = blockType;
 
 					/** @TODO Use Cue or comment somehow */
 				}
