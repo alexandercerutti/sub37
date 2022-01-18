@@ -20,8 +20,6 @@ enum BlockType {
 }
 
 export class WebVTTRenderer extends HSBaseRenderer {
-	private blockParsingPhase: BlockType = BlockType.HEADER;
-
 	static override get supportedType() {
 		return "text/vtt";
 	}
@@ -37,6 +35,14 @@ export class WebVTTRenderer extends HSBaseRenderer {
 			start: 0,
 			cursor: 0,
 		};
+
+		/**
+		 * Phase indicator to ignore unordered blocks.
+		 * Standard expects header (WEBVTT, STYLE, REGION, COMMENTS)
+		 * and then only CUES and COMMENTS.
+		 */
+
+		let blockParsingPhase = BlockType.HEADER;
 
 		/**
 		 * Navigating body
@@ -57,13 +63,13 @@ export class WebVTTRenderer extends HSBaseRenderer {
 				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor + 1);
 
 				if (!(blockType & (BlockType.REGION | BlockType.STYLE))) {
-					this.blockParsingPhase = blockType;
+					blockParsingPhase = blockType;
 
 					/** @TODO Use Cue or comment somehow */
 				}
 
-				if (this.blockParsingPhase !== BlockType.CUE) {
-					this.blockParsingPhase = blockType;
+				if (blockParsingPhase !== BlockType.CUE) {
+					blockParsingPhase = blockType;
 
 					/** @TODO Use Region or Style somehow */
 				}
