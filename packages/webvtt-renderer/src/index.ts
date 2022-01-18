@@ -69,7 +69,7 @@ function evaluateBlock(content: string, start: number, end: number): [BlockType,
 			throw new Error("Invalid WebVTT file. It should start with string 'WEBVTT'");
 		}
 
-		return;
+		return [ BlockType.HEADER, undefined ];
 	}
 
 	const contentSection = content.substring(start, end);
