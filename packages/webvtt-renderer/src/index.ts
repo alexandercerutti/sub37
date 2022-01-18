@@ -56,16 +56,16 @@ export class WebVTTRenderer extends HSBaseRenderer {
 
 				const [ blockType, parsedContent ] = evaluateBlock(content, block.start, block.cursor + 1);
 
-				if (blockType & (BlockType.REGION | BlockType.STYLE)) {
-					if (this.blockParsingPhase === BlockType.CUE) {
-						/** ignore */
-					} else {
-						/**
-						 * @TODO Process Parsed Block (somehow)
-						 */
-					}
-				} else {
+				if (!(blockType & (BlockType.REGION | BlockType.STYLE))) {
 					this.blockParsingPhase = blockType;
+
+					/** @TODO Use Cue or comment somehow */
+				}
+
+				if (this.blockParsingPhase !== BlockType.CUE) {
+					this.blockParsingPhase = blockType;
+
+					/** @TODO Use Region or Style somehow */
 				}
 
 				/** Skipping \n\n and going to the next character */
