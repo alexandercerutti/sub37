@@ -76,6 +76,8 @@ export class WebVTTRenderer extends HSBaseRenderer {
 					 */
 
 					latestBlockPhase = blockType;
+
+					/** @TODO Use Region or Style */
 				}
 
 				if (blockType & BlockType.CUE) {
