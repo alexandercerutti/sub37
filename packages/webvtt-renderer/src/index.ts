@@ -146,9 +146,18 @@ function parseCue(cueData: {
 	endtime: string;
 	attributes: any;
 	text: string;
-}) {
+}): CueNode {
 	const startTimeMs /**/ = parseTimeMs(cueData.starttime);
 	const endTimeMs /****/ = parseTimeMs(cueData.endtime);
+
+	return {
+		startTime: startTimeMs,
+		endTime: endTimeMs,
+		content: cueData.text,
+		entities: undefined,
+		id: cueData.cueid,
+		styles: undefined,
+	};
 }
 
 function parseTimeMs(timestring: string) {
