@@ -115,7 +115,7 @@ function evaluateBlock(
 	const contentSection = content.substring(start, end);
 	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
 
-	if (blockMatch && blockMatch.groups["blocktype"]) {
+	if (blockMatch?.groups["blocktype"]) {
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
 				/** @TODO not supported yet */
