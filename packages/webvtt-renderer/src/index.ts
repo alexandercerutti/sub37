@@ -1,5 +1,6 @@
 import { HSBaseRenderer } from "@hsubs/base-renderer";
 import { CueNode } from "@hsubs/server";
+import { CueData, parseCue } from "./parser";
 
 const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
@@ -135,122 +136,7 @@ function evaluateBlock(
 		return [BlockType.IGNORED, undefined];
 	}
 
-	const cueParsingResult = parseCue(cueMatch.groups as Parameters<typeof parseCue>[0]);
+	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueData);
 
 	return [BlockType.CUE, cueParsingResult];
-}
-
-enum CueParsingPhase {
-	TAG /**********/ = 0b00001,
-	TIMESTAMP /****/ = 0b00010,
-	TEXT /*********/ = 0b00100,
-}
-
-function parseCue(cueData: {
-	cueid: string;
-	starttime: string;
-	endtime: string;
-	attributes: any;
-	text: string;
-}): CueNode[] {
-	const TAG_START = "<";
-	const TAG_CLOSE = ">";
-
-	const startTimeMs /**/ = parseTimeMs(cueData.starttime);
-	const endTimeMs /****/ = parseTimeMs(cueData.endtime);
-
-	const cues: CueNode[] = [];
-
-	/**
-	 * @TODO start parsing the text and searching for entities.
-	 * Entities are:
-	 *
-	 * - <c.classname>text</c>
-	 * - <i>text</i> <i.loud>Yellow!</i>
-	 * - <b>text</b> <b.loud>Yellow!</b>
-	 * - <u>text</u> <u.loud>Yellow!</u>
-	 * - <ruby>text</ruby> <ruby.loud>Yellow! <rt.loud>Yellow!</rt></ruby>
-	 * - <v Bob>text</v> <v.loud Kathryn>Yellow!</v>
-	 * - <lang en-GB>Cyan!</lang> <lang.loud en>Yellow!</lang>
-	 * - Timestamps "Like a <00:19.000>big-a <00:19.500>pizza <00:20.000>pie"
-	 */
-
-	let textContent = "";
-	let cursor = 0;
-	let parsingPhase: CueParsingPhase = CueParsingPhase.TEXT;
-
-	while (cursor <= cueData.text.length) {
-		if (cueData.text[cursor] == TAG_START) {
-			/** Start Token */
-			if (Number.isNaN(cueData.text[cursor + 1])) {
-				/** Definitely not a timestamp */
-				parsingPhase = CueParsingPhase.TAG;
-			} else {
-				parsingPhase = CueParsingPhase.TIMESTAMP;
-			}
-		} else if (cueData.text[cursor] === TAG_CLOSE) {
-			parsingPhase = CueParsingPhase.TEXT;
-			cursor++;
-		}
-
-		if (parsingPhase & (CueParsingPhase.TIMESTAMP | CueParsingPhase.TAG)) {
-		} else {
-			textContent += cueData.text[cursor];
-		}
-
-		cursor++;
-	}
-
-	return [
-		{
-			startTime: startTimeMs,
-			endTime: endTimeMs,
-			content: cueData.text,
-			entities: undefined,
-			id: cueData.cueid,
-			styles: undefined,
-		},
-	];
-}
-
-function parseCueTimestamp(content: string, offset: number) {}
-
-function parseCueEntity(content: string, cursorPoint: number) {
-	/** Should we implement something like a state machine that navigates in characters? */
-	const markers = [
-		["v"],
-		["r", "u", "b", "y"],
-		["r", "t"],
-		["b"],
-		["u"],
-		["c"],
-		["l", "a", "n", "g"],
-	];
-
-	const entityBuffer = "";
-}
-
-function parseTimeMs(timestring: string) {
-	var timeMatch = timestring.match(
-		/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/,
-	);
-
-	if (!timeMatch) {
-		throw new Error("Time format is not valid. Ignoring cue.");
-	}
-
-	const {
-		groups: { hours, minutes, seconds, milliseconds },
-	} = timeMatch;
-
-	const hoursInSeconds = parseIntFallback(hours) * 60 * 60;
-	const minutesInSeconds = parseIntFallback(minutes) * 60;
-	const parsedSeconds = parseIntFallback(seconds);
-	const parsedMs = parseIntFallback(milliseconds) / 1000;
-
-	return (hoursInSeconds + minutesInSeconds + parsedSeconds + parsedMs) * 1000;
-}
-
-function parseIntFallback(string: string) {
-	return parseInt(string) || 0;
 }
