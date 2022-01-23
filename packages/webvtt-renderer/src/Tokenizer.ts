@@ -36,7 +36,11 @@ export class Tokenizer {
 	constructor(private rawContent: string) {}
 
 	static isWhitespace(character: string) {
-		return character == " " || character == "\x0A" || character == "\x09" || character == "\x0C";
+		return character == " " || character == "\x09" || character == "\x0C";
+	}
+
+	static isNewLine(character: string) {
+		return character == "\x0A";
 	}
 
 	public nextToken(): Token {
@@ -91,7 +95,7 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.TAG: {
-					if (Tokenizer.isWhitespace(char)) {
+					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 						state = TokenizerState.START_TAG_ANNOTATION;
 						break;
 					}
@@ -128,6 +132,12 @@ export class Tokenizer {
 						break;
 					}
 
+					if (Tokenizer.isNewLine(char)) {
+						buffer += char;
+						state = TokenizerState.START_TAG_ANNOTATION;
+						break;
+					}
+
 					if (char === ".") {
 						state = TokenizerState.START_TAG_CLASS;
 						break;
@@ -146,6 +156,12 @@ export class Tokenizer {
 					if (Tokenizer.isWhitespace(char)) {
 						classes.push(buffer);
 						buffer = "";
+						state = TokenizerState.START_TAG_ANNOTATION;
+						break;
+					}
+
+					if (Tokenizer.isNewLine(char)) {
+						buffer += char;
 						state = TokenizerState.START_TAG_ANNOTATION;
 						break;
 					}
