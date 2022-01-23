@@ -157,6 +157,7 @@ export class Tokenizer {
 					}
 
 					if (char === ">" || this.cursor === this.rawContent.length) {
+						this.cursor++;
 						classes.push(buffer);
 						return Token.StartTag(result, classes);
 					}
