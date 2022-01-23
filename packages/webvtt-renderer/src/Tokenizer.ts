@@ -188,7 +188,7 @@ export class Tokenizer {
 						return Token.StartTag(result, classes, buffer);
 					}
 
-					result += char;
+					buffer += char;
 					break;
 				}
 
