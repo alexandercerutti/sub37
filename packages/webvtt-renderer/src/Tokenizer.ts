@@ -60,7 +60,7 @@ export class Tokenizer {
 
 					if (char === "<") {
 						if (!result.length) {
-							state = TokenizerState.START_TAG;
+							state = TokenizerState.TAG;
 						} else {
 							return Token.String(result);
 						}
@@ -97,8 +97,9 @@ export class Tokenizer {
 						break;
 					}
 
-					if (parseInt(char)) {
+					if (!Number.isNaN(parseInt(char))) {
 						state = TokenizerState.TIMESTAMP_TAG;
+						result += char;
 						break;
 					}
 
