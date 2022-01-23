@@ -43,6 +43,26 @@ export class Tokenizer {
 		return character == "\x0A";
 	}
 
+	static parseHTMLEntity(buffer: string): string | null {
+		let cursor = 0;
+
+		if (!buffer.length) {
+			return null;
+		}
+
+		while (cursor < buffer.length) {
+			const char = buffer[cursor];
+
+			cursor++;
+		}
+
+		return null;
+	}
+
+	// ************************ //
+	// *** INSTANCE METHODS *** //
+	// ************************ //
+
 	public nextToken(): Token {
 		if (this.cursor >= this.rawContent.length) {
 			return null;
