@@ -47,6 +47,15 @@ export class Tokenizer {
 		let state: TokenizerState = TokenizerState.DATA;
 		let result = "";
 
+		/**
+		 * Buffer is an additional container for data
+		 * that should be associated to result but should
+		 * not belong to the same content
+		 */
+		let buffer = "";
+
+		const classes: string[] = [];
+
 		while (this.cursor <= this.rawContent.length) {
 			const char = this.rawContent[this.cursor];
 
@@ -134,6 +143,25 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG_CLASS: {
+					if (Tokenizer.isWhitespace(char)) {
+						classes.push(buffer);
+						buffer = "";
+						state = TokenizerState.START_TAG_ANNOTATION;
+						break;
+					}
+
+					if (char === ".") {
+						classes.push(buffer);
+						buffer = "";
+						break;
+					}
+
+					if (char === ">" || this.cursor === this.rawContent.length) {
+						classes.push(buffer);
+						return Token.StartTag(result, classes);
+					}
+
+					buffer += char;
 					break;
 				}
 
@@ -156,7 +184,7 @@ export class Tokenizer {
 						 * given in classes, and with buffer as the annotation, and abort these steps.
 						 */
 
-						return Token.StartTag(result);
+						return Token.StartTag(result, classes, buffer);
 					}
 
 					result += char;
@@ -210,21 +238,29 @@ export enum TokenType {
 }
 
 export class Token {
+	public annotations: string;
+	public classes: string[];
+
 	private constructor(public type: TokenType, private content: string) {}
 
 	static String(content: string): Token {
 		return new Token(TokenType.STRING, content);
 	}
 
-	static StartTag(content: string): Token {
-		return new Token(TokenType.START_TAG, content);
+	static StartTag(tagName: string, classes?: string[], annotations?: string): Token {
+		const token = new Token(TokenType.START_TAG, tagName);
+
+		token.classes = classes;
+		token.annotations = annotations;
+
+		return token;
 	}
 
-	static EndTag(content: string): Token {
-		return new Token(TokenType.END_TAG, content);
+	static EndTag(tagName: string): Token {
+		return new Token(TokenType.END_TAG, tagName);
 	}
 
-	static TimestampTag(content: string): Token {
-		return new Token(TokenType.TIMESTAMP, content);
+	static TimestampTag(timestampRaw: string): Token {
+		return new Token(TokenType.TIMESTAMP, timestampRaw);
 	}
 }
