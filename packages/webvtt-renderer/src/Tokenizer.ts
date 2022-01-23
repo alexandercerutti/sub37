@@ -191,17 +191,8 @@ export class Tokenizer {
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
 
-						/**
-						 * @TODO
-						 * Remove any leading or trailing ASCII whitespace characters from buffer,
-						 * and replace any sequence of one or more consecutive ASCII whitespace
-						 * characters in buffer with a single U+0020 SPACE character;
-						 *
-						 * then, return a start tag whose tag name is result, with the classes
-						 * given in classes, and with buffer as the annotation, and abort these steps.
-						 */
-
-						return Token.StartTag(result, classes, buffer);
+						/** \x20 is classic space (U+0020 SPACE character) */
+						return Token.StartTag(result, classes, buffer.trim().replace(/\s+/g, "\x20"));
 					}
 
 					buffer += char;
