@@ -30,6 +30,8 @@ enum TokenizerState {
 	TIMESTAMP_TAG,
 }
 
+const SHARED_DOM_PARSER = new DOMParser();
+
 export class Tokenizer {
 	private cursor = 0;
 
@@ -43,20 +45,70 @@ export class Tokenizer {
 		return character == "\x0A";
 	}
 
-	static parseHTMLEntity(buffer: string): string | null {
-		let cursor = 0;
+	/**
+	 * Attempts to convert a set of character (a supposed HTML Entity)
+	 * to the correct character, by accumulating its char code;
+	 *
+	 * @param source
+	 * @param currentCursor
+	 * @param additionalAllowedCharacters
+	 * @returns
+	 */
 
-		if (!buffer.length) {
-			return null;
-		}
+	static parseHTMLEntity(
+		source: string,
+		currentCursor: number,
+		additionalAllowedCharacters: string[] = [],
+	): [content: string, cursor: number] {
+		let cursor = currentCursor;
+		let result = "";
 
-		while (cursor < buffer.length) {
-			const char = buffer[cursor];
+		/**
+		 * This partial implementation, compared to Chromium's implementation
+		 * is due to my lack of understanding and laziness of everything
+		 * that concerns Unicode characters conversion. I mean, wth is this?
+		 * It is okay for me until it is just matter of following parsing
+		 * and states, but when it comes to decimals and unicodes... I'm out.
+		 * It is better to use a DOMParser, even if it might be a little bit
+		 * slower than native implementation (or... maybe not?).
+		 *
+		 * Maybe one day I'll try to understand this whole world.
+		 * Right now, I'm going to integrate only the basic logic.
+		 *
+		 * @see https://github.com/chromium/chromium/blob/c4d3c31083a2e1481253ff2d24298a1dfe19c754/third_party/blink/renderer/core/html/parser/html_entity_parser.cc#L107
+		 */
 
+		while (cursor < source.length) {
+			const char = source[cursor];
+			const maybeHTMLEntity = "&" + result + char;
+
+			if (
+				Tokenizer.isWhitespace(char) ||
+				Tokenizer.isNewLine(char) ||
+				char === "<" ||
+				char === "&" ||
+				additionalAllowedCharacters.includes(char)
+			) {
+				/**
+				 * Not a valid HTMLEntity. Returning what we
+				 * discovered, so it can be appended to the result
+				 */
+				return [maybeHTMLEntity, cursor];
+			}
+
+			if (char === ";") {
+				return [
+					SHARED_DOM_PARSER.parseFromString(maybeHTMLEntity, "text/html").documentElement
+						.textContent || maybeHTMLEntity,
+					cursor,
+				];
+			}
+
+			result += char;
 			cursor++;
 		}
 
-		return null;
+		return ["&" + result, cursor];
 	}
 
 	// ************************ //
@@ -110,7 +162,12 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.HTML_CHARACTER_REFERENCE: {
-					/** @TODO Attempt to consume html character */
+					const [content, nextCursor] = Tokenizer.parseHTMLEntity(this.rawContent, this.cursor);
+
+					result += content;
+					this.cursor = nextCursor;
+
+					state = TokenizerState.DATA;
 					break;
 				}
 
@@ -220,8 +277,12 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.HTML_CHARACTER_REFERENCE_ANNOTATION: {
-					/** @TODO Attempt to consume html character, by also allowing ">" */
-					/** @TODO if nothing is returned, append char to result */
+					const [content, nextCursor] = Tokenizer.parseHTMLEntity(this.rawContent, this.cursor, [
+						">",
+					]);
+
+					buffer += content;
+					this.cursor = nextCursor;
 
 					state = TokenizerState.START_TAG_ANNOTATION;
 					break;
