@@ -33,7 +33,10 @@ enum TokenizerState {
 const SHARED_DOM_PARSER = new DOMParser();
 
 export class Tokenizer {
+	/** Character index in the content */
 	private cursor = 0;
+	/** Next token index in the content */
+	private startPoint = 0;
 
 	constructor(private rawContent: string) {}
 
@@ -120,6 +123,9 @@ export class Tokenizer {
 			return null;
 		}
 
+		/** Our token starts at this index. We'll be using thi */
+		this.startPoint = this.cursor;
+
 		let state: TokenizerState = TokenizerState.DATA;
 		let result = "";
 
@@ -147,14 +153,14 @@ export class Tokenizer {
 						if (!result.length) {
 							state = TokenizerState.TAG;
 						} else {
-							return Token.String(result);
+							return Token.String(result, { start: this.startPoint, end: this.cursor });
 						}
 
 						break;
 					}
 
 					if (this.cursor === this.rawContent.length) {
-						return Token.String(result);
+						return Token.String(result, { start: this.startPoint, end: this.cursor });
 					}
 
 					result += char;
@@ -195,7 +201,7 @@ export class Tokenizer {
 
 					if (this.cursor === this.rawContent.length) {
 						this.cursor++;
-						return Token.StartTag(result);
+						return Token.StartTag(result, { start: this.startPoint, end: this.cursor }, classes);
 					}
 
 					state = TokenizerState.START_TAG;
@@ -222,7 +228,7 @@ export class Tokenizer {
 
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
-						return Token.StartTag(result);
+						return Token.StartTag(result, { start: this.startPoint, end: this.cursor }, classes);
 					}
 
 					result += char;
@@ -252,7 +258,7 @@ export class Tokenizer {
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
 						classes.push(buffer);
-						return Token.StartTag(result, classes);
+						return Token.StartTag(result, { start: this.startPoint, end: this.cursor }, classes);
 					}
 
 					buffer += char;
@@ -268,8 +274,13 @@ export class Tokenizer {
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
 
-						/** \x20 is classic space (U+0020 SPACE character) */
-						return Token.StartTag(result, classes, buffer.trim().replace(/\s+/g, "\x20"));
+						return Token.StartTag(
+							result,
+							{ start: this.startPoint, end: this.cursor },
+							classes,
+							/** \x20 is classic space (U+0020 SPACE character) */
+							buffer.trim().replace(/\s+/g, "\x20"),
+						);
 					}
 
 					buffer += char;
@@ -296,7 +307,7 @@ export class Tokenizer {
 
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
-						return Token.EndTag(result);
+						return Token.EndTag(result, { start: this.startPoint, end: this.cursor });
 					}
 
 					result += char;
@@ -306,7 +317,7 @@ export class Tokenizer {
 				case TokenizerState.TIMESTAMP_TAG: {
 					if (char === ">" || this.cursor === this.rawContent.length) {
 						this.cursor++;
-						return Token.TimestampTag(result);
+						return Token.TimestampTag(result, { start: this.startPoint, end: this.cursor });
 					}
 
 					result += char;
@@ -326,30 +337,56 @@ export enum TokenType {
 	TIMESTAMP,
 }
 
+type Boundaries = { start: number; end: number };
+
 export class Token {
 	public annotations: string;
 	public classes: string[];
+	public offset: number;
+	public length: number;
 
 	private constructor(public type: TokenType, private content: string) {}
 
-	static String(content: string): Token {
-		return new Token(TokenType.STRING, content);
+	static String(content: string, boundaries: Boundaries): Token {
+		const token = new Token(TokenType.STRING, content);
+
+		token.length = boundaries.end - boundaries.start;
+		token.offset = boundaries.start;
+
+		return token;
 	}
 
-	static StartTag(tagName: string, classes?: string[], annotations?: string): Token {
+	static StartTag(
+		tagName: string,
+		boundaries: Boundaries,
+		classes: string[] = [],
+		annotations: string = "",
+	): Token {
 		const token = new Token(TokenType.START_TAG, tagName);
 
+		token.length = boundaries.end - boundaries.start;
+		token.offset = boundaries.start;
 		token.classes = classes;
 		token.annotations = annotations;
 
 		return token;
 	}
 
-	static EndTag(tagName: string): Token {
-		return new Token(TokenType.END_TAG, tagName);
+	static EndTag(tagName: string, boundaries: Boundaries): Token {
+		const token = new Token(TokenType.END_TAG, tagName);
+
+		token.length = boundaries.end - boundaries.start;
+		token.offset = boundaries.start;
+
+		return token;
 	}
 
-	static TimestampTag(timestampRaw: string): Token {
-		return new Token(TokenType.TIMESTAMP, timestampRaw);
+	static TimestampTag(timestampRaw: string, boundaries: Boundaries): Token {
+		const token = new Token(TokenType.TIMESTAMP, timestampRaw);
+
+		token.length = boundaries.end - boundaries.start;
+		token.offset = boundaries.start;
+
+		return token;
 	}
 }
