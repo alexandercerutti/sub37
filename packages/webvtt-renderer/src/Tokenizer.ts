@@ -345,7 +345,7 @@ export class Token {
 	public offset: number;
 	public length: number;
 
-	private constructor(public type: TokenType, private content: string) {}
+	private constructor(public readonly type: TokenType, public readonly content: string) {}
 
 	static String(content: string, boundaries: Boundaries): Token {
 		const token = new Token(TokenType.STRING, content);
