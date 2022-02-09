@@ -6,19 +6,21 @@
  * at the same time?
  */
 
+import { Entity } from "@hsubs/server";
+
 export interface CueNode {
 	startTime: number;
 	endTime: number;
 	id?: string;
 	styles?: any /** @TODO parse them */;
-	entities?: any[] /** @TODO define them */;
+	entities?: Entity[];
 	content: string;
 }
 
 class TimelineTreeNode implements CueNode {
 	public id?: string;
 	public styles?: any /** @TODO parse them */;
-	public entities?: any[] /** @TODO define them */;
+	public entities?: Entity[];
 
 	public left: TimelineTreeNode = null;
 	public right: TimelineTreeNode = null;
