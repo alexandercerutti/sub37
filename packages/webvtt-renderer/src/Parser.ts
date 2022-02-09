@@ -1,6 +1,44 @@
 import { CueNode } from "@hsubs/server";
-import { Tokenizer } from "./Tokenizer";
+import { Tokenizer, TokenType } from "./Tokenizer";
 import type { Token } from "./Tokenizer";
+
+enum VTTEntities {
+	VOICE /*******/ = 0b00000001,
+	LANG /********/ = 0b00000010,
+	RUBY /********/ = 0b00000100,
+	RT /**********/ = 0b00001000,
+	CLASS /*******/ = 0b00010000,
+	BOLD /********/ = 0b00100000,
+	ITALIC /******/ = 0b01000000,
+	UNDERLINE /***/ = 0b10000000,
+}
+
+namespace Tags {
+	export type OpenTag = { index: number; token: Token };
+
+	const EntitiesTokenMap: { [key: string]: VTTEntities } = {
+		v: VTTEntities.VOICE,
+		lang: VTTEntities.LANG,
+		ruby: VTTEntities.RUBY,
+		rt: VTTEntities.RT,
+		c: VTTEntities.CLASS,
+		b: VTTEntities.BOLD,
+		i: VTTEntities.ITALIC,
+		u: VTTEntities.UNDERLINE,
+	};
+
+	export function isSupported(content: string): boolean {
+		return Boolean(EntitiesTokenMap[content]);
+	}
+
+	export function completeMissing(openTags: OpenTag[], currentCue: CueNode) {
+		return openTags.map(({ index, token }) => ({
+			offset: index,
+			length: currentCue.content.length - index,
+			type: EntitiesTokenMap[token.content],
+		}));
+	}
+}
 
 export interface CueData {
 	cueid: string;
@@ -13,40 +51,110 @@ export interface CueData {
 export function parseCue(data: CueData): CueNode[] {
 	const { starttime, endtime, text } = data;
 
-	const startTimeMs /**/ = Timestamps.parseMs(starttime);
-	const endTimeMs /****/ = Timestamps.parseMs(endtime);
-
+	const hsCues: CueNode[] = [];
 	const tokenizer = new Tokenizer(text);
 	let token: Token = null;
+	let currentCue: CueNode = {
+		startTime: Timestamps.parseMs(starttime),
+		endTime: Timestamps.parseMs(endtime),
+		content: "",
+		entities: [],
+		id: data.cueid,
+	};
+
+	const openTags: Tags.OpenTag[] = [];
 
 	while ((token = tokenizer.nextToken())) {
-		/** @TODO Do something with tokens */
+		switch (token.type) {
+			case TokenType.START_TAG: {
+				if (Tags.isSupported(token.content)) {
+					openTags.push({ index: currentCue.content.length, token });
+				}
 
-		console.log(token);
+				break;
+			}
+
+			case TokenType.END_TAG: {
+				if (
+					Tags.isSupported(token.content) &&
+					openTags.length &&
+					openTags[openTags.length - 1].token.content === token.content
+				) {
+					const openedTag = openTags.pop();
+
+					currentCue.entities.push({
+						offset: openedTag.index,
+						length: currentCue.content.length - openedTag.index,
+						attributes: [openedTag.token.annotations],
+					});
+				}
+
+				break;
+			}
+
+			case TokenType.STRING: {
+				currentCue.content += token.content;
+				break;
+			}
+
+			case TokenType.TIMESTAMP: {
+				if (!currentCue.content.length) {
+					/** Current cue is the first one. Not need to append a new one */
+					break;
+				}
+
+				/**
+				 * Closing the current entities for the previous cue,
+				 * still without resetting open tags, because timestamps
+				 * actually belong to the same "logic" cue, so we might
+				 * have some tags still open
+				 */
+
+				currentCue.entities.push(...Tags.completeMissing(openTags, currentCue));
+
+				currentCue.content = currentCue.content.trimStart();
+				hsCues.push(currentCue);
+
+				currentCue = {
+					startTime: Timestamps.parseMs(token.content),
+					endTime: currentCue.endTime,
+					content: "",
+					entities: [],
+					id: currentCue.id,
+				};
+
+				break;
+			}
+
+			default:
+				break;
+		}
 
 		// Resetting the token for the next one
 		token = null;
 	}
 
-	// return [
-	// 	{
-	// 		startTime: startTimeMs,
-	// 		endTime: endTimeMs,
-	// 		content: cueData.text,
-	// 		entities: undefined,
-	// 		id: cueData.cueid,
-	// 		styles: undefined,
-	// 	},
-	// ];
+	/**
+	 * For the last token... hip hip, hooray!
+	 * Jk, we need to close the yet-opened
+	 * tags and create entities for them.
+	 */
 
-	return [];
+	currentCue.entities.push(...Tags.completeMissing(openTags, currentCue));
+
+	if (currentCue.content.length) {
+		hsCues.push(currentCue);
+	}
+
+	return hsCues;
 }
 
 namespace Timestamps {
+	const TIME_REGEX =
+		/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/;
+
 	export function parseMs(timestring: string) {
-		const timeMatch = timestring.match(
-			/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/,
-		);
+		const timeMatch = timestring.match(TIME_REGEX);
 
 		if (!timeMatch) {
 			throw new Error("Time format is not valid. Ignoring cue.");
