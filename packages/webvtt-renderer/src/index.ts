@@ -83,8 +83,11 @@ export class WebVTTRenderer extends HSBaseRenderer {
 
 				if (blockType & BlockType.CUE) {
 					latestBlockPhase = blockType;
+					cues.push(...(parsedContent as CueNode[]));
 
 					/** @TODO Use Cue or comment somehow */
+					/** @TODO Link with styled */
+					/** @TODO Link with associated regions */
 				}
 
 				/** Skipping \n\n and going to the next character */
@@ -99,11 +102,7 @@ export class WebVTTRenderer extends HSBaseRenderer {
 	}
 }
 
-function evaluateBlock(
-	content: string,
-	start: number,
-	end: number,
-): [BlockType, unknown /** @TODO change type */] {
+function evaluateBlock(content: string, start: number, end: number): [BlockType, unknown] {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
