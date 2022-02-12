@@ -6,7 +6,7 @@
  * at the same time?
  */
 
-import { Entity } from "@hsubs/server";
+import { Entity } from "./model";
 
 export interface CueNode {
 	startTime: number;
