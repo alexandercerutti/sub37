@@ -3,15 +3,20 @@
 	"version": "0.1.0",
 	"description": "A subtitles renderer for WebVTT subtitles",
 	"main": "lib/index.js",
+	"type": "module",
 	"peerDependencies": {
 		"@hsubs/server": "^0.1.0"
 	},
 	"dependencies": {
 		"@hsubs/base-renderer": "^0.1.0"
 	},
-	"devDependencies": {},
+	"devDependencies": {
+		"@types/jasmine": "^3.10.3",
+		"jasmine": "^4.0.2"
+	},
 	"scripts": {
-		"build": "rm -rf lib && npx tsc -p tsconfig.build.json"
+		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
+		"test": "rm -rf spec/build && npx tsc -p tsconfig.spec.json; npx jasmine"
 	},
 	"repository": {
 		"type": "git",
