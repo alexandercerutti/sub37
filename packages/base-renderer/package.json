@@ -10,7 +10,7 @@
 		"typescript": "^4.5.4"
 	},
 	"scripts": {
-		"build": "npx tsc -p tsconfig.build.json"
+		"build": "rm -rf lib && npx tsc -p tsconfig.build.json"
 	},
 	"repository": {
 		"type": "git",

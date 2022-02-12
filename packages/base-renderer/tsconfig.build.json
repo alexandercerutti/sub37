@@ -1,6 +1,8 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": "../../tsconfig.build.json",
 	"compilerOptions": {
-		"paths": {}
-	}
+		"outDir": "lib",
+		"noUnusedParameters": false
+	},
+	"include": ["src/**/*"]
 }

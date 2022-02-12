@@ -11,7 +11,7 @@
 	},
 	"devDependencies": {},
 	"scripts": {
-		"build": "npx tsc -p tsconfig.build.json"
+		"build": "rm -rf lib && npx tsc -p tsconfig.build.json"
 	},
 	"repository": {
 		"type": "git",
