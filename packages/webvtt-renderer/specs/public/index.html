@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>WebVTT Renderer Tests</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+	</head>
+
+	<body>
+		<div id="mocha"></div>
+
+		<script src="../../node_modules/mocha/mocha.js"></script>
+		<!-- Exposing Chai in global because its ESM support is broken -->
+		<script src="../../node_modules/chai/chai.js"></script>
+
+		<script>
+			// Setup Mocha to use the BDD interface
+			mocha.setup("bdd");
+		</script>
+
+		<!-- Load new tests in this file below as side-effects -->
+		<script type="module" type="text/javascript" src="index.mjs"></script>
+
+		<script>
+			mocha.run();
+		</script>
+	</body>
+</html>

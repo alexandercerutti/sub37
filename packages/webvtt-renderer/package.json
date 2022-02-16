@@ -11,12 +11,14 @@
 		"@hsubs/base-renderer": "^0.1.0"
 	},
 	"devDependencies": {
-		"@types/jasmine": "^3.10.3",
-		"jasmine": "^4.0.2"
+		"@types/chai": "^4.3.0",
+		"@types/mocha": "^9.1.0",
+		"chai": "^4.3.6",
+		"mocha": "^9.2.0"
 	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
-		"test": "rm -rf spec/build && npx tsc -p tsconfig.spec.json; npx jasmine"
+		"test": "npm run build && npx live-server --port=9000 --mount=/:specs/public --mount=/:specs --mount=/node_modules:../../node_modules"
 	},
 	"repository": {
 		"type": "git",
