@@ -63,6 +63,10 @@ export class Tokenizer {
 		currentCursor: number,
 		additionalAllowedCharacters: string[] = [],
 	): [content: string, cursor: number] {
+		if (!source?.length) {
+			return ["", currentCursor];
+		}
+
 		let cursor = currentCursor;
 		let result = "";
 
