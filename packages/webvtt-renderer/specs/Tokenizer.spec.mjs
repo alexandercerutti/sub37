@@ -1,3 +1,4 @@
+// @ts-check
 /// <reference types="chai">
 import { Tokenizer } from "../lib/Tokenizer.js";
 
