@@ -49,6 +49,24 @@ describe("Tokenizer", () => {
 				chai.expect(Tokenizer.parseHTMLEntity(VALID_HTML_ENTITY_STRING, 0)).to.eql(["&", 3]);
 			});
 		});
+
+		describe("isWhitespace", () => {
+			it("should match actual whitespace", () => {
+				chai.expect(Tokenizer.isWhitespace(" ")).to.be.true;
+			});
+
+			it("should match tabulation character", () => {
+				chai.expect(Tokenizer.isWhitespace("\x09")).to.be.true;
+			});
+
+			it("should match form feed (page break) character", () => {
+				chai.expect(Tokenizer.isWhitespace("\x0C")).to.be.true;
+			});
+
+			it("should not match new line", () => {
+				chai.expect(Tokenizer.isWhitespace("\x0A")).to.be.false;
+			});
+		});
 	});
 
 	xdescribe("[instance]", () => {});
