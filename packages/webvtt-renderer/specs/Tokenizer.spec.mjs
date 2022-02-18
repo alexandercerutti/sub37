@@ -67,6 +67,15 @@ describe("Tokenizer", () => {
 				chai.expect(Tokenizer.isWhitespace("\x0A")).to.be.false;
 			});
 		});
+
+		describe("isNewline", () => {
+			it("should match only new lines", () => {
+				const NEWLINE = "\x0A";
+				const NOT_NEWLINE = "a";
+				chai.expect(Tokenizer.isNewLine(NEWLINE)).to.be.true;
+				chai.expect(Tokenizer.isNewLine(NOT_NEWLINE)).to.be.false;
+			});
+		});
 	});
 
 	xdescribe("[instance]", () => {});
