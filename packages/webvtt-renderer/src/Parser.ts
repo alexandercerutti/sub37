@@ -1,7 +1,7 @@
 import { CueNode } from "@hsubs/server";
-import { Tokenizer } from "./Tokenizer";
-import { TokenType } from "./Token";
-import type { Token } from "./Token";
+import { Tokenizer } from "./Tokenizer.js";
+import { TokenType } from "./Token.js";
+import type { Token } from "./Token.js";
 
 enum VTTEntities {
 	VOICE /*******/ = 0b00000001,
