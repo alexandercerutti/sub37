@@ -1,6 +1,7 @@
 // @ts-check
 /// <reference types="chai">
-import { Token, Tokenizer, TokenType } from "../lib/Tokenizer.js";
+import { Tokenizer } from "../lib/Tokenizer.js";
+import { Token, TokenType } from "../lib/Token.js";
 
 describe("Tokenizer", () => {
 	describe("[static]", () => {
