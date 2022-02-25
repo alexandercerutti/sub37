@@ -1,45 +1,9 @@
 import { CueNode } from "@hsubs/server";
-import { Tokenizer } from "./Tokenizer.js";
-import { TokenType } from "./Token.js";
-import type { Token } from "./Token.js";
-
-enum VTTEntities {
-	VOICE /*******/ = 0b00000001,
-	LANG /********/ = 0b00000010,
-	RUBY /********/ = 0b00000100,
-	RT /**********/ = 0b00001000,
-	CLASS /*******/ = 0b00010000,
-	BOLD /********/ = 0b00100000,
-	ITALIC /******/ = 0b01000000,
-	UNDERLINE /***/ = 0b10000000,
-}
-
-namespace Tags {
-	export type OpenTag = { index: number; token: Token };
-
-	const EntitiesTokenMap: { [key: string]: VTTEntities } = {
-		v: VTTEntities.VOICE,
-		lang: VTTEntities.LANG,
-		ruby: VTTEntities.RUBY,
-		rt: VTTEntities.RT,
-		c: VTTEntities.CLASS,
-		b: VTTEntities.BOLD,
-		i: VTTEntities.ITALIC,
-		u: VTTEntities.UNDERLINE,
-	};
-
-	export function isSupported(content: string): boolean {
-		return Boolean(EntitiesTokenMap[content]);
-	}
-
-	export function completeMissing(openTags: OpenTag[], currentCue: CueNode) {
-		return openTags.map(({ index, token }) => ({
-			offset: index,
-			length: currentCue.content.length - index,
-			type: EntitiesTokenMap[token.content],
-		}));
-	}
-}
+import { Tokenizer } from "../Tokenizer.js";
+import { TokenType } from "../Token.js";
+import type { Token } from "../Token.js";
+import * as Tags from "./Tags.utils";
+import * as Timestamps from "./Timestamps.utils";
 
 export interface CueData {
 	cueid: string;
@@ -148,32 +112,4 @@ export function parseCue(data: CueData): CueNode[] {
 	}
 
 	return hsCues;
-}
-
-namespace Timestamps {
-	const TIME_REGEX =
-		/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/;
-
-	export function parseMs(timestring: string) {
-		const timeMatch = timestring.match(TIME_REGEX);
-
-		if (!timeMatch) {
-			throw new Error("Time format is not valid. Ignoring cue.");
-		}
-
-		const {
-			groups: { hours, minutes, seconds, milliseconds },
-		} = timeMatch;
-
-		const hoursInSeconds = parseIntFallback(hours) * 60 * 60;
-		const minutesInSeconds = parseIntFallback(minutes) * 60;
-		const parsedSeconds = parseIntFallback(seconds);
-		const parsedMs = parseIntFallback(milliseconds) / 1000;
-
-		return (hoursInSeconds + minutesInSeconds + parsedSeconds + parsedMs) * 1000;
-	}
-
-	function parseIntFallback(string: string) {
-		return parseInt(string) || 0;
-	}
 }
