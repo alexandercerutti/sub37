@@ -1,4 +1,4 @@
-import { CueNode } from "packages/server/src/TimelineTree.js";
+import { CueNode } from "@hsubs/server";
 import { Token } from "../Token.js";
 
 export enum VTTEntities {

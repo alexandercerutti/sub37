@@ -2,8 +2,8 @@ import { CueNode } from "@hsubs/server";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
 import type { Token } from "../Token.js";
-import * as Tags from "./Tags.utils";
-import * as Timestamps from "./Timestamps.utils";
+import * as Tags from "./Tags.utils.js";
+import * as Timestamps from "./Timestamps.utils.js";
 
 export interface CueData {
 	cueid: string;
