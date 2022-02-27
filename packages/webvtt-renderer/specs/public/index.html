@@ -5,6 +5,18 @@
 		<title>WebVTT Renderer Tests</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+		<!--
+			Import maps, as per Feb 2022, are supported only on Chromium.
+			I hope they will get supported soon in other browsers.
+		-->
+		<script type="importmap">
+			{
+				"imports": {
+					"@hsubs/base-renderer": "../../node_modules/@hsubs/base-renderer/lib/index.js",
+					"@hsubs/server": "../../node_modules/@hsubs/server/lib/index.js"
+				}
+			}
+		</script>
 	</head>
 
 	<body>
