@@ -32,7 +32,7 @@ export default class Renderer extends HSBaseRenderer {
 		}
 
 		const cues: CueNode[] = [];
-		const content = rawContent.replace(/\r?\n/g, "\n");
+		const content = String(rawContent).replace(/\r?\n/g, "\n");
 		const block = {
 			start: 0,
 			cursor: 0,
