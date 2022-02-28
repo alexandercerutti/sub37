@@ -1,5 +1,4 @@
 // @ts-check
-/// <reference types="chai">
 import { Tokenizer } from "../lib/Tokenizer.js";
 import { Token, TokenType } from "../lib/Token.js";
 
@@ -7,6 +6,7 @@ describe("Tokenizer", () => {
 	describe("[static]", () => {
 		describe("parseHTMLEntity", () => {
 			it("empty string should return current cursor", () => {
+				/** @type {number} */
 				const currentCursor = 4;
 				chai.expect(Tokenizer.parseHTMLEntity("", currentCursor)).to.eql(["", currentCursor]);
 			});
