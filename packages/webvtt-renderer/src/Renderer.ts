@@ -83,7 +83,12 @@ export default class Renderer extends HSBaseRenderer {
 
 				if (blockType & BlockType.CUE) {
 					latestBlockPhase = blockType;
-					cues.push(...(parsedContent as CueNode[]));
+
+					for (let cue of parsedContent) {
+						if (cue.startTime < cue.endTime) {
+							cues.push(cue);
+						}
+					}
 
 					/** @TODO Use Cue or comment somehow */
 					/** @TODO Link with styled */
