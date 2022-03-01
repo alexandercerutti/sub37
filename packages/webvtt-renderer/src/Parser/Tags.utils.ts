@@ -1,4 +1,4 @@
-import { CueNode } from "@hsubs/server";
+import { CueNode, Entity } from "@hsubs/server";
 import { Token } from "../Token.js";
 
 export enum VTTEntities {
@@ -29,10 +29,15 @@ export function isSupported(content: string): boolean {
 	return Boolean(EntitiesTokenMap[content]);
 }
 
-export function completeMissing(openTags: OpenTag[], currentCue: CueNode) {
-	return openTags.map(({ index, token }) => ({
-		offset: index,
-		length: currentCue.content.length - index,
-		type: EntitiesTokenMap[token.content],
-	}));
+export function completeMissing(openTags: OpenTag[], currentCue: CueNode): Entity[] {
+	return openTags.map<Entity>((tag) => createEntity(tag, currentCue));
+}
+
+export function createEntity(tag: OpenTag, currentCue: CueNode): Entity {
+	return {
+		offset: tag.index,
+		length: currentCue.content.length - tag.index,
+		attributes: [tag.token.annotations],
+		type: EntitiesTokenMap[tag.token.content],
+	};
 }

@@ -47,11 +47,7 @@ export function parseCue(data: CueData): CueNode[] {
 				) {
 					const openedTag = openTags.pop();
 
-					currentCue.entities.push({
-						offset: openedTag.index,
-						length: currentCue.content.length - openedTag.index,
-						attributes: [openedTag.token.annotations],
-					});
+					currentCue.entities.push(Tags.createEntity(openedTag, currentCue));
 				}
 
 				break;
