@@ -25,6 +25,19 @@ WEBVTT
 00:00:00.000 --> 00:00:20.000 region:fred align:left
 <lang.mimmo en-US>Hi, my name is Fred</lang>`;
 
+		const SAME_START_END_TIMES_CONTENT = `
+WEBVTT
+
+00:00:05.000 --> 00:00:05.000
+This cue should never appear, right?
+
+00:00:06.000 --> 00:00:07.000
+...
+
+00:00:08.000 --> 00:00:10.000
+...Right?
+`;
+
 		const WebVttContentWithTimestamps = `
 WEBVTT
 
@@ -49,6 +62,17 @@ WEBVTT
 			// @ts-expect-error
 			chai.expect(() => renderer.parse(10)).to.throw(Error, invalidWebVTTError);
 			chai.expect(() => renderer.parse("Look, a phoenix!")).to.throw(Error, invalidWebVTTError);
+		});
+
+		it("should exclude cues with the same start time and end time", () => {
+			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
+			chai.expect(result.length).to.eql(2);
+
+			chai.expect(result[0].startTime).to.eql(6000);
+			chai.expect(result[0].endTime).to.eql(7000);
+
+			chai.expect(result[1].startTime).to.eql(8000);
+			chai.expect(result[1].endTime).to.eql(10000);
 		});
 
 		/** @TODO review test. Incongruence in entities type found, between the two returned cues */
