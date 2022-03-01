@@ -102,7 +102,14 @@ export default class Renderer extends HSBaseRenderer {
 	}
 }
 
-function evaluateBlock(content: string, start: number, end: number): [BlockType, unknown] {
+type BlockTuple =
+	| [BlockType.CUE, CueNode[]]
+	| [BlockType.HEADER, undefined]
+	| [BlockType.REGION, undefined] /** @TODO what type has a region data? */
+	| [BlockType.STYLE, undefined] /** @TODO what type has a style data? */
+	| [BlockType.IGNORED, undefined];
+
+function evaluateBlock(content: string, start: number, end: number): BlockTuple {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
