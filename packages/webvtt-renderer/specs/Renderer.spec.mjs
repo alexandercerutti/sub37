@@ -16,7 +16,7 @@ describe("WebVTTRenderer", () => {
 	});
 
 	describe("parse", () => {
-		const PureWebVttContent = `
+		const CLASSIC_CONTENT = `
 WEBVTT
 
 00:00:05.000 --> 00:00:25.000 region:fred align:left
@@ -38,7 +38,7 @@ This cue should never appear, right?
 ...Right?
 `;
 
-		const WebVttContentWithTimestamps = `
+		const TIMESTAMPS_CUES_CONTENT = `
 WEBVTT
 
 00:00:16.000 --> 00:00:24.000
@@ -77,7 +77,7 @@ WEBVTT
 
 		/** @TODO review test. Incongruence in entities type found, between the two returned cues */
 		xit("should return an array containing two cues", () => {
-			const parsingResult = renderer.parse(PureWebVttContent);
+			const parsingResult = renderer.parse(CLASSIC_CONTENT);
 			chai.expect(parsingResult).to.be.an("array");
 			chai.expect(parsingResult.length).to.eql(2);
 
@@ -113,9 +113,9 @@ WEBVTT
 		});
 
 		it("should return an array containing four cues when a timestamps are found", () => {
-			const parsingResult = renderer.parse(WebVttContentWithTimestamps);
+			const parsingResult = renderer.parse(TIMESTAMPS_CUES_CONTENT);
 			chai.expect(parsingResult).to.be.an("array");
-			chai.expect(parsingResult.length).to.eql(5);
+			chai.expect(parsingResult.length).to.eql(4);
 
 			console.log(parsingResult);
 
