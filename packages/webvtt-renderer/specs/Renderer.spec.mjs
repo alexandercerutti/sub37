@@ -75,13 +75,10 @@ WEBVTT
 			chai.expect(result[1].endTime).to.eql(10000);
 		});
 
-		/** @TODO review test. Incongruence in entities type found, between the two returned cues */
-		xit("should return an array containing two cues", () => {
+		it("should return an array containing two cues", () => {
 			const parsingResult = renderer.parse(CLASSIC_CONTENT);
 			chai.expect(parsingResult).to.be.an("array");
 			chai.expect(parsingResult.length).to.eql(2);
-
-			console.log(parsingResult);
 
 			chai.expect(parsingResult[0]).to.eql({
 				startTime: 5000,
@@ -92,7 +89,9 @@ WEBVTT
 					{
 						offset: 0,
 						length: 31,
-						type: 1,
+						type: 1, // voice
+						attributes: ["Fred>"],
+						/** @TODO add classes */
 					},
 				],
 			});
@@ -106,7 +105,9 @@ WEBVTT
 					{
 						offset: 0,
 						length: 19,
+						type: 2, // lang
 						attributes: ["en-US"],
+						/** @TODO add classes */
 					},
 				],
 			});
