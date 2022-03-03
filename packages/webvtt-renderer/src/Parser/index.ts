@@ -46,8 +46,7 @@ export function parseCue(data: CueData): CueNode[] {
 					openTags[openTags.length - 1].token.content === token.content
 				) {
 					const openedTag = openTags.pop();
-
-					currentCue.entities.push(Tags.createEntity(openedTag, currentCue));
+					currentCue.entities.push(Tags.createEntity(currentCue, openedTag));
 				}
 
 				break;

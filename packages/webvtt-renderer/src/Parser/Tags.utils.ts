@@ -30,14 +30,14 @@ export function isSupported(content: string): boolean {
 }
 
 export function completeMissing(openTags: OpenTag[], currentCue: CueNode): Entity[] {
-	return openTags.map<Entity>((tag) => createEntity(tag, currentCue));
+	return openTags.map<Entity>((tag) => createEntity(currentCue, tag));
 }
 
-export function createEntity(tag: OpenTag, currentCue: CueNode): Entity {
+export function createEntity(currentCue: CueNode, tagStart: OpenTag): Entity {
 	return {
-		offset: tag.index,
-		length: currentCue.content.length - tag.index,
-		attributes: [tag.token.annotations],
-		type: EntitiesTokenMap[tag.token.content],
+		offset: tagStart.index,
+		length: currentCue.content.length - tagStart.index,
+		attributes: [tagStart.token.annotations],
+		type: EntitiesTokenMap[tagStart.token.content],
 	};
 }
