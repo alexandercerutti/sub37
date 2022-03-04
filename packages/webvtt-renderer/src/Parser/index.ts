@@ -33,7 +33,10 @@ export function parseCue(data: CueData): CueNode[] {
 		switch (token.type) {
 			case TokenType.START_TAG: {
 				if (Tags.isSupported(token.content)) {
-					openTags.push({ index: currentCue.content.length, token });
+					openTags.push({
+						index: currentCue.content.length,
+						token,
+					});
 				}
 
 				break;
