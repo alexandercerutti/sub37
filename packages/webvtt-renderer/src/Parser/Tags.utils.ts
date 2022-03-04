@@ -12,7 +12,11 @@ export enum VTTEntities {
 	UNDERLINE /***/ = 0b10000000,
 }
 
-export type OpenTag = { index: number; token: Token };
+export interface OpenTag {
+	/** Zero-based position of cue (or timestamp section) content */
+	index: number;
+	token: Token;
+}
 
 const EntitiesTokenMap: { [key: string]: VTTEntities } = {
 	v: VTTEntities.VOICE,
