@@ -118,35 +118,35 @@ WEBVTT
 			chai.expect(parsingResult).to.be.an("array");
 			chai.expect(parsingResult.length).to.eql(4);
 
-			console.log(parsingResult);
+			chai.expect(parsingResult[0]).to.eql({
+				startTime: 16000,
+				endTime: 24000,
+				content: " This\n",
+				id: undefined,
+				entities: [
+					{
+						type: 16,
+						offset: 1,
+						length: 4,
+						attributes: [],
+					},
+				],
+			});
 
-			// chai.expect(parsingResult[0]).to.eql({
-			// 	startTime: 5000,
-			// 	endTime: 25000,
-			// 	content: "Would you like to get < coffee?",
-			// 	id: undefined,
-			// 	entities: [
-			// 		{
-			// 			offset: 0,
-			// 			length: 31,
-			// 			type: 1,
-			// 		},
-			// 	],
-			// });
-
-			// chai.expect(parsingResult[1]).to.eql({
-			// 	startTime: 0,
-			// 	endTime: 20000,
-			// 	content: "Hi, my name is Fred",
-			// 	id: undefined,
-			// 	entities: [
-			// 		{
-			// 			offset: 0,
-			// 			length: 19,
-			// 			attributes: ["en-US"],
-			// 		},
-			// 	],
-			// });
+			chai.expect(parsingResult[1]).to.eql({
+				startTime: 18000,
+				endTime: 24000,
+				content: " can\n",
+				id: undefined,
+				entities: [
+					{
+						type: 16,
+						offset: 1,
+						length: 3,
+						attributes: [],
+					},
+				],
+			});
 		});
 	});
 });
