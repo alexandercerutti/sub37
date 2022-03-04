@@ -285,7 +285,7 @@ export class Tokenizer {
 							{ start: this.startPoint, end: this.cursor },
 							classes,
 							/** \x20 is classic space (U+0020 SPACE character) */
-							buffer.trim().replace(/\s+/g, "\x20"),
+							buffer.trim().replace(/\s+/g, "\x20").split("\x20"),
 						);
 					}
 

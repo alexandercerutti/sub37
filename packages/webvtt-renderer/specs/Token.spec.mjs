@@ -55,8 +55,8 @@ describe("Token", () => {
 			chai.expect(token.classes).to.eql([]);
 		});
 
-		it("should set annotations to empty string if none is available", () => {
-			chai.expect(token.annotations).to.be.equal("");
+		it("should set annotations to empty array if none is available", () => {
+			chai.expect(token.annotations).to.be.eql([]);
 		});
 
 		it("should bring the content as-is", () => {

@@ -37,7 +37,7 @@ export function createEntity(currentCue: CueNode, tagStart: OpenTag): Entity {
 	return {
 		offset: tagStart.index,
 		length: currentCue.content.length - tagStart.index,
-		attributes: [tagStart.token.annotations],
+		attributes: tagStart.token.annotations ?? [],
 		type: EntitiesTokenMap[tagStart.token.content],
 	};
 }

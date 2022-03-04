@@ -8,7 +8,7 @@ export enum TokenType {
 type Boundaries = { start: number; end: number };
 
 export class Token {
-	public annotations: string;
+	public annotations: string[];
 	public classes: string[];
 	public offset: number;
 	public length: number;
@@ -28,7 +28,7 @@ export class Token {
 		tagName: string,
 		boundaries: Boundaries,
 		classes: string[] = [],
-		annotations: string = "",
+		annotations: string[] = [],
 	): Token {
 		const token = new Token(TokenType.START_TAG, tagName);
 
