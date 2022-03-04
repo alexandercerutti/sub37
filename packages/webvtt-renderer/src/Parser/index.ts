@@ -71,8 +71,6 @@ export function parseCue(data: CueData): CueNode[] {
 				 */
 
 				currentCue.entities.push(...Tags.completeMissing(openTags, currentCue));
-
-				currentCue.content = currentCue.content.trimStart();
 				hsCues.push(currentCue);
 
 				currentCue = {
