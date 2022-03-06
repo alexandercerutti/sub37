@@ -34,13 +34,38 @@ export function isSupported(content: string): boolean {
 }
 
 export function completeMissing(openTags: OpenTag[], currentCue: CueNode): Entity[] {
-	return openTags.map<Entity>((tag) => createEntity(currentCue, tag));
+	return openTags.reduce<Entity[]>((acc, tag) => {
+		if (currentCue.content.length - tag.index === 0) {
+			/**
+			 * If an entity startTag is placed between two timestamps
+			 * the closing timestamp should not have the new tag associated.
+			 * tag.index is zero-based.
+			 */
+
+			return acc;
+		}
+
+		const entity = createEntity(currentCue, tag);
+
+		return [...acc, entity];
+	}, []);
 }
 
 export function createEntity(currentCue: CueNode, tagStart: OpenTag): Entity {
+	/**
+	 * If length is negative, that means that the tag was opened before
+	 * the beginning of the current Cue. Therefore, offset should represent
+	 * the beginning of the **current cue** and the length should be set to
+	 * current cue content.
+	 */
+
+	const tagOpenedInCurrentCue = currentCue.content.length - tagStart.index > 0;
+
 	return {
-		offset: tagStart.index,
-		length: currentCue.content.length - tagStart.index,
+		offset: tagOpenedInCurrentCue ? tagStart.index : 0,
+		length: tagOpenedInCurrentCue
+			? currentCue.content.length - tagStart.index
+			: currentCue.content.length,
 		attributes: tagStart.token.annotations ?? [],
 		type: EntitiesTokenMap[tagStart.token.content],
 	};
