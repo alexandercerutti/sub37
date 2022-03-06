@@ -158,5 +158,74 @@ WEBVTT
 				entities: [],
 			});
 		});
+
+		it("should return an array of CueNodes that have the same entities if an entity start before a timestamp and ends in a next timestamp", () => {
+			/** @type {import("../lib/Parser/index.js").CueData} */
+			const originalData = {
+				attributes: "",
+				cueid: "text-1",
+				starttime: "00:00:00.000",
+				endtime: "00:00:30.000",
+				text: `<v Announcer>Welcome Liquicity Airlines
+<00:00:06.000> Our destination: the galaxy of dreams
+<00:00:09.000> (Our destination: the galaxy of dreams)
+<00:00:12.000> Estimated Time of Arrival: unknown</v>
+<v Announcer2><00:00:18.000> Please fasten your seatbelt
+<00:00:21.000> And get ready to take off</v>
+<00:00:24.000> (Please fasten your seatbelt)
+<00:00:27.000> (And get ready to take off)
+`,
+			};
+
+			const parsingResult = parseCue(originalData);
+			chai.expect(parsingResult.length).to.equal(8);
+
+			chai.expect(parsingResult[0].entities).to.deep.equal([
+				{
+					offset: 0,
+					length: 27,
+					attributes: ["Announcer"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[1].entities).to.deep.equal([
+				{
+					offset: 0,
+					length: 39,
+					attributes: ["Announcer"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[2].entities).to.deep.equal([
+				{
+					offset: 0,
+					length: 41,
+					attributes: ["Announcer"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[3].entities).to.deep.equal([
+				{
+					offset: 0,
+					length: 35,
+					attributes: ["Announcer"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[4].entities).to.deep.equal([
+				{
+					offset: 0,
+					length: 29,
+					attributes: ["Announcer2"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[6].entities).to.deep.equal([]);
+		});
 	});
 });
