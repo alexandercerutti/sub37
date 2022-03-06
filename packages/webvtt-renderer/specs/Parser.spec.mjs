@@ -168,11 +168,11 @@ WEBVTT
 				endtime: "00:00:30.000",
 				text: `<v Announcer>Welcome Liquicity Airlines
 <00:00:06.000> Our destination: the galaxy of dreams
-<00:00:09.000> (Our destination: the galaxy of dreams)
-<00:00:12.000> Estimated Time of Arrival: unknown</v>
-<v Announcer2><00:00:18.000> Please fasten your seatbelt
-<00:00:21.000> And get ready to take off</v>
-<00:00:24.000> (Please fasten your seatbelt)
+<00:00:09.000> (Our destination: the galaxy of dreams)</v>
+<v Announcer2><00:00:12.000> Estimated Time of Arrival: unknown
+<00:00:18.000> Please fasten your seatbelt</v>
+<00:00:21.000> <v Announcer3>And get ready to take off
+<00:00:24.000> (Please fasten your seatbelt)</v>
 <00:00:27.000> (And get ready to take off)
 `,
 			};
@@ -201,7 +201,7 @@ WEBVTT
 			chai.expect(parsingResult[2].entities).to.deep.equal([
 				{
 					offset: 0,
-					length: 41,
+					length: 40,
 					attributes: ["Announcer"],
 					type: 1,
 				},
@@ -210,8 +210,8 @@ WEBVTT
 			chai.expect(parsingResult[3].entities).to.deep.equal([
 				{
 					offset: 0,
-					length: 35,
-					attributes: ["Announcer"],
+					length: 36,
+					attributes: ["Announcer2"],
 					type: 1,
 				},
 			]);
@@ -219,13 +219,22 @@ WEBVTT
 			chai.expect(parsingResult[4].entities).to.deep.equal([
 				{
 					offset: 0,
-					length: 29,
+					length: 28,
 					attributes: ["Announcer2"],
 					type: 1,
 				},
 			]);
 
-			chai.expect(parsingResult[6].entities).to.deep.equal([]);
+			chai.expect(parsingResult[5].entities).to.deep.equal([
+				{
+					offset: 1,
+					length: 26,
+					attributes: ["Announcer3"],
+					type: 1,
+				},
+			]);
+
+			chai.expect(parsingResult[7].entities).to.deep.equal([]);
 		});
 	});
 });
