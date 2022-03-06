@@ -49,85 +49,94 @@ WEBVTT
 				]);
 		});
 
-		it("should return an array of CueNode if a CueData inclues timestamps. All the CueNodes should maintain the same origin ID", () => {
+		it("should return an array of CueNodes if a CueData inclues timestamps. All the CueNodes should maintain the same origin ID", () => {
 			/** @type {import("../lib/Parser/index.js").CueData} */
 			const originalData = {
 				attributes: "",
 				cueid: "text-1",
 				starttime: "00:00:00.000",
-				endtime: "00:00:16.000",
-				text: `Welcome to the galaxy of dreams
-<00:00:04.000> Estimated Time of Arrival:
-<00:00:06.000> Unknown
-<00:00:08.000> Please take your seat back
-<00:00:10.000> And get ready to take off
-<00:00:12.000> (Please take your seat back)
-<00:00:14.000> (And get ready to take off)
+				endtime: "00:00:27.000",
+				text: `Welcome Liquicity Airlines
+<00:00:06.000> Our destination: the galaxy of dreams
+<00:00:09.000> (Our destination: the galaxy of dreams)
+<00:00:12.000> Estimated Time of Arrival: unknown
+<00:00:18.000> Please fasten your seatbelt
+<00:00:21.000> And get ready to take off
+<00:00:24.000> (Please fasten your seatbelt)
+<00:00:27.000> (And get ready to take off)
 `,
 			};
 
 			const parsingResult = parseCue(originalData);
 
-			chai.expect(parsingResult.length).to.equal(7);
+			chai.expect(parsingResult.length).to.equal(8);
 
 			chai.expect(parsingResult[0]).to.eql({
 				id: "text-1",
 				startTime: 0,
-				endTime: 16000,
-				content: "Welcome to the galaxy of dreams\n",
+				endTime: 27000,
+				content: "Welcome Liquicity Airlines\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[1]).to.eql({
 				id: "text-1",
-				startTime: 4000,
-				endTime: 16000,
-				content: " Estimated Time of Arrival:\n",
+				startTime: 6000,
+				endTime: 27000,
+				content: " Our destination: the galaxy of dreams\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[2]).to.eql({
 				id: "text-1",
-				startTime: 6000,
-				endTime: 16000,
-				content: " Unknown\n",
+				startTime: 9000,
+				endTime: 27000,
+				content: " (Our destination: the galaxy of dreams)\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[3]).to.eql({
 				id: "text-1",
-				startTime: 8000,
-				endTime: 16000,
-				content: " Please take your seat back\n",
+				startTime: 12000,
+				endTime: 27000,
+				content: " Estimated Time of Arrival: unknown\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[4]).to.eql({
 				id: "text-1",
-				startTime: 10000,
-				endTime: 16000,
-				content: " And get ready to take off\n",
+				startTime: 18000,
+				endTime: 27000,
+				content: " Please fasten your seatbelt\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[5]).to.eql({
 				id: "text-1",
-				startTime: 12000,
-				endTime: 16000,
-				content: " (Please take your seat back)\n",
+				startTime: 21000,
+				endTime: 27000,
+				content: " And get ready to take off\n",
 				entities: [],
 			});
 
 			chai.expect(parsingResult[6]).to.eql({
 				id: "text-1",
-				startTime: 14000,
-				endTime: 16000,
+				startTime: 24000,
+				endTime: 27000,
+				content: " (Please fasten your seatbelt)\n",
+				entities: [],
+			});
+
+			chai.expect(parsingResult[7]).to.eql({
+				id: "text-1",
+				startTime: 27000,
+				endTime: 27000,
 				content: " (And get ready to take off)\n",
 				entities: [],
 			});
 		});
 
-		it("should return an array of CueNode with the same id and endTime if one cue is passed", () => {
+		it("should return an array of CueNodes with the same id and endTime if one cue is passed", () => {
 			/** @type {import("../lib/Parser/index.js").CueData} */
 			const originalData = {
 				attributes: "",
