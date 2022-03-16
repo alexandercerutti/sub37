@@ -1,6 +1,5 @@
 // @ts-check
-/// <reference types="chai" />
-
+import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTRenderer from "../lib/Renderer.js";
 
 describe("WebVTTRenderer", () => {
@@ -12,7 +11,7 @@ describe("WebVTTRenderer", () => {
 	});
 
 	it("should always return a supported type", () => {
-		chai.expect(WebVTTRenderer.supportedType).to.eql("text/vtt");
+		expect(WebVTTRenderer.supportedType).toEqual("text/vtt");
 	});
 
 	describe("parse", () => {
@@ -50,37 +49,37 @@ WEBVTT
 `;
 
 		it("should return an empty array if rawContent is falsy", () => {
-			chai.expect(renderer.parse(undefined)).to.eql([]);
-			chai.expect(renderer.parse(null)).to.eql([]);
-			chai.expect(renderer.parse("")).to.eql([]);
+			expect(renderer.parse(undefined)).toEqual([]);
+			expect(renderer.parse(null)).toEqual([]);
+			expect(renderer.parse("")).toEqual([]);
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
 			const invalidWebVTTError = "Invalid WebVTT file. It should start with string 'WEBVTT'";
 			// @ts-expect-error
-			chai.expect(() => renderer.parse(true)).to.throw(Error, invalidWebVTTError);
+			expect(() => renderer.parse(true)).toThrow(Error, invalidWebVTTError);
 			// @ts-expect-error
-			chai.expect(() => renderer.parse(10)).to.throw(Error, invalidWebVTTError);
-			chai.expect(() => renderer.parse("Look, a phoenix!")).to.throw(Error, invalidWebVTTError);
+			expect(() => renderer.parse(10)).toThrow(Error /*invalidWebVTTError*/);
+			expect(() => renderer.parse("Look, a phoenix!")).toThrow(Error /*invalidWebVTTError*/);
 		});
 
 		it("should exclude cues with the same start time and end time", () => {
 			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
-			chai.expect(result.length).to.eql(2);
+			expect(result.length).toEqual(2);
 
-			chai.expect(result[0].startTime).to.eql(6000);
-			chai.expect(result[0].endTime).to.eql(7000);
+			expect(result[0].startTime).toEqual(6000);
+			expect(result[0].endTime).toEqual(7000);
 
-			chai.expect(result[1].startTime).to.eql(8000);
-			chai.expect(result[1].endTime).to.eql(10000);
+			expect(result[1].startTime).toEqual(8000);
+			expect(result[1].endTime).toEqual(10000);
 		});
 
 		it("should return an array containing two cues", () => {
 			const parsingResult = renderer.parse(CLASSIC_CONTENT);
-			chai.expect(parsingResult).to.be.an("array");
-			chai.expect(parsingResult.length).to.eql(2);
+			expect(parsingResult).toBeInstanceOf(Array);
+			expect(parsingResult.length).toEqual(2);
 
-			chai.expect(parsingResult[0]).to.eql({
+			expect(parsingResult[0]).toEqual({
 				startTime: 5000,
 				endTime: 25000,
 				content: "Would you like to get < coffee?",
@@ -96,7 +95,7 @@ WEBVTT
 				],
 			});
 
-			chai.expect(parsingResult[1]).to.eql({
+			expect(parsingResult[1]).toEqual({
 				startTime: 0,
 				endTime: 20000,
 				content: "Hi, my name is Fred",
@@ -115,10 +114,10 @@ WEBVTT
 
 		it("should return an array containing four cues when a timestamps are found", () => {
 			const parsingResult = renderer.parse(TIMESTAMPS_CUES_CONTENT);
-			chai.expect(parsingResult).to.be.an("array");
-			chai.expect(parsingResult.length).to.eql(4);
+			expect(parsingResult).toBeInstanceOf(Array);
+			expect(parsingResult.length).toEqual(4);
 
-			chai.expect(parsingResult[0]).to.eql({
+			expect(parsingResult[0]).toEqual({
 				startTime: 16000,
 				endTime: 24000,
 				content: " This\n",
@@ -133,7 +132,7 @@ WEBVTT
 				],
 			});
 
-			chai.expect(parsingResult[1]).to.eql({
+			expect(parsingResult[1]).toEqual({
 				startTime: 18000,
 				endTime: 24000,
 				content: " can\n",

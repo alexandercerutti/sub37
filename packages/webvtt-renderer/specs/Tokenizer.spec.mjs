@@ -1,4 +1,5 @@
 // @ts-check
+import { describe, beforeEach, it, expect } from "@jest/globals";
 import { Tokenizer } from "../lib/Tokenizer.js";
 import { Token, TokenType } from "../lib/Token.js";
 
@@ -8,36 +9,39 @@ describe("Tokenizer", () => {
 			it("empty string should return current cursor", () => {
 				/** @type {number} */
 				const currentCursor = 4;
-				chai.expect(Tokenizer.parseHTMLEntity("", currentCursor)).to.eql(["", currentCursor]);
+				expect(Tokenizer.parseHTMLEntity("", currentCursor)).toEqual(["", currentCursor]);
 			});
 
 			it("should return current content and cursor if a whitespace is found", () => {
 				const WHITE_SPACE_TEST_STRING = "am p;";
-				chai.expect(Tokenizer.parseHTMLEntity(WHITE_SPACE_TEST_STRING, 0)).to.eql(["&am ", 2]);
+				expect(Tokenizer.parseHTMLEntity(WHITE_SPACE_TEST_STRING, 0)).toEqual(["&am ", 2]);
 			});
 
 			it("should return current content and cursor if a newline is found", () => {
 				const NEWLINE_TEST_STRING = "am\x0Ap;";
-				chai.expect(Tokenizer.parseHTMLEntity(NEWLINE_TEST_STRING, 0)).to.eql(["&am\x0A", 2]);
+				expect(Tokenizer.parseHTMLEntity(NEWLINE_TEST_STRING, 0)).toEqual(["&am\x0A", 2]);
 			});
 
 			it("should return current content and cursor if a '<' or another '&' are found", () => {
 				const TAG_OPEN_STRING = "am<c.className> p";
-				chai.expect(Tokenizer.parseHTMLEntity(TAG_OPEN_STRING, 0)).to.eql(["&am<", 2]);
+				expect(Tokenizer.parseHTMLEntity(TAG_OPEN_STRING, 0)).toEqual(["&am<", 2]);
 
 				const HTML_ENTITY_IN_HTML_ENTITY_STRING = "am&amp;";
-				chai
-					.expect(Tokenizer.parseHTMLEntity(HTML_ENTITY_IN_HTML_ENTITY_STRING, 0))
-					.to.eql(["&am&", 2]);
+
+				expect(Tokenizer.parseHTMLEntity(HTML_ENTITY_IN_HTML_ENTITY_STRING, 0)).toEqual([
+					"&am&",
+					2,
+				]);
 			});
 
 			it("should return current content and cursor if allowed characters are passed and met", () => {
 				const ADDITIONAL_CHARACTERS = [">"];
 				const TEST_STRING = "amp> test;";
 
-				chai
-					.expect(Tokenizer.parseHTMLEntity(TEST_STRING, 0, ADDITIONAL_CHARACTERS))
-					.to.eql(["&amp>", 3]);
+				expect(Tokenizer.parseHTMLEntity(TEST_STRING, 0, ADDITIONAL_CHARACTERS)).toEqual([
+					"&amp>",
+					3,
+				]);
 			});
 
 			/**
@@ -48,25 +52,25 @@ describe("Tokenizer", () => {
 
 			it("should return a parsed content if a valid HTMLEntity is found in string", () => {
 				const VALID_HTML_ENTITY_STRING = "amp;";
-				chai.expect(Tokenizer.parseHTMLEntity(VALID_HTML_ENTITY_STRING, 0)).to.eql(["&", 3]);
+				expect(Tokenizer.parseHTMLEntity(VALID_HTML_ENTITY_STRING, 0)).toEqual(["&", 3]);
 			});
 		});
 
 		describe("isWhitespace", () => {
 			it("should match actual whitespace", () => {
-				chai.expect(Tokenizer.isWhitespace(" ")).to.be.true;
+				expect(Tokenizer.isWhitespace(" ")).toBe(true);
 			});
 
 			it("should match tabulation character", () => {
-				chai.expect(Tokenizer.isWhitespace("\x09")).to.be.true;
+				expect(Tokenizer.isWhitespace("\x09")).toBe(true);
 			});
 
 			it("should match form feed (page break) character", () => {
-				chai.expect(Tokenizer.isWhitespace("\x0C")).to.be.true;
+				expect(Tokenizer.isWhitespace("\x0C")).toBe(true);
 			});
 
 			it("should not match new line", () => {
-				chai.expect(Tokenizer.isWhitespace("\x0A")).to.be.false;
+				expect(Tokenizer.isWhitespace("\x0A")).toBe(false);
 			});
 		});
 
@@ -74,8 +78,8 @@ describe("Tokenizer", () => {
 			it("should match only new lines", () => {
 				const NEWLINE = "\x0A";
 				const NOT_NEWLINE = "a";
-				chai.expect(Tokenizer.isNewLine(NEWLINE)).to.be.true;
-				chai.expect(Tokenizer.isNewLine(NOT_NEWLINE)).to.be.false;
+				expect(Tokenizer.isNewLine(NEWLINE)).toBe(true);
+				expect(Tokenizer.isNewLine(NOT_NEWLINE)).toBe(false);
 			});
 		});
 	});
@@ -92,22 +96,22 @@ describe("Tokenizer", () => {
 				const tokenizer = new Tokenizer("mocked content");
 				// @ts-ignore
 				tokenizer.cursor = tokenizer.rawContent.length;
-				chai.expect(tokenizer.nextToken()).to.be.null;
+				expect(tokenizer.nextToken()).toBeNull();
 			});
 
 			it("should return null if no more content is available", () => {
 				const tokenizer = new Tokenizer("mocked content");
 				tokenizer.nextToken();
 
-				chai.expect(tokenizer.nextToken()).to.be.null;
+				expect(tokenizer.nextToken()).toBeNull();
 			});
 
 			it("should return a string token if rawContent contains only a string", () => {
 				const tokenizer = new Tokenizer("mocked content");
 				const nextToken = tokenizer.nextToken();
 
-				chai.expect(nextToken).to.be.instanceOf(Token);
-				chai.expect(nextToken.type).to.equal(TokenType.STRING);
+				expect(nextToken).toBeInstanceOf(Token);
+				expect(nextToken.type).toBe(TokenType.STRING);
 			});
 
 			describe("Start Tags", () => {
@@ -116,15 +120,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<b>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<b>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("b");
+						expect(nextToken.content).toBe("b");
 					});
 				});
 
@@ -133,15 +137,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<i>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<i>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("i");
+						expect(nextToken.content).toBe("i");
 					});
 				});
 
@@ -150,15 +154,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<u>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<u>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("u");
+						expect(nextToken.content).toBe("u");
 					});
 				});
 
@@ -167,15 +171,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<rt>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<rt>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("rt");
+						expect(nextToken.content).toBe("rt");
 					});
 				});
 
@@ -184,15 +188,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<ruby>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<ruby>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("ruby");
+						expect(nextToken.content).toBe("ruby");
 					});
 				});
 
@@ -201,15 +205,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<lang>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<lang>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("lang");
+						expect(nextToken.content).toBe("lang");
 					});
 				});
 
@@ -218,24 +222,24 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<v>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a start tag with annotations if rawContent contains a voice start tag with data", () => {
 						const tokenizer = new Tokenizer("<v Fred>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
-						chai.expect(nextToken.annotations).to.contain("Fred");
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
+						expect(nextToken.annotations).toContain("Fred");
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<v>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("v");
+						expect(nextToken.content).toBe("v");
 					});
 				});
 
@@ -244,27 +248,27 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("<c>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
 					});
 
 					it("should return a start tag token with annotations and classes if rawContent contains a class start tag with classes and annotations", () => {
 						const tokenizer = new Tokenizer("<c.className.klaasNaame testAnnotation>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.START_TAG);
-						chai.expect(nextToken.annotations).to.contain("testAnnotation");
-						chai.expect(nextToken.classes).to.contain("className");
-						chai.expect(nextToken.classes).to.contain("klaasNaame");
-						chai.expect(nextToken.classes).to.contain("klaasNaame");
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.START_TAG);
+						expect(nextToken.annotations).toContain("testAnnotation");
+						expect(nextToken.classes).toContain("className");
+						expect(nextToken.classes).toContain("klaasNaame");
+						expect(nextToken.classes).toContain("klaasNaame");
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("<c.className.klaasName testAnnotation>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("c");
+						expect(nextToken.content).toBe("c");
 					});
 				});
 			});
@@ -275,15 +279,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</b>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</b>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("b");
+						expect(nextToken.content).toBe("b");
 					});
 				});
 
@@ -292,15 +296,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</i>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</i>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("i");
+						expect(nextToken.content).toBe("i");
 					});
 				});
 
@@ -309,15 +313,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</u>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</u>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("u");
+						expect(nextToken.content).toBe("u");
 					});
 				});
 
@@ -326,15 +330,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</rt>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</rt>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("rt");
+						expect(nextToken.content).toBe("rt");
 					});
 				});
 
@@ -343,15 +347,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</ruby>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</ruby>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("ruby");
+						expect(nextToken.content).toBe("ruby");
 					});
 				});
 
@@ -360,15 +364,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</lang>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</lang>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("lang");
+						expect(nextToken.content).toBe("lang");
 					});
 				});
 
@@ -377,15 +381,15 @@ describe("Tokenizer", () => {
 						const tokenizer = new Tokenizer("</v>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken).to.be.instanceOf(Token);
-						chai.expect(nextToken.type).to.equal(TokenType.END_TAG);
+						expect(nextToken).toBeInstanceOf(Token);
+						expect(nextToken.type).toBe(TokenType.END_TAG);
 					});
 
 					it("should return a token with content without special characters", () => {
 						const tokenizer = new Tokenizer("</v>");
 						const nextToken = tokenizer.nextToken();
 
-						chai.expect(nextToken.content).to.be.eq("v");
+						expect(nextToken.content).toBe("v");
 					});
 				});
 			});
@@ -395,32 +399,32 @@ describe("Tokenizer", () => {
 					const tokenizer = new Tokenizer("<00:05:02.000>");
 					const nextToken = tokenizer.nextToken();
 
-					chai.expect(nextToken).to.be.instanceOf(Token);
-					chai.expect(nextToken.type).to.equal(TokenType.TIMESTAMP);
+					expect(nextToken).toBeInstanceOf(Token);
+					expect(nextToken.type).toBe(TokenType.TIMESTAMP);
 				});
 
 				it("should return a timestamp token without attributes or class name", () => {
 					const tokenizer = new Tokenizer("<00:05:02.000>");
 					const nextToken = tokenizer.nextToken();
 
-					chai.expect(nextToken.classes).to.be.undefined;
-					chai.expect(nextToken.annotations).to.be.undefined;
+					expect(nextToken.classes).toBeUndefined();
+					expect(nextToken.annotations).toBeUndefined();
 				});
 
 				it("should emit a timestamp tag even if it has an invalid timestamp", () => {
 					const tokenizer = new Tokenizer("<00:05.alpha.omega>");
 					const nextToken = tokenizer.nextToken();
 
-					chai.expect(nextToken).to.be.instanceOf(Token);
-					chai.expect(nextToken.type).to.be.equal(TokenType.TIMESTAMP);
+					expect(nextToken).toBeInstanceOf(Token);
+					expect(nextToken.type).toBe(TokenType.TIMESTAMP);
 				});
 
 				it("should emit a timestamp tag if string ends before it is complete", () => {
 					const tokenizer = new Tokenizer("<00:05:03");
 					const nextToken = tokenizer.nextToken();
 
-					chai.expect(nextToken).to.be.instanceOf(Token);
-					chai.expect(nextToken.type).to.be.equal(TokenType.TIMESTAMP);
+					expect(nextToken).toBeInstanceOf(Token);
+					expect(nextToken.type).toBe(TokenType.TIMESTAMP);
 				});
 			});
 		});

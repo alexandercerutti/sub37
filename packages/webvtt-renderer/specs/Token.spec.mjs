@@ -1,5 +1,5 @@
 // @ts-check
-/// <reference types="chai">
+import { describe, beforeEach, it, expect } from "@jest/globals";
 import { Token, TokenType } from "../lib/Token.js";
 
 describe("Token", () => {
@@ -12,21 +12,21 @@ describe("Token", () => {
 		});
 
 		it("should own a length and an offset", () => {
-			chai.expect(token.type).to.equal(TokenType.STRING);
-			chai.expect(token.length).to.equal(5);
-			chai.expect(token.offset).to.equal(10);
+			expect(token.type).toBe(TokenType.STRING);
+			expect(token.length).toBe(5);
+			expect(token.offset).toBe(10);
 		});
 
 		it("should not have classes", () => {
-			chai.expect(token.classes).to.be.undefined;
+			expect(token.classes).toBeUndefined();
 		});
 
 		it("should not have annotations", () => {
-			chai.expect(token.annotations).to.be.undefined;
+			expect(token.annotations).toBeUndefined();
 		});
 
 		it("should bring the content as-is", () => {
-			chai.expect(token.content).to.equal("test content");
+			expect(token.content).toBe("test content");
 		});
 	});
 
@@ -36,31 +36,31 @@ describe("Token", () => {
 		});
 
 		it("should own a length and an offset", () => {
-			chai.expect(token.type).to.equal(TokenType.START_TAG);
-			chai.expect(token.length).to.equal(5);
-			chai.expect(token.offset).to.equal(10);
+			expect(token.type).toBe(TokenType.START_TAG);
+			expect(token.length).toBe(5);
+			expect(token.offset).toBe(10);
 		});
 
 		it("should retain classes", () => {
 			const token = Token.StartTag("b", { start: 10, end: 15 }, ["className"]);
-			chai.expect(token.classes).to.eql(["className"]);
+			expect(token.classes).toEqual(["className"]);
 		});
 
 		it("should retain annotations", () => {
-			const token = Token.StartTag("b", { start: 10, end: 15 }, undefined, "Fred");
-			chai.expect(token.annotations).to.be.equal("Fred");
+			const token = Token.StartTag("b", { start: 10, end: 15 }, undefined, ["Fred"]);
+			expect(token.annotations).toEqual(["Fred"]);
 		});
 
 		it("should set classes to empty array if none is available", () => {
-			chai.expect(token.classes).to.eql([]);
+			expect(token.classes).toEqual([]);
 		});
 
 		it("should set annotations to empty array if none is available", () => {
-			chai.expect(token.annotations).to.be.eql([]);
+			expect(token.annotations).toEqual([]);
 		});
 
 		it("should bring the content as-is", () => {
-			chai.expect(token.content).to.equal("b");
+			expect(token.content).toBe("b");
 		});
 	});
 
@@ -70,21 +70,21 @@ describe("Token", () => {
 		});
 
 		it("should own a length and an offset", () => {
-			chai.expect(token.type).to.equal(TokenType.END_TAG);
-			chai.expect(token.length).to.equal(5);
-			chai.expect(token.offset).to.equal(10);
+			expect(token.type).toBe(TokenType.END_TAG);
+			expect(token.length).toBe(5);
+			expect(token.offset).toBe(10);
 		});
 
 		it("should not have classes", () => {
-			chai.expect(token.classes).to.be.undefined;
+			expect(token.classes).toBeUndefined();
 		});
 
 		it("should not have annotations", () => {
-			chai.expect(token.annotations).to.be.undefined;
+			expect(token.annotations).toBeUndefined();
 		});
 
 		it("should bring the content as-is", () => {
-			chai.expect(token.content).to.equal("b");
+			expect(token.content).toBe("b");
 		});
 	});
 
@@ -94,21 +94,21 @@ describe("Token", () => {
 		});
 
 		it("should own a length and an offset", () => {
-			chai.expect(token.type).to.equal(TokenType.TIMESTAMP);
-			chai.expect(token.length).to.equal(5);
-			chai.expect(token.offset).to.equal(10);
+			expect(token.type).toBe(TokenType.TIMESTAMP);
+			expect(token.length).toBe(5);
+			expect(token.offset).toBe(10);
 		});
 
 		it("should not have classes", () => {
-			chai.expect(token.classes).to.be.undefined;
+			expect(token.classes).toBeUndefined();
 		});
 
 		it("should not have annotations", () => {
-			chai.expect(token.annotations).to.be.undefined;
+			expect(token.annotations).toBeUndefined();
 		});
 
 		it("should bring the content as-is", () => {
-			chai.expect(token.content).to.equal("00.02.22:000");
+			expect(token.content).toBe("00.02.22:000");
 		});
 	});
 });

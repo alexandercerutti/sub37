@@ -1,4 +1,5 @@
 // @ts-check
+import { describe, it, expect } from "@jest/globals";
 import { parseCue } from "../lib/Parser/index.js";
 
 describe("Parser", () => {
@@ -21,32 +22,30 @@ WEBVTT
 `;
 
 		it("should convert a CueData to a CueNode", () => {
-			chai
-				.expect(
-					parseCue({
-						attributes: "region:fred align:left",
-						cueid: undefined,
-						starttime: "00:00:05.000",
-						endtime: "00:00:25.000",
-						text: "<v Fred&gt;>Would you like to get &lt; coffee?",
-					}),
-				)
-				.to.eql([
-					{
-						id: undefined,
-						startTime: 5000,
-						endTime: 25000,
-						content: "Would you like to get < coffee?",
-						entities: [
-							{
-								offset: 0,
-								length: 31,
-								attributes: ["Fred>"],
-								type: 1,
-							},
-						],
-					},
-				]);
+			expect(
+				parseCue({
+					attributes: "region:fred align:left",
+					cueid: undefined,
+					starttime: "00:00:05.000",
+					endtime: "00:00:25.000",
+					text: "<v Fred&gt;>Would you like to get &lt; coffee?",
+				}),
+			).toEqual([
+				{
+					id: undefined,
+					startTime: 5000,
+					endTime: 25000,
+					content: "Would you like to get < coffee?",
+					entities: [
+						{
+							offset: 0,
+							length: 31,
+							attributes: ["Fred>"],
+							type: 1,
+						},
+					],
+				},
+			]);
 		});
 
 		it("should return an array of CueNodes if a CueData inclues timestamps. All the CueNodes should maintain the same origin ID", () => {
@@ -69,9 +68,9 @@ WEBVTT
 
 			const parsingResult = parseCue(originalData);
 
-			chai.expect(parsingResult.length).to.equal(8);
+			expect(parsingResult.length).toBe(8);
 
-			chai.expect(parsingResult[0]).to.eql({
+			expect(parsingResult[0]).toEqual({
 				id: "text-1",
 				startTime: 0,
 				endTime: 27000,
@@ -79,7 +78,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[1]).to.eql({
+			expect(parsingResult[1]).toEqual({
 				id: "text-1",
 				startTime: 6000,
 				endTime: 27000,
@@ -87,7 +86,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[2]).to.eql({
+			expect(parsingResult[2]).toEqual({
 				id: "text-1",
 				startTime: 9000,
 				endTime: 27000,
@@ -95,7 +94,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[3]).to.eql({
+			expect(parsingResult[3]).toEqual({
 				id: "text-1",
 				startTime: 12000,
 				endTime: 27000,
@@ -103,7 +102,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[4]).to.eql({
+			expect(parsingResult[4]).toEqual({
 				id: "text-1",
 				startTime: 18000,
 				endTime: 27000,
@@ -111,7 +110,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[5]).to.eql({
+			expect(parsingResult[5]).toEqual({
 				id: "text-1",
 				startTime: 21000,
 				endTime: 27000,
@@ -119,7 +118,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[6]).to.eql({
+			expect(parsingResult[6]).toEqual({
 				id: "text-1",
 				startTime: 24000,
 				endTime: 27000,
@@ -127,7 +126,7 @@ WEBVTT
 				entities: [],
 			});
 
-			chai.expect(parsingResult[7]).to.eql({
+			expect(parsingResult[7]).toEqual({
 				id: "text-1",
 				startTime: 27000,
 				endTime: 27000,
@@ -148,9 +147,9 @@ WEBVTT
 
 			const parsingResult = parseCue(originalData);
 
-			chai.expect(parsingResult.length).to.equal(1);
+			expect(parsingResult.length).toBe(1);
 
-			chai.expect(parsingResult[0]).to.eql({
+			expect(parsingResult[0]).toEqual({
 				id: "text-1",
 				startTime: 0,
 				endTime: 16000,
@@ -178,9 +177,9 @@ WEBVTT
 			};
 
 			const parsingResult = parseCue(originalData);
-			chai.expect(parsingResult.length).to.equal(8);
+			expect(parsingResult.length).toBe(8);
 
-			chai.expect(parsingResult[0].entities).to.deep.equal([
+			expect(parsingResult[0].entities).toEqual([
 				{
 					offset: 0,
 					length: 27,
@@ -189,7 +188,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[1].entities).to.deep.equal([
+			expect(parsingResult[1].entities).toEqual([
 				{
 					offset: 0,
 					length: 39,
@@ -198,7 +197,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[2].entities).to.deep.equal([
+			expect(parsingResult[2].entities).toEqual([
 				{
 					offset: 0,
 					length: 40,
@@ -207,7 +206,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[3].entities).to.deep.equal([
+			expect(parsingResult[3].entities).toEqual([
 				{
 					offset: 0,
 					length: 36,
@@ -216,7 +215,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[4].entities).to.deep.equal([
+			expect(parsingResult[4].entities).toEqual([
 				{
 					offset: 0,
 					length: 28,
@@ -225,7 +224,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[5].entities).to.deep.equal([
+			expect(parsingResult[5].entities).toEqual([
 				{
 					offset: 1,
 					length: 26,
@@ -234,7 +233,7 @@ WEBVTT
 				},
 			]);
 
-			chai.expect(parsingResult[7].entities).to.deep.equal([]);
+			expect(parsingResult[7].entities).toEqual([]);
 		});
 	});
 });
