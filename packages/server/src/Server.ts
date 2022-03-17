@@ -34,19 +34,18 @@ export class HSServer {
 	public startSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
 		this[sessionSymbol] = null;
 
-		const Renderer: HSBaseRendererConstructor = this[renderersSymbol].find(
-			(Renderer) => Renderer instanceof HSBaseRenderer && Renderer.supportedType === mimeType,
-		);
+		for (let i = 0; i < this[renderersSymbol].length; i++) {
+			const Renderer = this[renderersSymbol][i];
 
-		if (!Renderer) {
-			console.warn(
-				`No renderer supports this content type (${mimeType}} or the passed Renderers do not extend "HSBaseRenderer". Engine won't render anything.`,
-			);
-
-			return;
+			if (Renderer instanceof HSBaseRenderer && Renderer.supportedType === mimeType) {
+				this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
+				return;
+			}
 		}
 
-		this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
+		console.warn(
+			`No renderer supports this content type (${mimeType}} or the passed Renderers do not extend "HSBaseRenderer". Engine won't render anything.`,
+		);
 	}
 
 	/**
