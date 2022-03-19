@@ -5,16 +5,21 @@ import { TimelineTree } from "./TimelineTree.js";
 const activeTrackSymbol = Symbol("session.active");
 
 export class HSSession {
-	private timelines: { [lang: string]: TimelineTree };
+	private timelines: { [lang: string]: TimelineTree } = Object.create(null);
 	private [activeTrackSymbol]: string = null;
 
 	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
 		for (let { lang, content } of rawContents) {
 			try {
 				const entities = renderer.parse(content);
-				this.timelines[lang] = new TimelineTree();
 
-				/** @TODO add entities to Timeline */
+				if (entities.length) {
+					this.timelines[lang] = new TimelineTree();
+
+					for (let entity of entities) {
+						this.timelines[lang].addNode(entity);
+					}
+				}
 			} catch (err) {
 				console.error(err);
 			}
