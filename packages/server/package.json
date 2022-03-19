@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"description": "Server component for subtitles",
 	"main": "lib/index.js",
+	"type": "module",
 	"devDependencies": {
 		"typescript": "^4.5.4"
 	},
