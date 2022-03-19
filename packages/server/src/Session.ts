@@ -1,6 +1,6 @@
 import { HSBaseRendererConstructor } from "./BaseRenderer";
 import type { RawTrack } from "./model";
-import { TimelineTree } from "./TimelineTree";
+import { TimelineTree } from "./TimelineTree.js";
 
 export class HSSession {
 	private timelines: { [lang: string]: TimelineTree };
