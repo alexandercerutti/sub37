@@ -7,9 +7,6 @@
 	"peerDependencies": {
 		"@hsubs/server": "^0.1.0"
 	},
-	"dependencies": {
-		"@hsubs/base-renderer": "^0.1.0"
-	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
 		"test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest -c ../../jest.config.mjs"

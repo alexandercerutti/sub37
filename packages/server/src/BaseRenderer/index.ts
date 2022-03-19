@@ -1,4 +1,4 @@
-import type { CueNode } from "@hsubs/server";
+import { CueNode } from "../TimelineTree";
 
 export interface HSBaseRendererConstructor {
 	supportedType: string;

@@ -1,4 +1,4 @@
-import { HSBaseRendererConstructor } from "@hsubs/base-renderer";
+import { HSBaseRendererConstructor } from "./BaseRenderer";
 import type { RawTrack } from "./model";
 import { TimelineTree } from "./TimelineTree";
 
