@@ -9,7 +9,10 @@ export interface HSBaseRenderer {
 	parse(rawContent: unknown): CueNode[];
 }
 
-export class HSBaseRenderer implements HSBaseRenderer {
+/** By doing this way, we also have static props type-checking */
+export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
+	implements HSBaseRenderer
+{
 	/**
 	 * Static property that instructs for which type of subtitles
 	 * this renderer should be used. Must be overridden by Renderers
@@ -34,4 +37,4 @@ export class HSBaseRenderer implements HSBaseRenderer {
 			"Renderer doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
 		);
 	}
-}
+};
