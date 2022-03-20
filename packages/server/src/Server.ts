@@ -1,19 +1,15 @@
 import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer";
 import { RawTrack } from "./model";
-import { HSSession } from "./Session";
+import { HSSession } from "./Session.js";
+import { SuspendableTimer } from "./SuspendableTimer.js";
 
-const intervalSymbol /********/ = Symbol("hs.s.interval");
-const latestIndexSymbol /*****/ = Symbol("hs.s.index");
-const createIntervalSymbol /**/ = Symbol("hs.s.createInterval");
-const renderersSymbol /*******/ = Symbol("hs.s.renderers");
-const sessionSymbol /*********/ = Symbol("hs.s.session");
+const intervalSymbol /*****/ = Symbol("hs.s.interval");
+const latestIndexSymbol /**/ = Symbol("hs.s.index");
+const renderersSymbol /****/ = Symbol("hs.s.renderers");
+const sessionSymbol /******/ = Symbol("hs.s.session");
 
 export class HSServer {
-	private [intervalSymbol]: [
-		interval: number,
-		getCurrentPosition: () => number,
-		frequencyMs: number,
-	];
+	private [intervalSymbol]: SuspendableTimer;
 	private [latestIndexSymbol]: number;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
 	private [sessionSymbol]: HSSession = null;
@@ -26,7 +22,7 @@ export class HSServer {
 	 * Creates a new subtitles / captions
 	 * distribution session.
 	 *
-	 * @param content
+	 * @param rawTracks
 	 * @param mimeType
 	 * @returns
 	 */
@@ -73,15 +69,18 @@ export class HSServer {
 			);
 		}
 
-		if (this[intervalSymbol]?.[0]) {
-			return;
-		}
+		this[intervalSymbol] = new SuspendableTimer(frequencyMs, () => {
+			/**
+			 * @TODO query the [selectedSourceSymbol] and request the next subtitle.
+			 * This might be structured upon iterators. [selectedSourceSymbol] will
+			 * accept the value of [latestIndexSymbol] as parameter so server
+			 * will be the only one to be stateful.
+			 *
+			 * @TODO Setup listeners and set sending events to the functions.
+			 */
+		});
 
-		this[intervalSymbol] = [
-			this[createIntervalSymbol](getCurrentPosition, frequencyMs),
-			getCurrentPosition,
-			frequencyMs,
-		];
+		this[intervalSymbol].start();
 	}
 
 	/**
@@ -92,13 +91,7 @@ export class HSServer {
 	 */
 
 	public suspend() {
-		if (this[intervalSymbol]?.[0] === undefined) {
-			// Nothing to suspend
-			return;
-		}
-
-		window.clearInterval(this[intervalSymbol][0]);
-		this[intervalSymbol][0] = undefined;
+		this[intervalSymbol]?.stop();
 	}
 
 	/**
@@ -109,37 +102,27 @@ export class HSServer {
 	 */
 
 	public resume() {
-		if (!this[intervalSymbol] || (this[intervalSymbol] && this[intervalSymbol][0] !== undefined)) {
-			// Nothing to resume
-			return;
-		}
-
-		const [, getCurrentPosition, frequencyMs] = this[intervalSymbol];
-
-		this[intervalSymbol][0] = this[createIntervalSymbol](getCurrentPosition, frequencyMs);
+		this[intervalSymbol]?.start();
 	}
 
 	/**
-	 * Halts the serving activity by removing anything
-	 * about the current activity.
+	 * Tells if this session is actively serving
+	 * subtitles
 	 */
 
-	public stop() {
-		window.clearInterval(this[intervalSymbol][0]);
-		this[intervalSymbol] = undefined;
+	public get isRunning() {
+		return this[intervalSymbol].isRunning;
 	}
 
-	private [createIntervalSymbol](getCurrentPosition: () => number, frequencyMs: number) {
-		return window.setInterval(() => {
-			/**
-			 * @TODO query the [selectedSourceSymbol] and request the next subtitle.
-			 * This might be structured upon iterators. [selectedSourceSymbol] will
-			 * accept the value of [latestIndexSymbol] as parameter so server
-			 * will be the only one to be stateful.
-			 *
-			 * @TODO Setup listeners and set sending events to the functions.
-			 */
-		}, frequencyMs);
+	/**
+	 * Destroys current session and all the loaded
+	 * subtitles data. Maintains the renderers.
+	 */
+
+	public destroy() {
+		this.suspend();
+		this[intervalSymbol] = undefined;
+		this[sessionSymbol] = undefined;
 	}
 
 	/**
