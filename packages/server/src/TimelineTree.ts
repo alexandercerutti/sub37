@@ -17,15 +17,19 @@ export interface CueNode {
 	content: string;
 }
 
-class TimelineTreeNode implements CueNode {
-	public id?: string;
-	public styles?: any /** @TODO parse them */;
-	public entities?: Entity[];
-
+class TimelineTreeNode {
 	public left: TimelineTreeNode = null;
 	public right: TimelineTreeNode = null;
 
-	constructor(public startTime: number, public endTime: number, public content: string) {}
+	constructor(public node: CueNode) {}
+
+	public get startTime() {
+		return this.node.startTime;
+	}
+
+	public get endTime() {
+		return this.node.endTime;
+	}
 }
 
 /**
@@ -38,11 +42,7 @@ export class TimelineTree {
 	private root: TimelineTreeNode = null;
 
 	public addNode(newNode: CueNode) {
-		const nextTreeNode = new TimelineTreeNode(newNode.startTime, newNode.endTime, newNode.content);
-
-		nextTreeNode.id = newNode.id;
-		nextTreeNode.entities = newNode.entities;
-		nextTreeNode.styles = newNode.styles;
+		const nextTreeNode = new TimelineTreeNode(newNode);
 
 		if (!this.root) {
 			this.root = nextTreeNode;
@@ -77,7 +77,7 @@ export class TimelineTree {
 	 * @returns
 	 */
 
-	public getCurrentNodes(currentTime: number): null | TimelineTreeNode[] {
+	public getCurrentNodes(currentTime: number): null | CueNode[] {
 		if (!this.root) {
 			return null;
 		}
@@ -91,20 +91,20 @@ export class TimelineTree {
  * and checking if every queried node's startTime and endTime are
  * an interval containing time parameter
  *
- * @param node
+ * @param treeNode
  * @param time
  * @returns
  */
 
-function accumulateMatchingNodes(node: TimelineTreeNode, time: number) {
-	if (!node) {
+function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
+	if (!treeNode) {
 		return [];
 	}
 
-	const matchingNodes: TimelineTreeNode[] = [];
+	const matchingNodes: CueNode[] = [];
 
-	if (node.startTime <= time && node.endTime > time) {
-		matchingNodes.push(node);
+	if (treeNode.startTime <= time && treeNode.endTime > time) {
+		matchingNodes.push(treeNode.node);
 	}
 
 	/**
@@ -112,11 +112,11 @@ function accumulateMatchingNodes(node: TimelineTreeNode, time: number) {
 	 * on left that might overlap
 	 */
 
-	if (time <= node.endTime) {
-		matchingNodes.push(...accumulateMatchingNodes(node.left, time));
+	if (time <= treeNode.endTime) {
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, time));
 	}
 
-	if (node.startTime <= time) {
+	if (treeNode.startTime <= time) {
 		/**
 		 * If current node has started already started, we might have
 		 * some nodes that are overlapping or this is just not the node
@@ -124,7 +124,7 @@ function accumulateMatchingNodes(node: TimelineTreeNode, time: number) {
 		 * node has finished or not here. Right nodes will be for sure bigger.
 		 */
 
-		matchingNodes.push(...accumulateMatchingNodes(node.right, time));
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.right, time));
 	}
 
 	return matchingNodes;
