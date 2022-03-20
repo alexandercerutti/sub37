@@ -70,13 +70,11 @@ export class HSServer {
 		}
 
 		this[intervalSymbol] = new SuspendableTimer(frequencyMs, () => {
+			const currentTime = getCurrentPosition();
+			const nextCues = this[sessionSymbol].getActiveCues(currentTime);
+
 			/**
-			 * @TODO query the [selectedSourceSymbol] and request the next subtitle.
-			 * This might be structured upon iterators. [selectedSourceSymbol] will
-			 * accept the value of [latestIndexSymbol] as parameter so server
-			 * will be the only one to be stateful.
-			 *
-			 * @TODO Setup listeners and set sending events to the functions.
+			 * @TODO setup listeners and events
 			 */
 		});
 

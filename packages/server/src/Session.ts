@@ -42,4 +42,13 @@ export class HSSession {
 
 		this[activeTrackSymbol] = lang;
 	}
+
+	public getActiveCues(time: number) {
+		if (!this.activeTrack) {
+			throw new Error("No active track found. Cannot retrieve active cues");
+		}
+
+		return this.timelines[this.activeTrack].getCurrentNodes(time);
+	}
+}
 }
