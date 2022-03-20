@@ -23,11 +23,11 @@ class TimelineTreeNode {
 
 	constructor(public node: CueNode) {}
 
-	public get startTime() {
+	public get min() {
 		return this.node.startTime;
 	}
 
-	public get endTime() {
+	public get max() {
 		return this.node.endTime;
 	}
 }
@@ -52,7 +52,7 @@ export class TimelineTree {
 		let node = this.root;
 
 		while (node !== null) {
-			if (newNode.startTime <= node.startTime) {
+			if (newNode.startTime <= node.min) {
 				if (!node.left) {
 					node.left = nextTreeNode;
 					return;
@@ -103,7 +103,7 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
 
 	const matchingNodes: CueNode[] = [];
 
-	if (treeNode.startTime <= time && treeNode.endTime > time) {
+	if (treeNode.min <= time && treeNode.max > time) {
 		matchingNodes.push(treeNode.node);
 	}
 
@@ -112,11 +112,11 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
 	 * on left that might overlap
 	 */
 
-	if (time <= treeNode.endTime) {
+	if (time <= treeNode.max) {
 		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, time));
 	}
 
-	if (treeNode.startTime <= time) {
+	if (treeNode.min <= time) {
 		/**
 		 * If current node has started already started, we might have
 		 * some nodes that are overlapping or this is just not the node
