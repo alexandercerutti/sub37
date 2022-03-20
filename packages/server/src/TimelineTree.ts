@@ -103,10 +103,6 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
 
 	const matchingNodes: CueNode[] = [];
 
-	if (treeNode.min <= time && treeNode.max > time) {
-		matchingNodes.push(treeNode.node);
-	}
-
 	/**
 	 * If current node has not yet ended, we might have nodes
 	 * on left that might overlap
@@ -114,6 +110,17 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
 
 	if (time <= treeNode.max) {
 		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, time));
+	}
+
+	/**
+	 * After having processed all the left nodes we can
+	 * proceed checking the current one, so we are sure
+	 * even unordered nodes will be pushed in the
+	 * correct sequence.
+	 */
+
+	if (treeNode.min <= time && treeNode.max > time) {
+		matchingNodes.push(treeNode.node);
 	}
 
 	if (treeNode.min <= time) {
