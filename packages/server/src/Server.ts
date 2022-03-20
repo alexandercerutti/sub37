@@ -171,32 +171,22 @@ export class HSServer {
 
 	/**
 	 * Provided a language to select, it attempts to switch to
-	 * that language among the ones provided in the constructor.
-	 *
-	 * If language is a _falsy_ value, the server gets stopped.
+	 * that language among the valid ones.
 	 *
 	 * @param lang
 	 * @returns
 	 */
 
-	public selectTextTrack(lang: string | null) {
-		// 	if (lang === null) {
-		// 		this.stop();
-		// 		return;
-		// 	}
-		// 	if (this[selectedSourceSymbol] && lang === this[selectedSourceSymbol].lang) {
-		// 		return;
-		// 	}
-		// 	const currentSource = this[selectedSourceSymbol];
-		// 	for (let source of this[sourcesSymbol]) {
-		// 		if (lang === source.lang) {
-		// 			this[selectedSourceSymbol] = source;
-		// 			break;
-		// 		}
-		// 	}
-		// 	if (this[selectedSourceSymbol] === currentSource) {
-		// 		throw new Error("Unable to set language: not found.");
-		// 	}
+	public selectTextTrack(lang: string) {
+		if (!this[sessionSymbol] || !lang) {
+			return;
+		}
+
+		if (this[sessionSymbol].activeTrack === lang) {
+			return;
+		}
+
+		this[sessionSymbol].activeTrack = lang;
 	}
 }
 
