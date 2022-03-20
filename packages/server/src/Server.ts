@@ -31,7 +31,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public startSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
+	public createSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
 		this[sessionSymbol] = null;
 
 		for (let i = 0; i < this[renderersSymbol].length; i++) {
