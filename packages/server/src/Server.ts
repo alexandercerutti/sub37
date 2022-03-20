@@ -2,17 +2,30 @@ import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer";
 import { RawTrack } from "./model";
 import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
+import { CueNode } from "./TimelineTree";
 
 const intervalSymbol /*****/ = Symbol("hs.s.interval");
 const latestIndexSymbol /**/ = Symbol("hs.s.index");
 const renderersSymbol /****/ = Symbol("hs.s.renderers");
 const sessionSymbol /******/ = Symbol("hs.s.session");
+const listenersSymbol /****/ = Symbol("hs.s.listeners");
+
+type HSListener =
+	| {
+			event: "cuestart";
+			handler(cue: CueNode[]): void;
+	  }
+	| {
+			event: "cuestop";
+			handler(): void;
+	  };
 
 export class HSServer {
 	private [intervalSymbol]: SuspendableTimer;
 	private [latestIndexSymbol]: number;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
 	private [sessionSymbol]: HSSession = null;
+	private [listenersSymbol]: HSListener[];
 
 	constructor(...renderers: HSBaseRendererConstructor[]) {
 		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
@@ -69,13 +82,25 @@ export class HSServer {
 			);
 		}
 
+		let lastUsedCues = new Set<CueNode>();
+
 		this[intervalSymbol] = new SuspendableTimer(frequencyMs, () => {
 			const currentTime = getCurrentPosition();
 			const nextCues = this[sessionSymbol].getActiveCues(currentTime);
+			const nextCache = new Set([...nextCues]);
 
-			/**
-			 * @TODO setup listeners and events
-			 */
+			if (isCueCacheEqual(lastUsedCues, nextCache)) {
+				return;
+			}
+
+			lastUsedCues = nextCache;
+
+			if (!nextCues.length) {
+				emitEvent(this[listenersSymbol], "cuestop");
+				return;
+			}
+
+			emitEvent(this[listenersSymbol], "cuestart", nextCues);
 		});
 
 		this[intervalSymbol].start();
@@ -123,6 +148,27 @@ export class HSServer {
 		this[sessionSymbol] = undefined;
 	}
 
+	public addEventListener(event: "cuestart", handler: (cueData: CueNode[]) => void): void;
+	public addEventListener(event: "cuestop", handler: () => void): void;
+	public addEventListener<K extends "cuestart" | "cuestop">(
+		event: K,
+		handler: (cueData?: CueNode[]) => void,
+	): void {
+		this[listenersSymbol].push({ event, handler });
+	}
+
+	public removeEventListener(event: "cuestart" | "cuestop", handler: Function): void {
+		const index = this[listenersSymbol].findIndex(
+			(listener) => listener.event === event && listener.handler === handler,
+		);
+
+		if (index === -1) {
+			return;
+		}
+
+		this[listenersSymbol].splice(index, 1);
+	}
+
 	/**
 	 * Provided a language to select, it attempts to switch to
 	 * that language among the ones provided in the constructor.
@@ -151,5 +197,28 @@ export class HSServer {
 		// 	if (this[selectedSourceSymbol] === currentSource) {
 		// 		throw new Error("Unable to set language: not found.");
 		// 	}
+	}
+}
+
+function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>) {
+	if (last.size !== next.size) {
+		return false;
+	}
+
+	for (let element of last) {
+		if (!next.has(element)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: CueNode[]) {
+	for (let i = 0; i < pool.length; i++) {
+		const { event, handler } = pool[i];
+		if (event === eventName) {
+			handler(data);
+		}
 	}
 }
