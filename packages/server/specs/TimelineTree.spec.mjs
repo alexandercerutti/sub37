@@ -81,6 +81,24 @@ describe("TimelineTree", () => {
 			endTime: 23000,
 		});
 
+		/**
+		 * Test: first node ends after second node.
+		 * If should be fetched in the correct time
+		 * order
+		 */
+
+		tree.addNode({
+			content: "A test sub-content",
+			startTime: 36000,
+			endTime: 38000,
+		});
+
+		tree.addNode({
+			content: "A test master-content",
+			startTime: 33500,
+			endTime: 38000,
+		});
+
 		const query1 = tree.getCurrentNodes(7000);
 
 		expect(query1.length).toBe(2);
@@ -110,6 +128,22 @@ describe("TimelineTree", () => {
 				content: "A test sub-content",
 				startTime: 20000,
 				endTime: 23000,
+			},
+		]);
+
+		const query3 = tree.getCurrentNodes(37000);
+
+		expect(query3.length).toBe(2);
+		expect(query3).toMatchObject([
+			{
+				content: "A test master-content",
+				startTime: 33500,
+				endTime: 38000,
+			},
+			{
+				content: "A test sub-content",
+				startTime: 36000,
+				endTime: 38000,
 			},
 		]);
 	});
