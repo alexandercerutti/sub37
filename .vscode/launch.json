@@ -1,0 +1,43 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Jest (Manual Chrome)",
+			"port": 9229,
+			"runtimeArgs": [
+				"--inspect-brk",
+				"--experimental-vm-modules",
+				"${workspaceRoot}/node_modules/.bin/jest",
+				"--runInBand",
+				"-c",
+				"${workspaceRoot}/jest.config.mjs"
+			],
+			"console": "internalConsole",
+			"internalConsoleOptions": "neverOpen"
+		},
+		{
+			"type": "node",
+			"name": "vscode-jest-tests.v2",
+			"request": "launch",
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"disableOptimisticBPs": true,
+			"cwd": "${workspaceFolder}",
+			"args": [
+				"--experimental-vm-modules",
+				"--no-warnings",
+				"${workspaceRoot}/node_modules/.bin/jest",
+				"-c",
+				"${workspaceRoot}/jest.config.mjs",
+				"--runInBand",
+				"--watchAll=false",
+				"--testNamePattern",
+				"${jest.testNamePattern}",
+				"--runTestsByPath",
+				"${jest.testFile}"
+			]
+		}
+	]
+}

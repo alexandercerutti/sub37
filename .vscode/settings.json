@@ -1,5 +1,7 @@
 {
 	"editor.tabSize": 2,
 	"editor.trimAutoWhitespace": true,
-	"editor.detectIndentation": true
+	"editor.detectIndentation": true,
+
+	"jest.jestCommandLine": "node --experimental-vm-modules --no-warnings ./node_modules/.bin/jest -c jest.config.mjs --runInBand"
 }
