@@ -28,7 +28,23 @@ export class HSServer {
 	private [listenersSymbol]: HSListener[];
 
 	constructor(...renderers: HSBaseRendererConstructor[]) {
-		this[renderersSymbol] = renderers.filter((Renderer) => Renderer.supportedType);
+		if (!renderers.length) {
+			throw new Error("HSServer is expected to be initialized with renderers. Received none.");
+		}
+
+		this[renderersSymbol] = renderers.filter((Renderer) => {
+			try {
+				return Object.getPrototypeOf(Renderer) === HSBaseRenderer && Renderer.supportedType;
+			} catch (err) {
+				return false;
+			}
+		});
+
+		if (!this[renderersSymbol].length) {
+			throw new Error(
+				"HSServer didn't find any suitable Renderer.\nPlease ensure yourself for them to extend HSBaseRenderer and to have a static property 'supportedType'.",
+			);
+		}
 	}
 
 	/**
@@ -46,7 +62,7 @@ export class HSServer {
 		for (let i = 0; i < this[renderersSymbol].length; i++) {
 			const Renderer = this[renderersSymbol][i];
 
-			if (Renderer instanceof HSBaseRenderer && Renderer.supportedType === mimeType) {
+			if (Renderer.supportedType === mimeType) {
 				this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
 				return;
 			}
