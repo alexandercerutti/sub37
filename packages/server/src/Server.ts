@@ -25,7 +25,7 @@ export class HSServer {
 	private [latestIndexSymbol]: number;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
 	private [sessionSymbol]: HSSession = null;
-	private [listenersSymbol]: HSListener[];
+	private [listenersSymbol]: HSListener[] = [];
 
 	constructor(...renderers: HSBaseRendererConstructor[]) {
 		if (!renderers.length) {
