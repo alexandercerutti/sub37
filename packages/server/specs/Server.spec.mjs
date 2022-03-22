@@ -287,5 +287,78 @@ describe("HSServer", () => {
 
 			server.start(mockGetCurrentPositionFactory());
 		}, 10000);
+
+		it("[timed] can be suspended and resumed", (done) => {
+			// ********************* //
+			// *** MOCKING START *** //
+			// ********************* //
+
+			MockedRenderer.prototype.parse = function (content) {
+				return content;
+			};
+
+			// ******************* //
+			// *** MOCKING END *** //
+			// ******************* //
+
+			const server = new HSServer(MockedRenderer);
+
+			server.createSession(
+				[
+					{
+						content: [
+							{
+								content: "This is a sample cue",
+								startTime: 0,
+								endTime: 1,
+							},
+							{
+								content: "This is a sample cue second",
+								startTime: 0.4,
+								endTime: 1,
+							},
+							{
+								content: "This is a sample cue third",
+								startTime: 1,
+								endTime: 2.5,
+							},
+							{
+								content: "This is a sample cue fourth",
+								startTime: 2.5,
+								endTime: 4,
+							},
+						],
+						lang: "eng",
+					},
+				],
+				"text/vtt",
+			);
+
+			let currentCues = 0;
+
+			server.addEventListener("cuestart", (nodes) => {
+				currentCues++;
+
+				if (currentCues === 2) {
+					server.suspend();
+					expect(server.isRunning).toBe(false);
+
+					setTimeout(() => {
+						server.resume();
+						expect(server.isRunning).toBe(true);
+
+						const checkInterval = window.setInterval(() => {
+							if (currentCues > 2) {
+								window.clearInterval(checkInterval);
+								MockedRenderer.prototype.parse = originalRendererParse;
+								done();
+							}
+						}, 500);
+					}, 500);
+				}
+			});
+
+			server.start(mockGetCurrentPositionFactory());
+		}, 10000);
 	});
 });
