@@ -4,11 +4,10 @@ import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
 import { CueNode } from "./TimelineTree";
 
-const intervalSymbol /*****/ = Symbol("hs.s.interval");
-const latestIndexSymbol /**/ = Symbol("hs.s.index");
-const renderersSymbol /****/ = Symbol("hs.s.renderers");
-const sessionSymbol /******/ = Symbol("hs.s.session");
-const listenersSymbol /****/ = Symbol("hs.s.listeners");
+const intervalSymbol /***/ = Symbol("hs.s.interval");
+const renderersSymbol /**/ = Symbol("hs.s.renderers");
+const sessionSymbol /****/ = Symbol("hs.s.session");
+const listenersSymbol /**/ = Symbol("hs.s.listeners");
 
 type HSListener =
 	| {
@@ -22,7 +21,6 @@ type HSListener =
 
 export class HSServer {
 	private [intervalSymbol]: SuspendableTimer;
-	private [latestIndexSymbol]: number;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
 	private [sessionSymbol]: HSSession = null;
 	private [listenersSymbol]: HSListener[] = [];
