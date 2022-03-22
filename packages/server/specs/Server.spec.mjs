@@ -84,26 +84,30 @@ describe("HSServer", () => {
 			// ********************* //
 
 			MockedRenderer.prototype.parse = function () {
+				// Low times to reduce test duration
+				// Mocked position factory steps by 1,
+				// but video tags step 4 times per second
+
 				return [
 					{
 						content: "This is a sample cue",
 						startTime: 0,
-						endTime: 3,
+						endTime: 1,
 					},
 					{
 						content: "This is a sample cue second",
-						startTime: 1,
-						endTime: 3,
+						startTime: 0.4,
+						endTime: 1,
 					},
 					{
 						content: "This is a sample cue third",
-						startTime: 3,
-						endTime: 5,
+						startTime: 1,
+						endTime: 2.5,
 					},
 					{
 						content: "This is a sample cue fourth",
-						startTime: 5,
-						endTime: 7,
+						startTime: 2.5,
+						endTime: 4,
 					},
 				];
 			};
@@ -166,22 +170,22 @@ describe("HSServer", () => {
 							{
 								content: "This is a sample cue",
 								startTime: 0,
-								endTime: 3,
+								endTime: 1,
 							},
 							{
 								content: "This is a sample cue second",
-								startTime: 1,
-								endTime: 3,
+								startTime: 0.4,
+								endTime: 1,
 							},
 							{
 								content: "This is a sample cue third",
-								startTime: 3,
-								endTime: 5,
+								startTime: 1,
+								endTime: 2.5,
 							},
 							{
 								content: "This is a sample cue fourth",
-								startTime: 5,
-								endTime: 7,
+								startTime: 2.5,
+								endTime: 4,
 							},
 						],
 						lang: "eng",
@@ -191,22 +195,22 @@ describe("HSServer", () => {
 							{
 								content: "Questo è un cue di prova",
 								startTime: 0,
-								endTime: 3,
+								endTime: 1,
 							},
 							{
 								content: "Questo è un cue di prova secondo",
-								startTime: 1,
-								endTime: 3,
+								startTime: 0.4,
+								endTime: 1,
 							},
 							{
 								content: "Questo è un cue di prova terzo",
-								startTime: 3,
-								endTime: 5,
+								startTime: 1,
+								endTime: 2.5,
 							},
 							{
 								content: "Questo è un cue di prova quarto",
-								startTime: 5,
-								endTime: 7,
+								startTime: 2.5,
+								endTime: 4,
 							},
 						],
 						lang: "ita",
@@ -233,44 +237,45 @@ describe("HSServer", () => {
 
 				if (cuesSequence.length === expectedCues) {
 					expect(cuesSequence).toEqual([
-						/** 0ms - 750ms */
-						[{ content: "This is a sample cue", startTime: 0, endTime: 3 }],
-						/** 750ms - 3000ms -> Next we do switch language */
+						/** Persisting time: 0ms - 400ms */
+						[{ content: "This is a sample cue", startTime: 0, endTime: 1 }],
+						/** Persisting time: 400ms - 1000ms */
 						[
-							{ content: "This is a sample cue", startTime: 0, endTime: 3 },
+							{ content: "This is a sample cue", startTime: 0, endTime: 1 },
 							{
 								content: "This is a sample cue second",
-								startTime: 1,
-								endTime: 3,
+								startTime: 0.4,
+								endTime: 1,
 							},
 						],
-						/** 750ms - 3000ms */
+						/** Here we change language to Italian */
+						/** Persisting time: 400ms - 1000ms */
 						[
 							{
 								content: "Questo è un cue di prova",
 								startTime: 0,
-								endTime: 3,
+								endTime: 1,
 							},
 							{
 								content: "Questo è un cue di prova secondo",
-								startTime: 1,
-								endTime: 3,
+								startTime: 0.4,
+								endTime: 1,
 							},
 						],
-						/** 3000ms - 5000ms */
+						/** Persisting time: 1000ms - 2500ms */
 						[
 							{
 								content: "Questo è un cue di prova terzo",
-								startTime: 3,
-								endTime: 5,
+								startTime: 1,
+								endTime: 2.5,
 							},
 						],
-						/** 5000ms - 7000ms */
+						/** Persisting time: 2500ms - 4000ms */
 						[
 							{
 								content: "Questo è un cue di prova quarto",
-								startTime: 5,
-								endTime: 7,
+								startTime: 2.5,
+								endTime: 4,
 							},
 						],
 					]);
