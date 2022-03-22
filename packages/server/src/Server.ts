@@ -57,7 +57,9 @@ export class HSServer {
 	 */
 
 	public createSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
-		this[sessionSymbol] = null;
+		try {
+			this.destroy();
+		} catch {}
 
 		for (let i = 0; i < this[renderersSymbol].length; i++) {
 			const Renderer = this[renderersSymbol][i];
