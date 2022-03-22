@@ -176,6 +176,14 @@ export class HSServer {
 		this[sessionSymbol] = undefined;
 	}
 
+	/**
+	 * Allows to receive events when a new set of cues is available to be
+	 * shown (`"cuestart"`) or when they should get hidden (`"cuestop"`).
+	 *
+	 * @param event
+	 * @param handler
+	 */
+
 	public addEventListener(event: "cuestart", handler: (cueData: CueNode[]) => void): void;
 	public addEventListener(event: "cuestop", handler: () => void): void;
 	public addEventListener<K extends "cuestart" | "cuestop">(
@@ -184,6 +192,14 @@ export class HSServer {
 	): void {
 		this[listenersSymbol].push({ event, handler });
 	}
+
+	/**
+	 * Allows to remove a listener for both `cuestart` and `cuestop`.
+	 * Requires handler to be one added early through `addEventListener`.
+	 *
+	 * @param event
+	 * @param handler
+	 */
 
 	public removeEventListener(event: "cuestart" | "cuestop", handler: Function): void {
 		const index = this[listenersSymbol].findIndex(
@@ -198,8 +214,10 @@ export class HSServer {
 	}
 
 	/**
-	 * Provided a language to select, it attempts to switch to
-	 * that language among the valid ones.
+	 * Given a language as parameter, it attempts to switch to
+	 * that language, if available among the valid ones. Passing
+	 * a falsy value to `lang` will result in server suspension
+	 * with a `"cuestop"` emission.
 	 *
 	 * @param lang
 	 * @returns
