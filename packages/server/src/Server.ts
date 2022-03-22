@@ -170,7 +170,7 @@ export class HSServer {
 	 */
 
 	public destroy() {
-		this.suspend();
+		this.suspend(true);
 
 		this[intervalSymbol] = undefined;
 		this[sessionSymbol] = undefined;
