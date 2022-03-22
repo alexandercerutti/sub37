@@ -360,5 +360,70 @@ describe("HSServer", () => {
 
 			server.start(mockGetCurrentPositionFactory());
 		}, 10000);
+
+		it("[timed] should emit a stop if track is changed to null while running", (done) => {
+			// ********************* //
+			// *** MOCKING START *** //
+			// ********************* //
+
+			MockedRenderer.prototype.parse = function (content) {
+				return content;
+			};
+
+			// ******************* //
+			// *** MOCKING END *** //
+			// ******************* //
+
+			const server = new HSServer(MockedRenderer);
+
+			server.createSession(
+				[
+					{
+						content: [
+							{
+								content: "This is a sample cue",
+								startTime: 0,
+								endTime: 1,
+							},
+							{
+								content: "This is a sample cue second",
+								startTime: 0.4,
+								endTime: 1,
+							},
+							{
+								content: "This is a sample cue third",
+								startTime: 1,
+								endTime: 2.5,
+							},
+							{
+								content: "This is a sample cue fourth",
+								startTime: 2.5,
+								endTime: 4,
+							},
+						],
+						lang: "eng",
+					},
+				],
+				"text/vtt",
+			);
+
+			let currentCues = 0;
+
+			server.addEventListener("cuestart", (nodes) => {
+				currentCues++;
+
+				if (currentCues === 2) {
+					server.selectTextTrack(null);
+				}
+			});
+
+			server.addEventListener("cuestop", () => {
+				expect(currentCues).toBe(2);
+				expect(server.isRunning).toBe(false);
+				done();
+			});
+
+			server.start(mockGetCurrentPositionFactory());
+		}, 10000);
 	});
 });

@@ -259,7 +259,7 @@ function assertIntervalStarted(this: HSServer) {
 }
 
 function assertIntervalNotRunning(this: HSServer) {
-	if (this[intervalSymbol].isRunning) {
+	if (this[intervalSymbol]?.isRunning) {
 		throw new Error("Server is already running. Cannot perform operation.");
 	}
 }
