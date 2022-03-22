@@ -88,9 +88,8 @@ export class HSServer {
 	 */
 
 	public start(getCurrentPosition: () => number, frequencyMs: number = 250) {
-		if (!this[sessionSymbol]) {
-			throw new Error("No session started. Engine won't serve any subtitles.");
-		}
+		assertSessionInitialized.call(this);
+		assertIntervalNotRunning.call(this);
 
 		if (!frequencyMs || typeof frequencyMs !== "number") {
 			throw new Error(
@@ -130,6 +129,9 @@ export class HSServer {
 	 */
 
 	public suspend() {
+		assertIntervalStarted.call(this);
+		assertIntervalRunning.call(this);
+
 		this[intervalSymbol]?.stop();
 	}
 
@@ -141,6 +143,9 @@ export class HSServer {
 	 */
 
 	public resume() {
+		assertIntervalStarted.call(this);
+		assertIntervalNotRunning.call(this);
+
 		this[intervalSymbol]?.start();
 	}
 
@@ -150,6 +155,8 @@ export class HSServer {
 	 */
 
 	public get isRunning() {
+		assertIntervalStarted.call(this);
+
 		return this[intervalSymbol].isRunning;
 	}
 
@@ -160,6 +167,7 @@ export class HSServer {
 
 	public destroy() {
 		this.suspend();
+
 		this[intervalSymbol] = undefined;
 		this[sessionSymbol] = undefined;
 	}
@@ -194,7 +202,9 @@ export class HSServer {
 	 */
 
 	public selectTextTrack(lang: string) {
-		if (!this[sessionSymbol] || !lang) {
+		assertSessionInitialized.call(this);
+
+		if (!lang) {
 			return;
 		}
 
@@ -226,5 +236,29 @@ function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: Cu
 		if (event === eventName) {
 			handler(data);
 		}
+	}
+}
+
+function assertSessionInitialized(this: HSServer) {
+	if (!this[sessionSymbol]) {
+		throw new Error("No session started. Engine won't serve any subtitles.");
+	}
+}
+
+function assertIntervalStarted(this: HSServer) {
+	if (!this[intervalSymbol]) {
+		throw new Error("Server has not been started at all. Cannot perform operation.");
+	}
+}
+
+function assertIntervalNotRunning(this: HSServer) {
+	if (this[intervalSymbol].isRunning) {
+		throw new Error("Server is already running. Cannot perform operation.");
+	}
+}
+
+function assertIntervalRunning(this: HSServer) {
+	if (!this[intervalSymbol].isRunning) {
+		throw new Error("Server has been started but is not running. Cannot perform operation.");
 	}
 }
