@@ -130,11 +130,15 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public suspend() {
+	public suspend(emitStop: boolean = false) {
 		assertIntervalStarted.call(this);
 		assertIntervalRunning.call(this);
 
 		this[intervalSymbol]?.stop();
+
+		if (emitStop) {
+			emitEvent(this[listenersSymbol], "cuestop");
+		}
 	}
 
 	/**
@@ -207,6 +211,7 @@ export class HSServer {
 		assertSessionInitialized.call(this);
 
 		if (!lang) {
+			this.suspend(true);
 			return;
 		}
 
