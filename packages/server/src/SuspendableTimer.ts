@@ -16,6 +16,7 @@ export class SuspendableTimer {
 			return;
 		}
 
+		window.clearInterval(this.interval);
 		this.interval = null;
 	}
 
