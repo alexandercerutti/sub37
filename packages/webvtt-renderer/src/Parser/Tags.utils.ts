@@ -12,10 +12,58 @@ export enum VTTEntities {
 	UNDERLINE /***/ = 0b10000000,
 }
 
-export interface OpenTag {
-	/** Zero-based position of cue (or timestamp section) content */
-	index: number;
-	token: Token;
+export class NodeTree {
+	private root: Node = null;
+
+	public get current() {
+		return this.root;
+	}
+
+	public get length() {
+		let thisNode: Node = this.root;
+
+		if (!thisNode) {
+			return 0;
+		}
+
+		let length = 1;
+		while (thisNode.parent !== null) {
+			length++;
+			thisNode = thisNode.parent;
+		}
+
+		return length;
+	}
+
+	public push(node: Node) {
+		if (!this.root) {
+			this.root = node;
+			return;
+		}
+
+		node.parent = this.root;
+		this.root = node;
+	}
+
+	public pop() {
+		if (!this.root) {
+			return;
+		}
+
+		const out = this.root;
+		this.root = this.root.parent;
+		return out;
+	}
+}
+
+export class Node {
+	public parent: Node = null;
+
+	constructor(
+		/** Zero-based position of cue (or timestamp section) content */
+		public index: number,
+		public token: Token,
+	) {}
 }
 
 const EntitiesTokenMap: { [key: string]: VTTEntities } = {
@@ -33,25 +81,42 @@ export function isSupported(content: string): boolean {
 	return Boolean(EntitiesTokenMap[content]);
 }
 
-export function completeMissing(openTags: OpenTag[], currentCue: CueNode): Entity[] {
-	return openTags.reduce<Entity[]>((acc, tag) => {
-		if (currentCue.content.length - tag.index === 0) {
+/**
+ * Creates entities from tree entities that have not been popped
+ * out yet, without removing them from the tree
+ *
+ * @param openTagsTree
+ * @param currentCue
+ * @returns
+ */
+
+export function createEntitiesFromUnpaired(openTagsTree: NodeTree, currentCue: CueNode): Entity[] {
+	let nodeCursor: Node = openTagsTree.current;
+
+	if (!nodeCursor) {
+		return [];
+	}
+
+	const entities: Entity[] = [];
+
+	while (nodeCursor !== null) {
+		if (currentCue.content.length - nodeCursor.index !== 0) {
 			/**
 			 * If an entity startTag is placed between two timestamps
 			 * the closing timestamp should not have the new tag associated.
 			 * tag.index is zero-based.
 			 */
 
-			return acc;
+			entities.push(createEntity(currentCue, nodeCursor));
 		}
 
-		const entity = createEntity(currentCue, tag);
+		nodeCursor = nodeCursor.parent;
+	}
 
-		return [...acc, entity];
-	}, []);
+	return entities;
 }
 
-export function createEntity(currentCue: CueNode, tagStart: OpenTag): Entity {
+export function createEntity(currentCue: CueNode, tagStart: Node): Entity {
 	/**
 	 * If length is negative, that means that the tag was opened before
 	 * the beginning of the current Cue. Therefore, offset should represent

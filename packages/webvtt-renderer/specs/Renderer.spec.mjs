@@ -48,6 +48,13 @@ WEBVTT
 <00:00:24.000>
 `;
 
+		const RUBY_RT_AUTOCLOSE = `
+WEBVTT
+
+00:00:05.000 --> 00:00:10.000
+<ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
+`;
+
 		it("should return an empty array if rawContent is falsy", () => {
 			expect(renderer.parse(undefined)).toEqual([]);
 			expect(renderer.parse(null)).toEqual([]);
@@ -142,6 +149,39 @@ WEBVTT
 						type: 16,
 						offset: 1,
 						length: 3,
+						attributes: [],
+					},
+				],
+			});
+		});
+
+		it("should return a cue with three entities when ruby autocloses a ruby-text <rt>", () => {
+			const parsingResult = renderer.parse(RUBY_RT_AUTOCLOSE);
+			expect(parsingResult).toBeInstanceOf(Array);
+			expect(parsingResult.length).toEqual(1);
+
+			expect(parsingResult[0]).toEqual({
+				startTime: 5000,
+				endTime: 10000,
+				content: "漢 kan 字 ji\n",
+				id: undefined,
+				entities: [
+					{
+						type: 8,
+						offset: 2,
+						length: 3,
+						attributes: [],
+					},
+					{
+						type: 8,
+						offset: 8,
+						length: 2,
+						attributes: [],
+					},
+					{
+						type: 4,
+						offset: 0,
+						length: 10,
 						attributes: [],
 					},
 				],
