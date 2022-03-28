@@ -62,8 +62,6 @@ export default class Renderer extends HSBaseRenderer {
 				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
 				block.cursor === content.length
 			) {
-				console.log("Found block:", content.substring(block.start, block.cursor));
-
 				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor);
 
 				const isRegionOrStyle = blockType & REGION_OR_STYLE;
