@@ -3,8 +3,8 @@ import Node from "./Node";
 import NodeTree from "./NodesTree";
 import { EntitiesTokenMap } from "./tokenEntities";
 
-export function isSupported(content: string): boolean {
-	return Boolean(EntitiesTokenMap[content]);
+export function isSupported(content: string) {
+	return EntitiesTokenMap.hasOwnProperty(content);
 }
 
 /**
