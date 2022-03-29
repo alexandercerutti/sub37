@@ -19,13 +19,11 @@ export function parseCue(data: CueData): CueNode[] {
 	const hsCues: CueNode[] = [];
 	const tokenizer = new Tokenizer(text);
 	let token: Token = null;
-	let currentCue: CueNode = {
-		startTime: Timestamps.parseMs(starttime),
-		endTime: Timestamps.parseMs(endtime),
-		content: "",
-		entities: [],
-		id: data.cueid,
-	};
+	let currentCue = createCue(
+		Timestamps.parseMs(starttime),
+		Timestamps.parseMs(endtime),
+		data.cueid,
+	);
 
 	const openTagsTree = new Tags.NodeTree();
 
@@ -85,13 +83,11 @@ export function parseCue(data: CueData): CueNode[] {
 				currentCue.entities.push(...Tags.createEntitiesFromUnpaired(openTagsTree, currentCue));
 				hsCues.push(currentCue);
 
-				currentCue = {
-					startTime: Timestamps.parseMs(token.content),
-					endTime: currentCue.endTime,
-					content: "",
-					entities: [],
-					id: currentCue.id,
-				};
+				currentCue = createCue(
+					Timestamps.parseMs(token.content),
+					currentCue.endTime,
+					currentCue.id,
+				);
 
 				break;
 			}
@@ -117,4 +113,14 @@ export function parseCue(data: CueData): CueNode[] {
 	}
 
 	return hsCues;
+}
+
+function createCue(startTime: number, endTime: number, id?: string): CueNode {
+	return {
+		startTime,
+		endTime,
+		content: "",
+		entities: [],
+		id,
+	};
 }
