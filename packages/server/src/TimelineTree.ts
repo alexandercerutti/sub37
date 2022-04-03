@@ -84,6 +84,15 @@ export class TimelineTree {
 
 		return accumulateMatchingNodes(this.root, currentTime);
 	}
+
+	/**
+	 * Retrieves all the nodes in order
+	 * @returns
+	 */
+
+	public getAll(): CueNode[] {
+		return findAllInSubtree(this.root);
+	}
 }
 
 /**
@@ -135,4 +144,20 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
 	}
 
 	return matchingNodes;
+}
+
+/**
+ * Recursively scans and accumulate the nodes in the subtree
+ * starting from an arbitrary root node
+ *
+ * @param root
+ * @returns
+ */
+
+function findAllInSubtree(root: TimelineTreeNode): CueNode[] {
+	if (!root) {
+		return [];
+	}
+
+	return [...findAllInSubtree(root.left), root.node, ...findAllInSubtree(root.right)];
 }

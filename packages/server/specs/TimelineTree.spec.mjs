@@ -147,4 +147,100 @@ describe("TimelineTree", () => {
 			},
 		]);
 	});
+
+	it("should return all the nodes in the correct order", () => {
+		/** Root */
+		tree.addNode({
+			content: "A test content",
+			startTime: 11000,
+			endTime: 12000,
+		});
+
+		/** Adding on left */
+		tree.addNode({
+			content: "A test content",
+			startTime: 3000,
+			endTime: 10000,
+		});
+
+		/** Adding on right */
+		tree.addNode({
+			content: "A test content",
+			startTime: 12000,
+			endTime: 15000,
+		});
+
+		/** Adding on left's left */
+		tree.addNode({
+			content: "A test content",
+			startTime: 0,
+			endTime: 5000,
+		});
+
+		/** Adding on left's right */
+		tree.addNode({
+			content: "A test content",
+			startTime: 5000,
+			endTime: 9000,
+		});
+
+		/** Adding on right's left */
+		tree.addNode({
+			content: "A test content",
+			startTime: 12000,
+			endTime: 13000,
+		});
+
+		/** Adding on right's right */
+		tree.addNode({
+			content: "A test content",
+			startTime: 13000,
+			endTime: 15000,
+		});
+
+		const query = tree.getAll();
+
+		expect(query.length).toBe(7);
+
+		expect(query).toEqual([
+			// left
+			{
+				content: "A test content",
+				startTime: 0,
+				endTime: 5000,
+			},
+			{
+				content: "A test content",
+				startTime: 3000,
+				endTime: 10000,
+			},
+			{
+				content: "A test content",
+				startTime: 5000,
+				endTime: 9000,
+			},
+			// Root
+			{
+				content: "A test content",
+				startTime: 11000,
+				endTime: 12000,
+			},
+			// right
+			{
+				content: "A test content",
+				startTime: 12000,
+				endTime: 13000,
+			},
+			{
+				content: "A test content",
+				startTime: 12000,
+				endTime: 15000,
+			},
+			{
+				content: "A test content",
+				startTime: 13000,
+				endTime: 15000,
+			},
+		]);
+	});
 });
