@@ -11,8 +11,8 @@ const listenersSymbol /**/ = Symbol("hs.s.listeners");
 
 type HSListener =
 	| {
-			event: "cuestart";
-			handler(cue: CueNode[]): void;
+			event: "cuestart" | "cuesfetch";
+			handler(cues: CueNode[]): void;
 	  }
 	| {
 			event: "cuestop";
@@ -87,7 +87,11 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public start(getCurrentPosition: () => number, frequencyMs: number = 250) {
+	public start(
+		getCurrentPosition: () => number,
+		frequencyMs: number = 250,
+		options?: { karaoke?: boolean },
+	) {
 		assertSessionInitialized.call(this);
 		assertIntervalNotRunning.call(this);
 
@@ -95,6 +99,14 @@ export class HSServer {
 			throw new Error(
 				"Cannot start subtitles server: a frequency is required to be either be set to a value > 0 or not be set (fallback to 250ms)",
 			);
+		}
+
+		if (options?.karaoke) {
+			/**
+			 * Emitting all the cues available so previous and next cues can be
+			 * seen before or after they get highlighted, like in a Karaoke.
+			 */
+			emitEvent(this[listenersSymbol], "cuesfetch", this[sessionSymbol].getAll());
 		}
 
 		let lastUsedCues = new Set<CueNode>();

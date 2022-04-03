@@ -30,6 +30,10 @@ export class HSSession {
 		}
 	}
 
+	public getAll() {
+		return this.timelines[this[activeTrackSymbol]].getAll();
+	}
+
 	public get availableTracks() {
 		return Object.keys(this.timelines);
 	}
