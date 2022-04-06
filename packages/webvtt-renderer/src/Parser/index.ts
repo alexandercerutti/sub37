@@ -5,7 +5,8 @@ import type { Token } from "../Token.js";
 import * as Tags from "./Tags";
 import * as Timestamps from "./Timestamps.utils.js";
 
-export interface CueData {
+/** This structure is compliant with the resulting one from Regex groups property */
+export interface CueRawData {
 	cueid: string;
 	starttime: string;
 	endtime: string;
@@ -13,7 +14,7 @@ export interface CueData {
 	text: string;
 }
 
-export function parseCue(data: CueData): CueNode[] {
+export function parseCue(data: CueRawData): CueNode[] {
 	const { starttime, endtime, text } = data;
 
 	const hsCues: CueNode[] = [];

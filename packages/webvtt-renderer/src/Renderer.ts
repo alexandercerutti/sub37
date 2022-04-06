@@ -1,6 +1,6 @@
 import { HSBaseRenderer } from "@hsubs/server";
 import type { CueNode } from "@hsubs/server";
-import { CueData, parseCue } from "./Parser/index.js";
+import { CueRawData, parseCue } from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
@@ -145,7 +145,7 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 		return [BlockType.IGNORED, undefined];
 	}
 
-	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueData);
+	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueRawData);
 
 	return [BlockType.CUE, cueParsingResult];
 }
