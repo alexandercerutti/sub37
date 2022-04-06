@@ -10,7 +10,7 @@ export interface CueRawData {
 	cueid: string;
 	starttime: string;
 	endtime: string;
-	attributes: any;
+	attributes: string;
 	text: string;
 }
 
