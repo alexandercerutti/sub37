@@ -12,11 +12,19 @@ export interface Entity {
 	type: number;
 }
 
+export interface Region {
+	viewportAnchorPoint?: [number, number];
+	width?: number;
+	lines?: number;
+	scrollCuesUp?: boolean;
+}
+
 export interface CueNode {
 	startTime: number;
 	endTime: number;
 	id?: string;
 	styles?: any /** @TODO parse them */;
+	region?: Region;
 	entities?: Entity[];
 	content: string;
 }
