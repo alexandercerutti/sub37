@@ -17,7 +17,7 @@ class MockedRenderer extends HSBaseRenderer {
 		return "text/vtt";
 	}
 
-	/** @returns {import("../lib/TimelineTree").CueNode[]} */
+	/** @returns {import("../lib/model").CueNode[]} */
 	parse() {
 		return [];
 	}

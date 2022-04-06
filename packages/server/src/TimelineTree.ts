@@ -6,16 +6,7 @@
  * at the same time?
  */
 
-import { Entity } from "./model";
-
-export interface CueNode {
-	startTime: number;
-	endTime: number;
-	id?: string;
-	styles?: any /** @TODO parse them */;
-	entities?: Entity[];
-	content: string;
-}
+import { CueNode } from "./model";
 
 class TimelineTreeNode {
 	public left: TimelineTreeNode = null;

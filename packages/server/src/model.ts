@@ -11,3 +11,12 @@ export interface Entity {
 	attributes?: any[];
 	type: number;
 }
+
+export interface CueNode {
+	startTime: number;
+	endTime: number;
+	id?: string;
+	styles?: any /** @TODO parse them */;
+	entities?: Entity[];
+	content: string;
+}

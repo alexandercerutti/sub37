@@ -1,4 +1,4 @@
-import { CueNode } from "../TimelineTree";
+import { CueNode } from "../model";
 
 export interface HSBaseRendererConstructor {
 	supportedType: string;

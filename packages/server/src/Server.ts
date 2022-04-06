@@ -1,8 +1,7 @@
 import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer";
-import { RawTrack } from "./model";
+import { RawTrack, CueNode } from "./model";
 import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
-import { CueNode } from "./TimelineTree";
 
 const intervalSymbol /***/ = Symbol("hs.s.interval");
 const renderersSymbol /**/ = Symbol("hs.s.renderers");

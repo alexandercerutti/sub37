@@ -8,7 +8,7 @@ class MockedRenderer extends HSBaseRenderer {
 	/**
 	 *
 	 * @param {string} content
-	 * @returns {Array<import("../lib/TimelineTree.js").CueNode>}
+	 * @returns {Array<import("../lib/model.js").CueNode>}
 	 */
 	parse(content) {
 		return [];
