@@ -62,20 +62,24 @@ export default class Renderer extends HSBaseRenderer {
 			) {
 				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
+				/**
+				 * According to WebVTT standard, Region and style blocks should be
+				 * placed above the cues. So we try to ignore them if they are mixed.
+				 */
+
 				const shouldProcessNonCues =
 					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
 
-				if (isRegionOrStyle(blockEvaluationResult) && shouldProcessNonCues) {
+				if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
-					/**
-					 * If we are not parsing yet cues,
-					 * we can save region and styles.
-					 * Otherwise ignore.
-					 */
+					latestBlockPhase = blockType;
+				}
 
+				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
+					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
 
-					/** @TODO Use Region or Style */
+					/** @TODO how do we process and use styles? */
 				}
 
 				if (isCue(blockEvaluationResult)) {
@@ -155,10 +159,6 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueRawData);
 
 	return [BlockType.CUE, cueParsingResult];
-}
-
-function isRegionOrStyle(evaluation: BlockTuple): evaluation is RegionBlockType | StyleBlockType {
-	return isRegion(evaluation) || isStyle(evaluation);
 }
 
 function isRegion(evalutation: BlockTuple): evalutation is RegionBlockType {
