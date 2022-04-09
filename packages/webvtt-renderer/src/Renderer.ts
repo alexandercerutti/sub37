@@ -64,10 +64,10 @@ export default class Renderer extends HSBaseRenderer {
 
 				const evaluatedBlock = evaluateBlock(content, block.start, block.cursor);
 
-				const isNonCueAllowed =
+				const shouldProcessNonCues =
 					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
 
-				if (isRegionOrStyle(evaluatedBlock) && isNonCueAllowed) {
+				if (isRegionOrStyle(evaluatedBlock) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = evaluatedBlock;
 					/**
 					 * If we are not parsing yet cues,
