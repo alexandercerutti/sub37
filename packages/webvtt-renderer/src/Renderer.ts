@@ -46,8 +46,6 @@ export default class Renderer extends HSBaseRenderer {
 
 		let latestBlockPhase = BlockType.HEADER;
 
-		const REGION_OR_STYLE = BlockType.REGION | BlockType.STYLE;
-
 		/**
 		 * Navigating body
 		 */
@@ -64,10 +62,13 @@ export default class Renderer extends HSBaseRenderer {
 			) {
 				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor);
 
-				const isRegionOrStyle = blockType & REGION_OR_STYLE;
-				const isNonCueAllowed = latestBlockPhase & (REGION_OR_STYLE | BlockType.HEADER);
+				const evaluatedBlock = evaluateBlock(content, block.start, block.cursor);
 
-				if (isRegionOrStyle && isNonCueAllowed) {
+				const isNonCueAllowed =
+					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
+
+				if (isRegionOrStyle(evaluatedBlock) && isNonCueAllowed) {
+					const [blockType, parsedContent] = evaluatedBlock;
 					/**
 					 * If we are not parsing yet cues,
 					 * we can save region and styles.
@@ -79,7 +80,9 @@ export default class Renderer extends HSBaseRenderer {
 					/** @TODO Use Region or Style */
 				}
 
-				if (blockType & BlockType.CUE) {
+				if (isCue(evaluatedBlock)) {
+					const [blockType, parsedContent] = evaluatedBlock;
+
 					latestBlockPhase = blockType;
 
 					for (let cue of parsedContent) {
@@ -105,12 +108,18 @@ export default class Renderer extends HSBaseRenderer {
 	}
 }
 
+type CueBlockType = [blockType: BlockType.CUE, payload: CueNode[]];
+type HeaderBlockType = [blockType: BlockType.HEADER, payload: undefined];
+type RegionBlockType = [blockType: BlockType.REGION, payload: Region];
+type StyleBlockType = [blockType: BlockType.STYLE, payload: undefined];
+type IgnoredBlockType = [blockType: BlockType.IGNORED, payload: undefined];
+
 type BlockTuple =
-	| [BlockType.CUE, CueNode[]]
-	| [BlockType.HEADER, undefined]
-	| [BlockType.REGION, undefined] /** @TODO what type has a region data? */
-	| [BlockType.STYLE, undefined] /** @TODO what type has a style data? */
-	| [BlockType.IGNORED, undefined];
+	| CueBlockType
+	| HeaderBlockType
+	| RegionBlockType
+	| StyleBlockType
+	| IgnoredBlockType;
 
 function evaluateBlock(content: string, start: number, end: number): BlockTuple {
 	if (start === 0) {
@@ -148,4 +157,20 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueRawData);
 
 	return [BlockType.CUE, cueParsingResult];
+}
+
+function isRegionOrStyle(evaluation: BlockTuple): evaluation is RegionBlockType | StyleBlockType {
+	return isRegion(evaluation) || isStyle(evaluation);
+}
+
+function isRegion(evalutation: BlockTuple): evalutation is RegionBlockType {
+	return Boolean(evalutation[0] & BlockType.REGION);
+}
+
+function isStyle(evalutation: BlockTuple): evalutation is StyleBlockType {
+	return Boolean(evalutation[0] & BlockType.STYLE);
+}
+
+function isCue(evaluation: BlockTuple): evaluation is CueBlockType {
+	return Boolean(evaluation[0] & BlockType.CUE);
 }
