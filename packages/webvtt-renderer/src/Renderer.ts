@@ -60,15 +60,13 @@ export default class Renderer extends HSBaseRenderer {
 				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
 				block.cursor === content.length
 			) {
-				const [blockType, parsedContent] = evaluateBlock(content, block.start, block.cursor);
-
-				const evaluatedBlock = evaluateBlock(content, block.start, block.cursor);
+				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
 				const shouldProcessNonCues =
 					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
 
-				if (isRegionOrStyle(evaluatedBlock) && shouldProcessNonCues) {
-					const [blockType, parsedContent] = evaluatedBlock;
+				if (isRegionOrStyle(blockEvaluationResult) && shouldProcessNonCues) {
+					const [blockType, parsedContent] = blockEvaluationResult;
 					/**
 					 * If we are not parsing yet cues,
 					 * we can save region and styles.
@@ -80,8 +78,8 @@ export default class Renderer extends HSBaseRenderer {
 					/** @TODO Use Region or Style */
 				}
 
-				if (isCue(evaluatedBlock)) {
-					const [blockType, parsedContent] = evaluatedBlock;
+				if (isCue(blockEvaluationResult)) {
+					const [blockType, parsedContent] = blockEvaluationResult;
 
 					latestBlockPhase = blockType;
 
