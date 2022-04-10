@@ -13,10 +13,12 @@ export interface Entity {
 }
 
 export interface Region {
-	viewportAnchorPoint?: [number, number];
-	width?: number;
+	id: string;
+	width?: string;
 	lines?: number;
-	scrollCuesUp?: boolean;
+	scroll?: "up" | "none";
+	regionanchor?: [`${number}%`, `${number}%`];
+	viewportanchor?: [`${number}%`, `${number}%`];
 }
 
 export interface CueNode {

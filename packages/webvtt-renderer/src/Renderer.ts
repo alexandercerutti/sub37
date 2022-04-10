@@ -1,10 +1,11 @@
-import { HSBaseRenderer } from "@hsubs/server";
+import { HSBaseRenderer, Region } from "@hsubs/server";
 import type { CueNode } from "@hsubs/server";
 import { CueRawData, parseCue } from "./Parser/index.js";
+import parseRegion from "./Parser/region.js";
 
 const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
-const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*/;
+const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*(?<payload>[\w\W]*)/;
 // const REGION_ATTRIBUTES_REGEX = /(?:(?<key>[^\s]+):(?<value>[^\s]+))(?:(?:[\r\n]+)|\s+)/g;
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))\s*?(?:(?<attributes>[^\r\n]*?))[\r\n]+(?<text>(?:.+[\r\n]*)+)/;
@@ -38,6 +39,8 @@ export default class Renderer extends HSBaseRenderer {
 			cursor: 0,
 		};
 
+		const regions: Region[] = [];
+
 		/**
 		 * Phase indicator to ignore unordered blocks.
 		 * Standard expects header (WEBVTT, STYLE, REGION, COMMENTS)
@@ -45,10 +48,6 @@ export default class Renderer extends HSBaseRenderer {
 		 */
 
 		let latestBlockPhase = BlockType.HEADER;
-
-		/**
-		 * Navigating body
-		 */
 
 		do {
 			/**
@@ -60,7 +59,7 @@ export default class Renderer extends HSBaseRenderer {
 				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
 				block.cursor === content.length
 			) {
-				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
+				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor, regions);
 
 				/**
 				 * According to WebVTT standard, Region and style blocks should be
@@ -73,6 +72,7 @@ export default class Renderer extends HSBaseRenderer {
 				if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
+					regions.push(parsedContent);
 				}
 
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
@@ -123,7 +123,7 @@ type BlockTuple =
 	| StyleBlockType
 	| IgnoredBlockType;
 
-function evaluateBlock(content: string, start: number, end: number): BlockTuple {
+function evaluateBlock(content: string, start: number, end: number, regions: Region[]): BlockTuple {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -139,8 +139,13 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 	if (blockMatch?.groups["blocktype"]) {
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
-				/** @TODO not supported yet */
-				return [BlockType.REGION, undefined];
+				const payload = parseRegion(blockMatch.groups["payload"]);
+
+				if (!payload || regions.find((r) => r.id === payload.id)) {
+					return [BlockType.IGNORED, undefined];
+				}
+
+				return [BlockType.REGION, payload];
 			case "STYLE":
 				/** @TODO not supported yet */
 				return [BlockType.STYLE, undefined];
