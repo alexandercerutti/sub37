@@ -29,4 +29,5 @@ export interface CueNode {
 	region?: Region;
 	entities?: Entity[];
 	content: string;
+	attributes?: any /** @TODO attributes are generic cue attributes, but we miss a shared format yet */;
 }
