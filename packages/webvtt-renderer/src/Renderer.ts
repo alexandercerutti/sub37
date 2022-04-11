@@ -1,7 +1,6 @@
 import { HSBaseRenderer, Region } from "@hsubs/server";
 import type { CueNode } from "@hsubs/server";
-import { CueRawData, parseCue } from "./Parser/index.js";
-import parseRegion from "./Parser/region.js";
+import * as Parser from "./Parser";
 
 const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
@@ -49,6 +48,8 @@ export default class Renderer extends HSBaseRenderer {
 
 		let latestBlockPhase = BlockType.HEADER;
 
+		debugger;
+
 		do {
 			/**
 			 * Checking if the current character is a newline linefeed indicator (\n) and if the next one is so.
@@ -59,6 +60,8 @@ export default class Renderer extends HSBaseRenderer {
 				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
 				block.cursor === content.length
 			) {
+				console.log("Found block:", content.substring(block.start, block.cursor));
+
 				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor, regions);
 
 				/**
@@ -139,7 +142,7 @@ function evaluateBlock(content: string, start: number, end: number, regions: Reg
 	if (blockMatch?.groups["blocktype"]) {
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
-				const payload = parseRegion(blockMatch.groups["payload"]);
+				const payload = Parser.parseRegion(blockMatch.groups["payload"]);
 
 				if (!payload || regions.find((r) => r.id === payload.id)) {
 					return [BlockType.IGNORED, undefined];
@@ -161,7 +164,7 @@ function evaluateBlock(content: string, start: number, end: number, regions: Reg
 		return [BlockType.IGNORED, undefined];
 	}
 
-	const cueParsingResult = parseCue(cueMatch.groups as unknown as CueRawData);
+	const cueParsingResult = Parser.parseCue(cueMatch.groups as unknown as Parser.CueRawData);
 
 	return [BlockType.CUE, cueParsingResult];
 }

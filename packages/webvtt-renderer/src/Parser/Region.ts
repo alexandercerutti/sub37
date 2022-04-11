@@ -25,7 +25,7 @@ interface VTTRegion {
  * @param rawData
  */
 
-export default function parseRegion(rawRegionData: string): Region {
+export function parseRegion(rawRegionData: string): Region {
 	const data = rawRegionData.split("\n").reduce<Region>((acc, current) => {
 		const [key, value] = current.split(":") as [keyof Region, string];
 

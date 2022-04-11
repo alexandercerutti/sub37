@@ -91,6 +91,9 @@ WEBVTT
 				endTime: 25000,
 				content: "Would you like to get < coffee?",
 				id: undefined,
+				attributes: {
+					align: "left",
+				},
 				entities: [
 					{
 						offset: 0,
@@ -107,6 +110,9 @@ WEBVTT
 				endTime: 20000,
 				content: "Hi, my name is Fred",
 				id: undefined,
+				attributes: {
+					align: "left",
+				},
 				entities: [
 					{
 						offset: 0,
@@ -129,6 +135,7 @@ WEBVTT
 				endTime: 24000,
 				content: " This\n",
 				id: undefined,
+				attributes: {},
 				entities: [
 					{
 						type: 16,
@@ -165,6 +172,7 @@ WEBVTT
 				endTime: 10000,
 				content: "漢 kan 字 ji\n",
 				id: undefined,
+				attributes: {},
 				entities: [
 					{
 						type: 8,

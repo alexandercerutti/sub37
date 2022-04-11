@@ -44,12 +44,15 @@ WEBVTT
 							type: 1,
 						},
 					],
+					attributes: {
+						align: "left",
+					},
 				},
 			]);
 		});
 
 		it("should return an array of CueNodes if a CueData inclues timestamps. All the CueNodes should maintain the same origin ID", () => {
-			/** @type {import("../lib/Parser/index.js").CueData} */
+			/** @type {import("../lib/Parser/index.js").CueRawData} */
 			const originalData = {
 				attributes: "",
 				cueid: "text-1",
@@ -76,6 +79,7 @@ WEBVTT
 				endTime: 27000,
 				content: "Welcome Liquicity Airlines\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[1]).toEqual({
@@ -136,7 +140,7 @@ WEBVTT
 		});
 
 		it("should return an array of CueNodes with the same id and endTime if one cue is passed", () => {
-			/** @type {import("../lib/Parser/index.js").CueData} */
+			/** @type {import("../lib/Parser/index.js").CueRawData} */
 			const originalData = {
 				attributes: "",
 				cueid: "text-1",
@@ -155,11 +159,12 @@ WEBVTT
 				endTime: 16000,
 				content: "Welcome to the galaxy of dreams",
 				entities: [],
+				attributes: {},
 			});
 		});
 
 		it("should return an array of CueNodes that have the same entities if an entity start before a timestamp and ends in a next timestamp", () => {
-			/** @type {import("../lib/Parser/index.js").CueData} */
+			/** @type {import("../lib/Parser/index.js").CueRawData} */
 			const originalData = {
 				attributes: "",
 				cueid: "text-1",
