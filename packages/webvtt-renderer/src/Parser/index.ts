@@ -19,12 +19,17 @@ export function parseCue(data: CueRawData): CueNode[] {
 
 	const hsCues: CueNode[] = [];
 	const tokenizer = new Tokenizer(text);
+	const { region, ...attributes } = parseAttributes(data.attributes);
+
 	let token: Token = null;
 	let currentCue = createCue(
 		Timestamps.parseMs(starttime),
 		Timestamps.parseMs(endtime),
 		data.cueid,
 	);
+
+	/** @TODO what to do with attributes */
+	currentCue.attributes = attributes;
 
 	const openTagsTree = new Tags.NodeTree();
 
@@ -124,4 +129,27 @@ function createCue(startTime: number, endTime: number, id?: string): CueNode {
 		entities: [],
 		id,
 	};
+}
+
+interface Attributes {
+	position?: string;
+	positionAlign?: "line-left" | "center" | "line-right" | "auto";
+	line?: string;
+	align?: string;
+	size?: string;
+	region?: string;
+	snapToLines?: string;
+	vertical?: "" | "rl" | "lr";
+	lineAlign?: "start" | "center" | "end";
+}
+
+function parseAttributes(attributesLine: string): Attributes {
+	if (!attributesLine?.length) {
+		return {};
+	}
+
+	return attributesLine.split(" ").reduce((acc, curr) => {
+		const [key, value] = curr.split(":");
+		return (key && value && { ...acc, [key]: value }) || acc;
+	}, {});
 }
