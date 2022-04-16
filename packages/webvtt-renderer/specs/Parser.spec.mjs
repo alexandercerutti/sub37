@@ -253,6 +253,8 @@ scroll:up
 
 		const REGION_WITH_ATTRIBUTES_SPACES = `id:fred width:40% lines:3 regionanchor:0%,100% viewportanchor:10%,90% scroll:up`;
 
+		const REGION_WITHOUT_ID = `width:40% lines:3 regionanchor:0%,100% viewportanchor:10%,90% scroll:up`;
+
 		it("should return a custom region with converted attributes if string is separated by newlines", () => {
 			expect(parseRegion(REGION_WITH_ATTRIBUTES_NEWLINES)).toEqual({
 				id: "fred",
@@ -271,6 +273,10 @@ scroll:up
 				displayStrategy: "push",
 				origin: ["10%", "90%"],
 			});
+		});
+
+		it("should discard the parsing result if a text region misses the id", () => {
+			expect(parseRegion(REGION_WITHOUT_ID)).toBeUndefined();
 		});
 	});
 });
