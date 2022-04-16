@@ -1,17 +1,6 @@
 import { Region } from "@hsubs/server";
 
-/**
- * 
-REGION
-id:fred
-width:40%
-lines:3
-regionanchor:0%,100%
-viewportanchor:10%,90%
-scroll:up
- */
-
-interface VTTRegion {
+interface WebVTTRegion {
 	id: string;
 	width?: string;
 	lines?: number;
@@ -21,48 +10,69 @@ interface VTTRegion {
 }
 
 /**
- *
  * @param rawData
  */
 
 export function parseRegion(rawRegionData: string): Region {
-	const data = rawRegionData.split("\n").reduce<Region>((acc, current) => {
-		const [key, value] = current.split(":") as [keyof Region, string];
+	const region = {} as Region;
+	const attributes = rawRegionData.split(/[\n\t\s]+/);
 
-		const convertedValue =
-			(value && (valueConverters[key] ? valueConverters[key](value) : value)) || undefined;
+	for (let i = 0; i < attributes.length; i++) {
+		const [key, value] = attributes[i].split(":") as [keyof WebVTTRegion, string];
 
-		if (!convertedValue) {
-			return acc;
+		if (!value || !(key in regionMappers)) {
+			continue;
 		}
 
-		return { ...acc, [key]: convertedValue };
-	}, {} as Region);
+		const mappedSubset = regionMappers[key](value);
+		Object.assign(region, mappedSubset);
+	}
 
-	if (!data.id) {
+	if (!region.id) {
 		return undefined;
 	}
 
-	return data;
+	return region;
 }
 
-const valueConverters: Partial<{ [key in keyof VTTRegion]: Function }> = {
-	width: String,
-	lines: parseInt,
-	regionanchor: (data: string) => {
-		const splitted = data.split(",");
-		if (!splitted[1]) {
-			return undefined;
-		}
+interface MappedValue {
+	id: "id";
+	scroll: "displayStrategy";
+	lines: "lines";
+	viewportanchor: "origin";
+	width: "width";
+}
 
-		return splitted;
-	},
-	viewportanchor: (data: string) => {
-		const splitted = data.split(",");
-		if (!splitted[1]) {
-			return undefined;
-		}
+type RegionMapper = {
+	[K in keyof WebVTTRegion]: K extends keyof MappedValue
+		? (value: string) => Record<MappedValue[K], Region[MappedValue[K]]>
+		: never;
+};
 
-		return splitted;
+const regionMappers: RegionMapper = Object.create(null, {
+	scroll: {
+		value: (value: string): Pick<Region, "displayStrategy"> => ({
+			displayStrategy: value === "up" ? "push" : "replace",
+		}),
 	},
-} as const;
+	id: {
+		value: (value: string): Pick<Region, "id"> => ({ id: value }),
+	},
+	lines: {
+		value: (value: string): Pick<Region, "lines"> => ({ lines: parseInt(value) }),
+	},
+	viewportanchor: {
+		value: (value: string): Pick<Region, "origin"> => {
+			const origin = value.split(",") as Region["origin"];
+
+			if (origin.length !== 2) {
+				return undefined;
+			}
+
+			return { origin };
+		},
+	},
+	width: {
+		value: (value: string): Pick<Region, "width"> => ({ width: value }),
+	},
+});
