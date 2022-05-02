@@ -10,7 +10,7 @@ interface WebVTTRegion {
 }
 
 /**
- * @param rawData
+ * @param rawRegionData
  */
 
 export function parseRegion(rawRegionData: string): Region {
