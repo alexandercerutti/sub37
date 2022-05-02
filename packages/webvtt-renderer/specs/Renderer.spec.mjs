@@ -151,6 +151,7 @@ WEBVTT
 				endTime: 24000,
 				content: " can\n",
 				id: undefined,
+				attributes: {},
 				entities: [
 					{
 						type: 16,

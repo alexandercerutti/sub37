@@ -45,6 +45,7 @@ WEBVTT
 						},
 					],
 					attributes: {
+						region: "fred",
 						align: "left",
 					},
 				},
@@ -88,6 +89,7 @@ WEBVTT
 				endTime: 27000,
 				content: " Our destination: the galaxy of dreams\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[2]).toEqual({
@@ -96,6 +98,7 @@ WEBVTT
 				endTime: 27000,
 				content: " (Our destination: the galaxy of dreams)\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[3]).toEqual({
@@ -104,6 +107,7 @@ WEBVTT
 				endTime: 27000,
 				content: " Estimated Time of Arrival: unknown\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[4]).toEqual({
@@ -112,6 +116,7 @@ WEBVTT
 				endTime: 27000,
 				content: " Please fasten your seatbelt\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[5]).toEqual({
@@ -120,6 +125,7 @@ WEBVTT
 				endTime: 27000,
 				content: " And get ready to take off\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[6]).toEqual({
@@ -128,6 +134,7 @@ WEBVTT
 				endTime: 27000,
 				content: " (Please fasten your seatbelt)\n",
 				entities: [],
+				attributes: {},
 			});
 
 			expect(parsingResult[7]).toEqual({
@@ -136,6 +143,7 @@ WEBVTT
 				endTime: 27000,
 				content: " (And get ready to take off)\n",
 				entities: [],
+				attributes: {},
 			});
 		});
 

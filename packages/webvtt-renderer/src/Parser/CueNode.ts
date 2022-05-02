@@ -19,7 +19,6 @@ export function parseCue(data: CueRawData): CueNode[] {
 
 	const hsCues: CueNode[] = [];
 	const tokenizer = new Tokenizer(text);
-	const { region, ...attributes } = parseAttributes(data.attributes);
 
 	let token: Token = null;
 	let currentCue = createCue(
@@ -28,8 +27,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 		data.cueid,
 	);
 
-	/** @TODO what to do with attributes */
-	currentCue.attributes = attributes;
+	currentCue.attributes = parseAttributes(data.attributes);
 
 	const openTagsTree = new Tags.NodeTree();
 
@@ -93,6 +91,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 					Timestamps.parseMs(token.content),
 					currentCue.endTime,
 					currentCue.id,
+					currentCue.attributes,
 				);
 
 				break;
@@ -121,13 +120,19 @@ export function parseCue(data: CueRawData): CueNode[] {
 	return hsCues;
 }
 
-function createCue(startTime: number, endTime: number, id?: string): CueNode {
+function createCue(
+	startTime: number,
+	endTime: number,
+	id?: string,
+	attributes?: Attributes,
+): CueNode {
 	return {
 		startTime,
 		endTime,
 		content: "",
 		entities: [],
 		id,
+		attributes,
 	};
 }
 
