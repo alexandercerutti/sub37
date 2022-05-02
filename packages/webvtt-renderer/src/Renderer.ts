@@ -92,6 +92,11 @@ export default class Renderer extends HSBaseRenderer {
 
 					for (let cue of parsedContent) {
 						if (cue.startTime < cue.endTime) {
+							if (cue.attributes.region) {
+								cue.region = regions.find((region) => region.id === cue.attributes.region);
+								delete cue.attributes.region;
+							}
+
 							cues.push(cue);
 						}
 					}

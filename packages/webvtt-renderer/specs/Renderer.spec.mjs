@@ -55,6 +55,22 @@ WEBVTT
 <ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
 `;
 
+		const REGION_WITH_ATTRIBUTES = `
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up
+
+00:00:05.000 --> 00:00:10.000 region:fred
+Mamma mia, Marcello, that's not how hold a gun.
+Alberto, come to look at Marcello!
+`;
+
 		it("should return an empty array if rawContent is falsy", () => {
 			expect(renderer.parse(undefined)).toEqual([]);
 			expect(renderer.parse(null)).toEqual([]);
@@ -194,6 +210,28 @@ WEBVTT
 						attributes: [],
 					},
 				],
+			});
+		});
+
+		it("should return a cue with a region associated", () => {
+			const parsingResult = renderer.parse(REGION_WITH_ATTRIBUTES);
+
+			expect(parsingResult[0]).toEqual({
+				content:
+					"Mamma mia, Marcello, that's not how hold a gun.\n" +
+					"Alberto, come to look at Marcello!\n",
+				startTime: 5000,
+				endTime: 10000,
+				entities: [],
+				id: undefined,
+				attributes: {},
+				region: {
+					id: "fred",
+					width: "40%",
+					lines: 3,
+					origin: ["10%", "90%"],
+					displayStrategy: "push",
+				},
 			});
 		});
 	});
