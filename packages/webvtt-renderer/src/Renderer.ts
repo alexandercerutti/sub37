@@ -59,7 +59,7 @@ export default class Renderer extends HSBaseRenderer {
 			) {
 				console.log("Found block:", content.substring(block.start, block.cursor));
 
-				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor, regions);
+				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
 				/**
 				 * According to WebVTT standard, Region and style blocks should be
@@ -71,8 +71,11 @@ export default class Renderer extends HSBaseRenderer {
 
 				if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
-					latestBlockPhase = blockType;
-					regions[parsedContent.id] = parsedContent;
+
+					if (parsedContent?.id) {
+						latestBlockPhase = blockType;
+						regions[parsedContent.id] = parsedContent;
+					}
 				}
 
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
@@ -128,12 +131,7 @@ type BlockTuple =
 	| StyleBlockType
 	| IgnoredBlockType;
 
-function evaluateBlock(
-	content: string,
-	start: number,
-	end: number,
-	regions: { [id: string]: Region },
-): BlockTuple {
+function evaluateBlock(content: string, start: number, end: number): BlockTuple {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -150,11 +148,6 @@ function evaluateBlock(
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION":
 				const payload = Parser.parseRegion(blockMatch.groups["payload"]);
-
-				if (!payload || regions[payload.id]) {
-					return [BlockType.IGNORED, undefined];
-				}
-
 				return [BlockType.REGION, payload];
 			case "STYLE":
 				/** @TODO not supported yet */
