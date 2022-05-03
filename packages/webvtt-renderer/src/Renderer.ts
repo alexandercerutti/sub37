@@ -37,7 +37,7 @@ export default class Renderer extends HSBaseRenderer {
 			cursor: 0,
 		};
 
-		const regions: Region[] = [];
+		const regions: { [id: string]: Region } = Object.create(null);
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -72,7 +72,7 @@ export default class Renderer extends HSBaseRenderer {
 				if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
-					regions.push(parsedContent);
+					regions[parsedContent.id] = parsedContent;
 				}
 
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
@@ -90,7 +90,7 @@ export default class Renderer extends HSBaseRenderer {
 					for (let cue of parsedContent) {
 						if (cue.startTime < cue.endTime) {
 							if (cue.attributes.region) {
-								cue.region = regions.find((region) => region.id === cue.attributes.region);
+								cue.region = regions[cue.attributes.region];
 								delete cue.attributes.region;
 							}
 
@@ -128,7 +128,12 @@ type BlockTuple =
 	| StyleBlockType
 	| IgnoredBlockType;
 
-function evaluateBlock(content: string, start: number, end: number, regions: Region[]): BlockTuple {
+function evaluateBlock(
+	content: string,
+	start: number,
+	end: number,
+	regions: { [id: string]: Region },
+): BlockTuple {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -146,7 +151,7 @@ function evaluateBlock(content: string, start: number, end: number, regions: Reg
 			case "REGION":
 				const payload = Parser.parseRegion(blockMatch.groups["payload"]);
 
-				if (!payload || regions.find((r) => r.id === payload.id)) {
+				if (!payload || regions[payload.id]) {
 					return [BlockType.IGNORED, undefined];
 				}
 
