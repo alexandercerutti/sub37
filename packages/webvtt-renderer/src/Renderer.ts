@@ -101,9 +101,7 @@ export default class Renderer extends HSBaseRenderer {
 						}
 					}
 
-					/** @TODO Use Cue or comment somehow */
 					/** @TODO Link with styled */
-					/** @TODO Link with associated regions */
 				}
 
 				/** Skipping \n\n and going to the next character */
