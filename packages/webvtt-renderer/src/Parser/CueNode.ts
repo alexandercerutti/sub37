@@ -25,9 +25,8 @@ export function parseCue(data: CueRawData): CueNode[] {
 		Timestamps.parseMs(starttime),
 		Timestamps.parseMs(endtime),
 		data.cueid,
+		parseAttributes(data.attributes),
 	);
-
-	currentCue.attributes = parseAttributes(data.attributes);
 
 	const openTagsTree = new Tags.NodeTree();
 
