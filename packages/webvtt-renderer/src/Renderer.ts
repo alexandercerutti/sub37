@@ -162,7 +162,17 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 		return [BlockType.IGNORED, undefined];
 	}
 
-	const cueParsingResult = Parser.parseCue(cueMatch.groups as unknown as Parser.CueRawData);
+	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as {
+		[K in keyof Parser.CueRawData]: Parser.CueRawData[K];
+	};
+
+	const cueParsingResult = Parser.parseCue({
+		attributes,
+		cueid,
+		endtime,
+		starttime,
+		text,
+	});
 
 	return [BlockType.CUE, cueParsingResult];
 }
