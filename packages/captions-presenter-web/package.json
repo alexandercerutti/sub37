@@ -1,0 +1,24 @@
+{
+	"name": "@hsubs/captions-presenter-web",
+	"version": "0.1.0",
+	"description": "A caption presenter written with Web Components",
+	"main": "lib/index.js",
+	"type": "module",
+	"peerDependencies": {
+		"@hsubs/server": "^0.1.0"
+	},
+	"scripts": {
+		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
+		"test": "npm run build && npm --prefix ../../ run test"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alexandercerutti/hyper-subtitles.git"
+	},
+	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/alexandercerutti/hyper-subtitles/issues"
+	},
+	"homepage": "https://github.com/alexandercerutti/hyper-subtitles#readme"
+}
