@@ -57,8 +57,7 @@ export class Renderer extends HTMLElement {
 				const rowFragment = getRowById(region, rows, cueNode.id);
 				const cue = document.createElement("span");
 
-				/** @TODO apply entities */
-				cue.textContent = cueNode.content;
+				cue.textContent = getPresentableCueContent(cueNode);
 				cue.id = cueNode.id;
 
 				rowFragment.appendChild(cue);
@@ -91,6 +90,11 @@ function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>,
 	region.appendChild(rowElement);
 
 	return rowElement;
+}
+
+function getPresentableCueContent(cueNode: CueNode): string {
+	/** @TODO add entities */
+	return cueNode.content;
 }
 
 customElements.define("captions-presenter", Renderer);
