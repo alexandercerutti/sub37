@@ -79,17 +79,17 @@ function cleanChildren(region: HTMLDivElement) {
 }
 
 function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>, id: string) {
-	let rowElement = rows.get(id);
+	const rowElement = rows.get(id);
 
 	if (rowElement) {
 		return rowElement;
 	}
 
-	rowElement = document.createElement("div");
-	rows.set(id, rowElement);
-	region.appendChild(rowElement);
+	const newRowElement = document.createElement("div");
+	rows.set(id, newRowElement);
+	region.appendChild(newRowElement);
 
-	return rowElement;
+	return newRowElement;
 }
 
 function getPresentableCueContent(cueNode: CueNode): string {
