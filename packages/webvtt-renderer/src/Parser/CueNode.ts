@@ -2,7 +2,7 @@ import { CueNode } from "@hsubs/server";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
 import type { Token } from "../Token.js";
-import * as Tags from "./Tags";
+import * as Tags from "./Tags/index.js";
 import * as Timestamps from "./Timestamps.utils.js";
 
 /** This structure is compliant with the resulting one from Regex groups property */

@@ -1,4 +1,4 @@
-import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer";
+import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import { RawTrack, CueNode } from "./model";
 import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";

@@ -1,7 +1,7 @@
 import { CueNode, Entity } from "@hsubs/server";
-import Node from "./Node";
-import NodeTree from "./NodesTree";
-import { EntitiesTokenMap } from "./tokenEntities";
+import Node from "./Node.js";
+import NodeTree from "./NodesTree.js";
+import { EntitiesTokenMap } from "./tokenEntities.js";
 
 export function isSupported(content: string) {
 	return EntitiesTokenMap.hasOwnProperty(content);

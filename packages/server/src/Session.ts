@@ -1,4 +1,4 @@
-import { HSBaseRendererConstructor } from "./BaseRenderer";
+import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import type { RawTrack } from "./model";
 import { TimelineTree } from "./TimelineTree.js";
 

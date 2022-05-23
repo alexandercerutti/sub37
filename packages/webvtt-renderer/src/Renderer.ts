@@ -1,6 +1,6 @@
 import { HSBaseRenderer, Region } from "@hsubs/server";
 import type { CueNode } from "@hsubs/server";
-import * as Parser from "./Parser";
+import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
