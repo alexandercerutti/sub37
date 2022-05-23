@@ -36,7 +36,7 @@ export class Renderer extends HTMLElement {
 	}
 
 	public setCue(cueData?: CueNode[]) {
-		if (!cueData?.length && this.mainRegion.childNodes.length) {
+		if (!cueData?.length) {
 			cleanChildren(this.mainRegion);
 			return;
 		}
@@ -89,6 +89,8 @@ function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>,
 	rowElement = document.createElement("div");
 	rows.set(id, rowElement);
 	region.appendChild(rowElement);
+
+	return rowElement;
 }
 
 customElements.define("captions-presenter", Renderer);
