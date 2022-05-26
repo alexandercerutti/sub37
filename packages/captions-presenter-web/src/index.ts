@@ -54,13 +54,13 @@ export class Renderer extends HTMLElement {
 			const rows = new Map<string, HTMLDivElement>([]);
 
 			for (const cueNode of cueData) {
-				const rowFragment = getRowById(region, rows, cueNode.id);
+				const rowElement = getRowById(region, rows, cueNode.id);
 				const cue = document.createElement("span");
 
 				cue.textContent = getPresentableCueContent(cueNode);
 				cue.id = cueNode.id;
 
-				rowFragment.appendChild(cue);
+				rowElement.appendChild(cue);
 			}
 
 			this.mainRegion.appendChild(region);
