@@ -55,10 +55,10 @@ export class Renderer extends HTMLElement {
 
 			for (const cueNode of cueData) {
 				const rowElement = getRowById(region, rows, cueNode.id);
-				const cue = document.createElement("span");
-
-				cue.textContent = getPresentableCueContent(cueNode);
-				cue.id = cueNode.id;
+				const cue = Object.assign(document.createElement("span"), {
+					textContent: getPresentableCueContent(cueNode),
+					id: cueNode.id,
+				});
 
 				rowElement.appendChild(cue);
 			}
