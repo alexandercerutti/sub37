@@ -6,7 +6,8 @@ const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
 const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*(?<payload>[\w\W]*)/;
 const CUE_MATCH_REGEX =
-	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))\s*?(?:(?<attributes>[^\r\n]*?))[\r\n]+(?<text>(?:.+[\r\n]*)+)/;
+	/(?:(?<cueid>\d{1,})[\r\n]+)?(?<starttime>(?:\d\d:?){3}\.\d{3})\s-->\s(?<endtime>(?:\d\d:?){3}(?:\.\d{3}))\s*?(?:(?<attributes>[^\r\n]*?))[\r\n]+[\t\s]*(?<text>(?:.+[\r\n]*)+)/;
+const TABS_REGEX = /\t+/g;
 
 /**
  * @see https://www.w3.org/TR/webvtt1/#file-structure
@@ -177,7 +178,7 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 		cueid,
 		endtime,
 		starttime,
-		text,
+		text: text.replace(TABS_REGEX, ""),
 	});
 
 	return [BlockType.CUE, cueParsingResult];
