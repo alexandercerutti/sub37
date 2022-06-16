@@ -11,6 +11,8 @@ export class Renderer extends HTMLElement {
 
 	private exitTransitionMode: "discrete" | "smooth" = "discrete";
 
+	private currentCues: Set<CueNode> = new Set<CueNode>();
+
 	public constructor() {
 		super();
 
@@ -41,6 +43,14 @@ export class Renderer extends HTMLElement {
 			return;
 		}
 
+		const newCues = getCuesDifference(this.currentCues, new Set(cueData));
+
+		if (!newCues.size) {
+			return;
+		}
+
+		this.currentCues = new Set(cueData);
+
 		if (this.exitTransitionMode === "discrete") {
 			/**
 			 * Not very optimal, we may alter the DOM every 0.25s.
@@ -53,7 +63,7 @@ export class Renderer extends HTMLElement {
 			const region = new DocumentFragment();
 			const rows = new Map<string, HTMLDivElement>([]);
 
-			for (const cueNode of cueData) {
+			for (const cueNode of newCues) {
 				const rowElement = getRowById(region, rows, cueNode.id);
 				const cue = Object.assign(document.createElement("span"), {
 					textContent: getPresentableCueContent(cueNode),
@@ -95,6 +105,20 @@ function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>,
 function getPresentableCueContent(cueNode: CueNode): string {
 	/** @TODO add entities */
 	return cueNode.content;
+}
+
+function getCuesDifference(current: Set<CueNode>, next: Set<CueNode>) {
+	if (!current.size) {
+		return next;
+	}
+
+	const difference = new Set(next);
+
+	for (const cue of current) {
+		difference.delete(cue);
+	}
+
+	return difference;
 }
 
 customElements.define("captions-presenter", Renderer);
