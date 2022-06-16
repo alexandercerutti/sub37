@@ -11,6 +11,7 @@ export class Renderer extends HTMLElement {
 
 	private exitTransitionMode: "discrete" | "smooth" = "discrete";
 
+	private latestHeight: number = 0;
 	private currentCues: Set<CueNode> = new Set<CueNode>();
 
 	public constructor() {
@@ -78,7 +79,38 @@ export class Renderer extends HTMLElement {
 			/**
 			 * @TODO implement smooth transition
 			 */
+
+			const { children } = this.mainRegion;
+
+			if (!children.length) {
+				this.mainRegion.appendChild(document.createElement("p"));
+			}
+
+			for (const cueNode of newCues) {
+				const lastChild = children[children.length - 1] as HTMLParagraphElement;
+				const textNode = document.createTextNode(` ${cueNode.content}`);
+
+				addTextToRow(textNode, lastChild);
+
+				const nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
+				const didParagraphWentOnNewLine = nextHeight > this.latestHeight;
+
+				if (didParagraphWentOnNewLine && this.latestHeight > 0) {
+					addTextToTextContainer(textNode, this.mainRegion);
+
+					// if (shouldRemoveFirstChild(children)) {
+					// 	createDebouncedRemover();
+					// }
+				}
+
+				scrollToBottom(this.mainRegion);
+				this.saveLatestContainerHeight(nextHeight);
+			}
 		}
+	}
+
+	private saveLatestContainerHeight(height: number) {
+		this.latestHeight = height;
 	}
 }
 
@@ -105,6 +137,33 @@ function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>,
 function getPresentableCueContent(cueNode: CueNode): string {
 	/** @TODO add entities */
 	return cueNode.content;
+}
+
+function addTextToTextContainer(textNode: Text, container: HTMLDivElement) {
+	container.appendChild(addTextToRow(textNode));
+}
+
+function addTextToRow(textNode: Text, nextParagraph = document.createElement("p")) {
+	nextParagraph.appendChild(
+		addTextToSpan(textNode, (nextParagraph.children as HTMLCollectionOf<HTMLSpanElement>)?.[0]),
+	);
+
+	return nextParagraph;
+}
+
+function addTextToSpan(textNode: Text, span = document.createElement("span")) {
+	span.appendChild(textNode);
+	return span;
+}
+
+function scrollToBottom(container: HTMLDivElement) {
+	/** Smooth scrolling via CSS */
+	container.scrollTop = container.scrollHeight;
+}
+
+function getElementHeight(child: HTMLElement) {
+	const { height } = child.getBoundingClientRect();
+	return Math.floor(height);
 }
 
 function getCuesDifference(current: Set<CueNode>, next: Set<CueNode>) {
