@@ -28,12 +28,9 @@ export class Renderer extends HTMLElement {
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.mainRegion);
 
-		const exitTransitionAttribute = this.getAttribute("exit-transition");
+		const exitTransitionAttribute = this.getAttribute("exit-transition") ?? "discrete";
 
-		if (
-			exitTransitionAttribute &&
-			(exitTransitionAttribute === "discrete" || exitTransitionAttribute === "smooth")
-		) {
+		if (exitTransitionAttribute === "discrete" || exitTransitionAttribute === "smooth") {
 			this.exitTransitionMode = exitTransitionAttribute;
 		}
 	}
