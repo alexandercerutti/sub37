@@ -41,6 +41,7 @@ export class Renderer extends HTMLElement {
 	public setCue(cueData?: CueNode[]) {
 		if (!cueData?.length) {
 			cleanChildren(this.mainRegion);
+			this.currentCues = new Set<CueNode>();
 			return;
 		}
 
