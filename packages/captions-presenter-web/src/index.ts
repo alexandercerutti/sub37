@@ -42,49 +42,22 @@ export class Renderer extends HTMLElement {
 			return;
 		}
 
-		const newCues = getCuesDifference(this.currentCues, new Set(cueData));
+		let latestCueId: string = "";
 
-		if (!newCues.size) {
-			return;
-		}
+		cleanChildren(this.mainRegion);
 
-		this.currentCues = new Set(cueData);
+		for (const cueNode of cueData) {
+			if (latestCueId !== cueNode.id) {
+				/** New line */
 
-		if (this.exitTransitionMode === "discrete") {
-			/**
-			 * Not very optimal, we may alter the DOM every 0.25s.
-			 * Probably we should keep a cache or whatever and
-			 * check against it first...
-			 */
+				const line = addTextToRow(document.createTextNode(cueNode.content));
+				this.mainRegion.appendChild(line);
 
-			cleanChildren(this.mainRegion);
+				line.scrollIntoView();
+			} else {
+				/** Maybe will go on a new line */
+				const { children } = this.mainRegion;
 
-			const region = new DocumentFragment();
-			const rows = new Map<string, HTMLDivElement>([]);
-
-			for (const cueNode of newCues) {
-				const rowElement = getRowById(region, rows, cueNode.id);
-				const cue = Object.assign(document.createElement("span"), {
-					textContent: getPresentableCueContent(cueNode),
-					id: cueNode.id,
-				});
-
-				rowElement.appendChild(cue);
-			}
-
-			this.mainRegion.appendChild(region);
-		} else {
-			/**
-			 * @TODO implement smooth transition
-			 */
-
-			const { children } = this.mainRegion;
-
-			if (!children.length) {
-				this.mainRegion.appendChild(document.createElement("p"));
-			}
-
-			for (const cueNode of newCues) {
 				const lastChild = children[children.length - 1] as HTMLParagraphElement;
 				const textNode = document.createTextNode(` ${cueNode.content}`);
 
@@ -104,7 +77,76 @@ export class Renderer extends HTMLElement {
 				scrollToBottom(this.mainRegion);
 				this.saveLatestContainerHeight(nextHeight);
 			}
+
+			if (this.exitTransitionMode === "smooth") {
+				/** Set scroll-behavior on element? */
+			}
+
+			scrollToBottom(this.mainRegion);
+			latestCueId = cueNode.id;
 		}
+
+		// const newCues = getCuesDifference(this.currentCues, new Set(cueData));
+
+		// if (!newCues.size) {
+		// 	return;
+		// }
+
+		// this.currentCues = new Set(cueData);
+
+		// if (this.exitTransitionMode === "discrete") {
+		// 	/**
+		// 	 * Not very optimal, we may alter the DOM every 0.25s.
+		// 	 * Probably we should keep a cache or whatever and
+		// 	 * check against it first...
+		// 	 */
+
+		// 	cleanChildren(this.mainRegion);
+
+		// 	const region = new DocumentFragment();
+		// 	const rows = new Map<string, HTMLDivElement>([]);
+
+		// 	for (const cueNode of newCues) {
+		// 		const rowElement = getRowById(region, rows, cueNode.id);
+		// 		const cue = Object.assign(document.createElement("span"), {
+		// 			textContent: getPresentableCueContent(cueNode),
+		// 			id: cueNode.id,
+		// 		});
+
+		// 		rowElement.appendChild(cue);
+		// 	}
+
+		// 	this.mainRegion.appendChild(region);
+		// } else {
+		// 	const { children } = this.mainRegion;
+
+		// 	if (!children.length) {
+		// 		this.mainRegion.appendChild(document.createElement("p"));
+		// 	}
+
+		// 	for (const cueNode of newCues) {
+		// 		const lastChild = children[children.length - 1] as HTMLParagraphElement;
+		// 		const textNode = document.createTextNode(` ${cueNode.content}`);
+
+		// 		addTextToRow(textNode, lastChild);
+
+		// 		const nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
+		// 		const didParagraphWentOnNewLine = nextHeight > this.latestHeight;
+
+		// 		/*console.log("NEXT:", nextHeight, "LATEST:", latestHeight, didParagraphWentOnNewLine);*/
+
+		// 		if (didParagraphWentOnNewLine && this.latestHeight > 0) {
+		// 			addTextToTextContainer(textNode, this.mainRegion);
+
+		// 			// if (shouldRemoveFirstChild(children)) {
+		// 			// 	createDebouncedRemover();
+		// 			// }
+		// 		}
+
+		// 		scrollToBottom(this.mainRegion);
+		// 		this.saveLatestContainerHeight(nextHeight);
+		// 	}
+		// }
 	}
 
 	private saveLatestContainerHeight(height: number) {
