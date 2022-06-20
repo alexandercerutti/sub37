@@ -22,7 +22,43 @@ export class Renderer extends HTMLElement {
 
 		style.id = "host-styles";
 		style.textContent = `
-:host { left: 0; right: 0; bottom: 0; top: 0; position: absolute; }
+:host {
+	left: 0; right: 0; bottom: 0; top: 0; position: absolute;
+	display: flex;
+	align-items: end;
+	justify-content: center;
+}
+
+div#scroll-window {
+	margin-bottom: 10px;
+	scroll-behavior: smooth;
+	/**
+	 * Space around text without letting
+	 * overflow being seen
+	 */
+	overflow-y: hidden;
+	/*border: 5px solid transparent;*/
+	max-height: 3em;
+	width: 300px;
+}
+
+div#scroll-window p {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+#scroll-window p span {
+  color: #FFF;
+  background-color: rgba(0,0,0,0.7);
+  padding: 0px 15px;
+  line-height: 1.5em;
+  word-wrap: break-word;
+  /**
+   * Change this to display:block for pop-on captions
+   * and whole background
+   */
+  display: inline-block;
+}
 `;
 
 		shadowRoot.appendChild(style);
