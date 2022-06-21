@@ -1,7 +1,12 @@
 import type { CueNode } from "@hsubs/server";
 
 export class Renderer extends HTMLElement {
-	private mainRegion = document.createElement("div");
+	private mainRegion = Object.assign(document.createElement("div"), {
+		id: "scroll-window",
+	});
+	private scrollArea = Object.assign(document.createElement("div"), {
+		id: "scroll-area",
+	});
 
 	/**
 	 * This strategy allows people to apply a roll-up captions
@@ -31,23 +36,28 @@ export class Renderer extends HTMLElement {
 
 div#scroll-window {
 	margin-bottom: 10px;
+	width: 300px;
+	overflow-y: hidden;
+	background-color: rgba(0,0,0,0.4);
+}
+
+div#scroll-area {
 	scroll-behavior: smooth;
+	height: 3em;
 	/**
 	 * Space around text without letting
 	 * overflow being seen
 	 */
 	overflow-y: hidden;
 	/*border: 5px solid transparent;*/
-	max-height: 3em;
-	width: 300px;
 }
 
-div#scroll-window p {
+div#scroll-area p {
   margin: 0;
   box-sizing: border-box;
 }
 
-#scroll-window p span {
+#scroll-area p span {
   color: #FFF;
   background-color: rgba(0,0,0,0.7);
   padding: 0px 15px;
@@ -61,6 +71,8 @@ div#scroll-window p {
 }
 `;
 
+		this.mainRegion.appendChild(this.scrollArea);
+
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.mainRegion);
 
@@ -73,14 +85,14 @@ div#scroll-window p {
 
 	public setCue(cueData?: CueNode[]) {
 		if (!cueData?.length) {
-			cleanChildren(this.mainRegion);
+			cleanChildren(this.scrollArea);
 			this.currentCues = new Set<CueNode>();
 			return;
 		}
 
 		let latestCueId: string = "";
 
-		cleanChildren(this.mainRegion);
+		cleanChildren(this.scrollArea);
 
 		for (const cueNode of cueData) {
 			let nextHeight: number = 0;
@@ -89,12 +101,12 @@ div#scroll-window p {
 				/** New line */
 
 				const line = addTextToRow(document.createTextNode(cueNode.content));
-				this.mainRegion.appendChild(line);
 
+				this.scrollArea.appendChild(line);
 				nextHeight = getElementHeight(line);
 			} else {
 				/** Maybe will go on a new line */
-				const { children } = this.mainRegion;
+				const { children } = this.scrollArea;
 
 				const lastChild = children[children.length - 1] as HTMLParagraphElement;
 				const textNode = document.createTextNode(` ${cueNode.content}`);
@@ -105,8 +117,17 @@ div#scroll-window p {
 				const didParagraphWentOnNewLine = nextHeight > this.latestHeight;
 
 				if (didParagraphWentOnNewLine && this.latestHeight > 0) {
-					addTextToTextContainer(textNode, this.mainRegion);
+					addTextToTextContainer(textNode, this.scrollArea);
 				}
+			}
+
+			if (this.scrollArea.children.length == 1) {
+				this.scrollArea.style.transform = "translateY(1.5em)";
+			} else {
+				Object.assign(this.scrollArea.style, {
+					transition: "transform .5s ease-out",
+					transform: "translateY(0)",
+				});
 			}
 
 			this.saveLatestContainerHeight(nextHeight);
@@ -115,7 +136,7 @@ div#scroll-window p {
 				/** Set scroll-behavior on element? */
 			}
 
-			scrollToBottom(this.mainRegion);
+			scrollToBottom(this.scrollArea);
 			latestCueId = cueNode.id;
 		}
 
