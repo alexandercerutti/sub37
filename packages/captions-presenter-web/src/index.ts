@@ -83,12 +83,15 @@ div#scroll-window p {
 		cleanChildren(this.mainRegion);
 
 		for (const cueNode of cueData) {
+			let nextHeight: number = 0;
+
 			if (latestCueId !== cueNode.id) {
 				/** New line */
 
 				const line = addTextToRow(document.createTextNode(cueNode.content));
 				this.mainRegion.appendChild(line);
 
+				nextHeight = getElementHeight(line);
 			} else {
 				/** Maybe will go on a new line */
 				const { children } = this.mainRegion;
@@ -98,15 +101,15 @@ div#scroll-window p {
 
 				addTextToRow(textNode, lastChild);
 
-				const nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
+				nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
 				const didParagraphWentOnNewLine = nextHeight > this.latestHeight;
 
 				if (didParagraphWentOnNewLine && this.latestHeight > 0) {
 					addTextToTextContainer(textNode, this.mainRegion);
 				}
-
-				this.saveLatestContainerHeight(nextHeight);
 			}
+
+			this.saveLatestContainerHeight(nextHeight);
 
 			if (this.exitTransitionMode === "smooth") {
 				/** Set scroll-behavior on element? */
