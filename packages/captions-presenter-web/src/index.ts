@@ -126,7 +126,10 @@ div#scroll-area p {
 			}
 
 			if (this.scrollArea.children.length == 1) {
-				this.scrollArea.style.transform = "translateY(1.5em)";
+				Object.assign(this.scrollArea.style, {
+					transition: "",
+					transform: "translateY(1.5em)",
+				});
 			} else {
 				Object.assign(this.scrollArea.style, {
 					transition: "transform .5s ease-out",
