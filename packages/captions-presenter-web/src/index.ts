@@ -89,7 +89,6 @@ div#scroll-window p {
 				const line = addTextToRow(document.createTextNode(cueNode.content));
 				this.mainRegion.appendChild(line);
 
-				line.scrollIntoView();
 			} else {
 				/** Maybe will go on a new line */
 				const { children } = this.mainRegion;
@@ -106,7 +105,6 @@ div#scroll-window p {
 					addTextToTextContainer(textNode, this.mainRegion);
 				}
 
-				scrollToBottom(this.mainRegion);
 				this.saveLatestContainerHeight(nextHeight);
 			}
 
