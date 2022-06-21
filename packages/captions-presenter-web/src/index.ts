@@ -104,10 +104,6 @@ div#scroll-window p {
 
 				if (didParagraphWentOnNewLine && this.latestHeight > 0) {
 					addTextToTextContainer(textNode, this.mainRegion);
-
-					// if (shouldRemoveFirstChild(children)) {
-					// 	createDebouncedRemover();
-					// }
 				}
 
 				scrollToBottom(this.mainRegion);
