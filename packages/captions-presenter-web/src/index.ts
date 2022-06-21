@@ -92,6 +92,11 @@ div#scroll-area p {
 
 		let latestCueId: string = "";
 
+		/**
+		 * @TODO Should we cache HTML Elements?
+		 * By doing so sub-DOM might not get reloaded entirely
+		 */
+
 		cleanChildren(this.scrollArea);
 
 		for (const cueNode of cueData) {
@@ -99,13 +104,12 @@ div#scroll-area p {
 
 			if (latestCueId !== cueNode.id) {
 				/** New line */
-
 				const line = addTextToRow(document.createTextNode(cueNode.content));
 
 				this.scrollArea.appendChild(line);
 				nextHeight = getElementHeight(line);
 			} else {
-				/** Maybe will go on a new line */
+				/** Maybe it will go on a new line */
 				const { children } = this.scrollArea;
 
 				const lastChild = children[children.length - 1] as HTMLParagraphElement;
