@@ -16,7 +16,6 @@ export class Renderer extends HTMLElement {
 
 	private exitTransitionMode: "discrete" | "smooth" = "discrete";
 
-	private latestHeight: number = 0;
 	private currentCues: Set<CueNode> = new Set<CueNode>();
 
 	public constructor() {
@@ -91,6 +90,7 @@ div#scroll-area p {
 		}
 
 		let latestCueId: string = "";
+		let latestHeight: number = 0;
 
 		/**
 		 * @TODO Should we cache HTML Elements?
@@ -118,9 +118,9 @@ div#scroll-area p {
 				addTextToRow(textNode, lastChild);
 
 				nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
-				const didParagraphWentOnNewLine = nextHeight > this.latestHeight;
+				const didParagraphWentOnNewLine = nextHeight > latestHeight;
 
-				if (didParagraphWentOnNewLine && this.latestHeight > 0) {
+				if (didParagraphWentOnNewLine && latestHeight > 0) {
 					addTextToTextContainer(textNode, this.scrollArea);
 				}
 			}
@@ -137,7 +137,7 @@ div#scroll-area p {
 				});
 			}
 
-			this.saveLatestContainerHeight(nextHeight);
+			latestHeight = nextHeight;
 
 			if (this.exitTransitionMode === "smooth") {
 				/** Set scroll-behavior on element? */
@@ -208,10 +208,6 @@ div#scroll-area p {
 		// 		this.saveLatestContainerHeight(nextHeight);
 		// 	}
 		// }
-	}
-
-	private saveLatestContainerHeight(height: number) {
-		this.latestHeight = height;
 	}
 }
 
