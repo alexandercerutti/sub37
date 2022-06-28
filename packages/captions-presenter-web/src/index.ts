@@ -43,12 +43,6 @@ div#scroll-window {
 div#scroll-area {
 	scroll-behavior: smooth;
 	height: 3em;
-	/**
-	 * Space around text without letting
-	 * overflow being seen
-	 */
-	overflow-y: hidden;
-	/*border: 5px solid transparent;*/
 }
 
 div#scroll-area p {
@@ -125,26 +119,58 @@ div#scroll-area p {
 				}
 			}
 
-			if (this.scrollArea.children.length == 1) {
-				Object.assign(this.scrollArea.style, {
-					transition: "",
-					transform: "translateY(1.5em)",
-				});
-			} else {
-				Object.assign(this.scrollArea.style, {
-					transition: "transform .5s ease-out",
-					transform: "translateY(0)",
-				});
-			}
-
 			latestHeight = nextHeight;
 
 			if (this.exitTransitionMode === "smooth") {
 				/** Set scroll-behavior on element? */
 			}
 
-			scrollToBottom(this.scrollArea);
 			latestCueId = cueNode.id;
+		}
+
+		/**
+		 * To achieve a Youtube-like subtitle effect, when a cue is alone
+		 * is it translated to the bottom of the X visible rows. A.k.a. 1.5em
+		 * (at the current moment). Hence, we need to traslate vertically the
+		 * whole block in steps of 1.5em (or "one line"), starting from 1.5 and
+		 * then going negatively.
+		 *
+		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
+		 */
+
+		if (this.scrollArea.children.length) {
+			/**
+			 * @TODO This should probably be a property of the component
+			 */
+			const MAXIMUM_VISIBLE_ELEMENTS = 2;
+			const {
+				children: { length: childrenAmount },
+			} = this.scrollArea;
+
+			/**
+			 * We need to obtain the number of rows we should scroll of.
+			 *
+			 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
+			 *
+			 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
+			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
+			 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
+			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
+			 */
+
+			const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
+
+			this.scrollArea.style.transform = `translateY(
+				${1.5 * linesToBeScrolled}em
+			)`;
+
+			if (linesToBeScrolled <= 0) {
+				this.scrollArea.style.transition = "transform .5s ease-in-out";
+			} else {
+				this.scrollArea.style.transition = "";
+			}
+		} else {
+			this.scrollArea.style.transition = "";
 		}
 
 		// const newCues = getCuesDifference(this.currentCues, new Set(cueData));
