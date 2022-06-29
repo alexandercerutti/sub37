@@ -71,20 +71,22 @@ export function parseCue(data: CueRawData): CueNode[] {
 			}
 
 			case TokenType.TIMESTAMP: {
-				if (!currentCue.content.length) {
-					/** Current cue is the first one. Not need to append a new one */
-					break;
-				}
-
 				/**
-				 * Closing the current entities for the previous cue,
-				 * still without resetting open tags, because timestamps
-				 * actually belong to the same "logic" cue, so we might
-				 * have some tags still open
+				 * If current cue has no content, we can safely ignore it.
+				 * Next cues will be the timestamped ones.
 				 */
 
-				currentCue.entities.push(...Tags.createEntitiesFromUnpaired(openTagsTree, currentCue));
-				hsCues.push(currentCue);
+				if (currentCue.content.length) {
+					/**
+					 * Closing the current entities for the previous cue,
+					 * still without resetting open tags, because timestamps
+					 * actually belong to the same "logic" cue, so we might
+					 * have some tags still open
+					 */
+
+					currentCue.entities.push(...Tags.createEntitiesFromUnpaired(openTagsTree, currentCue));
+					hsCues.push(currentCue);
+				}
 
 				currentCue = createCue(
 					Timestamps.parseMs(token.content),
