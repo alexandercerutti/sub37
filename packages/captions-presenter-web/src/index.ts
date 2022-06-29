@@ -120,11 +120,6 @@ div#scroll-area p {
 			}
 
 			latestHeight = nextHeight;
-
-			if (this.exitTransitionMode === "smooth") {
-				/** Set scroll-behavior on element? */
-			}
-
 			latestCueId = cueNode.id;
 		}
 
@@ -164,13 +159,15 @@ div#scroll-area p {
 				${1.5 * linesToBeScrolled}em
 			)`;
 
-			if (linesToBeScrolled <= 0) {
-				this.scrollArea.style.transition = "transform .5s ease-in-out";
+			if (this.exitTransitionMode === "smooth") {
+				if (linesToBeScrolled <= 0) {
+					this.scrollArea.style.transition = "transform .5s ease-in-out";
+				} else {
+					this.scrollArea.style.transition = "";
+				}
 			} else {
 				this.scrollArea.style.transition = "";
 			}
-		} else {
-			this.scrollArea.style.transition = "";
 		}
 
 		// const newCues = getCuesDifference(this.currentCues, new Set(cueData));
