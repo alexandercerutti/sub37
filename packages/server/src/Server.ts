@@ -170,7 +170,11 @@ export class HSServer {
 	 */
 
 	public get isRunning() {
-		assertIntervalStarted.call(this);
+		try {
+			assertIntervalStarted.call(this);
+		} catch (err) {
+			return false;
+		}
 
 		return this[intervalSymbol].isRunning;
 	}
