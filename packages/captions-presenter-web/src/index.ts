@@ -96,6 +96,10 @@ div#scroll-area p {
 		for (const cueNode of cueData) {
 			let nextHeight: number = 0;
 
+			if (!cueNode.content.length) {
+				continue;
+			}
+
 			if (latestCueId !== cueNode.id) {
 				/** New line */
 				const line = addTextToRow(document.createTextNode(cueNode.content));
