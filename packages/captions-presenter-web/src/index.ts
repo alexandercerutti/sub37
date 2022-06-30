@@ -163,14 +163,12 @@ div#scroll-area p {
 				${1.5 * linesToBeScrolled}em
 			)`;
 
+			this.scrollArea.style.transition = "";
+
 			if (this.exitTransitionMode === "smooth") {
 				if (linesToBeScrolled <= 0) {
 					this.scrollArea.style.transition = "transform .5s ease-in-out";
-				} else {
-					this.scrollArea.style.transition = "";
 				}
-			} else {
-				this.scrollArea.style.transition = "";
 			}
 		}
 
