@@ -1,11 +1,11 @@
 interface Ticker {
-	run(): void;
+	run(currentTime?: number): void;
 }
 
-function createTicker(tickCallback: () => void) {
+function createTicker(tickCallback: (currentTime?: number) => void) {
 	return {
-		run() {
-			tickCallback();
+		run(currentTime?: number) {
+			tickCallback(currentTime);
 		},
 	};
 }
@@ -14,7 +14,7 @@ export class SuspendableTimer {
 	private interval: number = null;
 	private ticker: Ticker;
 
-	constructor(private frequency: number, tickCallback: () => void) {
+	constructor(private frequency: number, tickCallback: (currentTime?: number) => void) {
 		this.ticker = createTicker(tickCallback);
 	}
 
@@ -45,9 +45,11 @@ export class SuspendableTimer {
 	 *
 	 * Most useful when the timer is suspended and the
 	 * function is run "manually".
+	 *
+	 * @param currentTime
 	 */
 
-	public runTick() {
-		this.ticker.run();
+	public runTick(currentTime?: number) {
+		this.ticker.run(currentTime);
 	}
 }

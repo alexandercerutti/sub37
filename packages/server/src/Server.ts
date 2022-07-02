@@ -110,9 +110,8 @@ export class HSServer {
 
 		let lastUsedCues = new Set<CueNode>();
 
-		this[intervalSymbol] = new SuspendableTimer(frequencyMs, () => {
-			const currentTime = getCurrentPosition();
-			const nextCues = this[sessionSymbol].getActiveCues(currentTime);
+		this[intervalSymbol] = new SuspendableTimer(frequencyMs, (currentTime?: number) => {
+			const nextCues = this[sessionSymbol].getActiveCues(currentTime || getCurrentPosition());
 			const nextCache = new Set([...nextCues]);
 
 			if (isCueCacheEqual(lastUsedCues, nextCache)) {
