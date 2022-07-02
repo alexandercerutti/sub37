@@ -73,6 +73,88 @@ describe("HSServer", () => {
 		});
 	});
 
+	describe("updateTime", () => {
+		/**
+		 * @type {HSServer}
+		 */
+
+		let server;
+
+		beforeAll(() => {
+			// ********************* //
+			// *** MOCKING START *** //
+			// ********************* //
+
+			MockedRenderer.prototype.parse = function () {
+				// Low times to reduce test duration
+				// Mocked position factory steps by 1,
+				// but video tags step 4 times per second
+
+				return [
+					{
+						content: "This is a sample cue",
+						startTime: 0,
+						endTime: 1,
+					},
+					{
+						content: "This is a sample cue second",
+						startTime: 0.4,
+						endTime: 1,
+					},
+					{
+						content: "This is a sample cue third",
+						startTime: 1,
+						endTime: 2.5,
+					},
+					{
+						content: "This is a sample cue fourth",
+						startTime: 2.5,
+						endTime: 4,
+					},
+				];
+			};
+		});
+
+		beforeEach(() => {
+			server = new HSServer(MockedRenderer);
+
+			server.createSession(
+				[
+					{
+						content: "any",
+						lang: "ita",
+					},
+				],
+				"text/vtt",
+			);
+		});
+
+		afterAll(() => {
+			MockedRenderer.prototype.parse = originalRendererParse;
+		});
+
+		it("should allow updating the manually the time if the server is paused", () => {
+			server.start(mockGetCurrentPositionFactory());
+			server.suspend();
+
+			server.addEventListener("cuestart", (nodes) => {
+				expect(nodes.length).toBe(1);
+				expect(nodes[0].content).toBe("This is a sample cue third");
+			});
+
+			server.updateTime(1200);
+		}, 3000);
+
+		it("should throw if server is not started", () => {
+			expect(() => server.updateTime(1200)).toThrow();
+		});
+
+		it("should throw if server is running", () => {
+			server.start(mockGetCurrentPositionFactory());
+			expect(() => server.updateTime(1200)).toThrow();
+		});
+	});
+
 	describe("start", () => {
 		it("should throw if no session has been created first", () => {
 			const server = new HSServer(MockedRenderer);

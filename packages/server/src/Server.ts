@@ -132,6 +132,27 @@ export class HSServer {
 	}
 
 	/**
+	 * Allows to perform a manual update of the currentTime so
+	 * latest cues can be served and rendered.
+	 *
+	 * Useful in case of paused seek, where the currentTime gets
+	 * updated but the engine cannot automatically get it.
+	 *
+	 * @throws if the server is not started;
+	 * @throws if the server is running;
+	 *
+	 * @param currentTime expressed in milliseconds
+	 * @returns
+	 */
+
+	public updateTime(currentTime: number) {
+		assertIntervalStarted.call(this);
+		assertIntervalNotRunning.call(this);
+
+		this[intervalSymbol].runTick(currentTime);
+	}
+
+	/**
 	 * Suspends serving action without losing
 	 * frequency and `getCurrentPosition` reference.
 	 *
