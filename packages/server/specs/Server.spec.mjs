@@ -25,6 +25,21 @@ class MockedRenderer extends HSBaseRenderer {
 
 const originalRendererParse = MockedRenderer.prototype.parse;
 
+function mockGetCurrentPositionFactory() {
+	let second = 0;
+
+	return function () {
+		const nextValue = second;
+		second += 0.3;
+
+		return nextValue;
+	};
+}
+
+// ********************** //
+// *** SPECIFICATIONS *** //
+// ********************** //
+
 describe("HSServer", () => {
 	it("should throw if no renderer is passed when a server is initialized", () => {
 		debugger;
@@ -59,17 +74,6 @@ describe("HSServer", () => {
 	});
 
 	describe("start", () => {
-		function mockGetCurrentPositionFactory() {
-			let second = 0;
-
-			return function () {
-				const nextValue = second;
-				second += 0.3;
-
-				return nextValue;
-			};
-		}
-
 		it("should throw if no session has been created first", () => {
 			const server = new HSServer(MockedRenderer);
 
