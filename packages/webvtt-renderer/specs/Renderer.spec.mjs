@@ -67,7 +67,7 @@ viewportanchor:10%,90%
 scroll:up
 
 00:00:05.000 --> 00:00:10.000 region:fred
-Mamma mia, Marcello, that's not how hold a gun.
+Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 `;
 
@@ -106,7 +106,7 @@ Alberto, come to look at Marcello!
 				startTime: 5000,
 				endTime: 25000,
 				content: "Would you like to get < coffee?",
-				id: undefined,
+				id: "cue-9-108",
 				attributes: {
 					align: "left",
 				},
@@ -125,7 +125,7 @@ Alberto, come to look at Marcello!
 				startTime: 0,
 				endTime: 20000,
 				content: "Hi, my name is Fred",
-				id: undefined,
+				id: "cue-110-207",
 				attributes: {
 					align: "left",
 				},
@@ -150,7 +150,7 @@ Alberto, come to look at Marcello!
 				startTime: 16000,
 				endTime: 24000,
 				content: " This\n",
-				id: undefined,
+				id: "cue-9-177",
 				attributes: {},
 				entities: [
 					{
@@ -166,7 +166,7 @@ Alberto, come to look at Marcello!
 				startTime: 18000,
 				endTime: 24000,
 				content: " can\n",
-				id: undefined,
+				id: "cue-9-177",
 				attributes: {},
 				entities: [
 					{
@@ -188,7 +188,7 @@ Alberto, come to look at Marcello!
 				startTime: 5000,
 				endTime: 10000,
 				content: "漢 kan 字 ji\n",
-				id: undefined,
+				id: "cue-9-76",
 				attributes: {},
 				entities: [
 					{
@@ -218,12 +218,12 @@ Alberto, come to look at Marcello!
 
 			expect(parsingResult[0]).toEqual({
 				content:
-					"Mamma mia, Marcello, that's not how hold a gun.\n" +
+					"Mamma mia, Marcello, that's not how you hold a gun.\n" +
 					"Alberto, come to look at Marcello!\n",
 				startTime: 5000,
 				endTime: 10000,
 				entities: [],
-				id: undefined,
+				id: "cue-97-226",
 				attributes: {},
 				region: {
 					id: "fred",

@@ -42,7 +42,6 @@ function mockGetCurrentPositionFactory() {
 
 describe("HSServer", () => {
 	it("should throw if no renderer is passed when a server is initialized", () => {
-		debugger;
 		expect(() => new HSServer()).toThrowError();
 	});
 
@@ -142,7 +141,7 @@ describe("HSServer", () => {
 				expect(nodes[0].content).toBe("This is a sample cue third");
 			});
 
-			server.updateTime(1200);
+			server.updateTime(1.2);
 		}, 3000);
 
 		it("should throw if server is not started", () => {
@@ -529,7 +528,6 @@ describe("HSServer", () => {
 
 			expect(() => server.suspend()).toThrow();
 			expect(() => server.resume()).toThrow();
-			expect(() => server.isRunning).toThrow();
 
 			server.createSession(
 				[
