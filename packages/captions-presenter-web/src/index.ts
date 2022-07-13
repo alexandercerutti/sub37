@@ -8,6 +8,8 @@ export class Renderer extends HTMLElement {
 		id: "scroll-area",
 	});
 
+	private renderArea = new TreeOrchestrator();
+
 	/**
 	 * This strategy allows people to apply a roll-up captions
 	 * animation (smooth) or a pop-on captions disappearance
@@ -64,7 +66,7 @@ div#scroll-area p {
 }
 `;
 
-		this.mainRegion.appendChild(this.scrollArea);
+		this.mainRegion.appendChild(this.renderArea.root);
 
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.mainRegion);
@@ -78,54 +80,62 @@ div#scroll-area p {
 
 	public setCue(cueData?: CueNode[]) {
 		if (!cueData?.length) {
-			cleanChildren(this.scrollArea);
+			// cleanChildren(this.scrollArea);
+			this.renderArea.cleanRoot();
 			this.currentCues = new Set<CueNode>();
 			return;
 		}
 
-		let latestCueId: string = "";
-		let latestHeight: number = 0;
+		this.renderArea.renderCuesToHTML(cueData);
 
 		/**
 		 * @TODO Should we cache HTML Elements?
 		 * By doing so sub-DOM might not get reloaded entirely
 		 */
 
-		cleanChildren(this.scrollArea);
+		// let latestCueId: string = "";
+		// let latestHeight: number = 0;
 
-		for (const cueNode of cueData) {
-			let nextHeight: number = 0;
+		// /**
+		//  * @TODO Should we cache HTML Elements?
+		//  * By doing so sub-DOM might not get reloaded entirely
+		//  */
 
-			if (!cueNode.content.length) {
-				continue;
-			}
+		// cleanChildren(this.scrollArea);
 
-			if (latestCueId !== cueNode.id) {
-				/** New line */
-				const line = addTextToRow(document.createTextNode(cueNode.content));
+		// for (const cueNode of cueData) {
+		// let nextHeight: number = 0;
 
-				this.scrollArea.appendChild(line);
-				nextHeight = getElementHeight(line);
-			} else {
-				/** Maybe it will go on a new line */
-				const { children } = this.scrollArea;
+		// if (!cueNode.content.length) {
+		// 	continue;
+		// }
 
-				const lastChild = children[children.length - 1] as HTMLParagraphElement;
-				const textNode = document.createTextNode(` ${cueNode.content}`);
+		// if (latestCueId !== cueNode.id) {
+		// 	/** New line */
+		// 	const line = addTextToRow(document.createTextNode(cueNode.content));
 
-				addTextToRow(textNode, lastChild);
+		// 	this.scrollArea.appendChild(line);
+		// 	nextHeight = getElementHeight(line);
+		// } else {
+		// 	/** Maybe it will go on a new line */
+		// 	const { children } = this.scrollArea;
 
-				nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
-				const didParagraphWentOnNewLine = nextHeight > latestHeight;
+		// 	const lastChild = children[children.length - 1] as HTMLParagraphElement;
+		// 	const textNode = document.createTextNode(` ${cueNode.content}`);
 
-				if (didParagraphWentOnNewLine && latestHeight > 0) {
-					addTextToTextContainer(textNode, this.scrollArea);
-				}
-			}
+		// 	addTextToRow(textNode, lastChild);
 
-			latestHeight = nextHeight;
-			latestCueId = cueNode.id;
-		}
+		// 	nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
+		// 	const didParagraphWentOnNewLine = nextHeight > latestHeight;
+
+		// 	if (didParagraphWentOnNewLine && latestHeight > 0) {
+		// 		addTextToTextContainer(textNode, this.scrollArea);
+		// 	}
+		// }
+
+		// latestHeight = nextHeight;
+		// latestCueId = cueNode.id;
+		// }
 
 		/**
 		 * To achieve a Youtube-like subtitle effect, when a cue is alone
@@ -137,40 +147,40 @@ div#scroll-area p {
 		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
 		 */
 
-		if (this.scrollArea.children.length) {
-			/**
-			 * @TODO This should probably be a property of the component
-			 */
-			const MAXIMUM_VISIBLE_ELEMENTS = 2;
-			const {
-				children: { length: childrenAmount },
-			} = this.scrollArea;
+		// if (this.scrollArea.children.length) {
+		// 	/**
+		// 	 * @TODO This should probably be a property of the component
+		// 	 */
+		// 	const MAXIMUM_VISIBLE_ELEMENTS = 2;
+		// 	const {
+		// 		children: { length: childrenAmount },
+		// 	} = this.scrollArea;
 
-			/**
-			 * We need to obtain the number of rows we should scroll of.
-			 *
-			 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
-			 *
-			 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
-			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
-			 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
-			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
-			 */
+		// 	/**
+		// 	 * We need to obtain the number of rows we should scroll of.
+		// 	 *
+		// 	 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
+		// 	 *
+		// 	 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
+		// 	 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
+		// 	 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
+		// 	 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
+		// 	 */
 
-			const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
+		// 	const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
 
-			this.scrollArea.style.transform = `translateY(
-				${1.5 * linesToBeScrolled}em
-			)`;
+		// 	this.scrollArea.style.transform = `translateY(
+		// 		${1.5 * linesToBeScrolled}em
+		// 	)`;
 
-			this.scrollArea.style.transition = "";
+		// 	this.scrollArea.style.transition = "";
 
-			if (this.exitTransitionMode === "smooth") {
-				if (linesToBeScrolled <= 0) {
-					this.scrollArea.style.transition = "transform .5s ease-in-out";
-				}
-			}
-		}
+		// 	if (this.exitTransitionMode === "smooth") {
+		// 		if (linesToBeScrolled <= 0) {
+		// 			this.scrollArea.style.transition = "transform .3s ease-in-out";
+		// 		}
+		// 	}
+		// }
 
 		// const newCues = getCuesDifference(this.currentCues, new Set(cueData));
 
@@ -300,6 +310,113 @@ function getCuesDifference(current: Set<CueNode>, next: Set<CueNode>) {
 	}
 
 	return difference;
+}
+
+class TreeOrchestrator {
+	private _root = Object.assign(document.createElement("div"), {
+		id: "scroll-area",
+	});
+
+	public get root() {
+		return this._root;
+	}
+
+	public cleanRoot() {
+		for (let node: Node; (node = this.root.firstChild); ) {
+			this.root.removeChild(node);
+		}
+	}
+
+	public renderCuesToHTML(cueNodes: CueNode[]) {
+		let latestCueId: string = "";
+		let latestHeight: number = 0;
+
+		/**
+		 * @TODO Should we cache HTML Elements?
+		 * By doing so sub-DOM might not get reloaded entirely
+		 */
+
+		this.cleanRoot();
+
+		for (const cueNode of cueNodes) {
+			let nextHeight: number = 0;
+
+			if (!cueNode.content.length) {
+				return;
+			}
+
+			if (latestCueId !== cueNode.id) {
+				/** New line */
+				const line = addTextToRow(document.createTextNode(cueNode.content));
+
+				this.root.appendChild(line);
+				nextHeight = getElementHeight(line);
+			} else {
+				/** Maybe it will go on a new line */
+				const { children } = this.root;
+
+				const lastChild = children[children.length - 1] as HTMLParagraphElement;
+				const textNode = document.createTextNode(` ${cueNode.content}`);
+
+				addTextToRow(textNode, lastChild);
+
+				nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
+				const didParagraphWentOnNewLine = nextHeight > latestHeight;
+
+				if (didParagraphWentOnNewLine && latestHeight > 0) {
+					addTextToTextContainer(textNode, this.root);
+				}
+			}
+
+			latestHeight = nextHeight;
+			latestCueId = cueNode.id;
+		}
+
+		/**
+		 * To achieve a Youtube-like subtitle effect, when a cue is alone
+		 * is it translated to the bottom of the X visible rows. A.k.a. 1.5em
+		 * (at the current moment). Hence, we need to traslate vertically the
+		 * whole block in steps of 1.5em (or "one line"), starting from 1.5 and
+		 * then going negatively.
+		 *
+		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
+		 */
+
+		if (this.root.children.length) {
+			/**
+			 * @TODO This should probably be a property of the component
+			 */
+			const MAXIMUM_VISIBLE_ELEMENTS = 2;
+			const {
+				children: { length: childrenAmount },
+			} = this.root;
+
+			/**
+			 * We need to obtain the number of rows we should scroll of.
+			 *
+			 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
+			 *
+			 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
+			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
+			 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
+			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
+			 */
+
+			const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
+
+			this.root.style.transform = `translateY(
+				${1.5 * linesToBeScrolled}em
+			)`;
+
+			this.root.style.transition = "";
+
+			// if (this.exitTransitionMode === "smooth") {
+			if (linesToBeScrolled <= 0) {
+				this.root.style.transition = "transform .5s ease-in-out";
+			}
+			// }
+		}
+	}
 }
 
 customElements.define("captions-presenter", Renderer);
