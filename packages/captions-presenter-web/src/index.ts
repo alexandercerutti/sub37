@@ -251,28 +251,6 @@ function getPresentableCueContent(cueNode: CueNode): string {
 	return cueNode.content;
 }
 
-function addTextToTextContainer(textNode: Text, container: HTMLDivElement) {
-	container.appendChild(addTextToRow(textNode));
-}
-
-function addTextToRow(textNode: Text, nextParagraph = document.createElement("p")) {
-	nextParagraph.appendChild(
-		addTextToSpan(textNode, (nextParagraph.children as HTMLCollectionOf<HTMLSpanElement>)?.[0]),
-	);
-
-	return nextParagraph;
-}
-
-function addTextToSpan(textNode: Text, span = document.createElement("span")) {
-	span.appendChild(textNode);
-	return span;
-}
-
-function getElementHeight(child: HTMLElement) {
-	const { height } = child.getBoundingClientRect();
-	return Math.floor(height);
-}
-
 class TreeOrchestrator {
 	private _root = Object.assign(document.createElement("div"), {
 		id: "scroll-area",
@@ -299,6 +277,8 @@ class TreeOrchestrator {
 
 		this.cleanRoot();
 
+		const lines: Line[] = [];
+
 		for (const cueNode of cueNodes) {
 			let nextHeight: number = 0;
 
@@ -308,24 +288,27 @@ class TreeOrchestrator {
 
 			if (latestCueId !== cueNode.id) {
 				/** New line */
-				const line = addTextToRow(document.createTextNode(cueNode.content));
+				const line = new Line();
+				line.addText(cueNode.content);
+				line.attachTo(this.root);
 
-				this.root.appendChild(line);
-				nextHeight = getElementHeight(line);
+				nextHeight = line.getHeight();
+
+				lines.push(line);
 			} else {
 				/** Maybe it will go on a new line */
-				const { children } = this.root;
+				const lastLine = lines[lines.length - 1];
+				const textNode = lastLine.addText(` ${cueNode.content}`);
 
-				const lastChild = children[children.length - 1] as HTMLParagraphElement;
-				const textNode = document.createTextNode(` ${cueNode.content}`);
+				nextHeight = lastLine.getHeight();
 
-				addTextToRow(textNode, lastChild);
-
-				nextHeight = getElementHeight(children[children.length - 1] as HTMLParagraphElement);
 				const didParagraphWentOnNewLine = nextHeight > latestHeight;
 
 				if (didParagraphWentOnNewLine && latestHeight > 0) {
-					addTextToTextContainer(textNode, this.root);
+					const line = new Line();
+					line.attachTo(this.root);
+					line.addText(textNode);
+					lines.push(line);
 				}
 			}
 
@@ -377,6 +360,42 @@ class TreeOrchestrator {
 			}
 			// }
 		}
+	}
+}
+
+class Line {
+	element: HTMLParagraphElement;
+
+	public constructor() {
+		const node = document.createElement("p");
+		node.appendChild(document.createElement("span"));
+
+		this.element = node;
+	}
+
+	public attachTo(root: HTMLElement) {
+		root.appendChild(this.element);
+	}
+
+	public detachFrom(root: HTMLElement) {
+		root.removeChild(this.element);
+	}
+
+	public addText(text: string | Text) {
+		let node: Text;
+
+		if (typeof text === "string") {
+			node = document.createTextNode(text);
+		} else {
+			node = text;
+		}
+
+		return this.element.children[0].appendChild(node);
+	}
+
+	public getHeight() {
+		const { height } = this.element.getBoundingClientRect();
+		return Math.floor(height);
 	}
 }
 
