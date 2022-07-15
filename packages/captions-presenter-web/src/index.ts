@@ -246,26 +246,6 @@ div#scroll-area p {
 	}
 }
 
-function cleanChildren(region: HTMLDivElement) {
-	for (const child of Array.from(region.childNodes)) {
-		region.removeChild(child);
-	}
-}
-
-function getRowById(region: DocumentFragment, rows: Map<string, HTMLDivElement>, id: string) {
-	const rowElement = rows.get(id);
-
-	if (rowElement) {
-		return rowElement;
-	}
-
-	const newRowElement = document.createElement("div");
-	rows.set(id, newRowElement);
-	region.appendChild(newRowElement);
-
-	return newRowElement;
-}
-
 function getPresentableCueContent(cueNode: CueNode): string {
 	/** @TODO add entities */
 	return cueNode.content;
@@ -288,28 +268,9 @@ function addTextToSpan(textNode: Text, span = document.createElement("span")) {
 	return span;
 }
 
-function scrollToBottom(container: HTMLDivElement) {
-	/** Smooth scrolling via CSS */
-	container.scrollTop = container.scrollHeight;
-}
-
 function getElementHeight(child: HTMLElement) {
 	const { height } = child.getBoundingClientRect();
 	return Math.floor(height);
-}
-
-function getCuesDifference(current: Set<CueNode>, next: Set<CueNode>) {
-	if (!current.size) {
-		return next;
-	}
-
-	const difference = new Set(next);
-
-	for (const cue of current) {
-		difference.delete(cue);
-	}
-
-	return difference;
 }
 
 class TreeOrchestrator {
