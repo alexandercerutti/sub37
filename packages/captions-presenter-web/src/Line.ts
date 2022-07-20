@@ -29,7 +29,6 @@ export default class Line {
 	}
 
 	public getHeight() {
-		const { height } = this.element.getBoundingClientRect();
-		return Math.floor(height);
+		return Math.floor(this.element.offsetHeight);
 	}
 }
