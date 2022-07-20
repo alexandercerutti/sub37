@@ -372,8 +372,6 @@ class TreeOrchestrator {
 				${1.5 * linesToBeScrolled}em
 			)`;
 
-			this.root.style.transition = "";
-
 			// if (this.exitTransitionMode === "smooth") {
 			if (linesToBeScrolled <= 0) {
 				this.root.style.transition = "transform .5s ease-in-out";
