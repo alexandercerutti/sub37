@@ -282,9 +282,11 @@ class TreeOrchestrator {
 		this.cleanRoot();
 
 		const lines: Line[] = [];
+		const items: CueNode[] = [...cueNodes];
 
-		for (const cueNode of cueNodes) {
+		for (let i = 0; i < items.length; i++) {
 			let nextHeight: number = 0;
+			let cueNode = items[i];
 
 			if (!cueNode.content.length) {
 				continue;
@@ -294,34 +296,41 @@ class TreeOrchestrator {
 			 * Splitting phrases so we can keep track of the
 			 * actual occupied lines
 			 */
-			const contentWords = cueNode.content.split(/\x20|\x09|\x0C|\x0A/);
+			const cueWords = cueNode.content.trim().split(/\x20|\x09|\x0C|\x0A/);
 
-			if (!lines.length || latestCueId !== cueNode.id) {
+			if (cueWords.length > 1) {
+				const cuesWithWordContent = cueWords.map((word) =>
+					Object.create(cueNode, {
+						content: {
+							value: word,
+						},
+					}),
+				);
+
+				items.splice(i, 1, ...cuesWithWordContent);
+				/** Refresh pointer */
+				cueNode = items[i];
+			}
+
+			if (latestCueId !== cueNode.id) {
 				const line = new Line();
 				lines.push(line);
 				line.attachTo(this.root);
 			}
 
-			for (let i = 0; i < contentWords.length; i++) {
-				if (!contentWords[i].length) {
-					continue;
-				}
+			const lastLine = lines[lines.length - 1];
+			const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cueNode.content}`);
+			nextHeight = lastLine.getHeight();
 
-				const lastLine = lines[lines.length - 1];
-				const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${contentWords[i]}`);
-				nextHeight = lastLine.getHeight();
-
-				if (nextHeight > latestHeight && latestHeight > 0) {
-					const line = new Line();
-					lines.push(line);
-					textNode.textContent.trim();
-					line.addText(textNode);
-					line.attachTo(this.root);
-				}
-
-				latestHeight = nextHeight;
+			if (nextHeight > latestHeight && latestHeight > 0) {
+				const line = new Line();
+				lines.push(line);
+				textNode.textContent.trim();
+				line.addText(textNode);
+				line.attachTo(this.root);
 			}
 
+			latestHeight = nextHeight;
 			latestCueId = cueNode.id;
 		}
 
