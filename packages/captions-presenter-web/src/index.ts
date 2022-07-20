@@ -262,6 +262,9 @@ class TreeOrchestrator {
 	}
 
 	public cleanRoot() {
+		this.root.style.transform = "";
+		this.root.style.transition = "";
+
 		for (let node: Node; (node = this.root.firstChild); ) {
 			this.root.removeChild(node);
 		}
