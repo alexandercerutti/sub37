@@ -287,33 +287,38 @@ class TreeOrchestrator {
 				return;
 			}
 
-			if (latestCueId !== cueNode.id) {
-				/** New line */
+			/**
+			 * Splitting phrases so we can keep track of the
+			 * actual occupied lines
+			 */
+			const contentWords = cueNode.content.split(/\x20|\x09|\x0C|\x0A/);
+
+			if (!lines.length || latestCueId !== cueNode.id) {
 				const line = new Line();
-				line.addText(cueNode.content);
-				line.attachTo(this.root);
-
-				nextHeight = line.getHeight();
-
 				lines.push(line);
-			} else {
-				/** Maybe it will go on a new line */
-				const lastLine = lines[lines.length - 1];
-				const textNode = lastLine.addText(` ${cueNode.content}`);
-
-				nextHeight = lastLine.getHeight();
-
-				const didParagraphWentOnNewLine = nextHeight > latestHeight;
-
-				if (didParagraphWentOnNewLine && latestHeight > 0) {
-					const line = new Line();
-					line.attachTo(this.root);
-					line.addText(textNode);
-					lines.push(line);
-				}
+				line.attachTo(this.root);
 			}
 
-			latestHeight = nextHeight;
+			for (let i = 0; i < contentWords.length; i++) {
+				if (!contentWords[i].length) {
+					continue;
+				}
+
+				const lastLine = lines[lines.length - 1];
+				const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${contentWords[i]}`);
+				nextHeight = lastLine.getHeight();
+
+				if (nextHeight > latestHeight && latestHeight > 0) {
+					const line = new Line();
+					lines.push(line);
+					textNode.textContent.trim();
+					line.addText(textNode);
+					line.attachTo(this.root);
+				}
+
+				latestHeight = nextHeight;
+			}
+
 			latestCueId = cueNode.id;
 		}
 
