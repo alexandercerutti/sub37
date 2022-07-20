@@ -284,7 +284,7 @@ class TreeOrchestrator {
 			let nextHeight: number = 0;
 
 			if (!cueNode.content.length) {
-				return;
+				continue;
 			}
 
 			/**
