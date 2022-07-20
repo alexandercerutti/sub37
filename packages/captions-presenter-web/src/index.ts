@@ -81,8 +81,8 @@ div#scroll-area p {
 
 	public setCue(cueData?: CueNode[]) {
 		if (!cueData?.length) {
-			// cleanChildren(this.scrollArea);
-			this.renderArea.cleanRoot();
+			this.renderArea.wipeTree();
+			this.renderArea.wipeEffects();
 			this.currentCues = new Set<CueNode>();
 			return;
 		}
@@ -261,10 +261,12 @@ class TreeOrchestrator {
 		return this._root;
 	}
 
-	public cleanRoot() {
+	public wipeEffects() {
 		this.root.style.transform = "";
 		this.root.style.transition = "";
+	}
 
+	public wipeTree() {
 		for (let node: Node; (node = this.root.firstChild); ) {
 			this.root.removeChild(node);
 		}
@@ -279,7 +281,7 @@ class TreeOrchestrator {
 		 * By doing so sub-DOM might not get reloaded entirely
 		 */
 
-		this.cleanRoot();
+		this.wipeTree();
 
 		const lines: Line[] = [];
 		const items: CueNode[] = [...cueNodes];
