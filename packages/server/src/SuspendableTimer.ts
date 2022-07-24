@@ -23,7 +23,7 @@ export class SuspendableTimer {
 			return;
 		}
 
-		this.interval = window.setInterval(this.ticker.run, this.frequency);
+		this.interval = window.setInterval(this.ticker.run, this.frequency || 0);
 	}
 
 	public stop() {
