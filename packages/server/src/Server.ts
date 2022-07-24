@@ -53,7 +53,10 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public createSession(rawTracks: RawTrack[], mimeType: `${"application" | "text"}/${string}`) {
+	public createSession(
+		rawTracks: RawTrack[],
+		mimeType: `${"application" | "text"}/${string}`,
+	): void {
 		try {
 			this.destroy();
 		} catch {}
