@@ -7,14 +7,6 @@ export class Renderer extends HTMLElement {
 	});
 	private renderArea = new TreeOrchestrator();
 
-	/**
-	 * This strategy allows people to apply a roll-up captions
-	 * animation (smooth) or a pop-on captions disappearance
-	 * (discrete)
-	 */
-
-	private exitTransitionMode: "discrete" | "smooth" = "discrete";
-
 	public constructor() {
 		super();
 
@@ -65,12 +57,6 @@ div#scroll-area p {
 
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.mainRegion);
-
-		const exitTransitionAttribute = this.getAttribute("exit-transition") ?? "discrete";
-
-		if (exitTransitionAttribute === "discrete" || exitTransitionAttribute === "smooth") {
-			this.exitTransitionMode = exitTransitionAttribute;
-		}
 	}
 
 	public setCue(cueData?: CueNode[]) {
