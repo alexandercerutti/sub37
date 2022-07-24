@@ -15,8 +15,6 @@ export class Renderer extends HTMLElement {
 
 	private exitTransitionMode: "discrete" | "smooth" = "discrete";
 
-	private currentCues: Set<CueNode> = new Set<CueNode>();
-
 	public constructor() {
 		super();
 
@@ -79,7 +77,6 @@ div#scroll-area p {
 		if (!cueData?.length) {
 			this.renderArea.wipeTree();
 			this.renderArea.wipeEffects();
-			this.currentCues = new Set<CueNode>();
 			return;
 		}
 
