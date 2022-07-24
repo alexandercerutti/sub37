@@ -1,5 +1,5 @@
 import { CueNode } from "@hsubs/server";
-import Line from "./Line";
+import Line from "./Line.js";
 
 export default class TreeOrchestrator {
 	private _root = Object.assign(document.createElement("div"), {
