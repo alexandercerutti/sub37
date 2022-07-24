@@ -258,7 +258,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public selectTextTrack(lang: string) {
+	public selectTextTrack(lang: string | undefined | null) {
 		assertSessionInitialized.call(this);
 
 		if (!lang) {
