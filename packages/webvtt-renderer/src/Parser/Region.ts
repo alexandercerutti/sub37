@@ -1,4 +1,4 @@
-import { Region } from "@hsubs/server";
+import type { Region } from "@hsubs/server";
 
 interface WebVTTRegion {
 	id: string;

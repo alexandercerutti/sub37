@@ -1,4 +1,4 @@
-import { CueNode } from "@hsubs/server";
+import type { CueNode } from "@hsubs/server";
 import Line from "./Line.js";
 
 export default class TreeOrchestrator {

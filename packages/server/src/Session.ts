@@ -1,5 +1,5 @@
-import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import type { RawTrack } from "./model";
+import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import { TimelineTree } from "./TimelineTree.js";
 
 const activeTrackSymbol = Symbol("session.active");

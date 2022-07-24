@@ -1,7 +1,7 @@
-import { CueNode } from "@hsubs/server";
+import type { CueNode } from "@hsubs/server";
+import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
-import type { Token } from "../Token.js";
 import * as Tags from "./Tags/index.js";
 import * as Timestamps from "./Timestamps.utils.js";
 

@@ -1,5 +1,5 @@
-import { HSBaseRenderer, Region } from "@hsubs/server";
-import type { CueNode } from "@hsubs/server";
+import type { CueNode, Region } from "@hsubs/server";
+import { HSBaseRenderer } from "@hsubs/server";
 import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;

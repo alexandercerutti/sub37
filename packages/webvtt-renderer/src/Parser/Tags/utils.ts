@@ -1,4 +1,4 @@
-import { CueNode, Entity } from "@hsubs/server";
+import type { CueNode, Entity } from "@hsubs/server";
 import Node from "./Node.js";
 import NodeTree from "./NodesTree.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";

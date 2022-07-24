@@ -6,7 +6,7 @@
  * at the same time?
  */
 
-import { CueNode } from "./model";
+import type { CueNode } from "./model";
 
 class TimelineTreeNode {
 	public left: TimelineTreeNode = null;
