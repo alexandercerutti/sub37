@@ -6,22 +6,22 @@ export default class TreeOrchestrator {
 		id: "scroll-area",
 	});
 
-	public get root() {
+	public get root(): HTMLDivElement {
 		return this._root;
 	}
 
-	public wipeEffects() {
+	public wipeEffects(): void {
 		this.root.style.transform = "";
 		this.root.style.transition = "";
 	}
 
-	public wipeTree() {
+	public wipeTree(): void {
 		for (let node: Node; (node = this.root.firstChild); ) {
 			this.root.removeChild(node);
 		}
 	}
 
-	public renderCuesToHTML(cueNodes: CueNode[]) {
+	public renderCuesToHTML(cueNodes: CueNode[]): void {
 		let latestCueId: string = "";
 		let latestHeight: number = 0;
 

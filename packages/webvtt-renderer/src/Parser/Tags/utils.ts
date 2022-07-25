@@ -3,7 +3,7 @@ import Node from "./Node.js";
 import NodeTree from "./NodesTree.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
 
-export function isSupported(content: string) {
+export function isSupported(content: string): boolean {
 	return EntitiesTokenMap.hasOwnProperty(content);
 }
 

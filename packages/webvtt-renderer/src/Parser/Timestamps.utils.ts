@@ -1,7 +1,7 @@
 const TIME_REGEX =
 	/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/;
 
-export function parseMs(timestring: string) {
+export function parseMs(timestring: string): number {
 	const timeMatch = timestring.match(TIME_REGEX);
 
 	if (!timeMatch) {
@@ -20,6 +20,6 @@ export function parseMs(timestring: string) {
 	return (hoursInSeconds + minutesInSeconds + parsedSeconds + parsedMs) * 1000;
 }
 
-function parseIntFallback(string: string) {
+function parseIntFallback(string: string): number {
 	return parseInt(string) || 0;
 }

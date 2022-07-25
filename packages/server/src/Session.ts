@@ -30,15 +30,15 @@ export class HSSession {
 		}
 	}
 
-	public getAll() {
+	public getAll(): CueNode[] {
 		return this.timelines[this[activeTrackSymbol]].getAll();
 	}
 
-	public get availableTracks() {
+	public get availableTracks(): string[] {
 		return Object.keys(this.timelines);
 	}
 
-	public get activeTrack() {
+	public get activeTrack(): string {
 		return this[activeTrackSymbol];
 	}
 
@@ -51,7 +51,7 @@ export class HSSession {
 		this[activeTrackSymbol] = lang;
 	}
 
-	public getActiveCues(time: number) {
+	public getActiveCues(time: number): CueNode[] {
 		if (!this.activeTrack) {
 			throw new Error("No active track found. Cannot retrieve active cues");
 		}

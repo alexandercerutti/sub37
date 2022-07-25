@@ -14,11 +14,11 @@ class TimelineTreeNode {
 
 	constructor(public node: CueNode) {}
 
-	public get min() {
+	public get min(): number {
 		return this.node.startTime;
 	}
 
-	public get max() {
+	public get max(): number {
 		return this.node.endTime;
 	}
 }
@@ -32,7 +32,7 @@ class TimelineTreeNode {
 export class TimelineTree {
 	private root: TimelineTreeNode = null;
 
-	public addNode(newNode: CueNode) {
+	public addNode(newNode: CueNode): void {
 		const nextTreeNode = new TimelineTreeNode(newNode);
 
 		if (!this.root) {
@@ -96,7 +96,7 @@ export class TimelineTree {
  * @returns
  */
 
-function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number) {
+function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number): CueNode[] {
 	if (!treeNode) {
 		return [];
 	}

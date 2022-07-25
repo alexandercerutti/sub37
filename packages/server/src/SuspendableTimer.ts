@@ -18,7 +18,7 @@ export class SuspendableTimer {
 		this.ticker = createTicker(tickCallback);
 	}
 
-	public start() {
+	public start(): void {
 		if (this.isRunning) {
 			return;
 		}
@@ -26,7 +26,7 @@ export class SuspendableTimer {
 		this.interval = window.setInterval(this.ticker.run, this.frequency || 0);
 	}
 
-	public stop() {
+	public stop(): void {
 		if (!this.isRunning) {
 			return;
 		}
@@ -35,7 +35,7 @@ export class SuspendableTimer {
 		this.interval = null;
 	}
 
-	public get isRunning() {
+	public get isRunning(): boolean {
 		return Boolean(this.interval);
 	}
 
@@ -49,7 +49,7 @@ export class SuspendableTimer {
 	 * @param currentTime
 	 */
 
-	public runTick(currentTime?: number) {
+	public runTick(currentTime?: number): void {
 		this.ticker.run(currentTime);
 	}
 }

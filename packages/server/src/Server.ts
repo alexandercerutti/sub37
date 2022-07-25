@@ -93,7 +93,7 @@ export class HSServer {
 		getCurrentPosition: () => number,
 		frequencyMs: number = 250,
 		options?: { karaoke?: boolean },
-	) {
+	): void {
 		assertSessionInitialized.call(this);
 		assertIntervalNotRunning.call(this);
 
@@ -148,7 +148,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public updateTime(currentTime: number) {
+	public updateTime(currentTime: number): void {
 		assertIntervalStarted.call(this);
 		assertIntervalNotRunning.call(this);
 
@@ -162,7 +162,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public suspend(emitStop: boolean = false) {
+	public suspend(emitStop: boolean = false): void {
 		assertIntervalStarted.call(this);
 		assertIntervalRunning.call(this);
 
@@ -180,7 +180,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public resume() {
+	public resume(): void {
 		assertIntervalStarted.call(this);
 		assertIntervalNotRunning.call(this);
 
@@ -192,7 +192,7 @@ export class HSServer {
 	 * subtitles
 	 */
 
-	public get isRunning() {
+	public get isRunning(): boolean {
 		try {
 			assertIntervalStarted.call(this);
 		} catch (err) {
@@ -207,7 +207,7 @@ export class HSServer {
 	 * subtitles data. Maintains the renderers.
 	 */
 
-	public destroy() {
+	public destroy(): void {
 		this.suspend(true);
 
 		this[intervalSymbol] = undefined;
@@ -261,7 +261,7 @@ export class HSServer {
 	 * @returns
 	 */
 
-	public selectTextTrack(lang: string | undefined | null) {
+	public selectTextTrack(lang: string | undefined | null): void {
 		assertSessionInitialized.call(this);
 
 		if (!lang) {
@@ -277,7 +277,7 @@ export class HSServer {
 	}
 }
 
-function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>) {
+function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
 	if (last.size !== next.size) {
 		return false;
 	}
@@ -291,7 +291,7 @@ function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>) {
 	return true;
 }
 
-function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: CueNode[]) {
+function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: CueNode[]): void {
 	for (let i = 0; i < pool.length; i++) {
 		const { event, handler } = pool[i];
 		if (event === eventName) {
@@ -300,25 +300,25 @@ function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: Cu
 	}
 }
 
-function assertSessionInitialized(this: HSServer) {
+function assertSessionInitialized(this: HSServer): void {
 	if (!this[sessionSymbol]) {
 		throw new Error("No session started. Engine won't serve any subtitles.");
 	}
 }
 
-function assertIntervalStarted(this: HSServer) {
+function assertIntervalStarted(this: HSServer): void {
 	if (!this[intervalSymbol]) {
 		throw new Error("Server has not been started at all. Cannot perform operation.");
 	}
 }
 
-function assertIntervalNotRunning(this: HSServer) {
+function assertIntervalNotRunning(this: HSServer): void {
 	if (this[intervalSymbol]?.isRunning) {
 		throw new Error("Server is already running. Cannot perform operation.");
 	}
 }
 
-function assertIntervalRunning(this: HSServer) {
+function assertIntervalRunning(this: HSServer): void {
 	if (!this[intervalSymbol].isRunning) {
 		throw new Error("Server has been started but is not running. Cannot perform operation.");
 	}

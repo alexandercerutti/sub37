@@ -13,7 +13,7 @@ export default class NodeTree {
 		return this.root;
 	}
 
-	public get length() {
+	public get length(): number {
 		if (!this.root) {
 			return 0;
 		}
@@ -29,7 +29,7 @@ export default class NodeTree {
 		return length;
 	}
 
-	public push(node: Node) {
+	public push(node: Node): void {
 		if (!this.root) {
 			this.root = node;
 			return;
@@ -39,7 +39,7 @@ export default class NodeTree {
 		this.root = node;
 	}
 
-	public pop() {
+	public pop(): Node {
 		if (!this.root) {
 			return;
 		}

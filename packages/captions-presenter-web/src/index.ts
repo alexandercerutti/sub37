@@ -59,7 +59,7 @@ div#scroll-area p {
 		shadowRoot.appendChild(this.mainRegion);
 	}
 
-	public setCue(cueData?: CueNode[]) {
+	public setCue(cueData?: CueNode[]): void {
 		if (!cueData?.length) {
 			this.renderArea.wipeTree();
 			this.renderArea.wipeEffects();
