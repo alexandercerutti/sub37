@@ -25,8 +25,8 @@ describe("TimelineTree", () => {
 
 		const query1 = tree.getCurrentNodes(0);
 
-		expect(query1.length).toBe(1);
-		expect(query1[0]).toMatchObject({
+		expect(query1?.length).toBe(1);
+		expect(query1?.[0]).toMatchObject({
 			content: "A test content",
 			startTime: 0,
 			endTime: 10000,
@@ -34,8 +34,8 @@ describe("TimelineTree", () => {
 
 		const query2 = tree.getCurrentNodes(11500);
 
-		expect(query2.length).toBe(1);
-		expect(query2[0]).toMatchObject({
+		expect(query2?.length).toBe(1);
+		expect(query2?.[0]).toMatchObject({
 			content: "A test content",
 			startTime: 11000,
 			endTime: 12000,
@@ -101,7 +101,7 @@ describe("TimelineTree", () => {
 
 		const query1 = tree.getCurrentNodes(7000);
 
-		expect(query1.length).toBe(2);
+		expect(query1?.length).toBe(2);
 		expect(query1).toMatchObject([
 			{
 				content: "A test master-content",
@@ -117,7 +117,7 @@ describe("TimelineTree", () => {
 
 		const query2 = tree.getCurrentNodes(22500);
 
-		expect(query2.length).toBe(2);
+		expect(query2?.length).toBe(2);
 		expect(query2).toMatchObject([
 			{
 				content: "A test master-content",
@@ -133,7 +133,7 @@ describe("TimelineTree", () => {
 
 		const query3 = tree.getCurrentNodes(37000);
 
-		expect(query3.length).toBe(2);
+		expect(query3?.length).toBe(2);
 		expect(query3).toMatchObject([
 			{
 				content: "A test master-content",
