@@ -25,14 +25,14 @@ WEBVTT
 			expect(
 				parseCue({
 					attributes: "region:fred align:left",
-					cueid: undefined,
+					cueid: "cue-105-207",
 					starttime: "00:00:05.000",
 					endtime: "00:00:25.000",
 					text: "<v Fred&gt;>Would you like to get &lt; coffee?",
 				}),
 			).toEqual([
 				{
-					id: undefined,
+					id: "cue-105-207",
 					startTime: 5000,
 					endTime: 25000,
 					content: "Would you like to get < coffee?",

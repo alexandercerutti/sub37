@@ -72,7 +72,9 @@ Alberto, come to look at Marcello!
 `;
 
 		it("should return an empty array if rawContent is falsy", () => {
+			// @ts-expect-error
 			expect(renderer.parse(undefined)).toEqual([]);
+			// @ts-expect-error
 			expect(renderer.parse(null)).toEqual([]);
 			expect(renderer.parse("")).toEqual([]);
 		});
