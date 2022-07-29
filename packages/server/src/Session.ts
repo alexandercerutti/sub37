@@ -11,13 +11,13 @@ export class HSSession {
 	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
 		for (let { lang, content } of rawContents) {
 			try {
-				const entities = renderer.parse(content);
+				const cues = renderer.parse(content);
 
-				if (entities.length) {
+				if (cues.length) {
 					this.timelines[lang] = new TimelineTree();
 
-					for (let entity of entities) {
-						this.timelines[lang].addNode(entity);
+					for (const cue of cues) {
+						this.timelines[lang].addNode(cue);
 					}
 				}
 			} catch (err) {
