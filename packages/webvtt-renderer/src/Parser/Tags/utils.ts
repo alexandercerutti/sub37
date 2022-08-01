@@ -1,4 +1,5 @@
 import type { CueNode, Entity } from "@hsubs/server";
+import { EntityType } from "@hsubs/server";
 import Node from "./Node.js";
 import NodeTree from "./NodesTree.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
@@ -53,11 +54,12 @@ export function createEntity(currentCue: CueNode, tagStart: Node): Entity {
 	const tagOpenedInCurrentCue = currentCue.content.length - tagStart.index > 0;
 
 	return {
+		type: EntityType.TAG,
 		offset: tagOpenedInCurrentCue ? tagStart.index : 0,
 		length: tagOpenedInCurrentCue
 			? currentCue.content.length - tagStart.index
 			: currentCue.content.length,
 		attributes: tagStart.token.annotations ?? [],
-		type: EntitiesTokenMap[tagStart.token.content],
+		tagType: EntitiesTokenMap[tagStart.token.content],
 	};
 }

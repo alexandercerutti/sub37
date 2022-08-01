@@ -3,14 +3,48 @@ export interface RawTrack {
 	content: unknown;
 }
 
-export interface Entity {
+export const enum EntityType {
+	STYLE,
+	TAG,
+}
+
+/**
+ * TagType is an enum containing
+ * recognized types in renderers
+ * like vtt
+ */
+
+export enum TagType {
+	VOICE /*******/ = 0b00000001,
+	LANG /********/ = 0b00000010,
+	RUBY /********/ = 0b00000100,
+	RT /**********/ = 0b00001000,
+	CLASS /*******/ = 0b00010000,
+	BOLD /********/ = 0b00100000,
+	ITALIC /******/ = 0b01000000,
+	UNDERLINE /***/ = 0b10000000,
+}
+
+export type Entity = {
 	/** zero-based shift based on cue begin, from which the entity will begin */
 	offset: number;
 	/** one-based content length in entity */
 	length: number;
-	attributes?: any[];
-	type: number;
-}
+} & (
+	| {
+			type: EntityType.STYLE;
+
+			/** Mainly for debug */
+			reason: "in-tag" | "id-match" | "global";
+
+			styles: { [key: string]: string | number };
+	  }
+	| {
+			type: EntityType.TAG;
+			tagType: TagType;
+			attributes: string[];
+	  }
+);
 
 export interface Region {
 	id: string;
@@ -27,6 +61,8 @@ export interface Region {
 	 * Paint-on is achieved by printing one word per time
 	 *
 	 * Default: "replace"
+	 *
+	 * @TODO implement support
 	 */
 	displayStrategy?: "push" | "replace";
 

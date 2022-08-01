@@ -116,7 +116,8 @@ Alberto, come to look at Marcello!
 					{
 						offset: 0,
 						length: 31,
-						type: 1, // voice
+						tagType: 1,
+						type: 1,
 						attributes: ["Fred>"],
 						/** @TODO add classes */
 					},
@@ -135,7 +136,8 @@ Alberto, come to look at Marcello!
 					{
 						offset: 0,
 						length: 19,
-						type: 2, // lang
+						tagType: 2,
+						type: 1, // lang
 						attributes: ["en-US"],
 						/** @TODO add classes */
 					},
@@ -156,7 +158,8 @@ Alberto, come to look at Marcello!
 				attributes: {},
 				entities: [
 					{
-						type: 16,
+						tagType: 16,
+						type: 1,
 						offset: 1,
 						length: 4,
 						attributes: [],
@@ -172,7 +175,8 @@ Alberto, come to look at Marcello!
 				attributes: {},
 				entities: [
 					{
-						type: 16,
+						tagType: 16,
+						type: 1,
 						offset: 1,
 						length: 3,
 						attributes: [],
@@ -194,19 +198,22 @@ Alberto, come to look at Marcello!
 				attributes: {},
 				entities: [
 					{
-						type: 8,
+						tagType: 8,
+						type: 1,
 						offset: 2,
 						length: 3,
 						attributes: [],
 					},
 					{
-						type: 8,
+						tagType: 8,
+						type: 1,
 						offset: 8,
 						length: 2,
 						attributes: [],
 					},
 					{
-						type: 4,
+						tagType: 4,
+						type: 1,
 						offset: 0,
 						length: 10,
 						attributes: [],

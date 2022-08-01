@@ -41,6 +41,7 @@ WEBVTT
 							offset: 0,
 							length: 31,
 							attributes: ["Fred>"],
+							tagType: 1,
 							type: 1,
 						},
 					],
@@ -197,6 +198,7 @@ WEBVTT
 					offset: 0,
 					length: 27,
 					attributes: ["Announcer"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
@@ -206,6 +208,7 @@ WEBVTT
 					offset: 0,
 					length: 39,
 					attributes: ["Announcer"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
@@ -215,6 +218,7 @@ WEBVTT
 					offset: 0,
 					length: 40,
 					attributes: ["Announcer"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
@@ -224,6 +228,7 @@ WEBVTT
 					offset: 0,
 					length: 36,
 					attributes: ["Announcer2"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
@@ -233,6 +238,7 @@ WEBVTT
 					offset: 0,
 					length: 28,
 					attributes: ["Announcer2"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
@@ -242,6 +248,7 @@ WEBVTT
 					offset: 1,
 					length: 26,
 					attributes: ["Announcer3"],
+					tagType: 1,
 					type: 1,
 				},
 			]);
