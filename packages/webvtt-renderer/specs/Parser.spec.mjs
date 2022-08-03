@@ -1,6 +1,6 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
-import { parseCue, parseRegion } from "../lib/Parser/index.js";
+import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
 
 describe("Parser", () => {
 	describe("parseCue", () => {
@@ -292,6 +292,179 @@ scroll:up
 
 		it("should discard the parsing result if a text region misses the id", () => {
 			expect(parseRegion(REGION_WITHOUT_ID)).toBeUndefined();
+		});
+	});
+
+	describe("parseStyle", () => {
+		it("should return undefined if style block is invalid", () => {
+			const STYLE_INVALID = `/** ::cue { }`;
+			expect(parseStyle(STYLE_INVALID)).toBeUndefined();
+		});
+
+		it("should safely ignore css comments", () => {
+			const STYLE_GLOBAL_WITH_COMMENT_TOP = `
+/* This is a top comment */
+::cue {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_GLOBAL_WITH_COMMENT_TOP)).toEqual({
+				type: 0,
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+
+			const STYLE_GLOBAL_WITH_COMMENT_MIDDLE = `
+::cue {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	/* This is a middle comment */
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_GLOBAL_WITH_COMMENT_MIDDLE)).toEqual({
+				type: 0,
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+
+			const STYLE_GLOBAL_WITH_END_COMMENT = `
+::cue {
+background-image: linear-gradient(to bottom, dimgray, lightgray);
+color: papayawhip;
+}
+/* This is an end comment */
+		`;
+
+			expect(parseStyle(STYLE_GLOBAL_WITH_END_COMMENT)).toEqual({
+				type: 0,
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+		});
+
+		it("should return a structure containing global styles if style block has no selector", () => {
+			const STYLE_GLOBAL = `
+::cue {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_GLOBAL)).toEqual({
+				type: 0,
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+		});
+
+		it("should return a structure containing the id if the style block has an id", () => {
+			const STYLE_WITH_STRING_ID = `
+::cue(#test) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_STRING_ID)).toEqual({
+				type: 1,
+				selector: "test",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+
+			/**
+			 * Scripts run in "strict-mode" and in there octal identifiers are not allowed.
+			 * Octal identifiers are also not allowed in template strings. Hence, we are
+			 * double-escaping them. Node.js double escapes them when they are read as buffers,
+			 *
+			 * @see https://www.w3.org/International/questions/qa-escapes#css_identifiers
+			 * @see https://github.com/chromium/chromium/blob/924ec189cdfd33c8cee15d918f927afcb88d06db/third_party/blink/renderer/core/css/parser/css_parser_idioms.cc#L24-L52
+			 */
+
+			const STYLE_WITH_NUMERIC_ID = `
+::cue(#\\31 23) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_NUMERIC_ID)).toEqual({
+				type: 1,
+				selector: "123",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+		});
+
+		it("should return a structure containing an escaped id if the style block has an id with spaces", () => {
+			const STYLE_WITH_ID_ESCAPED = `
+::cue(#crédit\ de\ transcription) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_ID_ESCAPED)).toEqual({
+				type: 1,
+				selector: "crédit de transcription",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+			});
+		});
+
+		it("should return a structure containing the selector if the style block has one", () => {
+			const STYLE_WITH_SELECTOR_NO_ATTRIBUTES = `
+::cue(b) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_SELECTOR_NO_ATTRIBUTES)).toEqual({
+				type: 2,
+				selector: "b",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+				attributes: [],
+			});
+		});
+
+		it("should return a structure containing the selector and the attributes if style block has some", () => {
+			const STYLE_WITH_SELECTOR_ONE_ATTRIBUTE = `
+::cue(v[voice="Esme"]) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_SELECTOR_ONE_ATTRIBUTE)).toEqual({
+				type: 2,
+				selector: "v",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+				attributes: [["voice", "Esme"]],
+			});
+
+			const STYLE_WITH_SELECTOR_ATTRIBUTES = `
+::cue(v[voice="Esme"][lang="it"]) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_SELECTOR_ATTRIBUTES)).toEqual({
+				type: 2,
+				selector: "v",
+				styleString:
+					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+				attributes: [
+					["voice", "Esme"],
+					["lang", "it"],
+				],
+			});
 		});
 	});
 });
