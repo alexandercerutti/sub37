@@ -39,6 +39,7 @@ export default class Renderer extends HSBaseRenderer {
 		};
 
 		const regions: { [id: string]: Region } = Object.create(null);
+		const styles: Parser.Style[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -82,8 +83,7 @@ export default class Renderer extends HSBaseRenderer {
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
-
-					/** @TODO how do we process and use styles? */
+					styles.push(parsedContent);
 				}
 
 				if (isCue(blockEvaluationResult)) {
@@ -120,7 +120,7 @@ export default class Renderer extends HSBaseRenderer {
 type CueBlockType = [blockType: BlockType.CUE, payload: CueNode[]];
 type HeaderBlockType = [blockType: BlockType.HEADER, payload: undefined];
 type RegionBlockType = [blockType: BlockType.REGION, payload: Region];
-type StyleBlockType = [blockType: BlockType.STYLE, payload: undefined];
+type StyleBlockType = [blockType: BlockType.STYLE, payload: Parser.Style];
 type IgnoredBlockType = [blockType: BlockType.IGNORED, payload: undefined];
 
 type BlockTuple =
@@ -145,14 +145,19 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 
 	if (blockMatch?.groups["blocktype"]) {
 		switch (blockMatch.groups["blocktype"]) {
-			case "REGION":
+			case "REGION": {
 				const payload = Parser.parseRegion(blockMatch.groups["payload"]);
 				return [BlockType.REGION, payload];
-			case "STYLE":
-				/** @TODO not supported yet */
-				return [BlockType.STYLE, undefined];
-			case "NOTE":
+			}
+
+			case "STYLE": {
+				const payload = Parser.parseStyle(blockMatch.groups["payload"]);
+				return [BlockType.STYLE, payload];
+			}
+
+			case "NOTE": {
 				return [BlockType.IGNORED, undefined];
+			}
 		}
 	}
 
