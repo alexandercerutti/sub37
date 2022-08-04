@@ -11,16 +11,16 @@ const CSS_SELECTOR_ATTRIBUTES_REGEX = /([^\[\]]+)|\[(.+?)(?:="(.+?)?")?\]/g;
 
 const CODEPOINT_ESCAPE_REPLACE_REGEX = /\\3(\d)\s+(\d+)/;
 
-export const enum StyleTarget {
+export const enum StyleDomain {
 	GLOBAL,
 	ID,
 	TAG,
 }
 
 type SelectorTarget =
-	| { type: StyleTarget.GLOBAL }
-	| { type: StyleTarget.ID; selector: string }
-	| { type: StyleTarget.TAG; selector: TagType; attributes: string[][] };
+	| { type: StyleDomain.GLOBAL }
+	| { type: StyleDomain.ID; selector: string }
+	| { type: StyleDomain.TAG; selector: TagType; attributes: string[][] };
 
 export type Style = SelectorTarget & {
 	styleString: string;
@@ -56,13 +56,13 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 function getParsedSelector(selector: string): SelectorTarget | undefined {
 	if (!selector) {
 		return {
-			type: StyleTarget.GLOBAL,
+			type: StyleDomain.GLOBAL,
 		};
 	}
 
 	if (selector.startsWith("#")) {
 		return {
-			type: StyleTarget.ID,
+			type: StyleDomain.ID,
 			selector: stripEscapedCodePoint(selector.slice(1)).replace("\\", ""),
 		};
 	}
@@ -75,7 +75,7 @@ function getParsedSelector(selector: string): SelectorTarget | undefined {
 	}
 
 	return {
-		type: StyleTarget.TAG,
+		type: StyleDomain.TAG,
 		...selectorComponents,
 	};
 }
