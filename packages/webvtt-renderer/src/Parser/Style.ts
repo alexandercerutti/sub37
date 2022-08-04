@@ -1,3 +1,6 @@
+import type { TagType } from "@hsubs/server";
+import { EntitiesTokenMap } from "./Tags/tokenEntities";
+
 const CSS_RULESET_REGEX = /::cue(?:\((.+)\))?\s*\{\s*([\s\S]+)\}/;
 
 /**
@@ -14,18 +17,14 @@ export const enum StyleTarget {
 	TAG,
 }
 
-type SelectorTargetComponents =
+type SelectorTarget =
+	| { type: StyleTarget.GLOBAL }
 	| { type: StyleTarget.ID; selector: string }
-	| { type: StyleTarget.TAG; selector: string; attributes: string[][] };
+	| { type: StyleTarget.TAG; selector: TagType; attributes: string[][] };
 
-export type Style = {
+export type Style = SelectorTarget & {
 	styleString: string;
-} & (
-	| SelectorTargetComponents
-	| {
-			type: StyleTarget.GLOBAL;
-	  }
-);
+};
 
 export function parseStyle(rawStyleData: string): Style | undefined {
 	const styleBlockComponents = rawStyleData.match(CSS_RULESET_REGEX);
@@ -44,14 +43,8 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 
 	const parsedSelector = getParsedSelector(selector);
 
-	console.log("cssData", cssData);
-	console.log("normalizedCssData:", normalizedCssData);
-
 	if (!parsedSelector) {
-		return {
-			type: StyleTarget.GLOBAL,
-			styleString: normalizedCssData,
-		};
+		return undefined;
 	}
 
 	return {
@@ -60,9 +53,11 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 	};
 }
 
-function getParsedSelector(selector: string): SelectorTargetComponents | undefined {
+function getParsedSelector(selector: string): SelectorTarget | undefined {
 	if (!selector) {
-		return undefined;
+		return {
+			type: StyleTarget.GLOBAL,
+		};
 	}
 
 	if (selector.startsWith("#")) {
@@ -72,14 +67,21 @@ function getParsedSelector(selector: string): SelectorTargetComponents | undefin
 		};
 	}
 
+	const selectorComponents = getSelectorComponents(selector);
+
+	if (!selectorComponents.selector) {
+		/** Invalid */
+		return undefined;
+	}
+
 	return {
 		type: StyleTarget.TAG,
-		...getSelectorComponents(selector),
+		...selectorComponents,
 	};
 }
 
-function getSelectorComponents(rawSelector: string): { selector: string; attributes: string[][] } {
-	let selector: string = "";
+function getSelectorComponents(rawSelector: string): { selector: TagType; attributes: string[][] } {
+	let selector: string = undefined;
 	const attributes: string[][] = [];
 
 	/**
@@ -97,7 +99,10 @@ function getSelectorComponents(rawSelector: string): { selector: string; attribu
 		}
 	}
 
-	return { selector, attributes };
+	return {
+		selector: EntitiesTokenMap[selector],
+		attributes,
+	};
 }
 
 function normalizeCssString(cssData: string = "") {

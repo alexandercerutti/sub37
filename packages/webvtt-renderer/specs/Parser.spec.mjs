@@ -425,7 +425,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_NO_ATTRIBUTES)).toEqual({
 				type: 2,
-				selector: "b",
+				selector: 32,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: [],
@@ -442,7 +442,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ONE_ATTRIBUTE)).toEqual({
 				type: 2,
-				selector: "v",
+				selector: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: [["voice", "Esme"]],
@@ -457,7 +457,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ATTRIBUTES)).toEqual({
 				type: 2,
-				selector: "v",
+				selector: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: [
@@ -465,6 +465,17 @@ color: papayawhip;
 					["lang", "it"],
 				],
 			});
+		});
+
+		it("should safely ignore style if a ruleset contains an unrecognized tag as selector", () => {
+			const STYLE_WITH_INVALID_TAG = `
+::cue(m) {
+	background-image: linear-gradient(to bottom, dimgray, lightgray);
+	color: papayawhip;
+}
+			`;
+
+			expect(parseStyle(STYLE_WITH_INVALID_TAG)).toBeUndefined();
 		});
 	});
 });
