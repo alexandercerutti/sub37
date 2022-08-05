@@ -1,5 +1,5 @@
 import type { TagType } from "@hsubs/server";
-import { EntitiesTokenMap } from "./Tags/tokenEntities";
+import { EntitiesTokenMap } from "./Tags/tokenEntities.js";
 
 const CSS_RULESET_REGEX = /::cue(?:\((.+)\))?\s*\{\s*([\s\S]+)\}/;
 
