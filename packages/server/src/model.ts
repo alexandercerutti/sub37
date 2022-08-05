@@ -36,8 +36,7 @@ export type Entity = {
 
 			/** Mainly for debug */
 			reason: "in-tag" | "id-match" | "global";
-
-			styles: { [key: string]: string | number };
+			styles: { [key: string]: string | number } | string /** @TODO choose one of the two */;
 	  }
 	| {
 			type: EntityType.TAG;

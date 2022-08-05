@@ -249,5 +249,141 @@ WEBVTT
 				},
 			});
 		});
+
+		describe("styles", () => {
+			describe("should correctly convert styles to entities and apply them to cues", () => {
+				it("should add global style", () => {
+					const CUE_WITH_STYLE_WITHOUT_ID = `
+WEBVTT
+
+STYLE
+::cue {
+	background-color: purple;
+}
+
+00:00:05.000 --> 00:00:10.000 region:fred
+Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult = renderer.parse(CUE_WITH_STYLE_WITHOUT_ID);
+
+					const content =
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n";
+
+					expect(parsingResult[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 0,
+								reason: "global",
+								styles: "background-color: purple;",
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+							},
+						],
+						id: "cue-53-187",
+						attributes: {
+							region: "fred",
+						},
+					});
+				});
+
+				it("should add only style that matches the id", () => {
+					const content =
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n";
+
+					const CUE_WITH_STYLE_WITH_CSS_ID = `
+WEBVTT
+
+STYLE
+::cue(#test) {
+	background-color: purple;
+}
+
+STYLE
+::cue(#\\31 23) {
+	background-color: red;
+}
+
+test
+00:00:05.000 --> 00:00:10.000 region:fred
+Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_ID);
+
+					expect(parsingResult1[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 0,
+								reason: "id-match",
+								styles: "background-color: purple;",
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+							},
+						],
+						id: "test",
+						attributes: {
+							region: "fred",
+						},
+					});
+
+					const CUE_WITH_STYLE_WITH_ESCAPED_ID = `
+WEBVTT
+
+STYLE
+::cue(#test) {
+	background-color: purple;
+}
+
+STYLE
+::cue(#\\31 23) {
+	background-color: red;
+}
+
+123
+00:00:05.000 --> 00:00:10.000 region:fred
+Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
+
+					expect(parsingResult2[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 0,
+								reason: "id-match",
+								styles: "background-color: red;",
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+							},
+						],
+						id: "123",
+						attributes: {
+							region: "fred",
+						},
+					});
+				});
+			});
+		});
 	});
 });
