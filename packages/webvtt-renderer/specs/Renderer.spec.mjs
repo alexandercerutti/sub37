@@ -111,6 +111,7 @@ Alberto, come to look at Marcello!
 				id: "cue-9-108",
 				attributes: {
 					align: "left",
+					region: "fred",
 				},
 				entities: [
 					{
@@ -130,6 +131,7 @@ Alberto, come to look at Marcello!
 				content: "Hi, my name is Fred",
 				id: "cue-110-207",
 				attributes: {
+					region: "fred",
 					align: "left",
 				},
 				entities: [
@@ -233,7 +235,9 @@ Alberto, come to look at Marcello!
 				endTime: 10000,
 				entities: [],
 				id: "cue-97-226",
-				attributes: {},
+				attributes: {
+					region: "fred",
+				},
 				region: {
 					id: "fred",
 					width: "40%",
