@@ -1,8 +1,12 @@
-import type { CueNode, Entity } from "@hsubs/server";
-import { EntityType } from "@hsubs/server";
+import type { Entity, EntityType, TagType } from "@hsubs/server";
+import type { CueParsedData } from "../CueNode.js";
 import Node from "./Node.js";
 import NodeTree from "./NodesTree.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
+
+type TagEntityValues = Pick<Entity & { type: EntityType.TAG }, "attributes" | "length" | "offset">;
+export type TagEntityEntry = [TagType?, TagEntityValues?];
+export type TagEntityMap = Map<TagType, TagEntityValues>;
 
 export function isSupported(content: string): boolean {
 	return EntitiesTokenMap.hasOwnProperty(content);
@@ -17,24 +21,27 @@ export function isSupported(content: string): boolean {
  * @returns
  */
 
-export function createEntitiesFromUnpaired(openTagsTree: NodeTree, currentCue: CueNode): Entity[] {
+export function createTagEntitiesFromUnpaired(
+	openTagsTree: NodeTree,
+	currentCue: CueParsedData,
+): TagEntityEntry[] {
 	let nodeCursor: Node = openTagsTree.current;
 
 	if (!nodeCursor) {
 		return [];
 	}
 
-	const entities: Entity[] = [];
+	const entities: TagEntityEntry[] = [];
 
 	while (nodeCursor !== null) {
-		if (currentCue.content.length - nodeCursor.index !== 0) {
+		if (currentCue.text.length - nodeCursor.index !== 0) {
 			/**
 			 * If an entity startTag is placed between two timestamps
 			 * the closing timestamp should not have the new tag associated.
 			 * tag.index is zero-based.
 			 */
 
-			entities.push(createEntity(currentCue, nodeCursor));
+			entities.push(createTagEntity(currentCue, nodeCursor));
 		}
 
 		nodeCursor = nodeCursor.parent;
@@ -43,7 +50,7 @@ export function createEntitiesFromUnpaired(openTagsTree: NodeTree, currentCue: C
 	return entities;
 }
 
-export function createEntity(currentCue: CueNode, tagStart: Node): Entity {
+export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagEntityEntry {
 	/**
 	 * If length is negative, that means that the tag was opened before
 	 * the beginning of the current Cue. Therefore, offset should represent
@@ -51,15 +58,16 @@ export function createEntity(currentCue: CueNode, tagStart: Node): Entity {
 	 * current cue content.
 	 */
 
-	const tagOpenedInCurrentCue = currentCue.content.length - tagStart.index > 0;
+	const tagOpenedInCurrentCue = currentCue.text.length - tagStart.index > 0;
 
-	return {
-		type: EntityType.TAG,
-		offset: tagOpenedInCurrentCue ? tagStart.index : 0,
-		length: tagOpenedInCurrentCue
-			? currentCue.content.length - tagStart.index
-			: currentCue.content.length,
-		attributes: tagStart.token.annotations ?? [],
-		tagType: EntitiesTokenMap[tagStart.token.content],
-	};
+	return [
+		EntitiesTokenMap[tagStart.token.content],
+		{
+			offset: tagOpenedInCurrentCue ? tagStart.index : 0,
+			length: tagOpenedInCurrentCue
+				? currentCue.text.length - tagStart.index
+				: currentCue.text.length,
+			attributes: tagStart.token.annotations ?? [],
+		},
+	];
 }

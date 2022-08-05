@@ -1,4 +1,3 @@
-import type { CueNode } from "@hsubs/server";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
@@ -14,10 +13,20 @@ export interface CueRawData {
 	text: string;
 }
 
-export function parseCue(data: CueRawData): CueNode[] {
+export interface CueParsedData {
+	id?: string;
+	startTime: number;
+	endTime: number;
+	regionName?: string;
+	tags: Tags.TagEntityMap;
+	text: string;
+	attributes: Attributes;
+}
+
+export function parseCue(data: CueRawData): CueParsedData[] {
 	const { starttime, endtime, text } = data;
 
-	const hsCues: CueNode[] = [];
+	const hsCues: CueParsedData[] = [];
 	const tokenizer = new Tokenizer(text);
 
 	let token: Token = null;
@@ -34,7 +43,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 		switch (token.type) {
 			case TokenType.START_TAG: {
 				if (Tags.isSupported(token.content)) {
-					openTagsTree.push(new Tags.Node(currentCue.content.length, token));
+					openTagsTree.push(new Tags.Node(currentCue.text.length, token));
 				}
 
 				break;
@@ -53,12 +62,12 @@ export function parseCue(data: CueRawData): CueNode[] {
 
 					if (token.content === "ruby" && openTagsTree.current.token.content === "rt") {
 						const out = openTagsTree.pop();
-						currentCue.entities.push(Tags.createEntity(currentCue, out));
+						currentCue.tags.set(...Tags.createTagEntity(currentCue, out));
 					}
 
 					if (openTagsTree.current.token.content === token.content) {
 						const out = openTagsTree.pop();
-						currentCue.entities.push(Tags.createEntity(currentCue, out));
+						currentCue.tags.set(...Tags.createTagEntity(currentCue, out));
 					}
 				}
 
@@ -66,7 +75,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 			}
 
 			case TokenType.STRING: {
-				currentCue.content += token.content;
+				currentCue.text += token.content;
 				break;
 			}
 
@@ -76,7 +85,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 				 * Next cues will be the timestamped ones.
 				 */
 
-				if (currentCue.content.length) {
+				if (currentCue.text.length) {
 					/**
 					 * Closing the current entities for the previous cue,
 					 * still without resetting open tags, because timestamps
@@ -84,7 +93,7 @@ export function parseCue(data: CueRawData): CueNode[] {
 					 * have some tags still open
 					 */
 
-					currentCue.entities.push(...Tags.createEntitiesFromUnpaired(openTagsTree, currentCue));
+					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsTree, currentCue));
 					hsCues.push(currentCue);
 				}
 
@@ -112,13 +121,19 @@ export function parseCue(data: CueRawData): CueNode[] {
 	 * tags and create entities for them.
 	 */
 
-	currentCue.entities.push(...Tags.createEntitiesFromUnpaired(openTagsTree, currentCue));
+	addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsTree, currentCue));
 
-	if (currentCue.content.length) {
+	if (currentCue.text.length) {
 		hsCues.push(currentCue);
 	}
 
 	return hsCues;
+}
+
+function addCueEntities(cue: CueParsedData, entities: Tags.TagEntityEntry[]) {
+	for (const entity of entities) {
+		cue.tags.set(...entity);
+	}
 }
 
 function createCue(
@@ -126,12 +141,12 @@ function createCue(
 	endTime: number,
 	id?: string,
 	attributes?: Attributes,
-): CueNode {
+): CueParsedData {
 	return {
 		startTime,
 		endTime,
-		content: "",
-		entities: [],
+		text: "",
+		tags: new Map() as Tags.TagEntityMap,
 		id,
 		attributes,
 	};
