@@ -1,5 +1,5 @@
-import type { CueNode, Region } from "@hsubs/server";
-import { HSBaseRenderer } from "@hsubs/server";
+import type { CueNode, Entity, Region } from "@hsubs/server";
+import { HSBaseRenderer, EntityType } from "@hsubs/server";
 import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
@@ -88,21 +88,32 @@ export default class Renderer extends HSBaseRenderer {
 
 				if (isCue(blockEvaluationResult)) {
 					const [blockType, parsedContent] = blockEvaluationResult;
-
 					latestBlockPhase = blockType;
 
-					for (let cue of parsedContent) {
-						if (cue.startTime < cue.endTime) {
-							if (cue.attributes.region) {
-								cue.region = regions[cue.attributes.region];
-								delete cue.attributes.region;
-							}
-
-							cues.push(cue);
+					for (const parsedCue of parsedContent) {
+						if (parsedCue.startTime >= parsedCue.endTime) {
+							continue;
 						}
-					}
 
-					/** @TODO Link with styled */
+						const cue: CueNode = {
+							id: parsedCue.id,
+							startTime: parsedCue.startTime,
+							endTime: parsedCue.endTime,
+							content: parsedCue.text,
+							attributes: parsedCue.attributes,
+							entities: Array.from(parsedCue.tags).map<Entity>(([tagType, entity]) => ({
+								type: EntityType.TAG,
+								tagType,
+								...entity,
+							})),
+						};
+
+						if (parsedCue.attributes.region) {
+							cue.region = regions[parsedCue.attributes.region];
+						}
+
+						cues.push(cue);
+					}
 				}
 
 				/** Skipping \n\n and going to the next character */
@@ -117,7 +128,7 @@ export default class Renderer extends HSBaseRenderer {
 	}
 }
 
-type CueBlockType = [blockType: BlockType.CUE, payload: CueNode[]];
+type CueBlockType = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
 type HeaderBlockType = [blockType: BlockType.HEADER, payload: undefined];
 type RegionBlockType = [blockType: BlockType.REGION, payload: Region];
 type StyleBlockType = [blockType: BlockType.STYLE, payload: Parser.Style];
