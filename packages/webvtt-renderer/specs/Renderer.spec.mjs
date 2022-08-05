@@ -48,13 +48,6 @@ WEBVTT
 <00:00:24.000>
 `;
 
-		const RUBY_RT_AUTOCLOSE = `
-WEBVTT
-
-00:00:05.000 --> 00:00:10.000
-<ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
-`;
-
 		const REGION_WITH_ATTRIBUTES = `
 WEBVTT
 
@@ -188,6 +181,15 @@ Alberto, come to look at Marcello!
 		});
 
 		it("should return a cue with three entities when ruby autocloses a ruby-text <rt>", () => {
+			const RUBY_RT_AUTOCLOSE = `
+WEBVTT
+
+00:00:05.000 --> 00:00:10.000
+<ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
+			`;
+
+			debugger;
+
 			const parsingResult = renderer.parse(RUBY_RT_AUTOCLOSE);
 			expect(parsingResult).toBeInstanceOf(Array);
 			expect(parsingResult.length).toEqual(1);
@@ -196,7 +198,7 @@ Alberto, come to look at Marcello!
 				startTime: 5000,
 				endTime: 10000,
 				content: "漢 kan 字 ji\n",
-				id: "cue-9-76",
+				id: "cue-9-79",
 				attributes: {},
 				entities: [
 					{

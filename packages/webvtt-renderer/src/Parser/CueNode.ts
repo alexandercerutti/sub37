@@ -62,12 +62,12 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 					if (token.content === "ruby" && openTagsTree.current.token.content === "rt") {
 						const out = openTagsTree.pop();
-						currentCue.tags.set(...Tags.createTagEntity(currentCue, out));
+						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 
 					if (openTagsTree.current.token.content === token.content) {
 						const out = openTagsTree.pop();
-						currentCue.tags.set(...Tags.createTagEntity(currentCue, out));
+						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 				}
 
@@ -132,7 +132,8 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 function addCueEntities(cue: CueParsedData, entities: Tags.TagEntityEntry[]) {
 	for (const entity of entities) {
-		cue.tags.set(...entity);
+		const current = cue.tags.get(entity[0]) || [];
+		cue.tags.set(entity[0], [...current, entity[1]]);
 	}
 }
 

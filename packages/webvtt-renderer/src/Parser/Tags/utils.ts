@@ -6,7 +6,7 @@ import { EntitiesTokenMap } from "./tokenEntities.js";
 
 type TagEntityValues = Pick<Entity & { type: EntityType.TAG }, "attributes" | "length" | "offset">;
 export type TagEntityEntry = [TagType?, TagEntityValues?];
-export type TagEntityMap = Map<TagType, TagEntityValues>;
+export type TagEntityMap = Map<TagType, TagEntityValues[]>;
 
 export function isSupported(content: string): boolean {
 	return EntitiesTokenMap.hasOwnProperty(content);
