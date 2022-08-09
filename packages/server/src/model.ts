@@ -78,10 +78,10 @@ export interface Region {
 export interface CueNode {
 	startTime: number;
 	endTime: number;
-	id?: string;
+	id: string;
 	styles?: any /** @TODO parse them */;
 	region?: Region;
-	entities?: Entity[];
+	entities: Entity[];
 	content: string;
 	attributes?: any /** @TODO attributes are generic cue attributes, but we miss a shared format yet */;
 }
