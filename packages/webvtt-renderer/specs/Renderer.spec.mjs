@@ -279,7 +279,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							{
 								type: 0,
-								reason: "global",
 								styles: "background-color: purple;",
 								offset: 0,
 								length:
@@ -327,7 +326,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							{
 								type: 0,
-								reason: "id-match",
 								styles: "background-color: purple;",
 								offset: 0,
 								length:
@@ -369,7 +367,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							{
 								type: 0,
-								reason: "id-match",
 								styles: "background-color: red;",
 								offset: 0,
 								length:
@@ -469,7 +466,6 @@ Alberto, come to look at Marcello!
 							{
 								type: 0,
 								styles: "background-color: red;",
-								reason: "id-match",
 								offset: 0,
 								length: content.length,
 							},
@@ -483,7 +479,6 @@ Alberto, come to look at Marcello!
 							{
 								type: 0,
 								styles: "background-color: purple;",
-								reason: "in-tag",
 								offset: 0,
 								length: 19,
 							},

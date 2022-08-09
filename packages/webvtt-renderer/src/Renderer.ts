@@ -108,7 +108,6 @@ export default class Renderer extends HSBaseRenderer {
 									offset: 0,
 									length: parsedCue.text.length,
 									styles: style.styleString,
-									reason: "id-match",
 								});
 							}
 						}
@@ -129,7 +128,6 @@ export default class Renderer extends HSBaseRenderer {
 									type: EntityType.STYLE,
 									offset: tag.offset,
 									length: tag.length,
-									reason: "in-tag",
 									styles: style.styleString,
 								});
 							}

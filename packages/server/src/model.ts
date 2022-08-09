@@ -33,9 +33,6 @@ export type Entity = {
 } & (
 	| {
 			type: EntityType.STYLE;
-
-			/** Mainly for debug */
-			reason: "in-tag" | "id-match" | "global";
 			styles: { [key: string]: string | number } | string /** @TODO choose one of the two */;
 	  }
 	| {
@@ -79,7 +76,6 @@ export interface CueNode {
 	startTime: number;
 	endTime: number;
 	id: string;
-	styles?: any /** @TODO parse them */;
 	region?: Region;
 	entities: Entity[];
 	content: string;
