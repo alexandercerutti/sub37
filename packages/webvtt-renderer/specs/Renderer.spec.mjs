@@ -37,17 +37,6 @@ This cue should never appear, right?
 ...Right?
 `;
 
-		const TIMESTAMPS_CUES_CONTENT = `
-WEBVTT
-
-00:00:16.000 --> 00:00:24.000
-<00:00:16.000> <c.mimmo>This</c>
-<00:00:18.000> <c>can</c>
-<00:00:20.000> <c>match</c>
-<00:00:22.000> <c>:past/:future</c>
-<00:00:24.000>
-`;
-
 		const REGION_WITH_ATTRIBUTES = `
 WEBVTT
 
@@ -141,6 +130,17 @@ Alberto, come to look at Marcello!
 		});
 
 		it("should return an array containing four cues when a timestamps are found", () => {
+			const TIMESTAMPS_CUES_CONTENT = `
+WEBVTT
+
+00:00:16.000 --> 00:00:24.000
+<00:00:16.000> <c.mimmo>This</c>
+<00:00:18.000> <c>can</c>
+<00:00:20.000> <c>match</c>
+<00:00:22.000> <c>:past/:future</c>
+<00:00:24.000>
+			`;
+
 			const parsingResult = renderer.parse(TIMESTAMPS_CUES_CONTENT);
 			expect(parsingResult).toBeInstanceOf(Array);
 			expect(parsingResult.length).toEqual(4);
@@ -149,7 +149,7 @@ Alberto, come to look at Marcello!
 				startTime: 16000,
 				endTime: 24000,
 				content: " This\n",
-				id: "cue-9-177",
+				id: "cue-9-180",
 				attributes: {},
 				entities: [
 					{
@@ -166,7 +166,7 @@ Alberto, come to look at Marcello!
 				startTime: 18000,
 				endTime: 24000,
 				content: " can\n",
-				id: "cue-9-177",
+				id: "cue-9-180",
 				attributes: {},
 				entities: [
 					{
@@ -378,6 +378,117 @@ Alberto, come to look at Marcello!
 							},
 						],
 						id: "123",
+						attributes: {
+							region: "fred",
+						},
+					});
+				});
+
+				it("should add only style that matches the tag", () => {
+					const content =
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n";
+
+					const CUE_WITH_STYLE_WITH_CSS_TAG = `
+WEBVTT
+
+STYLE
+::cue(b) {
+	background-color: purple;
+}
+
+STYLE
+::cue(ruby) {
+	background-color: red;
+}
+
+00:00:05.000 --> 00:00:10.000 region:fred
+<b>Mamma mia, Marcello</b>, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+
+					expect(parsingResult1[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 1,
+								tagType: 32,
+								offset: 0,
+								length: 19,
+								attributes: [],
+							},
+							{
+								type: 0,
+								styles: "background-color: purple;",
+								offset: 0,
+								length: 19,
+							},
+						],
+						id: "cue-103-244",
+						attributes: {
+							region: "fred",
+						},
+					});
+				});
+
+				it("should apply all styles and tags", () => {
+					const content =
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n";
+
+					const CUE_WITH_STYLE_WITH_CSS_TAG = `
+WEBVTT
+
+STYLE
+::cue(b) {
+	background-color: purple;
+}
+
+STYLE
+::cue(#test) {
+	background-color: red;
+}
+
+test
+00:00:05.000 --> 00:00:10.000 region:fred
+<b>Mamma mia, Marcello</b>, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+
+					expect(parsingResult1[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 0,
+								styles: "background-color: red;",
+								reason: "id-match",
+								offset: 0,
+								length: content.length,
+							},
+							{
+								type: 1,
+								tagType: 32,
+								offset: 0,
+								length: 19,
+								attributes: [],
+							},
+							{
+								type: 0,
+								styles: "background-color: purple;",
+								reason: "in-tag",
+								offset: 0,
+								length: 19,
+							},
+						],
+						id: "test",
 						attributes: {
 							region: "fred",
 						},

@@ -36,7 +36,15 @@ WEBVTT
 					startTime: 5000,
 					endTime: 25000,
 					text: "Would you like to get < coffee?",
-					tags: new Map([[1, { offset: 0, length: 31, attributes: ["Fred>"] }]]),
+					tags: [
+						{
+							type: 1,
+							offset: 0,
+							length: 31,
+							attributes: ["Fred>"],
+							tagType: 1,
+						},
+					],
 					attributes: {
 						region: "fred",
 						align: "left",
@@ -72,7 +80,7 @@ WEBVTT
 				startTime: 0,
 				endTime: 27000,
 				text: "Welcome Liquicity Airlines\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -81,7 +89,7 @@ WEBVTT
 				startTime: 6000,
 				endTime: 27000,
 				text: " Our destination: the galaxy of dreams\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -90,7 +98,7 @@ WEBVTT
 				startTime: 9000,
 				endTime: 27000,
 				text: " (Our destination: the galaxy of dreams)\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -99,7 +107,7 @@ WEBVTT
 				startTime: 12000,
 				endTime: 27000,
 				text: " Estimated Time of Arrival: unknown\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -108,7 +116,7 @@ WEBVTT
 				startTime: 18000,
 				endTime: 27000,
 				text: " Please fasten your seatbelt\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -117,7 +125,7 @@ WEBVTT
 				startTime: 21000,
 				endTime: 27000,
 				text: " And get ready to take off\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -126,7 +134,7 @@ WEBVTT
 				startTime: 24000,
 				endTime: 27000,
 				text: " (Please fasten your seatbelt)\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 
@@ -135,7 +143,7 @@ WEBVTT
 				startTime: 27000,
 				endTime: 27000,
 				text: " (And get ready to take off)\n",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 		});
@@ -159,7 +167,7 @@ WEBVTT
 				startTime: 0,
 				endTime: 16000,
 				text: "Welcome to the galaxy of dreams",
-				tags: new Map(),
+				tags: [],
 				attributes: {},
 			});
 		});
@@ -185,85 +193,67 @@ WEBVTT
 			const parsingResult = parseCue(originalData);
 			expect(parsingResult.length).toBe(8);
 
-			expect(parsingResult[0].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 0,
-							length: 27,
-							attributes: ["Announcer"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[0].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 0,
+					length: 27,
+					attributes: ["Announcer"],
+				},
+			]);
 
-			expect(parsingResult[1].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 0,
-							length: 39,
-							attributes: ["Announcer"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[1].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 0,
+					length: 39,
+					attributes: ["Announcer"],
+				},
+			]);
 
-			expect(parsingResult[2].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 0,
-							length: 40,
-							attributes: ["Announcer"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[2].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 0,
+					length: 40,
+					attributes: ["Announcer"],
+				},
+			]);
 
-			expect(parsingResult[3].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 0,
-							length: 36,
-							attributes: ["Announcer2"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[3].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 0,
+					length: 36,
+					attributes: ["Announcer2"],
+				},
+			]);
 
-			expect(parsingResult[4].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 0,
-							length: 28,
-							attributes: ["Announcer2"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[4].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 0,
+					length: 28,
+					attributes: ["Announcer2"],
+				},
+			]);
 
-			expect(parsingResult[5].tags).toEqual(
-				new Map([
-					[
-						1,
-						{
-							offset: 1,
-							length: 26,
-							attributes: ["Announcer3"],
-						},
-					],
-				]),
-			);
+			expect(parsingResult[5].tags).toEqual([
+				{
+					type: 1,
+					tagType: 1,
+					offset: 1,
+					length: 26,
+					attributes: ["Announcer3"],
+				},
+			]);
 
-			expect(parsingResult[7].tags).toEqual(new Map([]));
+			expect(parsingResult[7].tags).toEqual([]);
 		});
 	});
 

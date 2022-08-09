@@ -95,60 +95,44 @@ export default class Renderer extends HSBaseRenderer {
 							continue;
 						}
 
-						const entities: Entity[] = Array.from(parsedCue.tags).reduce<Entity[]>(
-							(acc, [tagType, entities]) => {
-								const next = [...acc];
-								for (const entity of entities) {
-									next.push({
-										type: EntityType.TAG,
-										tagType,
-										...entity,
-									});
-								}
-
-								return next;
-							},
-							[],
-						);
+						const entities: Entity[] = [];
 
 						for (const style of styles) {
-							if (style.type === Parser.StyleDomain.ID) {
-								if (style.selector === parsedCue.id) {
-									entities.push({
-										type: EntityType.STYLE,
-										length: parsedCue.text.length,
-										offset: 0,
-										reason: "id-match",
-										styles: style.styleString,
-									});
+							const shouldApplyStyle =
+								(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
+								style.type === Parser.StyleDomain.GLOBAL;
+
+							if (shouldApplyStyle) {
+								entities.push({
+									type: EntityType.STYLE,
+									offset: 0,
+									length: parsedCue.text.length,
+									styles: style.styleString,
+									reason: "id-match",
+								});
+							}
+						}
+
+						for (const tag of parsedCue.tags) {
+							entities.push(tag);
+
+							for (const style of styles) {
+								if (style.type !== Parser.StyleDomain.TAG) {
+									continue;
 								}
 
-								continue;
-							}
-
-							if (style.type === Parser.StyleDomain.TAG) {
-								const tags = parsedCue.tags.get(style.selector);
-
-								for (const tag of tags) {
-									entities.push({
-										type: EntityType.STYLE,
-										length: tag.length,
-										offset: tag.offset,
-										reason: "in-tag",
-										styles: style.styleString,
-									});
+								if (style.selector !== tag.tagType) {
+									continue;
 								}
 
-								continue;
+								entities.push({
+									type: EntityType.STYLE,
+									offset: tag.offset,
+									length: tag.length,
+									reason: "in-tag",
+									styles: style.styleString,
+								});
 							}
-
-							entities.push({
-								type: EntityType.STYLE,
-								offset: 0,
-								length: parsedCue.text.length,
-								reason: "global",
-								styles: style.styleString,
-							});
 						}
 
 						const cue: CueNode = {

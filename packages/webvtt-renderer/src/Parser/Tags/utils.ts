@@ -1,12 +1,10 @@
-import type { Entity, EntityType, TagType } from "@hsubs/server";
+import { Entity, EntityType, TagType } from "@hsubs/server";
 import type { CueParsedData } from "../CueNode.js";
 import Node from "./Node.js";
 import NodeTree from "./NodesTree.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
 
-type TagEntityValues = Pick<Entity & { type: EntityType.TAG }, "attributes" | "length" | "offset">;
-export type TagEntityEntry = [TagType?, TagEntityValues?];
-export type TagEntityMap = Map<TagType, TagEntityValues[]>;
+export type TagEntity = Entity & { type: EntityType.TAG };
 
 export function isSupported(content: string): boolean {
 	return EntitiesTokenMap.hasOwnProperty(content);
@@ -24,14 +22,14 @@ export function isSupported(content: string): boolean {
 export function createTagEntitiesFromUnpaired(
 	openTagsTree: NodeTree,
 	currentCue: CueParsedData,
-): TagEntityEntry[] {
+): TagEntity[] {
 	let nodeCursor: Node = openTagsTree.current;
 
 	if (!nodeCursor) {
 		return [];
 	}
 
-	const entities: TagEntityEntry[] = [];
+	const entities: TagEntity[] = [];
 
 	while (nodeCursor !== null) {
 		if (currentCue.text.length - nodeCursor.index !== 0) {
@@ -50,7 +48,7 @@ export function createTagEntitiesFromUnpaired(
 	return entities;
 }
 
-export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagEntityEntry {
+export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagEntity {
 	/**
 	 * If length is negative, that means that the tag was opened before
 	 * the beginning of the current Cue. Therefore, offset should represent
@@ -60,14 +58,13 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagE
 
 	const tagOpenedInCurrentCue = currentCue.text.length - tagStart.index > 0;
 
-	return [
-		EntitiesTokenMap[tagStart.token.content],
-		{
-			offset: tagOpenedInCurrentCue ? tagStart.index : 0,
-			length: tagOpenedInCurrentCue
-				? currentCue.text.length - tagStart.index
-				: currentCue.text.length,
-			attributes: tagStart.token.annotations ?? [],
-		},
-	];
+	return {
+		type: EntityType.TAG,
+		tagType: EntitiesTokenMap[tagStart.token.content],
+		offset: tagOpenedInCurrentCue ? tagStart.index : 0,
+		length: tagOpenedInCurrentCue
+			? currentCue.text.length - tagStart.index
+			: currentCue.text.length,
+		attributes: tagStart.token.annotations ?? [],
+	};
 }
