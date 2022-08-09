@@ -1,4 +1,4 @@
-import type { CueNode, RawTrack } from "./model";
+import type { CueNode, Entity, RawTrack } from "./model";
 import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import { TimelineTree } from "./TimelineTree.js";
 
@@ -17,11 +17,24 @@ export class HSSession {
 					this.timelines[lang] = new TimelineTree();
 
 					for (const cue of cues) {
-						this.timelines[lang].addNode(cue);
+						/**
+						 * Reordering cues entities for a later reconciliation
+						 * in captions presenter
+						 */
+
+						const cueTarget: CueNode = {
+							...cue,
+							entities: [...cue.entities].sort(reorderEntitiesComparisonFn),
+						};
+
+						this.timelines[lang].addNode(cueTarget);
 					}
 				}
 			} catch (err) {
 				console.error(err);
+				/**
+				 * @TODO Emit renderer error
+				 */
 			}
 		}
 
@@ -59,4 +72,7 @@ export class HSSession {
 		return this.timelines[this.activeTrack].getCurrentNodes(time);
 	}
 }
+
+function reorderEntitiesComparisonFn(e1: Entity, e2: Entity) {
+	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
 }
