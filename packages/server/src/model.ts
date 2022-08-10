@@ -38,7 +38,7 @@ export type Entity = {
 	| {
 			type: EntityType.TAG;
 			tagType: TagType;
-			attributes: string[];
+			attributes: Map<string, string>;
 	  }
 );
 

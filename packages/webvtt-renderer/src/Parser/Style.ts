@@ -20,7 +20,7 @@ export const enum StyleDomain {
 type SelectorTarget =
 	| { type: StyleDomain.GLOBAL }
 	| { type: StyleDomain.ID; selector: string }
-	| { type: StyleDomain.TAG; selector: TagType; attributes: string[][] };
+	| { type: StyleDomain.TAG; selector: TagType; attributes: Map<string, string> };
 
 export type Style = SelectorTarget & {
 	styleString: string;
@@ -80,9 +80,11 @@ function getParsedSelector(selector: string): SelectorTarget | undefined {
 	};
 }
 
-function getSelectorComponents(rawSelector: string): { selector: TagType; attributes: string[][] } {
+function getSelectorComponents(
+	rawSelector: string,
+): Omit<SelectorTarget & { type: StyleDomain.TAG }, "type"> {
 	let selector: string = undefined;
-	const attributes: string[][] = [];
+	const attributes: [string, string][] = [];
 
 	/**
 	 * This is too recent and will likely require a polyfill from
@@ -94,14 +96,14 @@ function getSelectorComponents(rawSelector: string): { selector: TagType; attrib
 	for (const [, tag = selector, attribute, value] of matchIterator) {
 		selector = tag;
 
-		if (attribute && value) {
+		if (attribute) {
 			attributes.push([attribute, value]);
 		}
 	}
 
 	return {
 		selector: EntitiesTokenMap[selector],
-		attributes,
+		attributes: new Map(attributes),
 	};
 }
 

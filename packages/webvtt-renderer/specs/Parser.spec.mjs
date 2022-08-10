@@ -41,7 +41,7 @@ WEBVTT
 							type: 1,
 							offset: 0,
 							length: 31,
-							attributes: ["Fred>"],
+							attributes: new Map([["Fred>", undefined]]),
 							tagType: 1,
 						},
 					],
@@ -199,7 +199,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 27,
-					attributes: ["Announcer"],
+					attributes: new Map([["Announcer", undefined]]),
 				},
 			]);
 
@@ -209,7 +209,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 39,
-					attributes: ["Announcer"],
+					attributes: new Map([["Announcer", undefined]]),
 				},
 			]);
 
@@ -219,7 +219,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 40,
-					attributes: ["Announcer"],
+					attributes: new Map([["Announcer", undefined]]),
 				},
 			]);
 
@@ -229,7 +229,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 36,
-					attributes: ["Announcer2"],
+					attributes: new Map([["Announcer2", undefined]]),
 				},
 			]);
 
@@ -239,7 +239,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 28,
-					attributes: ["Announcer2"],
+					attributes: new Map([["Announcer2", undefined]]),
 				},
 			]);
 
@@ -249,7 +249,7 @@ WEBVTT
 					tagType: 1,
 					offset: 1,
 					length: 26,
-					attributes: ["Announcer3"],
+					attributes: new Map([["Announcer3", undefined]]),
 				},
 			]);
 
@@ -428,7 +428,7 @@ color: papayawhip;
 				selector: 32,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
-				attributes: [],
+				attributes: new Map(),
 			});
 		});
 
@@ -445,7 +445,7 @@ color: papayawhip;
 				selector: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
-				attributes: [["voice", "Esme"]],
+				attributes: new Map([["voice", "Esme"]]),
 			});
 
 			const STYLE_WITH_SELECTOR_ATTRIBUTES = `
@@ -460,10 +460,10 @@ color: papayawhip;
 				selector: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
-				attributes: [
+				attributes: new Map([
 					["voice", "Esme"],
 					["lang", "it"],
-				],
+				]),
 			});
 		});
 

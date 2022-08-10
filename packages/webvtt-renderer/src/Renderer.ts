@@ -115,13 +115,31 @@ export default class Renderer extends HSBaseRenderer {
 						for (const tag of parsedCue.tags) {
 							entities.push(tag);
 
-							for (const style of styles) {
+							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
 								}
 
 								if (style.selector !== tag.tagType) {
 									continue;
+								}
+
+								if (style.attributes.size !== tag.attributes.size) {
+									continue;
+								}
+
+								if (style.attributes.size && tag.attributes.size) {
+									for (const [key, value] of tag.attributes) {
+										const styleAttributeValue = style.attributes.get(key);
+
+										if (styleAttributeValue === null) {
+											continue stylesLoop;
+										}
+
+										if (styleAttributeValue && styleAttributeValue !== value) {
+											continue stylesLoop;
+										}
+									}
 								}
 
 								entities.push({

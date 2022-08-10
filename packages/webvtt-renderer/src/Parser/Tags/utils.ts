@@ -58,6 +58,13 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagE
 
 	const tagOpenedInCurrentCue = currentCue.text.length - tagStart.index > 0;
 
+	const attributes = new Map(
+		tagStart.token.annotations?.map((annotation) => {
+			const attribute = annotation.split("=");
+			return [attribute[0], attribute[1]?.replace(/["']/g, "")];
+		}),
+	);
+
 	return {
 		type: EntityType.TAG,
 		tagType: EntitiesTokenMap[tagStart.token.content],
@@ -65,6 +72,6 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): TagE
 		length: tagOpenedInCurrentCue
 			? currentCue.text.length - tagStart.index
 			: currentCue.text.length,
-		attributes: tagStart.token.annotations ?? [],
+		attributes,
 	};
 }

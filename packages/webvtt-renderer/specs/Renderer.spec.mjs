@@ -101,7 +101,7 @@ Alberto, come to look at Marcello!
 						length: 31,
 						tagType: 1,
 						type: 1,
-						attributes: ["Fred>"],
+						attributes: new Map([["Fred>", undefined]]),
 						/** @TODO add classes */
 					},
 				],
@@ -122,7 +122,7 @@ Alberto, come to look at Marcello!
 						length: 19,
 						tagType: 2,
 						type: 1, // lang
-						attributes: ["en-US"],
+						attributes: new Map([["en-US", undefined]]),
 						/** @TODO add classes */
 					},
 				],
@@ -157,7 +157,7 @@ WEBVTT
 						type: 1,
 						offset: 1,
 						length: 4,
-						attributes: [],
+						attributes: new Map(),
 					},
 				],
 			});
@@ -174,7 +174,7 @@ WEBVTT
 						type: 1,
 						offset: 1,
 						length: 3,
-						attributes: [],
+						attributes: new Map(),
 					},
 				],
 			});
@@ -206,21 +206,21 @@ WEBVTT
 						type: 1,
 						offset: 2,
 						length: 3,
-						attributes: [],
+						attributes: new Map(),
 					},
 					{
 						tagType: 8,
 						type: 1,
 						offset: 8,
 						length: 2,
-						attributes: [],
+						attributes: new Map(),
 					},
 					{
 						tagType: 4,
 						type: 1,
 						offset: 0,
 						length: 10,
-						attributes: [],
+						attributes: new Map(),
 					},
 				],
 			});
@@ -416,7 +416,7 @@ Alberto, come to look at Marcello!
 								tagType: 32,
 								offset: 0,
 								length: 19,
-								attributes: [],
+								attributes: new Map(),
 							},
 							{
 								type: 0,
@@ -474,13 +474,122 @@ Alberto, come to look at Marcello!
 								tagType: 32,
 								offset: 0,
 								length: 19,
-								attributes: [],
+								attributes: new Map(),
 							},
 							{
 								type: 0,
 								styles: "background-color: purple;",
 								offset: 0,
 								length: 19,
+							},
+						],
+						id: "test",
+						attributes: {
+							region: "fred",
+						},
+					});
+				});
+
+				it("should apply all styles for tags with the same attributes", () => {
+					const content =
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n";
+
+					const CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES = `
+WEBVTT
+
+STYLE
+::cue(v) {
+	background-color: purple;
+}
+
+STYLE
+::cue(v[voice="Fred"]) {
+	background-color: red;
+}
+
+test
+00:00:05.000 --> 00:00:10.000 region:fred
+<v>Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
+
+					expect(parsingResult1[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 1,
+								tagType: 1,
+								offset: 0,
+								length: 87,
+								attributes: new Map(),
+							},
+							{
+								type: 0,
+								styles: "background-color: purple;",
+								offset: 0,
+								length: 87,
+							},
+						],
+						id: "test",
+						attributes: {
+							region: "fred",
+						},
+					});
+
+					const CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES = `
+WEBVTT
+
+STYLE
+::cue(v[voice="Mimmo"]) {
+	background-color: purple;
+}
+
+STYLE
+::cue(v[voice="Fred"]) {
+	background-color: red;
+}
+
+STYLE
+::cue(v[voice]) {
+	background-color: pink;
+}
+
+test
+00:00:05.000 --> 00:00:10.000 region:fred
+<v voice="Fred">Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+					`;
+
+					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
+
+					expect(parsingResult2[0]).toEqual({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							{
+								type: 1,
+								tagType: 1,
+								offset: 0,
+								length: 87,
+								attributes: new Map([["voice", "Fred"]]),
+							},
+							{
+								type: 0,
+								styles: "background-color: red;",
+								offset: 0,
+								length: 87,
+							},
+							{
+								type: 0,
+								styles: "background-color: pink;",
+								offset: 0,
+								length: 87,
 							},
 						],
 						id: "test",
