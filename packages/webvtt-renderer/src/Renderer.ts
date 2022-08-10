@@ -96,6 +96,9 @@ export default class Renderer extends HSBaseRenderer {
 						}
 
 						const entities: Entity[] = [];
+						const stylesEntities: (Parser.Style & {
+							type: Parser.StyleDomain.GLOBAL | Parser.StyleDomain.ID;
+						})[] = [];
 
 						for (const style of styles) {
 							const shouldApplyStyle =
@@ -103,14 +106,23 @@ export default class Renderer extends HSBaseRenderer {
 								style.type === Parser.StyleDomain.GLOBAL;
 
 							if (shouldApplyStyle) {
-								entities.push({
-									type: EntityType.STYLE,
-									offset: 0,
-									length: parsedCue.text.length,
-									styles: style.styleString,
-								});
+								stylesEntities.push(style);
 							}
 						}
+
+						/**
+						 * Reordering styles to have global
+						 * styles before id styles
+						 */
+
+						entities.push(
+							...stylesEntities.sort(styleSpecificitySorter).map<Entity>((style) => ({
+								type: EntityType.STYLE,
+								offset: 0,
+								length: parsedCue.text.length,
+								styles: style.styleString,
+							})),
+						);
 
 						for (const tag of parsedCue.tags) {
 							entities.push(tag);
@@ -262,4 +274,25 @@ function isStyle(evalutation: BlockTuple): evalutation is StyleBlockType {
 
 function isCue(evaluation: BlockTuple): evaluation is CueBlockType {
 	return Boolean(evaluation[0] & BlockType.CUE);
+}
+
+/**
+ * Reorders styles so that Global styles are placed
+ * before id styles
+ *
+ * @param s1
+ * @param s2
+ * @returns
+ */
+
+function styleSpecificitySorter(s1: Parser.Style, s2: Parser.Style) {
+	if (s1.type === s2.type) {
+		return 0;
+	}
+
+	if (s1.type === Parser.StyleDomain.ID && s2.type === Parser.StyleDomain.GLOBAL) {
+		return 1;
+	}
+
+	return -1;
 }
