@@ -1,7 +1,7 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSSession } from "../lib/Session.js";
-import { IntervalBinaryTree } from "../lib/TimelineTree.js";
+import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
 import { HSBaseRenderer } from "../lib/BaseRenderer";
 
 class MockedRenderer extends HSBaseRenderer {

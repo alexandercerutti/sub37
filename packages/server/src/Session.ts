@@ -1,6 +1,6 @@
 import type { CueNode, Entity, RawTrack } from "./model";
-import type { IntervalBinaryLeaf } from "./TimelineTree.js";
-import { IntervalBinaryTree } from "./TimelineTree.js";
+import type { IntervalBinaryLeaf } from "./IntervalBinaryTree.js";
+import { IntervalBinaryTree } from "./IntervalBinaryTree.js";
 import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 
 const activeTrackSymbol = Symbol("session.active");

@@ -1,6 +1,6 @@
 // @ts-check
 import { describe, it, expect, beforeEach } from "@jest/globals";
-import { IntervalBinaryTree } from "../lib/TimelineTree.js";
+import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
 
 describe("TimelineTree", () => {
 	/** @type {IntervalBinaryTree} */
