@@ -1,40 +1,23 @@
 /**
  * Implementation of an Interval Tree or Binary Search Three without nodes
- * deletion feature, specifically tailored on Cues.
+ * deletion feature.
  *
  * This solves the issue of "How can we serve several overlapping cues
  * at the same time?
  */
 
-import type { CueNode } from "./model";
-
-class TimelineTreeNode {
-	public left: TimelineTreeNode = null;
-	public right: TimelineTreeNode = null;
-
-	constructor(public node: CueNode) {}
-
-	public get min(): number {
-		return this.node.startTime;
-	}
-
-	public get max(): number {
-		return this.node.endTime;
-	}
+export interface IntervalBinaryLeaf<LeafShape extends object> {
+	left: IntervalBinaryLeaf<LeafShape> | null;
+	right: IntervalBinaryLeaf<LeafShape> | null;
+	node: LeafShape;
+	get min(): number;
+	get max(): number;
 }
 
-/**
- * Tree that is navigated to serve
- * the subtitles cues, only with essential
- * features
- */
+export class IntervalBinaryTree<LeafShape extends object> {
+	private root: IntervalBinaryLeaf<LeafShape> = null;
 
-export class TimelineTree {
-	private root: TimelineTreeNode = null;
-
-	public addNode(newNode: CueNode): void {
-		const nextTreeNode = new TimelineTreeNode(newNode);
-
+	public addNode(nextTreeNode: IntervalBinaryLeaf<LeafShape>): void {
 		if (!this.root) {
 			this.root = nextTreeNode;
 			return;
@@ -43,7 +26,7 @@ export class TimelineTree {
 		let node = this.root;
 
 		while (node !== null) {
-			if (newNode.startTime <= node.min) {
+			if (nextTreeNode.min <= node.min) {
 				if (!node.left) {
 					node.left = nextTreeNode;
 					return;
@@ -68,7 +51,7 @@ export class TimelineTree {
 	 * @returns
 	 */
 
-	public getCurrentNodes(currentTime: number): null | CueNode[] {
+	public getCurrentNodes(currentTime: number): null | IntervalBinaryLeaf<LeafShape>["node"][] {
 		if (!this.root) {
 			return null;
 		}
@@ -81,7 +64,7 @@ export class TimelineTree {
 	 * @returns
 	 */
 
-	public getAll(): CueNode[] {
+	public getAll(): IntervalBinaryLeaf<LeafShape>["node"][] {
 		return findAllInSubtree(this.root);
 	}
 }
@@ -96,12 +79,15 @@ export class TimelineTree {
  * @returns
  */
 
-function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number): CueNode[] {
+function accumulateMatchingNodes<LeafShape extends object>(
+	treeNode: IntervalBinaryLeaf<LeafShape>,
+	time: number,
+): IntervalBinaryLeaf<LeafShape>["node"][] {
 	if (!treeNode) {
 		return [];
 	}
 
-	const matchingNodes: CueNode[] = [];
+	const matchingNodes: IntervalBinaryLeaf<LeafShape>["node"][] = [];
 
 	/**
 	 * If current node has not yet ended, we might have nodes
@@ -145,7 +131,9 @@ function accumulateMatchingNodes(treeNode: TimelineTreeNode, time: number): CueN
  * @returns
  */
 
-function findAllInSubtree(root: TimelineTreeNode): CueNode[] {
+function findAllInSubtree<LeafShape extends object>(
+	root: IntervalBinaryLeaf<LeafShape>,
+): IntervalBinaryLeaf<LeafShape>["node"][] {
 	if (!root) {
 		return [];
 	}

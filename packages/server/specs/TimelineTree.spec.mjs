@@ -1,27 +1,31 @@
 // @ts-check
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { TimelineTree } from "../lib/TimelineTree.js";
+import { describe, it, expect, beforeEach } from "@jest/globals";
+import { IntervalBinaryTree } from "../lib/TimelineTree.js";
 
 describe("TimelineTree", () => {
-	/** @type {TimelineTree} */
+	/** @type {IntervalBinaryTree} */
 	let tree;
 
 	beforeEach(() => {
-		tree = new TimelineTree();
+		tree = new IntervalBinaryTree();
 	});
 
 	it("should assign nodes to the correct timeframe", () => {
-		tree.addNode({
-			content: "A test content",
-			startTime: 11000,
-			endTime: 12000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 11000,
+				endTime: 12000,
+			}),
+		);
 
-		tree.addNode({
-			content: "A test content",
-			startTime: 0,
-			endTime: 10000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 0,
+				endTime: 10000,
+			}),
+		);
 
 		const query1 = tree.getCurrentNodes(0);
 
@@ -47,39 +51,49 @@ describe("TimelineTree", () => {
 		 * Test: the second node ends at the same moment of the "parent".
 		 * For example, VTT Timestamps
 		 */
-		tree.addNode({
-			content: "A test master-content",
-			startTime: 0,
-			endTime: 15000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test master-content",
+				startTime: 0,
+				endTime: 15000,
+			}),
+		);
 
-		tree.addNode({
-			content: "A test sub-content",
-			startTime: 3000,
-			endTime: 15000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test sub-content",
+				startTime: 3000,
+				endTime: 15000,
+			}),
+		);
 
-		tree.addNode({
-			content: "A completely different and single node",
-			startTime: 16000,
-			endTime: 17000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A completely different and single node",
+				startTime: 16000,
+				endTime: 17000,
+			}),
+		);
 
 		/**
 		 * Test: the second node ends before "parent".
 		 */
 
-		tree.addNode({
-			content: "A test master-content",
-			startTime: 18000,
-			endTime: 30000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test master-content",
+				startTime: 18000,
+				endTime: 30000,
+			}),
+		);
 
-		tree.addNode({
-			content: "A test sub-content",
-			startTime: 20000,
-			endTime: 23000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test sub-content",
+				startTime: 20000,
+				endTime: 23000,
+			}),
+		);
 
 		/**
 		 * Test: first node ends after second node.
@@ -87,17 +101,21 @@ describe("TimelineTree", () => {
 		 * order
 		 */
 
-		tree.addNode({
-			content: "A test sub-content",
-			startTime: 36000,
-			endTime: 38000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test sub-content",
+				startTime: 36000,
+				endTime: 38000,
+			}),
+		);
 
-		tree.addNode({
-			content: "A test master-content",
-			startTime: 33500,
-			endTime: 38000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test master-content",
+				startTime: 33500,
+				endTime: 38000,
+			}),
+		);
 
 		const query1 = tree.getCurrentNodes(7000);
 
@@ -150,53 +168,67 @@ describe("TimelineTree", () => {
 
 	it("should return all the nodes in the correct order", () => {
 		/** Root */
-		tree.addNode({
-			content: "A test content",
-			startTime: 11000,
-			endTime: 12000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 11000,
+				endTime: 12000,
+			}),
+		);
 
 		/** Adding on left */
-		tree.addNode({
-			content: "A test content",
-			startTime: 3000,
-			endTime: 10000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 3000,
+				endTime: 10000,
+			}),
+		);
 
 		/** Adding on right */
-		tree.addNode({
-			content: "A test content",
-			startTime: 12000,
-			endTime: 15000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 12000,
+				endTime: 15000,
+			}),
+		);
 
 		/** Adding on left's left */
-		tree.addNode({
-			content: "A test content",
-			startTime: 0,
-			endTime: 5000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 0,
+				endTime: 5000,
+			}),
+		);
 
 		/** Adding on left's right */
-		tree.addNode({
-			content: "A test content",
-			startTime: 5000,
-			endTime: 9000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 5000,
+				endTime: 9000,
+			}),
+		);
 
 		/** Adding on right's left */
-		tree.addNode({
-			content: "A test content",
-			startTime: 12000,
-			endTime: 13000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 12000,
+				endTime: 13000,
+			}),
+		);
 
 		/** Adding on right's right */
-		tree.addNode({
-			content: "A test content",
-			startTime: 13000,
-			endTime: 15000,
-		});
+		tree.addNode(
+			cueNodeToTreeLeaf({
+				content: "A test content",
+				startTime: 13000,
+				endTime: 15000,
+			}),
+		);
 
 		const query = tree.getAll();
 
@@ -244,3 +276,23 @@ describe("TimelineTree", () => {
 		]);
 	});
 });
+
+/**
+ *
+ * @param {import("../lib/index.js").CueNode} cueNode
+ * @returns
+ */
+
+function cueNodeToTreeLeaf(cueNode) {
+	return {
+		left: null,
+		right: null,
+		node: cueNode,
+		get max() {
+			return this.node.endTime;
+		},
+		get min() {
+			return this.node.startTime;
+		},
+	};
+}

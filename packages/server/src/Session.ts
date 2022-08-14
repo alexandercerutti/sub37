@@ -1,11 +1,12 @@
 import type { CueNode, Entity, RawTrack } from "./model";
+import type { IntervalBinaryLeaf } from "./TimelineTree.js";
+import { IntervalBinaryTree } from "./TimelineTree.js";
 import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
-import { TimelineTree } from "./TimelineTree.js";
 
 const activeTrackSymbol = Symbol("session.active");
 
 export class HSSession {
-	private timelines: { [lang: string]: TimelineTree } = Object.create(null);
+	private timelines: { [lang: string]: IntervalBinaryTree<CueNode> } = Object.create(null);
 	private [activeTrackSymbol]: string = null;
 
 	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
@@ -14,7 +15,7 @@ export class HSSession {
 				const cues = renderer.parse(content);
 
 				if (cues.length) {
-					this.timelines[lang] = new TimelineTree();
+					this.timelines[lang] = new IntervalBinaryTree();
 
 					for (const cue of cues) {
 						/**
@@ -27,7 +28,7 @@ export class HSSession {
 							entities: [...cue.entities].sort(reorderEntitiesComparisonFn),
 						};
 
-						this.timelines[lang].addNode(cueTarget);
+						this.timelines[lang].addNode(cueNodeToTreeLeaf(cueTarget));
 					}
 				}
 			} catch (err) {
@@ -75,4 +76,18 @@ export class HSSession {
 
 function reorderEntitiesComparisonFn(e1: Entity, e2: Entity) {
 	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
+}
+
+function cueNodeToTreeLeaf(cueNode: CueNode): IntervalBinaryLeaf<CueNode> {
+	return {
+		left: null,
+		right: null,
+		node: cueNode,
+		get min() {
+			return cueNode.startTime;
+		},
+		get max() {
+			return cueNode.endTime;
+		},
+	};
 }

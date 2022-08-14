@@ -1,7 +1,7 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSSession } from "../lib/Session.js";
-import { TimelineTree } from "../lib/TimelineTree.js";
+import { IntervalBinaryTree } from "../lib/TimelineTree.js";
 import { HSBaseRenderer } from "../lib/BaseRenderer";
 
 class MockedRenderer extends HSBaseRenderer {
@@ -67,7 +67,7 @@ describe("HSSession", () => {
 
 		const session = new HSSession(mockedTracks, new MockedRenderer());
 
-		/** @type {Array<[string, TimelineTree]>} */
+		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
 			// @ts-ignore
 			session.timelines,
@@ -77,14 +77,14 @@ describe("HSSession", () => {
 		const values = timelines.map(([, value]) => value);
 
 		expect(keys).toEqual(["ita", "eng"]);
-		expect(values[0]).toBeInstanceOf(TimelineTree);
-		expect(values[1]).toBeInstanceOf(TimelineTree);
+		expect(values[0]).toBeInstanceOf(IntervalBinaryTree);
+		expect(values[1]).toBeInstanceOf(IntervalBinaryTree);
 	});
 
 	it("should ignore tracks that have no output", () => {
 		const session = new HSSession(mockedEmptyTracks, new MockedRenderer());
 
-		/** @type {Array<[string, TimelineTree]>} */
+		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
 			// @ts-ignore
 			session.timelines,
