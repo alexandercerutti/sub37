@@ -111,7 +111,7 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * correct sequence.
 	 */
 
-	if (treeNode.min <= query && treeNode.max > query) {
+	if (treeNode.min <= query && treeNode.max >= query) {
 		matchingNodes.push(treeNode.node);
 	}
 
