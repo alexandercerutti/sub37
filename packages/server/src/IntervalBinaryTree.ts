@@ -53,16 +53,16 @@ export class IntervalBinaryTree<LeafShape extends object> {
 	/**
 	 * Retrieves nodes which startTime and endTime are inside
 	 *
-	 * @param currentTime
+	 * @param query
 	 * @returns
 	 */
 
-	public getCurrentNodes(currentTime: number): null | IntervalBinaryLeaf<LeafShape>["node"][] {
+	public getCurrentNodes(query: number): null | IntervalBinaryLeaf<LeafShape>["node"][] {
 		if (!this.root) {
 			return null;
 		}
 
-		return accumulateMatchingNodes(this.root, currentTime);
+		return accumulateMatchingNodes(this.root, query);
 	}
 
 	/**
@@ -87,7 +87,7 @@ export class IntervalBinaryTree<LeafShape extends object> {
 
 function accumulateMatchingNodes<LeafShape extends object>(
 	treeNode: IntervalBinaryLeaf<LeafShape>,
-	time: number,
+	query: number,
 ): IntervalBinaryLeaf<LeafShape>["node"][] {
 	if (!treeNode) {
 		return [];
@@ -100,8 +100,8 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * on left that might overlap
 	 */
 
-	if (time <= treeNode.max) {
-		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, time));
+	if (query <= treeNode.max) {
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, query));
 	}
 
 	/**
@@ -111,11 +111,11 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * correct sequence.
 	 */
 
-	if (treeNode.min <= time && treeNode.max > time) {
+	if (treeNode.min <= query && treeNode.max > query) {
 		matchingNodes.push(treeNode.node);
 	}
 
-	if (treeNode.min <= time) {
+	if (treeNode.min <= query) {
 		/**
 		 * If current node has started already started, we might have
 		 * some nodes that are overlapping or this is just not the node
@@ -123,7 +123,7 @@ function accumulateMatchingNodes<LeafShape extends object>(
 		 * node has finished or not here. Right nodes will be for sure bigger.
 		 */
 
-		matchingNodes.push(...accumulateMatchingNodes(treeNode.right, time));
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.right, query));
 	}
 
 	return matchingNodes;
