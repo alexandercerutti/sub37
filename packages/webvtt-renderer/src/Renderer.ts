@@ -1,5 +1,5 @@
-import type { CueNode, Entity, Region } from "@hsubs/server";
-import { HSBaseRenderer, EntityType } from "@hsubs/server";
+import type { Entity, Region } from "@hsubs/server";
+import { HSBaseRenderer, CueNode, EntityType } from "@hsubs/server";
 import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
@@ -163,14 +163,14 @@ export default class Renderer extends HSBaseRenderer {
 							}
 						}
 
-						const cue: CueNode = {
+						const cue = new CueNode({
 							id: parsedCue.id,
 							startTime: parsedCue.startTime,
 							endTime: parsedCue.endTime,
 							content: parsedCue.text,
 							attributes: parsedCue.attributes,
 							entities,
-						};
+						});
 
 						if (parsedCue.attributes.region) {
 							cue.region = regions[parsedCue.attributes.region];

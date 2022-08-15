@@ -1,4 +1,5 @@
 // @ts-check
+import { CueNode } from "@hsubs/server/lib/CueNode.js";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTRenderer from "../lib/Renderer.js";
 
@@ -86,47 +87,51 @@ Alberto, come to look at Marcello!
 			expect(parsingResult).toBeInstanceOf(Array);
 			expect(parsingResult.length).toEqual(2);
 
-			expect(parsingResult[0]).toEqual({
-				startTime: 5000,
-				endTime: 25000,
-				content: "Would you like to get < coffee?",
-				id: "cue-9-108",
-				attributes: {
-					align: "left",
-					region: "fred",
-				},
-				entities: [
-					{
-						offset: 0,
-						length: 31,
-						tagType: 1,
-						type: 1,
-						attributes: new Map([["Fred>", undefined]]),
-						/** @TODO add classes */
+			expect(parsingResult[0]).toEqual(
+				new CueNode({
+					startTime: 5000,
+					endTime: 25000,
+					content: "Would you like to get < coffee?",
+					id: "cue-9-108",
+					attributes: {
+						align: "left",
+						region: "fred",
 					},
-				],
-			});
+					entities: [
+						{
+							offset: 0,
+							length: 31,
+							tagType: 1,
+							type: 1,
+							attributes: new Map([["Fred>", undefined]]),
+							/** @TODO add classes */
+						},
+					],
+				}),
+			);
 
-			expect(parsingResult[1]).toEqual({
-				startTime: 0,
-				endTime: 20000,
-				content: "Hi, my name is Fred",
-				id: "cue-110-207",
-				attributes: {
-					region: "fred",
-					align: "left",
-				},
-				entities: [
-					{
-						offset: 0,
-						length: 19,
-						tagType: 2,
-						type: 1, // lang
-						attributes: new Map([["en-US", undefined]]),
-						/** @TODO add classes */
+			expect(parsingResult[1]).toEqual(
+				new CueNode({
+					startTime: 0,
+					endTime: 20000,
+					content: "Hi, my name is Fred",
+					id: "cue-110-207",
+					attributes: {
+						region: "fred",
+						align: "left",
 					},
-				],
-			});
+					entities: [
+						{
+							offset: 0,
+							length: 19,
+							tagType: 2,
+							type: 1, // lang
+							attributes: new Map([["en-US", undefined]]),
+							/** @TODO add classes */
+						},
+					],
+				}),
+			);
 		});
 
 		it("should return an array containing four cues when a timestamps are found", () => {
@@ -145,39 +150,43 @@ WEBVTT
 			expect(parsingResult).toBeInstanceOf(Array);
 			expect(parsingResult.length).toEqual(4);
 
-			expect(parsingResult[0]).toEqual({
-				startTime: 16000,
-				endTime: 24000,
-				content: " This\n",
-				id: "cue-9-180",
-				attributes: {},
-				entities: [
-					{
-						tagType: 16,
-						type: 1,
-						offset: 1,
-						length: 4,
-						attributes: new Map(),
-					},
-				],
-			});
+			expect(parsingResult[0]).toEqual(
+				new CueNode({
+					startTime: 16000,
+					endTime: 24000,
+					content: " This\n",
+					id: "cue-9-180",
+					attributes: {},
+					entities: [
+						{
+							tagType: 16,
+							type: 1,
+							offset: 1,
+							length: 4,
+							attributes: new Map(),
+						},
+					],
+				}),
+			);
 
-			expect(parsingResult[1]).toEqual({
-				startTime: 18000,
-				endTime: 24000,
-				content: " can\n",
-				id: "cue-9-180",
-				attributes: {},
-				entities: [
-					{
-						tagType: 16,
-						type: 1,
-						offset: 1,
-						length: 3,
-						attributes: new Map(),
-					},
-				],
-			});
+			expect(parsingResult[1]).toEqual(
+				new CueNode({
+					startTime: 18000,
+					endTime: 24000,
+					content: " can\n",
+					id: "cue-9-180",
+					attributes: {},
+					entities: [
+						{
+							tagType: 16,
+							type: 1,
+							offset: 1,
+							length: 3,
+							attributes: new Map(),
+						},
+					],
+				}),
+			);
 		});
 
 		it("should return a cue with three entities when ruby autocloses a ruby-text <rt>", () => {
@@ -188,66 +197,68 @@ WEBVTT
 <ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
 			`;
 
-			debugger;
-
 			const parsingResult = renderer.parse(RUBY_RT_AUTOCLOSE);
 			expect(parsingResult).toBeInstanceOf(Array);
 			expect(parsingResult.length).toEqual(1);
 
-			expect(parsingResult[0]).toEqual({
-				startTime: 5000,
-				endTime: 10000,
-				content: "漢 kan 字 ji\n",
-				id: "cue-9-79",
-				attributes: {},
-				entities: [
-					{
-						tagType: 8,
-						type: 1,
-						offset: 2,
-						length: 3,
-						attributes: new Map(),
-					},
-					{
-						tagType: 8,
-						type: 1,
-						offset: 8,
-						length: 2,
-						attributes: new Map(),
-					},
-					{
-						tagType: 4,
-						type: 1,
-						offset: 0,
-						length: 10,
-						attributes: new Map(),
-					},
-				],
-			});
+			expect(parsingResult[0]).toEqual(
+				new CueNode({
+					startTime: 5000,
+					endTime: 10000,
+					content: "漢 kan 字 ji\n",
+					id: "cue-9-79",
+					attributes: {},
+					entities: [
+						{
+							tagType: 8,
+							type: 1,
+							offset: 2,
+							length: 3,
+							attributes: new Map(),
+						},
+						{
+							tagType: 8,
+							type: 1,
+							offset: 8,
+							length: 2,
+							attributes: new Map(),
+						},
+						{
+							tagType: 4,
+							type: 1,
+							offset: 0,
+							length: 10,
+							attributes: new Map(),
+						},
+					],
+				}),
+			);
 		});
 
 		it("should return a cue with a region associated", () => {
 			const parsingResult = renderer.parse(REGION_WITH_ATTRIBUTES);
 
-			expect(parsingResult[0]).toEqual({
-				content:
-					"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-					"Alberto, come to look at Marcello!\n",
-				startTime: 5000,
-				endTime: 10000,
-				entities: [],
-				id: "cue-97-226",
-				attributes: {
-					region: "fred",
-				},
-				region: {
-					id: "fred",
-					width: "40%",
-					lines: 3,
-					origin: ["10%", "90%"],
-					displayStrategy: "push",
-				},
-			});
+			expect(parsingResult[0]).toEqual(
+				new CueNode({
+					content:
+						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+						"Alberto, come to look at Marcello!\n",
+					startTime: 5000,
+					endTime: 10000,
+					entities: [],
+					id: "cue-97-226",
+					attributes: {
+						region: "fred",
+					},
+					region: {
+						id: "fred",
+						width: "40%",
+						lines: 3,
+						origin: ["10%", "90%"],
+						displayStrategy: "push",
+					},
+				}),
+			);
 		});
 
 		describe("styles", () => {
@@ -272,25 +283,27 @@ Alberto, come to look at Marcello!
 						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
 						"Alberto, come to look at Marcello!\n";
 
-					expect(parsingResult[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 0,
-								styles: "background-color: purple;",
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
+					expect(parsingResult[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 0,
+									styles: "background-color: purple;",
+									offset: 0,
+									length:
+										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+										"Alberto, come to look at Marcello!\n".length,
+								},
+							],
+							id: "cue-53-187",
+							attributes: {
+								region: "fred",
 							},
-						],
-						id: "cue-53-187",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 				});
 
 				it("should add only style that matches the id", () => {
@@ -319,25 +332,27 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_ID);
 
-					expect(parsingResult1[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 0,
-								styles: "background-color: purple;",
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
+					expect(parsingResult1[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 0,
+									styles: "background-color: purple;",
+									offset: 0,
+									length:
+										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+										"Alberto, come to look at Marcello!\n".length,
+								},
+							],
+							id: "test",
+							attributes: {
+								region: "fred",
 							},
-						],
-						id: "test",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 
 					const CUE_WITH_STYLE_WITH_ESCAPED_ID = `
 WEBVTT
@@ -360,25 +375,27 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
 
-					expect(parsingResult2[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 0,
-								styles: "background-color: red;",
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
+					expect(parsingResult2[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 0,
+									styles: "background-color: red;",
+									offset: 0,
+									length:
+										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+										"Alberto, come to look at Marcello!\n".length,
+								},
+							],
+							id: "123",
+							attributes: {
+								region: "fred",
 							},
-						],
-						id: "123",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 				});
 
 				it("should add only style that matches the tag", () => {
@@ -406,30 +423,32 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 1,
-								tagType: 32,
-								offset: 0,
-								length: 19,
-								attributes: new Map(),
+					expect(parsingResult1[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 1,
+									tagType: 32,
+									offset: 0,
+									length: 19,
+									attributes: new Map(),
+								},
+								{
+									type: 0,
+									styles: "background-color: purple;",
+									offset: 0,
+									length: 19,
+								},
+							],
+							id: "cue-103-244",
+							attributes: {
+								region: "fred",
 							},
-							{
-								type: 0,
-								styles: "background-color: purple;",
-								offset: 0,
-								length: 19,
-							},
-						],
-						id: "cue-103-244",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 				});
 
 				it("should apply all styles and tags", () => {
@@ -458,36 +477,38 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 0,
-								styles: "background-color: red;",
-								offset: 0,
-								length: content.length,
+					expect(parsingResult1[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 0,
+									styles: "background-color: red;",
+									offset: 0,
+									length: content.length,
+								},
+								{
+									type: 1,
+									tagType: 32,
+									offset: 0,
+									length: 19,
+									attributes: new Map(),
+								},
+								{
+									type: 0,
+									styles: "background-color: purple;",
+									offset: 0,
+									length: 19,
+								},
+							],
+							id: "test",
+							attributes: {
+								region: "fred",
 							},
-							{
-								type: 1,
-								tagType: 32,
-								offset: 0,
-								length: 19,
-								attributes: new Map(),
-							},
-							{
-								type: 0,
-								styles: "background-color: purple;",
-								offset: 0,
-								length: 19,
-							},
-						],
-						id: "test",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 				});
 
 				it("should apply all styles for tags with the same attributes", () => {
@@ -516,30 +537,32 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
 
-					expect(parsingResult1[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 1,
-								tagType: 1,
-								offset: 0,
-								length: 87,
-								attributes: new Map(),
+					expect(parsingResult1[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 1,
+									tagType: 1,
+									offset: 0,
+									length: 87,
+									attributes: new Map(),
+								},
+								{
+									type: 0,
+									styles: "background-color: purple;",
+									offset: 0,
+									length: 87,
+								},
+							],
+							id: "test",
+							attributes: {
+								region: "fred",
 							},
-							{
-								type: 0,
-								styles: "background-color: purple;",
-								offset: 0,
-								length: 87,
-							},
-						],
-						id: "test",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 
 					const CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES = `
 WEBVTT
@@ -567,36 +590,38 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
 
-					expect(parsingResult2[0]).toEqual({
-						content,
-						startTime: 5000,
-						endTime: 10000,
-						entities: [
-							{
-								type: 1,
-								tagType: 1,
-								offset: 0,
-								length: 87,
-								attributes: new Map([["voice", "Fred"]]),
+					expect(parsingResult2[0]).toEqual(
+						new CueNode({
+							content,
+							startTime: 5000,
+							endTime: 10000,
+							entities: [
+								{
+									type: 1,
+									tagType: 1,
+									offset: 0,
+									length: 87,
+									attributes: new Map([["voice", "Fred"]]),
+								},
+								{
+									type: 0,
+									styles: "background-color: red;",
+									offset: 0,
+									length: 87,
+								},
+								{
+									type: 0,
+									styles: "background-color: pink;",
+									offset: 0,
+									length: 87,
+								},
+							],
+							id: "test",
+							attributes: {
+								region: "fred",
 							},
-							{
-								type: 0,
-								styles: "background-color: red;",
-								offset: 0,
-								length: 87,
-							},
-							{
-								type: 0,
-								styles: "background-color: pink;",
-								offset: 0,
-								length: 87,
-							},
-						],
-						id: "test",
-						attributes: {
-							region: "fred",
-						},
-					});
+						}),
+					);
 				});
 			});
 		});

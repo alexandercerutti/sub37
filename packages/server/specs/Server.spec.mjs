@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSBaseRenderer } from "../lib/BaseRenderer";
 import { HSServer } from "../lib/Server";
+import { CueNode } from "../lib/CueNode";
 
 class MockedRendererNoExtend {
 	static get supportedType() {
@@ -17,7 +18,7 @@ class MockedRenderer extends HSBaseRenderer {
 		return "text/vtt";
 	}
 
-	/** @returns {import("../lib/model").CueNode[]} */
+	/** @returns {CueNode[]} */
 	parse() {
 		return [];
 	}
@@ -90,34 +91,30 @@ describe("HSServer", () => {
 				// but video tags step 4 times per second
 
 				return [
-					{
+					new CueNode({
 						content: "This is a sample cue",
 						startTime: 0,
 						endTime: 1,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue second",
 						startTime: 0.4,
 						endTime: 1,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue third",
 						startTime: 1,
 						endTime: 2.5,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue fourth",
 						startTime: 2.5,
 						endTime: 4,
-						entities: [],
 						id: "any",
-					},
+					}),
 				];
 			};
 		});
@@ -182,34 +179,30 @@ describe("HSServer", () => {
 				// but video tags step 4 times per second
 
 				return [
-					{
+					new CueNode({
 						content: "This is a sample cue",
 						startTime: 0,
 						endTime: 1,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue second",
 						startTime: 0.4,
 						endTime: 1,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue third",
 						startTime: 1,
 						endTime: 2.5,
-						entities: [],
 						id: "any",
-					},
-					{
+					}),
+					new CueNode({
 						content: "This is a sample cue fourth",
 						startTime: 2.5,
 						endTime: 4,
-						entities: [],
 						id: "any",
-					},
+					}),
 				];
 			};
 
@@ -268,67 +261,59 @@ describe("HSServer", () => {
 				[
 					{
 						content: [
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue second",
 								startTime: 0.4,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue third",
 								startTime: 1,
 								endTime: 2.5,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue fourth",
 								startTime: 2.5,
 								endTime: 4,
-								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						lang: "eng",
 					},
 					{
 						content: [
-							{
+							new CueNode({
 								content: "Questo è un cue di prova",
 								startTime: 0,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "Questo è un cue di prova secondo",
 								startTime: 0.4,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "Questo è un cue di prova terzo",
 								startTime: 1,
 								endTime: 2.5,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "Questo è un cue di prova quarto",
 								startTime: 2.5,
 								endTime: 4,
-								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						lang: "ita",
 					},
@@ -356,68 +341,68 @@ describe("HSServer", () => {
 					expect(cuesSequence).toEqual([
 						/** Persisting time: 0ms - 400ms */
 						[
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
 								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						/** Persisting time: 400ms - 1000ms */
 						[
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
 								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue second",
 								startTime: 0.4,
 								endTime: 1,
 								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						/** Here we change language to Italian */
 						/** Persisting time: 400ms - 1000ms */
 						[
-							{
+							new CueNode({
 								content: "Questo è un cue di prova",
 								startTime: 0,
 								endTime: 1,
 								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "Questo è un cue di prova secondo",
 								startTime: 0.4,
 								endTime: 1,
 								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						/** Persisting time: 1000ms - 2500ms */
 						[
-							{
+							new CueNode({
 								content: "Questo è un cue di prova terzo",
 								startTime: 1,
 								endTime: 2.5,
 								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						/** Persisting time: 2500ms - 4000ms */
 						[
-							{
+							new CueNode({
 								content: "Questo è un cue di prova quarto",
 								startTime: 2.5,
 								endTime: 4,
 								entities: [],
 								id: "any",
-							},
+							}),
 						],
 					]);
 
@@ -448,34 +433,30 @@ describe("HSServer", () => {
 				[
 					{
 						content: [
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue second",
 								startTime: 0.4,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue third",
 								startTime: 1,
 								endTime: 2.5,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue fourth",
 								startTime: 2.5,
 								endTime: 4,
-								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						lang: "eng",
 					},
@@ -529,34 +510,30 @@ describe("HSServer", () => {
 				[
 					{
 						content: [
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue second",
 								startTime: 0.4,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue third",
 								startTime: 1,
 								endTime: 2.5,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue fourth",
 								startTime: 2.5,
 								endTime: 4,
-								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						lang: "eng",
 					},
@@ -605,34 +582,30 @@ describe("HSServer", () => {
 				[
 					{
 						content: [
-							{
+							new CueNode({
 								content: "This is a sample cue",
 								startTime: 0,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue second",
 								startTime: 0.4,
 								endTime: 1,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue third",
 								startTime: 1,
 								endTime: 2.5,
-								entities: [],
 								id: "any",
-							},
-							{
+							}),
+							new CueNode({
 								content: "This is a sample cue fourth",
 								startTime: 2.5,
 								endTime: 4,
-								entities: [],
 								id: "any",
-							},
+							}),
 						],
 						lang: "eng",
 					},

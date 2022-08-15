@@ -1,4 +1,4 @@
-import type { CueNode } from "../model";
+import type { CueNode } from "../CueNode.js";
 
 export interface HSBaseRendererConstructor {
 	supportedType: string;

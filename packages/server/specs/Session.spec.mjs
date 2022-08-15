@@ -3,12 +3,13 @@ import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSSession } from "../lib/Session.js";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
 import { HSBaseRenderer } from "../lib/BaseRenderer";
+import { CueNode } from "../lib/CueNode.js";
 
 class MockedRenderer extends HSBaseRenderer {
 	/**
 	 *
 	 * @param {string} content
-	 * @returns {Array<import("../lib/model.js").CueNode>}
+	 * @returns {Array<CueNode>}
 	 */
 	parse(content) {
 		return [];
@@ -53,11 +54,12 @@ describe("HSSession", () => {
 
 		MockedRenderer.prototype.parse = function () {
 			return [
-				{
+				new CueNode({
+					id: "any",
 					startTime: 0,
 					endTime: 2000,
 					content: "Whatever is your content, it will be displayed here",
-				},
+				}),
 			];
 		};
 

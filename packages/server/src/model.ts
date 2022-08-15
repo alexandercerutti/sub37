@@ -38,7 +38,7 @@ export type Entity = {
 	| {
 			type: EntityType.TAG;
 			tagType: TagType;
-			attributes: Map<string, string>;
+			attributes: Map<string, string | undefined>;
 	  }
 );
 
@@ -70,14 +70,4 @@ export interface Region {
 	origin?: [`${number}%`, `${number}%`];
 
 	// regionanchor?: [`${number}%`, `${number}%`]; // Is there something like this in other systems outside VTT?
-}
-
-export interface CueNode {
-	startTime: number;
-	endTime: number;
-	id: string;
-	region?: Region;
-	entities: Entity[];
-	content: string;
-	attributes?: any /** @TODO attributes are generic cue attributes, but we miss a shared format yet */;
 }

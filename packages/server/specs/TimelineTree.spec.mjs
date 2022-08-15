@@ -1,6 +1,7 @@
 // @ts-check
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
+import { CueNode } from "../lib/CueNode.js";
 
 describe("TimelineTree", () => {
 	/** @type {IntervalBinaryTree} */
@@ -12,19 +13,25 @@ describe("TimelineTree", () => {
 
 	it("should assign nodes to the correct timeframe", () => {
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 11000,
-				endTime: 12000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 11000,
+					endTime: 12000,
+				}),
+			),
 		);
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 0,
-				endTime: 10000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 0,
+					endTime: 10000,
+				}),
+			),
 		);
 
 		const query1 = tree.getCurrentNodes(0);
@@ -52,27 +59,36 @@ describe("TimelineTree", () => {
 		 * For example, VTT Timestamps
 		 */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test master-content",
-				startTime: 0,
-				endTime: 15000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test master-content",
+					startTime: 0,
+					endTime: 15000,
+				}),
+			),
 		);
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test sub-content",
-				startTime: 3000,
-				endTime: 15000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test sub-content",
+					startTime: 3000,
+					endTime: 15000,
+				}),
+			),
 		);
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A completely different and single node",
-				startTime: 16000,
-				endTime: 17000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A completely different and single node",
+					startTime: 16000,
+					endTime: 17000,
+				}),
+			),
 		);
 
 		/**
@@ -80,19 +96,25 @@ describe("TimelineTree", () => {
 		 */
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test master-content",
-				startTime: 18000,
-				endTime: 30000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test master-content",
+					startTime: 18000,
+					endTime: 30000,
+				}),
+			),
 		);
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test sub-content",
-				startTime: 20000,
-				endTime: 23000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test sub-content",
+					startTime: 20000,
+					endTime: 23000,
+				}),
+			),
 		);
 
 		/**
@@ -102,19 +124,25 @@ describe("TimelineTree", () => {
 		 */
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test sub-content",
-				startTime: 36000,
-				endTime: 38000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test sub-content",
+					startTime: 36000,
+					endTime: 38000,
+				}),
+			),
 		);
 
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test master-content",
-				startTime: 33500,
-				endTime: 38000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test master-content",
+					startTime: 33500,
+					endTime: 38000,
+				}),
+			),
 		);
 
 		const query1 = tree.getCurrentNodes(7000);
@@ -122,11 +150,13 @@ describe("TimelineTree", () => {
 		expect(query1?.length).toBe(2);
 		expect(query1).toMatchObject([
 			{
+				id: "any",
 				content: "A test master-content",
 				startTime: 0,
 				endTime: 15000,
 			},
 			{
+				id: "any",
 				content: "A test sub-content",
 				startTime: 3000,
 				endTime: 15000,
@@ -169,65 +199,86 @@ describe("TimelineTree", () => {
 	it("should return all the nodes in the correct order", () => {
 		/** Root */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 11000,
-				endTime: 12000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 11000,
+					endTime: 12000,
+				}),
+			),
 		);
 
 		/** Adding on left */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 3000,
-				endTime: 10000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 3000,
+					endTime: 10000,
+				}),
+			),
 		);
 
 		/** Adding on right */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 12000,
-				endTime: 15000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 12000,
+					endTime: 15000,
+				}),
+			),
 		);
 
 		/** Adding on left's left */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 0,
-				endTime: 5000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 0,
+					endTime: 5000,
+				}),
+			),
 		);
 
 		/** Adding on left's right */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 5000,
-				endTime: 9000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 5000,
+					endTime: 9000,
+				}),
+			),
 		);
 
 		/** Adding on right's left */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 12000,
-				endTime: 13000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 12000,
+					endTime: 13000,
+				}),
+			),
 		);
 
 		/** Adding on right's right */
 		tree.addNode(
-			cueNodeToTreeLeaf({
-				content: "A test content",
-				startTime: 13000,
-				endTime: 15000,
-			}),
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 13000,
+					endTime: 15000,
+				}),
+			),
 		);
 
 		const query = tree.getAll();
@@ -236,50 +287,57 @@ describe("TimelineTree", () => {
 
 		expect(query).toEqual([
 			// left
-			{
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 0,
 				endTime: 5000,
-			},
-			{
+			}),
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 3000,
 				endTime: 10000,
-			},
-			{
+			}),
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 5000,
 				endTime: 9000,
-			},
+			}),
 			// Root
-			{
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 11000,
 				endTime: 12000,
-			},
+			}),
 			// right
-			{
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 12000,
 				endTime: 13000,
-			},
-			{
+			}),
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 12000,
 				endTime: 15000,
-			},
-			{
+			}),
+			new CueNode({
+				id: "any",
 				content: "A test content",
 				startTime: 13000,
 				endTime: 15000,
-			},
+			}),
 		]);
 	});
 });
 
 /**
  *
- * @param {import("../lib/index.js").CueNode} cueNode
+ * @param {CueNode} cueNode
  * @returns
  */
 
