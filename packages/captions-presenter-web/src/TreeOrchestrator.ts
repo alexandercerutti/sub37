@@ -1,4 +1,4 @@
-import type { CueNode } from "@hsubs/server";
+import { CueNode, Entities, IntervalBinaryTree } from "@hsubs/server";
 import Line from "./Line.js";
 
 export default class TreeOrchestrator {
@@ -22,9 +22,6 @@ export default class TreeOrchestrator {
 	}
 
 	public renderCuesToHTML(cueNodes: CueNode[]): void {
-		let latestCueId: string = "";
-		let latestHeight: number = 0;
-
 		/**
 		 * @TODO Should we cache HTML Elements?
 		 * By doing so sub-DOM might not get reloaded entirely
@@ -32,46 +29,65 @@ export default class TreeOrchestrator {
 
 		this.wipeTree();
 
-		const lines: Line[] = [];
-		const items: CueNode[] = [...cueNodes];
+		const cues: CueNode[] = [];
 
-		for (let i = 0; i < items.length; i++) {
-			let nextHeight: number = 0;
-			let cueNode = items[i];
+		for (let i = 0; i < cueNodes.length; i++) {
+			const cueNode = cueNodes[i];
 
 			if (!cueNode.content.length) {
 				continue;
 			}
 
-			/**
-			 * Splitting phrases so we can keep track of the
-			 * actual occupied lines
-			 */
-			const cueWords = cueNode.content.trim().split(/\x20|\x09|\x0C|\x0A/);
+			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
 
-			if (cueWords.length > 1) {
-				const cuesWithWordContent = cueWords.map((word) =>
-					Object.create(cueNode, {
-						content: {
-							value: word,
-						},
-					}),
-				);
-
-				items.splice(i, 1, ...cuesWithWordContent);
-				/** Refresh pointer */
-				cueNode = items[i];
+			for (let i = 0; i < cueNode.entities.length; i++) {
+				entitiesTree.addNode(cueNode.entities[i]);
 			}
 
-			if (latestCueId !== cueNode.id) {
+			let previousContentBreakIndex = 0;
+
+			for (let i = 0; i < cueNode.content.length; i++) {
+				const char = cueNode.content[i];
+				const entitiesAtCoordinates = entitiesTree
+					.getCurrentNodes(i)
+					.filter((e) => !(e.offset === 0 && e.length === cueNode.content.length));
+
+				const shouldBreakCue =
+					isCharacterWhitespace(char) || indexMatchesEntityEnd(i, entitiesAtCoordinates);
+
+				if (shouldBreakCue) {
+					cues.push(
+						Object.create(cueNode, {
+							content: {
+								value: cueNode.content.slice(previousContentBreakIndex, i),
+							},
+							entities: {
+								value: entitiesAtCoordinates,
+							},
+						}),
+					);
+
+					previousContentBreakIndex = i + 1;
+				}
+			}
+		}
+
+		let latestCueId: string = "";
+		let latestHeight: number = 0;
+		const lines: Line[] = [];
+
+		for (let i = 0; i < cues.length; i++) {
+			const cue = cues[i];
+
+			if (latestCueId !== cue.id) {
 				const line = new Line();
 				lines.push(line);
 				line.attachTo(this.root);
 			}
 
 			const lastLine = lines[lines.length - 1];
-			const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cueNode.content}`);
-			nextHeight = lastLine.getHeight();
+			const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cue.content}`);
+			const nextHeight = lastLine.getHeight();
 
 			if (nextHeight > latestHeight && latestHeight > 0) {
 				const line = new Line();
@@ -82,7 +98,7 @@ export default class TreeOrchestrator {
 			}
 
 			latestHeight = nextHeight;
-			latestCueId = cueNode.id;
+			latestCueId = cue.id;
 		}
 
 		/**
@@ -126,4 +142,17 @@ export default class TreeOrchestrator {
 			}
 		}
 	}
+}
+
+function isCharacterWhitespace(char: string) {
+	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
+}
+
+function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]) {
+	if (!entities.length) {
+		return false;
+	}
+
+	const lastEntity = entities[entities.length - 1];
+	return lastEntity.offset + lastEntity.length === index;
 }
