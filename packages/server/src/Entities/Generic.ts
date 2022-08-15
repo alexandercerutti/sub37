@@ -22,7 +22,7 @@ export class GenericEntity implements Leafable<GenericEntity> {
 			right: null,
 			node: this,
 			get max() {
-				return this.node.length;
+				return this.node.offset + this.node.length;
 			},
 			get min() {
 				return this.node.offset;
