@@ -29,8 +29,6 @@ export default class TreeOrchestrator {
 
 		this.wipeTree();
 
-		const cues: CueNode[] = [];
-
 		for (let i = 0; i < cueNodes.length; i++) {
 			const cueNode = cueNodes[i];
 
@@ -38,6 +36,7 @@ export default class TreeOrchestrator {
 				continue;
 			}
 
+			const cues: CueNode[] = [];
 			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
 
 			for (let i = 0; i < cueNode.entities.length; i++) {
@@ -70,37 +69,36 @@ export default class TreeOrchestrator {
 					previousContentBreakIndex = i + 1;
 				}
 			}
-		}
 
-		let latestCueId: string = "";
-		let latestHeight: number = 0;
-		const lines: Line[] = [];
+			let latestCueId: string = "";
+			let latestHeight: number = 0;
+			const lines: Line[] = [];
 
-		for (let i = 0; i < cues.length; i++) {
-			const cue = cues[i];
+			for (let i = 0; i < cues.length; i++) {
+				const cue = cues[i];
 
-			if (latestCueId !== cue.id) {
-				const line = new Line();
-				lines.push(line);
-				line.attachTo(this.root);
+				if (latestCueId !== cue.id) {
+					const line = new Line();
+					lines.push(line);
+					line.attachTo(this.root);
+				}
+
+				const lastLine = lines[lines.length - 1];
+				const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cue.content}`);
+				const nextHeight = lastLine.getHeight();
+
+				if (nextHeight > latestHeight && latestHeight > 0) {
+					const line = new Line();
+					lines.push(line);
+					textNode.textContent = textNode.textContent.trim();
+					line.addText(textNode);
+					line.attachTo(this.root);
+				}
+
+				latestHeight = nextHeight;
+				latestCueId = cue.id;
 			}
-
-			const lastLine = lines[lines.length - 1];
-			const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cue.content}`);
-			const nextHeight = lastLine.getHeight();
-
-			if (nextHeight > latestHeight && latestHeight > 0) {
-				const line = new Line();
-				lines.push(line);
-				textNode.textContent = textNode.textContent.trim();
-				line.addText(textNode);
-				line.attachTo(this.root);
-			}
-
-			latestHeight = nextHeight;
-			latestCueId = cue.id;
 		}
-
 		/**
 		 * To achieve a Youtube-like subtitle effect, when a cue is alone
 		 * is it translated to the bottom of the X visible rows. A.k.a. 1.5em
