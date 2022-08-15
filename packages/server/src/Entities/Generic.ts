@@ -1,9 +1,11 @@
+import type { IntervalBinaryLeaf, Leafable } from "../IntervalBinaryTree";
+
 export const enum Type {
 	STYLE,
 	TAG,
 }
 
-export class GenericEntity {
+export class GenericEntity implements Leafable<GenericEntity> {
 	public offset: number;
 	public length: number;
 	public type: Type;
@@ -12,5 +14,19 @@ export class GenericEntity {
 		this.offset = offset;
 		this.length = length;
 		this.type = type;
+	}
+
+	public toLeaf(): IntervalBinaryLeaf<GenericEntity> {
+		return {
+			left: null,
+			right: null,
+			node: this,
+			get max() {
+				return this.node.length;
+			},
+			get min() {
+				return this.node.offset;
+			},
+		};
 	}
 }
