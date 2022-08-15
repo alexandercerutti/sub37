@@ -246,19 +246,13 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 		return [BlockType.IGNORED, undefined];
 	}
 
-	const {
-		attributes,
-		cueid = `cue-${start}-${end}`,
-		endtime,
-		starttime,
-		text,
-	} = cueMatch.groups as {
+	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as {
 		[K in keyof Parser.CueRawData]: Parser.CueRawData[K];
 	};
 
 	const cueParsingResult = Parser.parseCue({
 		attributes,
-		cueid,
+		cueid: cueid || `cue-${start}-${end}`,
 		endtime,
 		starttime,
 		text: text.replace(TABS_REGEX, ""),
