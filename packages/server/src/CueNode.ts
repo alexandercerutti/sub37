@@ -1,5 +1,6 @@
+import type * as Entities from "./Entities";
 import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree.js";
-import type { Entity, Region } from "./model";
+import type { Region } from "./model";
 
 const entitiesSymbol = Symbol("hs.entities");
 const regionSymbol = Symbol("hs.region");
@@ -12,7 +13,7 @@ interface CueProps {
 
 	/** @TODO attributes are generic cue attributes, but we miss a shared format yet */
 	attributes?: any;
-	entities?: Entity[];
+	entities?: Entities.GenericEntity[];
 	region?: Region;
 }
 
@@ -24,7 +25,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	public attributes?: any;
 
 	public [regionSymbol]?: Region;
-	public [entitiesSymbol]: Entity[] = [];
+	public [entitiesSymbol]: Entities.GenericEntity[] = [];
 
 	constructor(data: CueProps) {
 		this.id = data.id;
@@ -39,11 +40,11 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		}
 	}
 
-	public get entities(): Entity[] {
+	public get entities(): Entities.GenericEntity[] {
 		return this[entitiesSymbol];
 	}
 
-	public set entities(value: Entity[]) {
+	public set entities(value: Entities.GenericEntity[]) {
 		/**
 		 * Reordering cues entities for a later reconciliation
 		 * in captions presenter
@@ -82,6 +83,6 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	}
 }
 
-function reorderEntitiesComparisonFn(e1: Entity, e2: Entity) {
+function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
 	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
 }

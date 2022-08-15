@@ -1,12 +1,12 @@
-import { TagType } from "@hsubs/server";
+import { Entities } from "@hsubs/server";
 
-export const EntitiesTokenMap: { [key: string]: TagType } = {
-	b: TagType.BOLD,
-	c: TagType.CLASS,
-	i: TagType.ITALIC,
-	lang: TagType.LANG,
-	rt: TagType.RT,
-	ruby: TagType.RUBY,
-	u: TagType.UNDERLINE,
-	v: TagType.VOICE,
+export const EntitiesTokenMap: { [key: string]: Entities.TagType } = {
+	b: Entities.TagType.BOLD,
+	c: Entities.TagType.CLASS,
+	i: Entities.TagType.ITALIC,
+	lang: Entities.TagType.LANG,
+	rt: Entities.TagType.RT,
+	ruby: Entities.TagType.RUBY,
+	u: Entities.TagType.UNDERLINE,
+	v: Entities.TagType.VOICE,
 };

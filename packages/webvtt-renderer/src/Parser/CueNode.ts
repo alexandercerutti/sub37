@@ -1,3 +1,4 @@
+import type { Entities } from "@hsubs/server";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
@@ -18,7 +19,7 @@ export interface CueParsedData {
 	startTime: number;
 	endTime: number;
 	regionName?: string;
-	tags: Tags.TagEntity[];
+	tags: Entities.Tag[];
 	text: string;
 	attributes: Attributes;
 }
@@ -130,7 +131,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	return hsCues;
 }
 
-function addCueEntities(cue: CueParsedData, entities: Tags.TagEntity[]) {
+function addCueEntities(cue: CueParsedData, entities: Entities.Tag[]) {
 	for (const entity of entities) {
 		cue.tags.push(entity);
 	}

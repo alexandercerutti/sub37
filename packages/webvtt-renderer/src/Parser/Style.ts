@@ -1,4 +1,4 @@
-import type { TagType } from "@hsubs/server";
+import type { Entities } from "@hsubs/server";
 import { EntitiesTokenMap } from "./Tags/tokenEntities.js";
 
 const CSS_RULESET_REGEX = /::cue(?:\((.+)\))?\s*\{\s*([\s\S]+)\}/;
@@ -20,7 +20,7 @@ export const enum StyleDomain {
 type SelectorTarget =
 	| { type: StyleDomain.GLOBAL }
 	| { type: StyleDomain.ID; selector: string }
-	| { type: StyleDomain.TAG; selector: TagType; attributes: Map<string, string> };
+	| { type: StyleDomain.TAG; selector: Entities.TagType; attributes: Map<string, string> };
 
 export type Style = SelectorTarget & {
 	styleString: string;

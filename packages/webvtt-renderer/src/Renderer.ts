@@ -1,5 +1,5 @@
-import type { Entity, Region } from "@hsubs/server";
-import { HSBaseRenderer, CueNode, EntityType } from "@hsubs/server";
+import type { Region } from "@hsubs/server";
+import { HSBaseRenderer, CueNode, Entities } from "@hsubs/server";
 import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
@@ -95,7 +95,7 @@ export default class Renderer extends HSBaseRenderer {
 							continue;
 						}
 
-						const entities: Entity[] = [];
+						const entities: Entities.GenericEntity[] = [];
 						const stylesEntities: (Parser.Style & {
 							type: Parser.StyleDomain.GLOBAL | Parser.StyleDomain.ID;
 						})[] = [];
@@ -116,12 +116,14 @@ export default class Renderer extends HSBaseRenderer {
 						 */
 
 						entities.push(
-							...stylesEntities.sort(styleSpecificitySorter).map<Entity>((style) => ({
-								type: EntityType.STYLE,
-								offset: 0,
-								length: parsedCue.text.length,
-								styles: style.styleString,
-							})),
+							...stylesEntities.sort(styleSpecificitySorter).map<Entities.Style>(
+								(style) =>
+									new Entities.Style({
+										offset: 0,
+										length: parsedCue.text.length,
+										styles: style.styleString,
+									}),
+							),
 						);
 
 						for (const tag of parsedCue.tags) {
@@ -154,12 +156,13 @@ export default class Renderer extends HSBaseRenderer {
 									}
 								}
 
-								entities.push({
-									type: EntityType.STYLE,
-									offset: tag.offset,
-									length: tag.length,
-									styles: style.styleString,
-								});
+								entities.push(
+									new Entities.Style({
+										offset: tag.offset,
+										length: tag.length,
+										styles: style.styleString,
+									}),
+								);
 							}
 						}
 

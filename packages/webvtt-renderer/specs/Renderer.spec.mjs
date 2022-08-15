@@ -1,5 +1,5 @@
 // @ts-check
-import { CueNode } from "@hsubs/server/lib/CueNode.js";
+import { Entities, CueNode } from "@hsubs/server";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTRenderer from "../lib/Renderer.js";
 
@@ -98,14 +98,13 @@ Alberto, come to look at Marcello!
 						region: "fred",
 					},
 					entities: [
-						{
+						new Entities.Tag({
 							offset: 0,
 							length: 31,
 							tagType: 1,
-							type: 1,
 							attributes: new Map([["Fred>", undefined]]),
 							/** @TODO add classes */
-						},
+						}),
 					],
 				}),
 			);
@@ -121,14 +120,13 @@ Alberto, come to look at Marcello!
 						align: "left",
 					},
 					entities: [
-						{
+						new Entities.Tag({
 							offset: 0,
 							length: 19,
 							tagType: 2,
-							type: 1, // lang
 							attributes: new Map([["en-US", undefined]]),
 							/** @TODO add classes */
-						},
+						}),
 					],
 				}),
 			);
@@ -158,13 +156,12 @@ WEBVTT
 					id: "cue-9-180",
 					attributes: {},
 					entities: [
-						{
-							tagType: 16,
-							type: 1,
+						new Entities.Tag({
 							offset: 1,
 							length: 4,
+							tagType: 16,
 							attributes: new Map(),
-						},
+						}),
 					],
 				}),
 			);
@@ -177,13 +174,12 @@ WEBVTT
 					id: "cue-9-180",
 					attributes: {},
 					entities: [
-						{
-							tagType: 16,
-							type: 1,
+						new Entities.Tag({
 							offset: 1,
 							length: 3,
+							tagType: 16,
 							attributes: new Map(),
-						},
+						}),
 					],
 				}),
 			);
@@ -209,27 +205,24 @@ WEBVTT
 					id: "cue-9-79",
 					attributes: {},
 					entities: [
-						{
+						new Entities.Tag({
 							tagType: 8,
-							type: 1,
 							offset: 2,
 							length: 3,
 							attributes: new Map(),
-						},
-						{
+						}),
+						new Entities.Tag({
 							tagType: 8,
-							type: 1,
 							offset: 8,
 							length: 2,
 							attributes: new Map(),
-						},
-						{
+						}),
+						new Entities.Tag({
 							tagType: 4,
-							type: 1,
 							offset: 0,
 							length: 10,
 							attributes: new Map(),
-						},
+						}),
 					],
 				}),
 			);
@@ -289,14 +282,13 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 0,
+								new Entities.Style({
 									styles: "background-color: purple;",
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
-								},
+								}),
 							],
 							id: "cue-53-187",
 							attributes: {
@@ -338,14 +330,13 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 0,
+								new Entities.Style({
 									styles: "background-color: purple;",
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
-								},
+								}),
 							],
 							id: "test",
 							attributes: {
@@ -381,14 +372,13 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 0,
+								new Entities.Style({
 									styles: "background-color: red;",
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
-								},
+								}),
 							],
 							id: "123",
 							attributes: {
@@ -429,19 +419,17 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 1,
+								new Entities.Tag({
 									tagType: 32,
 									offset: 0,
 									length: 19,
 									attributes: new Map(),
-								},
-								{
-									type: 0,
+								}),
+								new Entities.Style({
 									styles: "background-color: purple;",
 									offset: 0,
 									length: 19,
-								},
+								}),
 							],
 							id: "cue-103-244",
 							attributes: {
@@ -483,25 +471,22 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 0,
+								new Entities.Style({
 									styles: "background-color: red;",
 									offset: 0,
 									length: content.length,
-								},
-								{
-									type: 1,
+								}),
+								new Entities.Tag({
 									tagType: 32,
 									offset: 0,
 									length: 19,
 									attributes: new Map(),
-								},
-								{
-									type: 0,
+								}),
+								new Entities.Style({
 									styles: "background-color: purple;",
 									offset: 0,
 									length: 19,
-								},
+								}),
 							],
 							id: "test",
 							attributes: {
@@ -543,19 +528,17 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 1,
+								new Entities.Tag({
 									tagType: 1,
 									offset: 0,
 									length: 87,
 									attributes: new Map(),
-								},
-								{
-									type: 0,
+								}),
+								new Entities.Style({
 									styles: "background-color: purple;",
 									offset: 0,
 									length: 87,
-								},
+								}),
 							],
 							id: "test",
 							attributes: {
@@ -596,25 +579,22 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								{
-									type: 1,
+								new Entities.Tag({
 									tagType: 1,
 									offset: 0,
 									length: 87,
 									attributes: new Map([["voice", "Fred"]]),
-								},
-								{
-									type: 0,
+								}),
+								new Entities.Style({
 									styles: "background-color: red;",
 									offset: 0,
 									length: 87,
-								},
-								{
-									type: 0,
+								}),
+								new Entities.Style({
 									styles: "background-color: pink;",
 									offset: 0,
 									length: 87,
-								},
+								}),
 							],
 							id: "test",
 							attributes: {
