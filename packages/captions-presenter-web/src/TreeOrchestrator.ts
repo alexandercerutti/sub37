@@ -52,13 +52,15 @@ export default class TreeOrchestrator {
 					.filter((e) => !(e.offset === 0 && e.length === cueNode.content.length));
 
 				const shouldBreakCue =
-					isCharacterWhitespace(char) || indexMatchesEntityEnd(i, entitiesAtCoordinates);
+					isCharacterWhitespace(char) ||
+					indexMatchesEntityEnd(i, entitiesAtCoordinates) ||
+					isCueContentEnd(cueNode, i);
 
 				if (shouldBreakCue) {
 					cues.push(
 						Object.create(cueNode, {
 							content: {
-								value: cueNode.content.slice(previousContentBreakIndex, i),
+								value: cueNode.content.slice(previousContentBreakIndex, i + 1).trim(),
 							},
 							entities: {
 								value: entitiesAtCoordinates,
@@ -142,15 +144,19 @@ export default class TreeOrchestrator {
 	}
 }
 
-function isCharacterWhitespace(char: string) {
+function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
 }
 
-function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]) {
+function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]): boolean {
 	if (!entities.length) {
 		return false;
 	}
 
 	const lastEntity = entities[entities.length - 1];
 	return lastEntity.offset + lastEntity.length === index;
+}
+
+function isCueContentEnd(cueNode: CueNode, index: number): boolean {
+	return cueNode.content.length - 1 === index;
 }
