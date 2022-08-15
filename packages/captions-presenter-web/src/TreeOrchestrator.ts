@@ -92,7 +92,7 @@ export default class TreeOrchestrator {
 			if (nextHeight > latestHeight && latestHeight > 0) {
 				const line = new Line();
 				lines.push(line);
-				textNode.textContent.trim();
+				textNode.textContent = textNode.textContent.trim();
 				line.addText(textNode);
 				line.attachTo(this.root);
 			}
