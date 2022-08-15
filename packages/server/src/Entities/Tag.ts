@@ -1,4 +1,4 @@
-import { GenericEntity, Type } from "./Generic";
+import { GenericEntity, Type } from "./Generic.js";
 
 /**
  * TagType is an enum containing

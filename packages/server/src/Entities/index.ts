@@ -1,3 +1,3 @@
-export * from "./Style";
-export * from "./Tag";
-export * from "./Generic";
+export * from "./Style.js";
+export * from "./Tag.js";
+export * from "./Generic.js";
