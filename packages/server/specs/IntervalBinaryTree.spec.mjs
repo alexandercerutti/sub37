@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "@jest/globals";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
 import { CueNode } from "../lib/CueNode.js";
 
-describe("TimelineTree", () => {
+describe("IntervalBinaryTree", () => {
 	/** @type {IntervalBinaryTree} */
 	let tree;
 
