@@ -1,5 +1,5 @@
-import { CueNode, Entities, IntervalBinaryTree } from "@hsubs/server";
-import Line from "./Line.js";
+import { IntervalBinaryTree } from "@hsubs/server";
+import type { CueNode, Entities } from "@hsubs/server";
 
 export default class TreeOrchestrator {
 	private _root = Object.assign(document.createElement("div"), {
@@ -29,6 +29,8 @@ export default class TreeOrchestrator {
 
 		this.wipeTree();
 
+		const cues: CueNode[] = [];
+
 		for (let i = 0; i < cueNodes.length; i++) {
 			const cueNode = cueNodes[i];
 
@@ -36,7 +38,6 @@ export default class TreeOrchestrator {
 				continue;
 			}
 
-			const cues: CueNode[] = [];
 			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
 
 			for (let i = 0; i < cueNode.entities.length; i++) {
@@ -52,9 +53,10 @@ export default class TreeOrchestrator {
 					.filter((e) => !(e.offset === 0 && e.length === cueNode.content.length));
 
 				const shouldBreakCue =
-					isCharacterWhitespace(char) ||
-					indexMatchesEntityEnd(i, entitiesAtCoordinates) ||
-					isCueContentEnd(cueNode, i);
+					i > 0 &&
+					(isCharacterWhitespace(char) ||
+						indexMatchesEntityEnd(i, entitiesAtCoordinates) ||
+						isCueContentEnd(cueNode, i));
 
 				if (shouldBreakCue) {
 					cues.push(
@@ -71,35 +73,37 @@ export default class TreeOrchestrator {
 					previousContentBreakIndex = i + 1;
 				}
 			}
+		}
 
-			let latestCueId: string = "";
-			let latestHeight: number = 0;
-			const lines: Line[] = [];
+		let latestCueId = "";
+		let latestNode: HTMLElement = undefined;
+		let latestHeight: number = 0;
 
-			for (let i = 0; i < cues.length; i++) {
-				const cue = cues[i];
+		for (let i = 0; i < cues.length; i++) {
+			const cue = cues[i];
 
-				if (latestCueId !== cue.id) {
-					const line = new Line();
-					lines.push(line);
-					line.attachTo(this.root);
-				}
-
-				const lastLine = lines[lines.length - 1];
-				const textNode = lastLine.addText(`${i > 0 ? "\x20" : ""}${cue.content}`);
-				const nextHeight = lastLine.getHeight();
-
-				if (nextHeight > latestHeight && latestHeight > 0) {
-					const line = new Line();
-					lines.push(line);
-					textNode.textContent = textNode.textContent.trim();
-					line.addText(textNode);
-					line.attachTo(this.root);
-				}
-
-				latestHeight = nextHeight;
-				latestCueId = cue.id;
+			if (latestCueId !== cue.id) {
+				latestNode = undefined;
 			}
+
+			let line = latestNode || createLine();
+
+			const node = createNode(`${i > 0 ? "\x20" : ""}${cue.content}`);
+			line.children[0].appendChild(node);
+			this.root.appendChild(line);
+
+			const nextHeight = getLineHeight(line);
+
+			if (nextHeight > latestHeight && latestHeight > 0) {
+				line = createLine();
+				node.textContent = node.textContent.trim();
+				line.children[0].appendChild(node);
+				this.root.appendChild(line);
+			}
+
+			latestHeight = nextHeight;
+			latestCueId = cue.id;
+			latestNode = line;
 		}
 		/**
 		 * To achieve a Youtube-like subtitle effect, when a cue is alone
@@ -159,4 +163,34 @@ function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]
 
 function isCueContentEnd(cueNode: CueNode, index: number): boolean {
 	return cueNode.content.length - 1 === index;
+}
+
+function createLine(lineStyles?: any[]) {
+	const node = document.createElement("p");
+
+	const spanNode = node.appendChild(document.createElement("span"));
+
+	/**
+	 * @TODO add styles to spanNode once determined the format of styles
+	 */
+
+	return node;
+}
+
+function createNode(content: string | Text, styles?: any[]) {
+	const node = content instanceof Text ? content : document.createTextNode(content);
+
+	if (!styles?.length) {
+		return node;
+	}
+
+	const styleContainer = document.createElement("span");
+
+	/** @TODO apply styles to span one determined the format */
+
+	styleContainer.appendChild(node);
+}
+
+function getLineHeight(line: HTMLElement) {
+	return Math.floor(line.offsetHeight);
 }
