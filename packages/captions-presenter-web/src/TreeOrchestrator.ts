@@ -48,9 +48,10 @@ export default class TreeOrchestrator {
 
 			for (let i = 0; i < cueNode.content.length; i++) {
 				const char = cueNode.content[i];
-				const entitiesAtCoordinates = entitiesTree
-					.getCurrentNodes(i)
-					.filter((e) => !(e.offset === 0 && e.length === cueNode.content.length));
+				const entitiesAtCoordinates =
+					entitiesTree
+						.getCurrentNodes(i)
+						?.filter((e) => !(e.offset === 0 && e.length === cueNode.content.length)) ?? [];
 
 				const shouldBreakCue =
 					i > 0 &&
