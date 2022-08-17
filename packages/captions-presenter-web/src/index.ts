@@ -66,13 +66,13 @@ div#scroll-area p {
 			return;
 		}
 
+		/**
+		 * @TODO Select region to render if needed and
+		 * select / create a new TreeOrchestrator
+		 */
+
 		this.renderArea.renderCuesToHTML(cueData);
 	}
-}
-
-function getPresentableCueContent(cueNode: CueNode): string {
-	/** @TODO add entities */
-	return cueNode.content;
 }
 
 customElements.define("captions-presenter", Renderer);
