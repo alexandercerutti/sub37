@@ -138,6 +138,21 @@ export default class TreeOrchestrator {
 			addNode(getNodeAtDepth(firstDifferentEntityIndex, cueRootDomNode), textNode);
 
 			let line = latestNode || createLine();
+
+			/**
+			 * We want to ensure that all the text nodes are in, at least,
+			 * a span element in the root line element.
+			 */
+
+			if (cueRootDomNode.lastChild.nodeType === Node.TEXT_NODE) {
+				if (!latestNode) {
+					addNode(line, document.createElement("span"));
+				}
+
+				/** A span is already available or has been created, duh! */
+				firstDifferentEntityIndex++;
+			}
+
 			addNode(getNodeAtDepth(firstDifferentEntityIndex, line), cueRootDomNode);
 
 			if (!latestNode) {
