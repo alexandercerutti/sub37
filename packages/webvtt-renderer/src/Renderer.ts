@@ -95,36 +95,31 @@ export default class Renderer extends HSBaseRenderer {
 							continue;
 						}
 
-						const entities: Entities.GenericEntity[] = [];
-						const stylesEntities: (Parser.Style & {
-							type: Parser.StyleDomain.GLOBAL | Parser.StyleDomain.ID;
-						})[] = [];
+						const stylesEntities = styles
+							.filter((style) => {
+								return (
+									(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
+									style.type === Parser.StyleDomain.GLOBAL
+								);
+							})
+							.sort(styleSpecificitySorter);
 
-						for (const style of styles) {
-							const shouldApplyStyle =
-								(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
-								style.type === Parser.StyleDomain.GLOBAL;
+						const entities: Entities.Tag[] = [];
 
-							if (shouldApplyStyle) {
-								stylesEntities.push(style);
+						if (stylesEntities.length) {
+							entities.push(
+								new Entities.Tag({
+									offset: 0,
+									length: parsedCue.text.length,
+									tagType: Entities.TagType.SPAN,
+									attributes: new Map(),
+								}),
+							);
+
+							for (let style of stylesEntities) {
+								entities[0].setStyles(style.styleString);
 							}
 						}
-
-						/**
-						 * Reordering styles to have global
-						 * styles before id styles
-						 */
-
-						entities.push(
-							...stylesEntities.sort(styleSpecificitySorter).map<Entities.Style>(
-								(style) =>
-									new Entities.Style({
-										offset: 0,
-										length: parsedCue.text.length,
-										styles: style.styleString,
-									}),
-							),
-						);
 
 						for (const tag of parsedCue.tags) {
 							entities.push(tag);
@@ -156,13 +151,7 @@ export default class Renderer extends HSBaseRenderer {
 									}
 								}
 
-								entities.push(
-									new Entities.Style({
-										offset: tag.offset,
-										length: tag.length,
-										styles: style.styleString,
-									}),
-								);
+								tag.setStyles(style.styleString);
 							}
 						}
 

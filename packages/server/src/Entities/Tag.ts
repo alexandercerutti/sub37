@@ -20,16 +20,40 @@ export enum TagType {
 export class Tag extends GenericEntity {
 	public tagType: TagType;
 	public attributes: Map<string, string | undefined>;
+	public styles?: { [key: string]: string };
 
 	public constructor(params: {
 		offset: number;
 		length: number;
 		tagType: TagType;
 		attributes: Map<string, string | undefined>;
+		styles?: Tag["styles"];
 	}) {
 		super(Type.TAG, params.offset, params.length);
 
 		this.tagType = params.tagType;
 		this.attributes = params.attributes;
+		this.styles = params.styles || {};
+	}
+
+	setStyles(styles: string | Tag["styles"]) {
+		let stylesObject: { [key: string]: string };
+
+		if (typeof styles === "string") {
+			stylesObject = {};
+
+			const couples = styles.split(/\s*;\s*/);
+
+			for (let couple of couples) {
+				if (!couple.length) {
+					continue;
+				}
+
+				const [key, value] = couple.split(/\s*:\s*/);
+				stylesObject[key] = value;
+			}
+		}
+
+		Object.assign(this.styles, stylesObject || styles);
 	}
 }
