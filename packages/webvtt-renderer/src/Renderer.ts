@@ -90,9 +90,34 @@ export default class Renderer extends HSBaseRenderer {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
 
+					/**
+					 * Saving the first cue with the id of the next cues
+					 * so we can inherit the different properties and
+					 * always have a reference to the cue timelines cues
+					 * origin from.
+					 */
+
+					let latestRootCue: CueNode = undefined;
+
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							continue;
+						}
+
+						const cue = CueNode.from(latestRootCue, {
+							id: parsedCue.id,
+							startTime: parsedCue.startTime,
+							endTime: parsedCue.endTime,
+							content: parsedCue.text,
+							attributes: parsedCue.attributes,
+						});
+
+						if (parsedCue.attributes.region) {
+							cue.region = regions[parsedCue.attributes.region];
+						}
+
+						if (!latestRootCue) {
+							latestRootCue = cue;
 						}
 
 						const stylesEntities = styles
@@ -107,10 +132,20 @@ export default class Renderer extends HSBaseRenderer {
 						const entities: Entities.Tag[] = [];
 
 						if (stylesEntities.length) {
+							/**
+							 * Having the same length of the style entities here allows
+							 * us to prevent having several elements with the same styles
+							 * in presenter.
+							 */
+
+							const superCue = Object.getPrototypeOf(cue);
+							const length =
+								superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
+
 							entities.push(
 								new Entities.Tag({
 									offset: 0,
-									length: parsedCue.text.length,
+									length,
 									tagType: Entities.TagType.SPAN,
 									attributes: new Map(),
 								}),
@@ -155,19 +190,7 @@ export default class Renderer extends HSBaseRenderer {
 							}
 						}
 
-						const cue = new CueNode({
-							id: parsedCue.id,
-							startTime: parsedCue.startTime,
-							endTime: parsedCue.endTime,
-							content: parsedCue.text,
-							attributes: parsedCue.attributes,
-							entities,
-						});
-
-						if (parsedCue.attributes.region) {
-							cue.region = regions[parsedCue.attributes.region];
-						}
-
+						cue.entities = entities;
 						cues.push(cue);
 					}
 				}

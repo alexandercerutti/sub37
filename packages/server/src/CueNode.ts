@@ -18,6 +18,25 @@ interface CueProps {
 }
 
 export class CueNode implements CueProps, Leafable<CueNode> {
+	static from(cueNode: CueNode, data: CueProps): CueNode {
+		if (!cueNode) {
+			return new CueNode(data);
+		}
+
+		const descriptors: PropertyDescriptorMap = {};
+		const dataMap = Object.entries(data) as [keyof CueProps, CueProps[keyof CueProps]][];
+
+		for (const [key, value] of dataMap) {
+			if (cueNode[key] !== value) {
+				descriptors[key] = {
+					value,
+				};
+			}
+		}
+
+		return Object.create(cueNode, descriptors);
+	}
+
 	public startTime: number;
 	public endTime: number;
 	public id: string;
