@@ -44,35 +44,7 @@ export default class TreeOrchestrator {
 				entitiesTree.addNode(cueNode.entities[i]);
 			}
 
-			let previousContentBreakIndex = 0;
-
-			for (let i = 0; i < cueNode.content.length; i++) {
-				const char = cueNode.content[i];
-				const entitiesAtCoordinates = entitiesTree.getCurrentNodes(i) ?? [];
-
-				const shouldBreakCue =
-					i > 0 &&
-					(isCharacterWhitespace(char) ||
-						indexMatchesEntityEnd(i, entitiesAtCoordinates) ||
-						isCueContentEnd(cueNode, i));
-
-				if (shouldBreakCue) {
-					const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
-
-					cues.push(
-						Object.create(cueNode, {
-							content: {
-								value: content,
-							},
-							entities: {
-								value: entitiesAtCoordinates,
-							},
-						}),
-					);
-
-					previousContentBreakIndex = i + 1;
-				}
-			}
+			cues.push(...splitCueNodesByBreakpoints(cueNode, entitiesTree));
 		}
 
 		let latestCueId = "";
@@ -182,6 +154,55 @@ export default class TreeOrchestrator {
 	}
 }
 
+function splitCueNodesByBreakpoints(
+	cueNode: CueNode,
+	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
+): CueNode[] {
+	let previousContentBreakIndex: number = 0;
+	const cues: CueNode[] = [];
+
+	for (let i = 0; i < cueNode.content.length; i++) {
+		const entitiesAtCoordinates = entitiesTree.getCurrentNodes(i) ?? [];
+
+		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
+			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
+
+			cues.push(
+				Object.create(cueNode, {
+					content: {
+						value: content,
+					},
+					entities: {
+						value: entitiesAtCoordinates,
+					},
+				}),
+			);
+
+			previousContentBreakIndex = i + 1;
+		}
+	}
+
+	return cues;
+}
+
+function shouldCueNodeBreak(
+	cueNodeContent: string,
+	entitiesAtCoordinates: Entities.GenericEntity[],
+	currentIndex: number,
+): boolean {
+	if (currentIndex === 0) {
+		return false;
+	}
+
+	const char = cueNodeContent[currentIndex];
+
+	return (
+		isCharacterWhitespace(char) ||
+		indexMatchesEntityEnd(currentIndex, entitiesAtCoordinates) ||
+		isCueContentEnd(cueNodeContent, currentIndex)
+	);
+}
+
 function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
 }
@@ -195,8 +216,8 @@ function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]
 	return lastEntity.offset + lastEntity.length === index;
 }
 
-function isCueContentEnd(cueNode: CueNode, index: number): boolean {
-	return cueNode.content.length - 1 === index;
+function isCueContentEnd(cueNodeContent: string, index: number): boolean {
+	return cueNodeContent.length - 1 === index;
 }
 
 function createLine() {
