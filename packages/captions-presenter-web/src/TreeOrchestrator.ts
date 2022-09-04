@@ -59,28 +59,14 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			let [cueRootDomNode, firstDifferentEntityIndex] = getDOMSubtreeFromEntities(cue, cues[i - 1]);
 			const textNode = document.createTextNode(cue.content);
 
-			addNode(getNodeAtDepth(firstDifferentEntityIndex, cueRootDomNode), textNode);
+			const [cueRootDomNode, firstDifferentEntityIndex] = getDOMSubtreeFromEntities(
+				cue,
+				cues[i - 1],
+			);
 
-			let line = latestNode || createLine();
-
-			/**
-			 * We want to ensure that all the text nodes are in, at least,
-			 * a span element in the root line element.
-			 */
-
-			if (cueRootDomNode.lastChild.nodeType === Node.TEXT_NODE) {
-				if (!latestNode) {
-					addNode(line, document.createElement("span"));
-				}
-
-				/** A span is already available or has been created, duh! */
-				firstDifferentEntityIndex++;
-			}
-
-			addNode(getNodeAtDepth(firstDifferentEntityIndex, line), cueRootDomNode);
+			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex, textNode);
 
 			if (!latestNode) {
 				this.root.appendChild(line);
@@ -89,17 +75,9 @@ export default class TreeOrchestrator {
 			const nextHeight = getLineHeight(line);
 
 			if (nextHeight > latestHeight && latestHeight > 0) {
-				line = createLine();
+				const subTreeClone = entitiesToDOM(...cue.entities);
 
-				if (cue.entities.length) {
-					firstDifferentEntityIndex = cue.entities.length;
-					const entitiesTreeClone: Node = entitiesToDOM(...cue.entities);
-					addNode(getNodeAtDepth(firstDifferentEntityIndex, entitiesTreeClone), textNode);
-					line.appendChild(entitiesTreeClone);
-				} else {
-					const node = addNode(document.createElement("span"), textNode);
-					line.appendChild(node);
-				}
+				line = commitDOMTree(undefined, subTreeClone, cue.entities.length, textNode);
 
 				this.root.appendChild(line);
 			} else if (i > 0) {
@@ -220,8 +198,34 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function createLine() {
-	return document.createElement("p");
+function commitDOMTree(
+	rootNode: Node,
+	cueRootNode: Node,
+	diffDepth: number,
+	textNode: Text,
+): HTMLElement {
+	addNode(getNodeAtDepth(diffDepth, cueRootNode), textNode);
+
+	/**
+	 * We want to ensure that all the text nodes are in, at least,
+	 * a span element in the root line element.
+	 */
+
+	const shouldCreateSpanWrap = cueRootNode.lastChild.nodeType === Node.TEXT_NODE;
+	const root = rootNode || createLine(shouldCreateSpanWrap);
+
+	addNode(getNodeAtDepth(diffDepth, shouldCreateSpanWrap ? root.lastChild : root), cueRootNode);
+	return root as HTMLElement;
+}
+
+function createLine(addSpan: boolean = false) {
+	const node = document.createElement("p");
+
+	if (addSpan) {
+		node.appendChild(document.createElement("span"));
+	}
+
+	return node;
 }
 
 function getLineHeight(line: HTMLElement) {
@@ -244,14 +248,20 @@ function getNodeAtDepth(index: number, node: Node) {
 }
 
 function entitiesToDOM(...entities: Entities.GenericEntity[]): Node {
-	const node = new DocumentFragment();
+	const subRoot = new DocumentFragment();
+
+	if (!entities.length) {
+		return subRoot;
+	}
+
 	let latestNode: HTMLElement = null;
 
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
-		const node = document.createElement("span");
 
 		if (entity instanceof Entities.Tag && entity.styles) {
+			const node = document.createElement("span");
+
 			for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
 				console.log(key, value);
 				node.style.cssText += `${key}:${value};`;
@@ -265,8 +275,8 @@ function entitiesToDOM(...entities: Entities.GenericEntity[]): Node {
 		}
 	}
 
-	node.appendChild(latestNode);
-	return node;
+	subRoot.appendChild(latestNode);
+	return subRoot;
 }
 
 function addNode(node: Node, content: Node): Node {
