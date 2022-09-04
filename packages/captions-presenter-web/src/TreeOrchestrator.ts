@@ -244,24 +244,8 @@ function isCueContentEnd(cueNode: CueNode, index: number): boolean {
 	return cueNode.content.length - 1 === index;
 }
 
-function createLine(lineStyles?: any[]) {
-	const node = document.createElement("p");
-
-	return node;
-}
-
-function createNode(content: string | Text, styles?: any[]) {
-	const node = content instanceof Text ? content : document.createTextNode(content);
-
-	if (!styles?.length) {
-		return node;
-	}
-
-	const styleContainer = document.createElement("span");
-
-	/** @TODO apply styles to span one determined the format */
-
-	styleContainer.appendChild(node);
+function createLine() {
+	return document.createElement("p");
 }
 
 function getLineHeight(line: HTMLElement) {
