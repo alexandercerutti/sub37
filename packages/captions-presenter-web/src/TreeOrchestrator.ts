@@ -87,52 +87,7 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			let firstDifferentEntityIndex = 0;
-			let cueRootDomNode: Node;
-
-			if (!cue.entities.length) {
-				cueRootDomNode = new DocumentFragment();
-			} else {
-				const previousCue = cues[i - 1];
-
-				if (!previousCue?.entities.length) {
-					cueRootDomNode = entitiesToDOM(...cue.entities);
-					firstDifferentEntityIndex = cue.entities.length;
-				} else {
-					const longestCueEntitiesLength = Math.max(
-						cue.entities.length,
-						previousCue.entities.length,
-					);
-
-					for (
-						let i = firstDifferentEntityIndex;
-						i < longestCueEntitiesLength;
-						i++, firstDifferentEntityIndex++
-					) {
-						if (!cue.entities[i] || !previousCue.entities[i]) {
-							break;
-						}
-
-						const currentCueEntity = cue.entities[i];
-						const previousCueEntity = previousCue.entities[i];
-
-						if (
-							currentCueEntity.length !== previousCueEntity.length ||
-							currentCueEntity.offset !== previousCueEntity.offset
-						) {
-							break;
-						}
-					}
-
-					if (firstDifferentEntityIndex >= cue.entities.length) {
-						/** We already reached that depth */
-						cueRootDomNode = new DocumentFragment();
-					} else {
-						cueRootDomNode = entitiesToDOM(...cue.entities.slice(firstDifferentEntityIndex));
-					}
-				}
-			}
-
+			let [cueRootDomNode, firstDifferentEntityIndex] = getDOMSubtreeFromEntities(cue, cues[i - 1]);
 			const textNode = document.createTextNode(cue.content);
 
 			addNode(getNodeAtDepth(firstDifferentEntityIndex, cueRootDomNode), textNode);
@@ -296,4 +251,54 @@ function entitiesToDOM(...entities: Entities.GenericEntity[]): Node {
 function addNode(node: Node, content: Node): Node {
 	node.appendChild(content);
 	return node;
+}
+
+function getDOMSubtreeFromEntities(
+	currentCue: CueNode,
+	previousCue?: CueNode,
+): [root: Node, diffIndex: number] {
+	let firstDifferentEntityIndex = 0;
+
+	if (!currentCue.entities.length) {
+		return [new DocumentFragment(), 0];
+	}
+
+	if (!previousCue?.entities.length) {
+		return [entitiesToDOM(...currentCue.entities), currentCue.entities.length];
+	}
+
+	const longestCueEntitiesLength = Math.max(
+		currentCue.entities.length,
+		previousCue.entities.length,
+	);
+
+	for (
+		let i = firstDifferentEntityIndex;
+		i < longestCueEntitiesLength;
+		i++, firstDifferentEntityIndex++
+	) {
+		if (!currentCue.entities[i] || !previousCue.entities[i]) {
+			break;
+		}
+
+		const currentCueEntity = currentCue.entities[i];
+		const previousCueEntity = previousCue.entities[i];
+
+		if (
+			currentCueEntity.length !== previousCueEntity.length ||
+			currentCueEntity.offset !== previousCueEntity.offset
+		) {
+			break;
+		}
+	}
+
+	if (firstDifferentEntityIndex >= currentCue.entities.length) {
+		/** We already reached that depth */
+		return [new DocumentFragment(), firstDifferentEntityIndex];
+	}
+
+	return [
+		entitiesToDOM(...currentCue.entities.slice(firstDifferentEntityIndex)),
+		firstDifferentEntityIndex,
+	];
 }
