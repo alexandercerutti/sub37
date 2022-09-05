@@ -58,6 +58,10 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 
 	const attributes = new Map(
 		tagStart.token.annotations?.map((annotation) => {
+			if (tagStart.token.content === "lang") {
+				return ["lang", annotation];
+			}
+
 			const attribute = annotation.split("=");
 			return [attribute[0], attribute[1]?.replace(/["']/g, "")];
 		}),
