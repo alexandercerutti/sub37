@@ -248,12 +248,14 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
 
-		if (entity instanceof Entities.Tag && entity.styles) {
-			const node = document.createElement("span");
+		if (entity instanceof Entities.Tag) {
+			const node = getHTMLElementByEntity(entity);
 
-			for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-				console.log(key, value);
-				node.style.cssText += `${key}:${value};`;
+			if (entity.styles) {
+				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
+					console.log(key, value);
+					node.style.cssText += `${key}:${value};`;
+				}
 			}
 
 			node.appendChild(latestNode);
@@ -263,6 +265,39 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 
 	subRoot.appendChild(latestNode);
 	return subRoot;
+}
+
+function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
+	switch (entity.tagType) {
+		case Entities.TagType.BOLD: {
+			return document.createElement("b");
+		}
+		case Entities.TagType.ITALIC: {
+			return document.createElement("i");
+		}
+		case Entities.TagType.UNDERLINE: {
+			return document.createElement("u");
+		}
+		case Entities.TagType.RT: {
+			return document.createElement("rt");
+		}
+		case Entities.TagType.RUBY: {
+			return document.createElement("ruby");
+		}
+		case Entities.TagType.LANG:
+		case Entities.TagType.VOICE: {
+			const node = document.createElement("span");
+
+			for (let [key, value] of entity.attributes) {
+				node.setAttribute(key, value ? value : "");
+			}
+
+			return node;
+		}
+		default: {
+			return document.createElement("span");
+		}
+	}
 }
 
 function addNode(node: Node, content: Node): Node {
