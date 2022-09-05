@@ -39,7 +39,7 @@ div#scroll-area p {
   box-sizing: border-box;
 }
 
-#scroll-area p span {
+#scroll-area p > span {
   color: #FFF;
   background-color: rgba(0,0,0,0.7);
   padding: 0px 15px;
