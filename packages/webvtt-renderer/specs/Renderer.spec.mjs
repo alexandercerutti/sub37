@@ -166,22 +166,43 @@ WEBVTT
 				}),
 			);
 
-			expect(parsingResult[1]).toEqual(
-				new CueNode({
-					startTime: 18000,
-					endTime: 24000,
-					content: " can\n",
-					id: "cue-9-180",
-					attributes: {},
-					entities: [
-						new Entities.Tag({
-							offset: 1,
-							length: 3,
-							tagType: 16,
-							attributes: new Map(),
-						}),
-					],
-				}),
+			expect(parsingResult[1]).toMatchObject(
+				Object.create(
+					new CueNode({
+						startTime: 16000,
+						endTime: 24000,
+						content: " This\n",
+						id: "cue-9-180",
+						attributes: {},
+						entities: [
+							new Entities.Tag({
+								offset: 1,
+								length: 4,
+								tagType: 16,
+								attributes: new Map(),
+							}),
+						],
+					}),
+					{
+						startTime: {
+							value: 18000,
+						},
+						content: {
+							value: " can\n",
+						},
+						entities: {
+							value: [
+								new Entities.Tag({
+									offset: 1,
+									length: 3,
+									tagType: 16,
+									attributes: new Map(),
+									styles: {},
+								}),
+							],
+						},
+					},
+				),
 			);
 		});
 
@@ -255,7 +276,7 @@ WEBVTT
 		});
 
 		describe("styles", () => {
-			describe("should correctly convert styles to entities and apply them to cues", () => {
+			describe("should correctly apply styles to tag entities and apply them to cues", () => {
 				it("should add global style", () => {
 					const CUE_WITH_STYLE_WITHOUT_ID = `
 WEBVTT
@@ -282,8 +303,12 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								new Entities.Style({
-									styles: "background-color: purple;",
+								new Entities.Tag({
+									styles: {
+										"background-color": "purple",
+									},
+									attributes: new Map(),
+									tagType: Entities.TagType.SPAN,
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
@@ -330,8 +355,12 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								new Entities.Style({
-									styles: "background-color: purple;",
+								new Entities.Tag({
+									styles: {
+										"background-color": "purple",
+									},
+									tagType: Entities.TagType.SPAN,
+									attributes: new Map(),
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
@@ -372,12 +401,16 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								new Entities.Style({
-									styles: "background-color: red;",
+								new Entities.Tag({
+									tagType: Entities.TagType.SPAN,
 									offset: 0,
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
+									attributes: new Map(),
+									styles: {
+										"background-color": "red",
+									},
 								}),
 							],
 							id: "123",
@@ -421,14 +454,12 @@ Alberto, come to look at Marcello!
 							entities: [
 								new Entities.Tag({
 									tagType: 32,
+									styles: {
+										"background-color": "purple",
+									},
 									offset: 0,
 									length: 19,
 									attributes: new Map(),
-								}),
-								new Entities.Style({
-									styles: "background-color: purple;",
-									offset: 0,
-									length: 19,
 								}),
 							],
 							id: "cue-103-244",
@@ -471,21 +502,23 @@ Alberto, come to look at Marcello!
 							startTime: 5000,
 							endTime: 10000,
 							entities: [
-								new Entities.Style({
-									styles: "background-color: red;",
+								new Entities.Tag({
+									tagType: Entities.TagType.SPAN,
 									offset: 0,
 									length: content.length,
+									attributes: new Map(),
+									styles: {
+										"background-color": "red",
+									},
 								}),
 								new Entities.Tag({
 									tagType: 32,
 									offset: 0,
 									length: 19,
 									attributes: new Map(),
-								}),
-								new Entities.Style({
-									styles: "background-color: purple;",
-									offset: 0,
-									length: 19,
+									styles: {
+										"background-color": "purple",
+									},
 								}),
 							],
 							id: "test",
@@ -533,11 +566,9 @@ Alberto, come to look at Marcello!
 									offset: 0,
 									length: 87,
 									attributes: new Map(),
-								}),
-								new Entities.Style({
-									styles: "background-color: purple;",
-									offset: 0,
-									length: 87,
+									styles: {
+										"background-color": "purple",
+									},
 								}),
 							],
 							id: "test",
@@ -584,16 +615,9 @@ Alberto, come to look at Marcello!
 									offset: 0,
 									length: 87,
 									attributes: new Map([["voice", "Fred"]]),
-								}),
-								new Entities.Style({
-									styles: "background-color: red;",
-									offset: 0,
-									length: 87,
-								}),
-								new Entities.Style({
-									styles: "background-color: pink;",
-									offset: 0,
-									length: 87,
+									styles: {
+										"background-color": "pink",
+									},
 								}),
 							],
 							id: "test",

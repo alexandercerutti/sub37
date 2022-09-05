@@ -30,7 +30,7 @@ WEBVTT
 					endtime: "00:00:25.000",
 					text: "<v Fred&gt;>Would you like to get &lt; coffee?",
 				}),
-			).toEqual([
+			).toMatchObject([
 				{
 					id: "cue-105-207",
 					startTime: 5000,
@@ -193,7 +193,7 @@ WEBVTT
 			const parsingResult = parseCue(originalData);
 			expect(parsingResult.length).toBe(8);
 
-			expect(parsingResult[0].tags).toEqual([
+			expect(parsingResult[0].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -203,7 +203,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[1].tags).toEqual([
+			expect(parsingResult[1].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -213,7 +213,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[2].tags).toEqual([
+			expect(parsingResult[2].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -223,7 +223,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[3].tags).toEqual([
+			expect(parsingResult[3].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -233,7 +233,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[4].tags).toEqual([
+			expect(parsingResult[4].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -243,7 +243,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[5].tags).toEqual([
+			expect(parsingResult[5].tags).toMatchObject([
 				{
 					type: 1,
 					tagType: 1,
@@ -253,7 +253,7 @@ WEBVTT
 				},
 			]);
 
-			expect(parsingResult[7].tags).toEqual([]);
+			expect(parsingResult[7].tags).toMatchObject([]);
 		});
 	});
 
