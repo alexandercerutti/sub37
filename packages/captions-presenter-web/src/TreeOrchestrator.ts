@@ -147,7 +147,16 @@ function splitCueNodesByBreakpoints(
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < cueNode.content.length; i++) {
-		const entitiesAtCoordinates = entitiesTree.getCurrentNodes(i) ?? [];
+		/**
+		 * Reordering because IBT serves nodes from left to right,
+		 * but left nodes are the smallest. In case of a global entity,
+		 * it is inserted as the first node. Hence, it will will result
+		 * as the last entity here. If so, we render wrong elements.
+		 */
+
+		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes(i) ?? []).sort(
+			reorderEntitiesComparisonFn,
+		);
 
 		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
 			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
@@ -214,7 +223,18 @@ function commitDOMTree(rootNode: Node, cueRootNode: Node, diffDepth: number): HT
 	const shouldCreateSpanWrap = cueRootNode.lastChild.nodeType === Node.TEXT_NODE;
 	const root = rootNode || createLine(shouldCreateSpanWrap);
 
-	addNode(getNodeAtDepth(diffDepth, shouldCreateSpanWrap ? root.lastChild : root), cueRootNode);
+	addNode(
+		getNodeAtDepth(
+			diffDepth,
+			/**
+			 * Creation is valid only if rootNode is not available.
+			 * Otherwise we put textNodes in the wrong place.
+			 */
+			!rootNode && shouldCreateSpanWrap ? root.lastChild : root,
+		),
+		cueRootNode,
+	);
+
 	return root as HTMLElement;
 }
 
@@ -372,4 +392,8 @@ function getDOMSubtreeFromEntities(
 		entitiesToDOM(startingNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
 		firstDifferentEntityIndex,
 	];
+}
+
+function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
+	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
 }
