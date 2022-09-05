@@ -62,11 +62,12 @@ export default class TreeOrchestrator {
 			const textNode = document.createTextNode(cue.content);
 
 			const [cueRootDomNode, firstDifferentEntityIndex] = getDOMSubtreeFromEntities(
+				textNode,
 				cue,
 				cues[i - 1],
 			);
 
-			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex, textNode);
+			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!latestNode) {
 				this.root.appendChild(line);
@@ -75,9 +76,9 @@ export default class TreeOrchestrator {
 			const nextHeight = getLineHeight(line);
 
 			if (nextHeight > latestHeight && latestHeight > 0) {
-				const subTreeClone = entitiesToDOM(...cue.entities);
+				const subTreeClone = entitiesToDOM(textNode, ...cue.entities);
 
-				line = commitDOMTree(undefined, subTreeClone, cue.entities.length, textNode);
+				line = commitDOMTree(undefined, subTreeClone, cue.entities.length);
 
 				this.root.appendChild(line);
 			} else if (i > 0) {
@@ -198,14 +199,7 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(
-	rootNode: Node,
-	cueRootNode: Node,
-	diffDepth: number,
-	textNode: Text,
-): HTMLElement {
-	addNode(getNodeAtDepth(diffDepth, cueRootNode), textNode);
-
+function commitDOMTree(rootNode: Node, cueRootNode: Node, diffDepth: number): HTMLElement {
 	/**
 	 * We want to ensure that all the text nodes are in, at least,
 	 * a span element in the root line element.
@@ -247,14 +241,9 @@ function getNodeAtDepth(index: number, node: Node) {
 	return latestNodePointer;
 }
 
-function entitiesToDOM(...entities: Entities.GenericEntity[]): Node {
+function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
 	const subRoot = new DocumentFragment();
-
-	if (!entities.length) {
-		return subRoot;
-	}
-
-	let latestNode: HTMLElement = null;
+	let latestNode: Node = rootNode;
 
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
@@ -267,10 +256,7 @@ function entitiesToDOM(...entities: Entities.GenericEntity[]): Node {
 				node.style.cssText += `${key}:${value};`;
 			}
 
-			if (latestNode) {
-				node.appendChild(latestNode);
-			}
-
+			node.appendChild(latestNode);
 			latestNode = node;
 		}
 	}
@@ -285,17 +271,20 @@ function addNode(node: Node, content: Node): Node {
 }
 
 function getDOMSubtreeFromEntities(
+	startingNode: Node,
 	currentCue: CueNode,
 	previousCue?: CueNode,
 ): [root: Node, diffIndex: number] {
 	let firstDifferentEntityIndex = 0;
 
 	if (!currentCue.entities.length) {
-		return [new DocumentFragment(), 0];
+		const fragment = new DocumentFragment();
+		fragment.appendChild(startingNode);
+		return [fragment, 0];
 	}
 
 	if (!previousCue?.entities.length) {
-		return [entitiesToDOM(...currentCue.entities), currentCue.entities.length];
+		return [entitiesToDOM(startingNode, ...currentCue.entities), currentCue.entities.length];
 	}
 
 	const longestCueEntitiesLength = Math.max(
@@ -325,11 +314,13 @@ function getDOMSubtreeFromEntities(
 
 	if (firstDifferentEntityIndex >= currentCue.entities.length) {
 		/** We already reached that depth */
-		return [new DocumentFragment(), firstDifferentEntityIndex];
+		const fragment = new DocumentFragment();
+		fragment.appendChild(startingNode);
+		return [fragment, firstDifferentEntityIndex];
 	}
 
 	return [
-		entitiesToDOM(...currentCue.entities.slice(firstDifferentEntityIndex)),
+		entitiesToDOM(startingNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
 		firstDifferentEntityIndex,
 	];
 }
