@@ -7,6 +7,7 @@ import { GenericEntity, Type } from "./Generic.js";
  */
 
 export enum TagType {
+	SPAN /********/ = 0b00000000,
 	VOICE /*******/ = 0b00000001,
 	LANG /********/ = 0b00000010,
 	RUBY /********/ = 0b00000100,
