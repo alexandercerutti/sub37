@@ -222,7 +222,7 @@ function commitDOMTree(rootNode: Node, cueRootNode: Node, diffDepth: number): HT
 	 * a span element in the root line element.
 	 */
 
-	const shouldCreateSpanWrap = cueRootNode.lastChild.nodeType === Node.TEXT_NODE;
+	const shouldCreateSpanWrap = !(cueRootNode.lastChild instanceof HTMLSpanElement);
 	const root = rootNode || createLine(shouldCreateSpanWrap);
 
 	addNode(
