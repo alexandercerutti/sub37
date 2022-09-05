@@ -1,7 +1,7 @@
 import type { CueNode } from "@hsubs/server";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
-export class Renderer extends HTMLElement {
+export class Presenter extends HTMLElement {
 	private mainRegion = Object.assign(document.createElement("div"), {
 		id: "scroll-window",
 	});
@@ -75,4 +75,4 @@ div#scroll-area p {
 	}
 }
 
-customElements.define("captions-presenter", Renderer);
+customElements.define("captions-presenter", Presenter);
