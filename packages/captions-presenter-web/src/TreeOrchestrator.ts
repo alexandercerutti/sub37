@@ -76,14 +76,16 @@ export default class TreeOrchestrator {
 			const nextHeight = getLineHeight(line);
 
 			if (nextHeight > latestHeight && latestHeight > 0) {
-				const textParentNode = textNode.parentNode as HTMLElement;
+				let textParentNode = textNode.parentNode as HTMLElement;
 				const subTreeClone = entitiesToDOM(textNode, ...cue.entities);
 
 				line = commitDOMTree(undefined, subTreeClone, cue.entities.length);
 
-				if (!textParentNode.children.length) {
+				while (!textParentNode.childNodes.length) {
 					/** Cleaning up empty parents */
-					textParentNode.remove();
+					const node = textParentNode;
+					textParentNode = textParentNode.parentNode as HTMLElement;
+					node.remove();
 				}
 
 				this.root.appendChild(line);
