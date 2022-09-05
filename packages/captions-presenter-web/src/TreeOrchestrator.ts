@@ -274,36 +274,44 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 }
 
 function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
-	switch (entity.tagType) {
-		case Entities.TagType.BOLD: {
-			return document.createElement("b");
-		}
-		case Entities.TagType.ITALIC: {
-			return document.createElement("i");
-		}
-		case Entities.TagType.UNDERLINE: {
-			return document.createElement("u");
-		}
-		case Entities.TagType.RT: {
-			return document.createElement("rt");
-		}
-		case Entities.TagType.RUBY: {
-			return document.createElement("ruby");
-		}
-		case Entities.TagType.LANG:
-		case Entities.TagType.VOICE: {
-			const node = document.createElement("span");
-
-			for (let [key, value] of entity.attributes) {
-				node.setAttribute(key, value ? value : "");
+	const element: HTMLElement = (() => {
+		switch (entity.tagType) {
+			case Entities.TagType.BOLD: {
+				return document.createElement("b");
 			}
+			case Entities.TagType.ITALIC: {
+				return document.createElement("i");
+			}
+			case Entities.TagType.UNDERLINE: {
+				return document.createElement("u");
+			}
+			case Entities.TagType.RT: {
+				return document.createElement("rt");
+			}
+			case Entities.TagType.RUBY: {
+				return document.createElement("ruby");
+			}
+			case Entities.TagType.LANG:
+			case Entities.TagType.VOICE: {
+				const node = document.createElement("span");
 
-			return node;
+				for (let [key, value] of entity.attributes) {
+					node.setAttribute(key, value ? value : "");
+				}
+
+				return node;
+			}
+			default: {
+				return document.createElement("span");
+			}
 		}
-		default: {
-			return document.createElement("span");
-		}
+	})();
+
+	for (const className of entity.classes) {
+		element.classList.add(className);
 	}
+
+	return element;
 }
 
 function addNode(node: Node, content: Node): Node {

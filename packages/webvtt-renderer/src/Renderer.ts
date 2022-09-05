@@ -148,6 +148,7 @@ export default class Renderer extends HSBaseRenderer {
 									length,
 									tagType: Entities.TagType.SPAN,
 									attributes: new Map(),
+									classes: [],
 								}),
 							);
 
@@ -164,7 +165,7 @@ export default class Renderer extends HSBaseRenderer {
 									continue;
 								}
 
-								if (style.selector !== tag.tagType) {
+								if (style.tagName !== tag.tagType) {
 									continue;
 								}
 
@@ -183,6 +184,16 @@ export default class Renderer extends HSBaseRenderer {
 										if (styleAttributeValue && styleAttributeValue !== value) {
 											continue stylesLoop;
 										}
+									}
+								}
+
+								if (style.classes.length !== tag.classes.length) {
+									continue;
+								}
+
+								for (const className of tag.classes) {
+									if (!style.classes.includes(className)) {
+										continue stylesLoop;
 									}
 								}
 

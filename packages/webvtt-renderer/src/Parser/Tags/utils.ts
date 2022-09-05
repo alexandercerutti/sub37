@@ -74,5 +74,6 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 			? currentCue.text.length - tagStart.index
 			: currentCue.text.length,
 		attributes,
+		classes: tagStart.token.classes,
 	});
 }

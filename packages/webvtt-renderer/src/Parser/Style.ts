@@ -1,7 +1,7 @@
 import type { Entities } from "@hsubs/server";
 import { EntitiesTokenMap } from "./Tags/tokenEntities.js";
 
-const CSS_RULESET_REGEX = /::cue(?:\((.+)\))?\s*\{\s*([\s\S]+)\}/;
+const CSS_RULESET_REGEX = /::cue(?:\(([^.]*?)(?:\.(.+))*\))?\s*\{\s*([\s\S]+)\}/;
 
 /**
  * Matching of `lang[voice="Esme"]` both 'lang' or 'voice' + 'Esme'
@@ -20,7 +20,12 @@ export const enum StyleDomain {
 type SelectorTarget =
 	| { type: StyleDomain.GLOBAL }
 	| { type: StyleDomain.ID; selector: string }
-	| { type: StyleDomain.TAG; selector: Entities.TagType; attributes: Map<string, string> };
+	| {
+			type: StyleDomain.TAG;
+			tagName: Entities.TagType;
+			classes: string[];
+			attributes: Map<string, string>;
+	  };
 
 export type Style = SelectorTarget & {
 	styleString: string;
@@ -33,7 +38,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 		return undefined;
 	}
 
-	const [, selector, cssData] = styleBlockComponents;
+	const [, selector, classesChain, cssData] = styleBlockComponents;
 
 	const normalizedCssData = normalizeCssString(cssData.trim());
 
@@ -41,7 +46,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 		return undefined;
 	}
 
-	const parsedSelector = getParsedSelector(selector);
+	const parsedSelector = getParsedSelector(selector, classesChain);
 
 	if (!parsedSelector) {
 		return undefined;
@@ -53,7 +58,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 	};
 }
 
-function getParsedSelector(selector: string): SelectorTarget | undefined {
+function getParsedSelector(selector: string, classesChain: string): SelectorTarget | undefined {
 	if (!selector) {
 		return {
 			type: StyleDomain.GLOBAL,
@@ -69,20 +74,21 @@ function getParsedSelector(selector: string): SelectorTarget | undefined {
 
 	const selectorComponents = getSelectorComponents(selector);
 
-	if (!selectorComponents.selector) {
+	if (!selectorComponents.tagName) {
 		/** Invalid */
 		return undefined;
 	}
 
 	return {
 		type: StyleDomain.TAG,
+		classes: classesChain.split("."),
 		...selectorComponents,
 	};
 }
 
 function getSelectorComponents(
 	rawSelector: string,
-): Omit<SelectorTarget & { type: StyleDomain.TAG }, "type"> {
+): Omit<SelectorTarget & { type: StyleDomain.TAG }, "type" | "classes"> {
 	let selector: string = undefined;
 	const attributes: [string, string][] = [];
 
@@ -102,7 +108,7 @@ function getSelectorComponents(
 	}
 
 	return {
-		selector: EntitiesTokenMap[selector],
+		tagName: EntitiesTokenMap[selector],
 		attributes: new Map(attributes),
 	};
 }
