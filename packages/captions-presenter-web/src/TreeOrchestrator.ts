@@ -397,5 +397,26 @@ function getDOMSubtreeFromEntities(
 }
 
 function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
+	if (e1.offset < e2.offset) {
+		/** e1 starts before e2 */
+		return -1;
+	}
+
+	/**
+	 * The condition `e1.offset > e2.offset` is not possible.
+	 * Otherwise there would be an issue with parser. Tags open
+	 * and close like onions. Hence, here we have `e1.offset == e2.offset`
+	 */
+
+	if (e1.length < e2.length) {
+		/** e1 ends before e2, so it must be set last */
+		return 1;
+	}
+
+	if (e1.length > e2.length) {
+		/** e2 ends before e1, so it must be set first */
+		return -1;
+	}
+
+	return 0;
 }
