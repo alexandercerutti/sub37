@@ -222,18 +222,11 @@ function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number):
 	 * a span element in the root line element.
 	 */
 
-	const shouldCreateSpanWrap = !(cueSubTreeRoot.lastChild instanceof HTMLSpanElement);
-	const root = rootNode || createLine(shouldCreateSpanWrap);
+	const isSubrootContentSpanWrapped = cueSubTreeRoot.lastChild instanceof HTMLSpanElement;
+	const root = rootNode || createLine(!isSubrootContentSpanWrapped);
 
 	addNode(
-		getNodeAtDepth(
-			diffDepth,
-			/**
-			 * Creation is valid only if rootNode is not available.
-			 * Otherwise we put textNodes in the wrong place.
-			 */
-			!rootNode && shouldCreateSpanWrap ? root.lastChild : root,
-		),
+		getNodeAtDepth(diffDepth, isSubrootContentSpanWrapped ? root : root.lastChild),
 		cueSubTreeRoot,
 	);
 
