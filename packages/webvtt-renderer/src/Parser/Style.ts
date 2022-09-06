@@ -38,7 +38,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 		return undefined;
 	}
 
-	const [, selector, classesChain, cssData] = styleBlockComponents;
+	const [, selector, classesChain = "", cssData] = styleBlockComponents;
 
 	const normalizedCssData = normalizeCssString(cssData.trim());
 
