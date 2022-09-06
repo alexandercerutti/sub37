@@ -59,10 +59,7 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			const textNode = document.createTextNode(cue.content);
-
-			const [cueRootDomNode, firstDifferentEntityIndex] = getDOMSubtreeFromEntities(
-				textNode,
+			const [cueRootDomNode, firstDifferentEntityIndex, textNode] = getSubtreeFromCueNodes(
 				cue,
 				cues[i - 1],
 			);
@@ -334,22 +331,23 @@ function addNode(node: Node, content: Node): Node {
 	return node;
 }
 
-function getDOMSubtreeFromEntities(
-	startingNode: Node,
+function getSubtreeFromCueNodes(
 	currentCue: CueNode,
 	previousCue?: CueNode,
-): [root: Node, diffIndex: number] {
-	let firstDifferentEntityIndex = 0;
+): [root: Node, diffIndex: number, textNode: Text] {
+	const textNode = document.createTextNode(currentCue.content);
 
 	if (!currentCue.entities.length) {
 		const fragment = new DocumentFragment();
-		fragment.appendChild(startingNode);
-		return [fragment, 0];
+		fragment.appendChild(textNode);
+		return [fragment, 0, textNode];
 	}
 
 	if (!previousCue?.entities.length) {
-		return [entitiesToDOM(startingNode, ...currentCue.entities), currentCue.entities.length];
+		return [entitiesToDOM(textNode, ...currentCue.entities), currentCue.entities.length, textNode];
 	}
+
+	let firstDifferentEntityIndex = 0;
 
 	const longestCueEntitiesLength = Math.max(
 		currentCue.entities.length,
@@ -379,13 +377,14 @@ function getDOMSubtreeFromEntities(
 	if (firstDifferentEntityIndex >= currentCue.entities.length) {
 		/** We already reached that depth */
 		const fragment = new DocumentFragment();
-		fragment.appendChild(startingNode);
-		return [fragment, firstDifferentEntityIndex];
+		fragment.appendChild(textNode);
+		return [fragment, firstDifferentEntityIndex, textNode];
 	}
 
 	return [
-		entitiesToDOM(startingNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
+		entitiesToDOM(textNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
 		firstDifferentEntityIndex,
+		textNode,
 	];
 }
 
