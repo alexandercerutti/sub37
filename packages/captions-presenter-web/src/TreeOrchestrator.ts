@@ -271,7 +271,6 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 
 			if (entity.styles) {
 				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					console.log(key, value);
 					node.style.cssText += `${key}:${value};`;
 				}
 			}
