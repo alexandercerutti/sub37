@@ -216,13 +216,13 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(rootNode: Node, cueRootNode: Node, diffDepth: number): HTMLElement {
+function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
 	/**
 	 * We want to ensure that all the text nodes are in, at least,
 	 * a span element in the root line element.
 	 */
 
-	const shouldCreateSpanWrap = !(cueRootNode.lastChild instanceof HTMLSpanElement);
+	const shouldCreateSpanWrap = !(cueSubTreeRoot.lastChild instanceof HTMLSpanElement);
 	const root = rootNode || createLine(shouldCreateSpanWrap);
 
 	addNode(
@@ -234,7 +234,7 @@ function commitDOMTree(rootNode: Node, cueRootNode: Node, diffDepth: number): HT
 			 */
 			!rootNode && shouldCreateSpanWrap ? root.lastChild : root,
 		),
-		cueRootNode,
+		cueSubTreeRoot,
 	);
 
 	return root as HTMLElement;
