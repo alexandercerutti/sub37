@@ -35,21 +35,21 @@ div#scroll-area {
 }
 
 div#scroll-area p {
-  margin: 0;
-  box-sizing: border-box;
+	margin: 0;
+	box-sizing: border-box;
 }
 
-#scroll-area p > span {
-  color: #FFF;
-  background-color: rgba(0,0,0,0.7);
-  padding: 0px 15px;
-  line-height: 1.5em;
-  word-wrap: break-word;
-  /**
-   * Change this to display:block for pop-on captions
-   * and whole background
-   */
-  display: inline-block;
+#scroll-area > p > span {
+	color: #FFF;
+	background-color: rgba(0,0,0,0.7);
+	padding: 0px 15px;
+	line-height: 1.5em;
+	word-wrap: break-word;
+	/**
+	 * Change this to display:block for pop-on captions
+	 * and whole background
+	 */
+	display: inline-block;
 }
 `;
 
