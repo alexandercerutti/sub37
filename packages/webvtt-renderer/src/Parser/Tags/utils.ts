@@ -62,6 +62,10 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 				return ["lang", annotation];
 			}
 
+			if (tagStart.token.content === "v") {
+				return ["voice", annotation];
+			}
+
 			const attribute = annotation.split("=");
 			return [attribute[0], attribute[1]?.replace(/["']/g, "")];
 		}),
