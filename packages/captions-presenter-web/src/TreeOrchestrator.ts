@@ -214,28 +214,14 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 }
 
 function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
-	/**
-	 * We want to ensure that all the text nodes are in, at least,
-	 * a span element in the root line element.
-	 */
-
-	const isSubrootContentSpanWrapped = cueSubTreeRoot.lastChild instanceof HTMLSpanElement;
-	const root = rootNode || createLine(!isSubrootContentSpanWrapped);
-
-	addNode(
-		getNodeAtDepth(diffDepth, isSubrootContentSpanWrapped ? root : root.lastChild),
-		cueSubTreeRoot,
-	);
-
+	const root = rootNode || createLine();
+	addNode(getNodeAtDepth(diffDepth, root.lastChild), cueSubTreeRoot);
 	return root as HTMLElement;
 }
 
-function createLine(addSpan: boolean = false) {
+function createLine() {
 	const node = document.createElement("p");
-
-	if (addSpan) {
-		node.appendChild(document.createElement("span"));
-	}
+	node.appendChild(document.createElement("span"));
 
 	return node;
 }
