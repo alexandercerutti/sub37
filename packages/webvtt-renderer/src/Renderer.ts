@@ -165,11 +165,11 @@ export default class Renderer extends HSBaseRenderer {
 									continue;
 								}
 
-								if (style.tagName !== tag.tagType) {
+								if (style.tagName && style.tagName !== tag.tagType) {
 									continue;
 								}
 
-								if (style.attributes.size !== tag.attributes.size) {
+								if (style.attributes.size > tag.attributes.size) {
 									continue;
 								}
 

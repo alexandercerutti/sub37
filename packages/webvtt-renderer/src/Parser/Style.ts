@@ -59,7 +59,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 }
 
 function getParsedSelector(selector: string, classesChain: string): SelectorTarget | undefined {
-	if (!selector) {
+	if (!selector && !classesChain.length) {
 		return {
 			type: StyleDomain.GLOBAL,
 		};
@@ -74,7 +74,7 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 
 	const selectorComponents = getSelectorComponents(selector);
 
-	if (!selectorComponents.tagName) {
+	if (!selectorComponents.tagName && !classesChain.length) {
 		/** Invalid */
 		return undefined;
 	}
