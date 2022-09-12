@@ -183,10 +183,6 @@ function shouldCueNodeBreak(
 	entitiesAtCoordinates: Entities.GenericEntity[],
 	currentIndex: number,
 ): boolean {
-	if (currentIndex === 0) {
-		return false;
-	}
-
 	const char = cueNodeContent[currentIndex];
 
 	return (
