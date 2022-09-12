@@ -2,8 +2,9 @@ import type { CueNode } from "@hsubs/server";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Presenter extends HTMLElement {
-	private mainRegion = Object.assign(document.createElement("div"), {
-		id: "scroll-window",
+	private container = Object.assign(document.createElement("div"), {
+		id: "caption-window",
+		className: "hidden",
 	});
 	private renderArea = new TreeOrchestrator();
 
@@ -22,7 +23,11 @@ export class Presenter extends HTMLElement {
 	justify-content: center;
 }
 
-div#scroll-window {
+div#caption-window.hidden {
+	display: none;
+}
+
+div#caption-window.active {
 	margin-bottom: 10px;
 	width: 300px;
 	overflow-y: hidden;
@@ -53,14 +58,17 @@ div#scroll-area p {
 }
 `;
 
-		this.mainRegion.appendChild(this.renderArea.root);
+		this.container.appendChild(this.renderArea.root);
 
 		shadowRoot.appendChild(style);
-		shadowRoot.appendChild(this.mainRegion);
+		shadowRoot.appendChild(this.container);
 	}
 
 	public setCue(cueData?: CueNode[]): void {
 		if (!cueData?.length) {
+			this.container.classList.remove("active");
+			this.container.classList.add("hidden");
+
 			this.renderArea.wipeTree();
 			this.renderArea.wipeEffects();
 			return;
@@ -72,6 +80,9 @@ div#scroll-area p {
 		 */
 
 		this.renderArea.renderCuesToHTML(cueData);
+
+		this.container.classList.add("active");
+		this.container.classList.remove("hidden");
 	}
 }
 
