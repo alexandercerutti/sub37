@@ -326,6 +326,15 @@ export class Tokenizer {
 						return Token.TimestampTag(result, { start: this.startPoint, end: this.cursor });
 					}
 
+					if (Tokenizer.isWhitespace(char)) {
+						/**
+						 * Timestamp is incomplete and not a timestamp tag.
+						 * TIMESTAMP_TAG can be accessed only from TAG and, before,
+						 * from DATA.
+						 */
+						state = TokenizerState.DATA;
+					}
+
 					result += char;
 					break;
 				}
