@@ -147,8 +147,7 @@ export class Tokenizer {
 		while (this.cursor <= this.rawContent.length) {
 			const char = this.rawContent[this.cursor];
 
-			/** Screw you, Typescript */
-			switch (state as TokenizerState) {
+			switch (state) {
 				case TokenizerState.DATA: {
 					if (char === "&") {
 						state = TokenizerState.HTML_CHARACTER_REFERENCE;
