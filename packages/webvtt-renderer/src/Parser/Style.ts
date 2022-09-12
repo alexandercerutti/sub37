@@ -81,7 +81,7 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 
 	return {
 		type: StyleDomain.TAG,
-		classes: classesChain.split("."),
+		classes: (classesChain.length && classesChain.split(".")) || [],
 		...selectorComponents,
 	};
 }
