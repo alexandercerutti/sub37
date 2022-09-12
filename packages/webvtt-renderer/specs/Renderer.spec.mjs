@@ -102,8 +102,8 @@ Alberto, come to look at Marcello!
 							offset: 0,
 							length: 31,
 							tagType: 1,
-							attributes: new Map([["Fred>", undefined]]),
-							/** @TODO add classes */
+							attributes: new Map([["voice", "Fred>"]]),
+							classes: [],
 						}),
 					],
 				}),
@@ -124,8 +124,8 @@ Alberto, come to look at Marcello!
 							offset: 0,
 							length: 19,
 							tagType: 2,
-							attributes: new Map([["en-US", undefined]]),
-							/** @TODO add classes */
+							attributes: new Map([["lang", "en-US"]]),
+							classes: ["mimmo"],
 						}),
 					],
 				}),
@@ -161,6 +161,7 @@ WEBVTT
 							length: 4,
 							tagType: 16,
 							attributes: new Map(),
+							classes: ["mimmo"],
 						}),
 					],
 				}),
@@ -180,6 +181,7 @@ WEBVTT
 								length: 4,
 								tagType: 16,
 								attributes: new Map(),
+								classes: [],
 							}),
 						],
 					}),
@@ -197,7 +199,7 @@ WEBVTT
 									length: 3,
 									tagType: 16,
 									attributes: new Map(),
-									styles: {},
+									classes: [],
 								}),
 							],
 						},
@@ -231,18 +233,21 @@ WEBVTT
 							offset: 2,
 							length: 3,
 							attributes: new Map(),
+							classes: [],
 						}),
 						new Entities.Tag({
 							tagType: 8,
 							offset: 8,
 							length: 2,
 							attributes: new Map(),
+							classes: [],
 						}),
 						new Entities.Tag({
 							tagType: 4,
 							offset: 0,
 							length: 10,
 							attributes: new Map(),
+							classes: [],
 						}),
 					],
 				}),
@@ -313,6 +318,7 @@ Alberto, come to look at Marcello!
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
+									classes: [],
 								}),
 							],
 							id: "cue-53-187",
@@ -365,6 +371,7 @@ Alberto, come to look at Marcello!
 									length:
 										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
 										"Alberto, come to look at Marcello!\n".length,
+									classes: [],
 								}),
 							],
 							id: "test",
@@ -411,6 +418,7 @@ Alberto, come to look at Marcello!
 									styles: {
 										"background-color": "red",
 									},
+									classes: [],
 								}),
 							],
 							id: "123",
@@ -460,6 +468,7 @@ Alberto, come to look at Marcello!
 									offset: 0,
 									length: 19,
 									attributes: new Map(),
+									classes: [],
 								}),
 							],
 							id: "cue-103-244",
@@ -510,6 +519,7 @@ Alberto, come to look at Marcello!
 									styles: {
 										"background-color": "red",
 									},
+									classes: [],
 								}),
 								new Entities.Tag({
 									tagType: 32,
@@ -519,6 +529,7 @@ Alberto, come to look at Marcello!
 									styles: {
 										"background-color": "purple",
 									},
+									classes: [],
 								}),
 							],
 							id: "test",
@@ -569,6 +580,7 @@ Alberto, come to look at Marcello!
 									styles: {
 										"background-color": "purple",
 									},
+									classes: [],
 								}),
 							],
 							id: "test",
@@ -598,7 +610,7 @@ STYLE
 
 test
 00:00:05.000 --> 00:00:10.000 region:fred
-<v voice="Fred">Mamma mia, Marcello, that's not how you hold a gun.
+<v Fred>Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
@@ -618,6 +630,7 @@ Alberto, come to look at Marcello!
 									styles: {
 										"background-color": "pink",
 									},
+									classes: [],
 								}),
 							],
 							id: "test",

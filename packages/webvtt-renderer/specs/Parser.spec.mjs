@@ -41,7 +41,7 @@ WEBVTT
 							type: 1,
 							offset: 0,
 							length: 31,
-							attributes: new Map([["Fred>", undefined]]),
+							attributes: new Map([["voice", "Fred>"]]),
 							tagType: 1,
 						},
 					],
@@ -199,7 +199,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 27,
-					attributes: new Map([["Announcer", undefined]]),
+					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
@@ -209,7 +209,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 39,
-					attributes: new Map([["Announcer", undefined]]),
+					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
@@ -219,7 +219,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 40,
-					attributes: new Map([["Announcer", undefined]]),
+					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
@@ -229,7 +229,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 36,
-					attributes: new Map([["Announcer2", undefined]]),
+					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
 
@@ -239,7 +239,7 @@ WEBVTT
 					tagType: 1,
 					offset: 0,
 					length: 28,
-					attributes: new Map([["Announcer2", undefined]]),
+					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
 
@@ -249,7 +249,7 @@ WEBVTT
 					tagType: 1,
 					offset: 1,
 					length: 26,
-					attributes: new Map([["Announcer3", undefined]]),
+					attributes: new Map([["voice", "Announcer3"]]),
 				},
 			]);
 
@@ -425,10 +425,11 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_NO_ATTRIBUTES)).toEqual({
 				type: 2,
-				selector: 32,
+				tagName: 32,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: new Map(),
+				classes: [],
 			});
 		});
 
@@ -442,10 +443,11 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ONE_ATTRIBUTE)).toEqual({
 				type: 2,
-				selector: 1,
+				tagName: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: new Map([["voice", "Esme"]]),
+				classes: [],
 			});
 
 			const STYLE_WITH_SELECTOR_ATTRIBUTES = `
@@ -457,13 +459,14 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ATTRIBUTES)).toEqual({
 				type: 2,
-				selector: 1,
+				tagName: 1,
 				styleString:
 					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
 				attributes: new Map([
 					["voice", "Esme"],
 					["lang", "it"],
 				]),
+				classes: [],
 			});
 		});
 
