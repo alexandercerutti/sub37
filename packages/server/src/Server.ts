@@ -3,6 +3,12 @@ import type { CueNode } from "./CueNode.js";
 import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
+import {
+	RenderersMissingError,
+	NoRenderersFoundError,
+	UnsupportedContentError,
+	OutOfRangeFrequencyError,
+} from "./Errors/index.js";
 
 const intervalSymbol /***/ = Symbol("hs.s.interval");
 const renderersSymbol /**/ = Symbol("hs.s.renderers");
@@ -27,7 +33,7 @@ export class HSServer {
 
 	constructor(...renderers: HSBaseRendererConstructor[]) {
 		if (!renderers.length) {
-			throw new Error("HSServer is expected to be initialized with renderers. Received none.");
+			throw new RenderersMissingError();
 		}
 
 		this[renderersSymbol] = renderers.filter((Renderer) => {
@@ -43,9 +49,7 @@ export class HSServer {
 		});
 
 		if (!this[renderersSymbol].length) {
-			throw new Error(
-				"HSServer didn't find any suitable Renderer.\nPlease ensure yourself for them to extend HSBaseRenderer and to have static properties 'supportedType' and 'rendererName'.",
-			);
+			throw new NoRenderersFoundError();
 		}
 	}
 
@@ -75,9 +79,7 @@ export class HSServer {
 			}
 		}
 
-		console.warn(
-			`No renderer supports this content type (${mimeType}). Engine won't render anything.`,
-		);
+		throw new UnsupportedContentError(mimeType);
 	}
 
 	/**
@@ -102,10 +104,8 @@ export class HSServer {
 		assertSessionInitialized.call(this);
 		assertIntervalNotRunning.call(this);
 
-		if (!frequencyMs || typeof frequencyMs !== "number") {
-			throw new Error(
-				"Cannot start subtitles server: a frequency is required to be either be set to a value > 0 or not be set (fallback to 250ms)",
-			);
+		if (!frequencyMs || typeof frequencyMs !== "number" || frequencyMs < 1) {
+			throw new OutOfRangeFrequencyError(frequencyMs);
 		}
 
 		if (options?.karaoke) {

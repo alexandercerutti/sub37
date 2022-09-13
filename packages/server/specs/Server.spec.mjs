@@ -14,6 +14,8 @@ class MockedRendererNoSupportedType extends HSBaseRenderer {}
 class MockedRendererNoParse extends HSBaseRenderer {}
 
 class MockedRenderer extends HSBaseRenderer {
+	static rendererName = "Mocked Renderer";
+
 	static get supportedType() {
 		return "text/vtt";
 	}
@@ -54,22 +56,19 @@ describe("HSServer", () => {
 	});
 
 	describe("createSession", () => {
-		it("should warn of missing supported renderers", () => {
-			const warn = jest.spyOn(console, "warn");
-
-			const server = new HSServer(MockedRenderer);
-			server.createSession(
-				[
-					{
-						content: "any",
-						lang: "ita",
-					},
-				],
-				"application/x-subrip",
-			);
-
-			expect(warn).toHaveBeenCalledTimes(1);
-			warn.mockReset();
+		it("should throw on missing supported renderers", () => {
+			expect(() => {
+				const server = new HSServer(MockedRenderer);
+				server.createSession(
+					[
+						{
+							content: "any",
+							lang: "ita",
+						},
+					],
+					"application/x-subrip",
+				);
+			}).toThrow();
 		});
 	});
 
