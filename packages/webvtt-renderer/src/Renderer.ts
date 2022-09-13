@@ -22,6 +22,8 @@ enum BlockType {
 }
 
 export default class Renderer extends HSBaseRenderer {
+	static override rendererName: string = "WebVTT Renderer";
+
 	static override get supportedType() {
 		return "text/vtt";
 	}

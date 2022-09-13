@@ -1,6 +1,7 @@
 import type { CueNode } from "../CueNode.js";
 
 export interface HSBaseRendererConstructor {
+	rendererName: string;
 	supportedType: string;
 	new (): HSBaseRenderer;
 }
@@ -13,6 +14,13 @@ export interface HSBaseRenderer {
 export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	implements HSBaseRenderer
 {
+	/**
+	 * Static property for logging purposes.
+	 * Must be overridden by Renderers
+	 */
+
+	static rendererName: string = "default";
+
 	/**
 	 * Static property that instructs for which type of subtitles
 	 * this renderer should be used. Must be overridden by Renderers

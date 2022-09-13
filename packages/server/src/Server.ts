@@ -32,7 +32,11 @@ export class HSServer {
 
 		this[renderersSymbol] = renderers.filter((Renderer) => {
 			try {
-				return Object.getPrototypeOf(Renderer) === HSBaseRenderer && Renderer.supportedType;
+				return (
+					Object.getPrototypeOf(Renderer) === HSBaseRenderer &&
+					Renderer.supportedType &&
+					Renderer.rendererName !== "default"
+				);
 			} catch (err) {
 				return false;
 			}
@@ -40,7 +44,7 @@ export class HSServer {
 
 		if (!this[renderersSymbol].length) {
 			throw new Error(
-				"HSServer didn't find any suitable Renderer.\nPlease ensure yourself for them to extend HSBaseRenderer and to have a static property 'supportedType'.",
+				"HSServer didn't find any suitable Renderer.\nPlease ensure yourself for them to extend HSBaseRenderer and to have static properties 'supportedType' and 'rendererName'.",
 			);
 		}
 	}
