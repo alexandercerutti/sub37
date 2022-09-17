@@ -37,6 +37,8 @@ export class HSSession {
 								failedChunk: cue,
 								isCritical: false,
 							});
+
+							continue;
 						}
 
 						this.timelines[lang].addNode(cue);
