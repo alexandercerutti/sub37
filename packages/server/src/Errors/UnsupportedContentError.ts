@@ -1,5 +1,6 @@
 /**
- * When Server will be instantiated without renderers, this will be the resulting error
+ * When session is provided with a content not supported
+ * by the provided renderers, this will error will be emitted
  */
 
 export class UnsupportedContentError extends Error {
