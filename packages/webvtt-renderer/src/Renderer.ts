@@ -1,5 +1,6 @@
 import type { Region } from "@hsubs/server";
 import { HSBaseRenderer, CueNode, Entities } from "@hsubs/server";
+import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";
 
 const LF_REGEX = /\n/;
@@ -28,9 +29,15 @@ export default class Renderer extends HSBaseRenderer {
 		return "text/vtt";
 	}
 
-	override parse(rawContent: string): CueNode[] {
+	override parse(rawContent: string): HSBaseRenderer.ParseResult {
 		if (!rawContent) {
-			return [];
+			return HSBaseRenderer.ParseResult(undefined, [
+				{
+					error: new MissingContentError(),
+					failedChunk: "",
+					isCritical: true,
+				},
+			]);
 		}
 
 		const cues: CueNode[] = [];
@@ -42,6 +49,8 @@ export default class Renderer extends HSBaseRenderer {
 
 		const regions: { [id: string]: Region } = Object.create(null);
 		const styles: Parser.Style[] = [];
+
+		const failures: HSBaseRenderer.ParseError[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -216,7 +225,7 @@ export default class Renderer extends HSBaseRenderer {
 			}
 		} while (block.cursor <= content.length);
 
-		return cues;
+		return HSBaseRenderer.ParseResult(cues, failures);
 	}
 }
 

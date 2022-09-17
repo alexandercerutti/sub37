@@ -1,7 +1,8 @@
 import type { RawTrack } from "./model";
 import { CueNode } from "./CueNode.js";
 import { IntervalBinaryTree } from "./IntervalBinaryTree.js";
-import { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
+import { HSBaseRendererConstructor, ParseResult } from "./BaseRenderer/index.js";
+import { UnexpectedParsingOutputFormatError } from "./Errors/index.js";
 
 const activeTrackSymbol = Symbol("session.active");
 
@@ -10,14 +11,21 @@ export class HSSession {
 	private [activeTrackSymbol]: string = null;
 
 	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
-		for (let { lang, content } of rawContents) {
-			try {
-				const cues = renderer.parse(content);
+		const { rendererName } = Object.getPrototypeOf(renderer)
+			.constructor as HSBaseRendererConstructor;
 
-				if (cues.length) {
+		for (const { lang, content } of rawContents) {
+			try {
+				const parseResult = renderer.parse(content);
+
+				if (!(parseResult instanceof ParseResult)) {
+					throw new UnexpectedParsingOutputFormatError(rendererName, lang, parseResult);
+				}
+
+				if (parseResult.data.length) {
 					this.timelines[lang] = new IntervalBinaryTree();
 
-					for (const cue of cues) {
+					for (const cue of parseResult.data) {
 						if (!(cue instanceof CueNode)) {
 							continue;
 						}
