@@ -1,10 +1,11 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { HSBaseRenderer } from "../lib/BaseRenderer";
+import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
 import { HSServer } from "../lib/Server";
 import { CueNode } from "../lib/CueNode";
 
 class MockedRendererNoExtend {
+	static rendererName = "NoExtendRenderer";
 	static get supportedType() {
 		return "text/vtt";
 	}
@@ -14,15 +15,18 @@ class MockedRendererNoSupportedType extends HSBaseRenderer {}
 class MockedRendererNoParse extends HSBaseRenderer {}
 
 class MockedRenderer extends HSBaseRenderer {
-	static rendererName = "Mocked Renderer";
+	static rendererName = "MockedRenderer";
 
 	static get supportedType() {
 		return "text/vtt";
 	}
 
-	/** @returns {CueNode[]} */
-	parse() {
-		return [];
+	/**
+	 * @param {CueNode[]} content
+	 * @returns {ParseResult}
+	 */
+	parse(content) {
+		return HSBaseRenderer.ParseResult([], []);
 	}
 }
 
@@ -89,32 +93,35 @@ describe("HSServer", () => {
 				// Mocked position factory steps by 1,
 				// but video tags step 4 times per second
 
-				return [
-					new CueNode({
-						content: "This is a sample cue",
-						startTime: 0,
-						endTime: 1,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue second",
-						startTime: 0.4,
-						endTime: 1,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue third",
-						startTime: 1,
-						endTime: 2.5,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue fourth",
-						startTime: 2.5,
-						endTime: 4,
-						id: "any",
-					}),
-				];
+				return HSBaseRenderer.ParseResult(
+					[
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					[],
+				);
 			};
 		});
 
@@ -177,32 +184,35 @@ describe("HSServer", () => {
 				// Mocked position factory steps by 1,
 				// but video tags step 4 times per second
 
-				return [
-					new CueNode({
-						content: "This is a sample cue",
-						startTime: 0,
-						endTime: 1,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue second",
-						startTime: 0.4,
-						endTime: 1,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue third",
-						startTime: 1,
-						endTime: 2.5,
-						id: "any",
-					}),
-					new CueNode({
-						content: "This is a sample cue fourth",
-						startTime: 2.5,
-						endTime: 4,
-						id: "any",
-					}),
-				];
+				return HSBaseRenderer.ParseResult(
+					[
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					[],
+				);
 			};
 
 			// ******************* //
@@ -246,8 +256,13 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
+			/**
+			 * @param {CueNode[]} content
+			 * @returns
+			 */
+
 			MockedRenderer.prototype.parse = function (content) {
-				return content;
+				return HSBaseRenderer.ParseResult(content, []);
 			};
 
 			// ******************* //
@@ -418,8 +433,13 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
+			/**
+			 * @param {CueNode[]} content
+			 * @returns
+			 */
+
 			MockedRenderer.prototype.parse = function (content) {
-				return content;
+				return HSBaseRenderer.ParseResult(content, []);
 			};
 
 			// ******************* //
@@ -495,8 +515,13 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
+			/**
+			 * @param {CueNode[]} content
+			 * @returns
+			 */
+
 			MockedRenderer.prototype.parse = function (content) {
-				return content;
+				return HSBaseRenderer.ParseResult(content, []);
 			};
 
 			// ******************* //
@@ -564,8 +589,13 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
+			/**
+			 * @param {CueNode[]} content
+			 * @returns
+			 */
+
 			MockedRenderer.prototype.parse = function (content) {
-				return content;
+				return HSBaseRenderer.ParseResult(content, []);
 			};
 
 			// ******************* //

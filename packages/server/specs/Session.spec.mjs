@@ -2,17 +2,23 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSSession } from "../lib/Session.js";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
-import { HSBaseRenderer } from "../lib/BaseRenderer";
+import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
 import { CueNode } from "../lib/CueNode.js";
+import {
+	UnexpectedParsingOutputFormatError,
+	UncaughtParsingExceptionError,
+} from "../lib/Errors/index.js";
 
 class MockedRenderer extends HSBaseRenderer {
+	static rendererName = "Mocked Renderer";
+
 	/**
 	 *
 	 * @param {string} content
-	 * @returns {Array<CueNode>}
+	 * @returns {ParseResult}
 	 */
 	parse(content) {
-		return [];
+		return HSBaseRenderer.ParseResult([], []);
 	}
 }
 
@@ -47,20 +53,91 @@ describe("HSSession", () => {
 		MockedRenderer.prototype.parse = originalParseMethod;
 	});
 
+	it("Should throw if Renderer doesn't return expected data structure", () => {
+		// ********************* //
+		// *** MOCKING START *** //
+		// ********************* //
+
+		/**
+		 * @param {CueNode[]} content
+		 * @returns
+		 */
+
+		// @ts-expect-error
+		MockedRenderer.prototype.parse = function (content) {
+			return content;
+		};
+
+		// ******************* //
+		// *** MOCKING END *** //
+		// ******************* //
+
+		expect(() => {
+			new HSSession(
+				[
+					{
+						content: "This content format is not actually important. Renderer is mocked",
+						lang: "eng",
+					},
+				],
+				new MockedRenderer(),
+			);
+		}).toThrow(UnexpectedParsingOutputFormatError);
+
+		MockedRenderer.prototype.parse = originalParseMethod;
+	});
+
+	it("Should throw if Renderer crashes", () => {
+		// ********************* //
+		// *** MOCKING START *** //
+		// ********************* //
+
+		/**
+		 * @param {CueNode[]} content
+		 * @returns
+		 */
+
+		// @ts-expect-error
+		MockedRenderer.prototype.parse = function (content) {
+			throw new Error("Mocked Error");
+		};
+
+		// ******************* //
+		// *** MOCKING END *** //
+		// ******************* //
+
+		expect(() => {
+			new HSSession(
+				[
+					{
+						content: "This content format is not actually important. Renderer is mocked",
+						lang: "eng",
+					},
+				],
+				new MockedRenderer(),
+			);
+		}).toThrowError(UncaughtParsingExceptionError);
+
+		MockedRenderer.prototype.parse = originalParseMethod;
+	});
+
 	it("should create a timeline for each passed track that has content and didn't throw", () => {
 		// *************** //
 		// *** MOCKING *** //
 		// *************** //
 
 		MockedRenderer.prototype.parse = function () {
-			return [
-				new CueNode({
-					id: "any",
-					startTime: 0,
-					endTime: 2000,
-					content: "Whatever is your content, it will be displayed here",
-				}),
-			];
+			return HSBaseRenderer.ParseResult(
+				[
+					new CueNode({
+						id: "any",
+						startTime: 0,
+						endTime: 2000,
+						content: "Whatever is your content, it will be displayed here",
+					}),
+				],
+				[],
+			);
 		};
 
 		// ******************* //

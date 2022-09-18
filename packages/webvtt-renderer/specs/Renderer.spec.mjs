@@ -1,7 +1,9 @@
 // @ts-check
-import { Entities, CueNode } from "@hsubs/server";
+import { Entities, CueNode, HSBaseRenderer } from "@hsubs/server";
+import { ParseResult } from "@hsubs/server/lib/BaseRenderer/index.js";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTRenderer from "../lib/Renderer.js";
+import { MissingContentError } from "../lib/MissingContentError.js";
 
 describe("WebVTTRenderer", () => {
 	/** @type {WebVTTRenderer} */
@@ -54,12 +56,23 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 `;
 
-		it("should return an empty array if rawContent is falsy", () => {
+		it("should return an empty ParseResult if rawContent is falsy", () => {
+			const emptyParseResult = HSBaseRenderer.ParseResult(
+				[],
+				[
+					{
+						error: new MissingContentError(),
+						failedChunk: "",
+						isCritical: true,
+					},
+				],
+			);
+
 			// @ts-expect-error
-			expect(renderer.parse(undefined)).toEqual([]);
+			expect(renderer.parse(undefined)).toEqual(emptyParseResult);
 			// @ts-expect-error
-			expect(renderer.parse(null)).toEqual([]);
-			expect(renderer.parse("")).toEqual([]);
+			expect(renderer.parse(null)).toEqual(emptyParseResult);
+			expect(renderer.parse("")).toEqual(emptyParseResult);
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
@@ -73,21 +86,21 @@ Alberto, come to look at Marcello!
 
 		it("should exclude cues with the same start time and end time", () => {
 			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
-			expect(result.length).toEqual(2);
+			expect(result.data.length).toEqual(2);
 
-			expect(result[0].startTime).toEqual(6000);
-			expect(result[0].endTime).toEqual(7000);
+			expect(result.data[0].startTime).toEqual(6000);
+			expect(result.data[0].endTime).toEqual(7000);
 
-			expect(result[1].startTime).toEqual(8000);
-			expect(result[1].endTime).toEqual(10000);
+			expect(result.data[1].startTime).toEqual(8000);
+			expect(result.data[1].endTime).toEqual(10000);
 		});
 
 		it("should return an array containing two cues", () => {
 			const parsingResult = renderer.parse(CLASSIC_CONTENT);
-			expect(parsingResult).toBeInstanceOf(Array);
-			expect(parsingResult.length).toEqual(2);
+			expect(parsingResult).toBeInstanceOf(ParseResult);
+			expect(parsingResult.data.length).toEqual(2);
 
-			expect(parsingResult[0]).toEqual(
+			expect(parsingResult.data[0]).toEqual(
 				new CueNode({
 					startTime: 5000,
 					endTime: 25000,
@@ -109,7 +122,7 @@ Alberto, come to look at Marcello!
 				}),
 			);
 
-			expect(parsingResult[1]).toEqual(
+			expect(parsingResult.data[1]).toEqual(
 				new CueNode({
 					startTime: 0,
 					endTime: 20000,
@@ -145,10 +158,10 @@ WEBVTT
 			`;
 
 			const parsingResult = renderer.parse(TIMESTAMPS_CUES_CONTENT);
-			expect(parsingResult).toBeInstanceOf(Array);
-			expect(parsingResult.length).toEqual(4);
+			expect(parsingResult).toBeInstanceOf(ParseResult);
+			expect(parsingResult.data.length).toEqual(4);
 
-			expect(parsingResult[0]).toEqual(
+			expect(parsingResult.data[0]).toEqual(
 				new CueNode({
 					startTime: 16000,
 					endTime: 24000,
@@ -167,7 +180,7 @@ WEBVTT
 				}),
 			);
 
-			expect(parsingResult[1]).toMatchObject(
+			expect(parsingResult.data[1]).toMatchObject(
 				Object.create(
 					new CueNode({
 						startTime: 16000,
@@ -217,10 +230,10 @@ WEBVTT
 			`;
 
 			const parsingResult = renderer.parse(RUBY_RT_AUTOCLOSE);
-			expect(parsingResult).toBeInstanceOf(Array);
-			expect(parsingResult.length).toEqual(1);
+			expect(parsingResult).toBeInstanceOf(ParseResult);
+			expect(parsingResult.data.length).toEqual(1);
 
-			expect(parsingResult[0]).toEqual(
+			expect(parsingResult.data[0]).toEqual(
 				new CueNode({
 					startTime: 5000,
 					endTime: 10000,
@@ -257,7 +270,7 @@ WEBVTT
 		it("should return a cue with a region associated", () => {
 			const parsingResult = renderer.parse(REGION_WITH_ATTRIBUTES);
 
-			expect(parsingResult[0]).toEqual(
+			expect(parsingResult.data[0]).toEqual(
 				new CueNode({
 					content:
 						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
@@ -302,7 +315,7 @@ Alberto, come to look at Marcello!
 						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
 						"Alberto, come to look at Marcello!\n";
 
-					expect(parsingResult[0]).toEqual(
+					expect(parsingResult.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -355,7 +368,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_ID);
 
-					expect(parsingResult1[0]).toEqual(
+					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -402,7 +415,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
 
-					expect(parsingResult2[0]).toEqual(
+					expect(parsingResult2.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -454,7 +467,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1[0]).toEqual(
+					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -505,7 +518,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1[0]).toEqual(
+					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -566,7 +579,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
 
-					expect(parsingResult1[0]).toEqual(
+					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
@@ -616,7 +629,7 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
 
-					expect(parsingResult2[0]).toEqual(
+					expect(parsingResult2.data[0]).toEqual(
 						new CueNode({
 							content,
 							startTime: 5000,
