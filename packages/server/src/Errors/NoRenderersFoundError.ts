@@ -8,13 +8,7 @@ export class NoRenderersFoundError extends Error {
 
 		const message = `HSServer didn't find any valid Renderer.
 
-  If you are a Renderer developer, please ensure yourself for:
-  	- it to extend HSBaseRenderer
-  	- it to have static properties overridden:
-  		- 'supportedType'
-  		- 'rendererName'
-  
-  See documentation for more details.
+	If you are a Renderer developer, please ensure yourself that your renderer satisfies all the API requirements. See documentation for more details.
 		`;
 
 		this.name = "UnmatchedRendererError";

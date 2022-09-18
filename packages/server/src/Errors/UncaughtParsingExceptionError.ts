@@ -3,18 +3,20 @@
  * by the provided renderers, this will error will be emitted
  */
 
+import { formatError } from "./utils.js";
+
 export class UncaughtParsingExceptionError extends Error {
 	constructor(rendererName: string, error: unknown) {
 		super();
 
 		const message = `Oh no! Parsing through ${rendererName} failed for some uncaught reason.
-		
-		If you are using a custom renderer, check your renderer first and the content that caused the issue.
-		Otherwise, please report it us with a repro case (code + content). Thank you!
 
-		Here below what happened:
+	If you are using a custom renderer, check your renderer first and the content that caused the issue.
+	Otherwise, please report it us with a repro case (code + content). Thank you!
 
-		${error}
+	Here below what happened:
+
+	${formatError(error)}
 `;
 
 		this.name = "UncaughtParsingExceptionError";
