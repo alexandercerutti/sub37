@@ -14,7 +14,7 @@ export class UncaughtParsingExceptionError extends Error {
 
 		Here below what happened:
 
-    ${JSON.stringify(error)}
+		${error}
 `;
 
 		this.name = "UncaughtParsingExceptionError";
