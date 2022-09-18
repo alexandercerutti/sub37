@@ -27,14 +27,14 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	 * Must be overridden by Renderers
 	 */
 
-	static rendererName: string = "default";
+	public static rendererName: string = "default";
 
 	/**
 	 * Static property that instructs for which type of subtitles
 	 * this renderer should be used. Must be overridden by Renderers
 	 */
 
-	static get supportedType(): string {
+	public static get supportedType(): string {
 		throw new Error(
 			"Renderer didn't specify any static supportedType property. Renderer will be ignored.",
 		);
@@ -49,7 +49,10 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	 * @returns
 	 */
 
-	static ParseResult(data: CueNode[] = [], errors: HSBaseRenderer.ParseError[] = []): ParseResult {
+	public static ParseResult(
+		data: CueNode[] = [],
+		errors: HSBaseRenderer.ParseError[] = [],
+	): ParseResult {
 		return new ParseResult(data, errors);
 	}
 
@@ -61,7 +64,7 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	 * @param rawContent
 	 */
 
-	parse(rawContent: unknown): ParseResult {
+	public parse(rawContent: unknown): ParseResult {
 		throw new Error(
 			"Renderer doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
 		);
