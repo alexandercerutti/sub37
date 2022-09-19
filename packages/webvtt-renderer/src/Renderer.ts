@@ -83,6 +83,10 @@ export default class Renderer extends HSBaseRenderer {
 							isCritical: false,
 						});
 
+						/** Skipping \n\n and going to the next character */
+						block.cursor += 3;
+						block.start = block.cursor - 1;
+
 						continue;
 					}
 
