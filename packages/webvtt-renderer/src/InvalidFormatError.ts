@@ -8,18 +8,24 @@ export class InvalidFormatError extends Error {
 	constructor(reason: Reason, dataBlock: string) {
 		super();
 
-		const message = `Content provided to WebVTTRenderer is invalid.
+		this.name = "InvalidFormatError";
 
-	Reason Code: ${reason}.
+		if (reason === "WEBVTT_HEADER_MISSING") {
+			this.message = `Content provided to WebVTTRenderer cannot be parsed.
 
-	Parser stopped at the following code block follows:
+	Reason code: ${reason}
+			`;
+		} else {
+			this.message = `Content provided to WebVTTRenderer cannot be parsed.
+			
+	Reason code: ${reason}
+	
+	This block seems to be invalid:
 
 	=============
 	${dataBlock.replace(/\n/g, "\n\t")}
 	=============
 `;
-
-		this.name = "InvalidFormatError";
-		this.message = message;
+		}
 	}
 }
