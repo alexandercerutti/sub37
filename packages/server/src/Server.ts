@@ -8,6 +8,7 @@ import {
 	NoRenderersFoundError,
 	UnsupportedContentError,
 	OutOfRangeFrequencyError,
+	ParsingError,
 } from "./Errors/index.js";
 
 const intervalSymbol /***/ = Symbol("hs.s.interval");
@@ -76,8 +77,12 @@ export class HSServer {
 			const Renderer = this[renderersSymbol][i];
 
 			if (Renderer.supportedType === mimeType) {
-				this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
-				return;
+				try {
+					this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
+					return;
+				} catch (err: unknown) {
+					throw new ParsingError(err);
+				}
 			}
 		}
 
