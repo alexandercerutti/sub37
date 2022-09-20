@@ -108,8 +108,8 @@ export class HSServer {
 		frequencyMs: number = 250,
 		options?: { karaoke?: boolean },
 	): void {
-		assertSessionInitialized.call(this);
-		assertIntervalNotRunning.call(this);
+		assertSessionInitialized(this[sessionSymbol]);
+		assertIntervalNotRunning(this[intervalSymbol]);
 
 		if (!frequencyMs || typeof frequencyMs !== "number" || frequencyMs < 1) {
 			throw new OutOfRangeFrequencyError(frequencyMs);
@@ -161,8 +161,8 @@ export class HSServer {
 	 */
 
 	public updateTime(currentTime: number): void {
-		assertIntervalStarted.call(this);
-		assertIntervalNotRunning.call(this);
+		assertIntervalStarted(this[intervalSymbol]);
+		assertIntervalNotRunning(this[intervalSymbol]);
 
 		this[intervalSymbol].runTick(currentTime);
 	}
@@ -175,8 +175,8 @@ export class HSServer {
 	 */
 
 	public suspend(emitStop: boolean = false): void {
-		assertIntervalStarted.call(this);
-		assertIntervalRunning.call(this);
+		assertIntervalStarted(this[intervalSymbol]);
+		assertIntervalRunning(this[intervalSymbol]);
 
 		this[intervalSymbol]?.stop();
 
@@ -193,8 +193,8 @@ export class HSServer {
 	 */
 
 	public resume(): void {
-		assertIntervalStarted.call(this);
-		assertIntervalNotRunning.call(this);
+		assertIntervalStarted(this[intervalSymbol]);
+		assertIntervalNotRunning(this[intervalSymbol]);
 
 		this[intervalSymbol]?.start();
 	}
@@ -206,7 +206,7 @@ export class HSServer {
 
 	public get isRunning(): boolean {
 		try {
-			assertIntervalStarted.call(this);
+			assertIntervalStarted(this[intervalSymbol]);
 		} catch (err) {
 			return false;
 		}
@@ -274,7 +274,7 @@ export class HSServer {
 	 */
 
 	public selectTextTrack(lang: string | undefined | null): void {
-		assertSessionInitialized.call(this);
+		assertSessionInitialized(this[sessionSymbol]);
 
 		if (!lang) {
 			this.suspend(true);
@@ -315,26 +315,30 @@ function emitEvent<E extends keyof Events>(
 	}
 }
 
-function assertSessionInitialized(this: HSServer): void {
-	if (!this[sessionSymbol]) {
+function assertSessionInitialized(session: HSSession): asserts session is HSSession {
+	if (!session) {
 		throw new Error("No session started. Engine won't serve any subtitles.");
 	}
 }
 
-function assertIntervalStarted(this: HSServer): void {
-	if (!this[intervalSymbol]) {
+function assertIntervalStarted(interval: SuspendableTimer): asserts interval is SuspendableTimer {
+	if (!interval) {
 		throw new Error("Server has not been started at all. Cannot perform operation.");
 	}
 }
 
-function assertIntervalNotRunning(this: HSServer): void {
-	if (this[intervalSymbol]?.isRunning) {
+function assertIntervalNotRunning(
+	interval: SuspendableTimer,
+): asserts interval is SuspendableTimer & { isRunning: false } {
+	if (interval?.isRunning) {
 		throw new Error("Server is already running. Cannot perform operation.");
 	}
 }
 
-function assertIntervalRunning(this: HSServer): void {
-	if (!this[intervalSymbol].isRunning) {
+function assertIntervalRunning(
+	interval: SuspendableTimer,
+): asserts interval is SuspendableTimer & { isRunning: true } {
+	if (!interval?.isRunning) {
 		throw new Error("Server has been started but is not running. Cannot perform operation.");
 	}
 }
