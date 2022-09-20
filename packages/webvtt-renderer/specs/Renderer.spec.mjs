@@ -4,6 +4,7 @@ import { ParseResult } from "@hsubs/server/lib/BaseRenderer/index.js";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTRenderer from "../lib/Renderer.js";
 import { MissingContentError } from "../lib/MissingContentError.js";
+import { InvalidFormatError } from "../lib/InvalidFormatError.js";
 
 describe("WebVTTRenderer", () => {
 	/** @type {WebVTTRenderer} */
@@ -76,12 +77,26 @@ Alberto, come to look at Marcello!
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
-			const invalidWebVTTError = "Invalid WebVTT file. It should start with string 'WEBVTT'";
 			// @ts-expect-error
-			expect(() => renderer.parse(true)).toThrow(Error, invalidWebVTTError);
+			expect(renderer.parse(true)).toBeInstanceOf(ParseResult);
 			// @ts-expect-error
-			expect(() => renderer.parse(10)).toThrow(Error /*invalidWebVTTError*/);
-			expect(() => renderer.parse("Look, a phoenix!")).toThrow(Error /*invalidWebVTTError*/);
+			expect(renderer.parse(true).data.length).toBe(0);
+			// @ts-expect-error
+			expect(renderer.parse(true).errors.length).toBe(1);
+			// @ts-expect-error
+			expect(renderer.parse(true).errors[0].error).toEqual(
+				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
+			);
+			// @ts-expect-error
+			expect(renderer.parse(true).errors[0].isCritical).toBe(true);
+
+			// @ts-expect-error
+			expect(renderer.parse(10).errors[0].error).toEqual(
+				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
+			);
+			expect(renderer.parse("Look, a phoenix!").errors[0].error).toEqual(
+				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
+			);
 		});
 
 		it("should exclude cues with the same start time and end time", () => {
