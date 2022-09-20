@@ -6,3 +6,4 @@ export * from "./UnexpectedParsingOutputFormatError.js";
 export * from "./UncaughtParsingExceptionError.js";
 export * from "./UnexpectedDataFormatError.js";
 export * from "./ParsingError.js";
+export * from "./UnparsableContentError.js";

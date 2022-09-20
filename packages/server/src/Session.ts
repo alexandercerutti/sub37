@@ -6,6 +6,7 @@ import {
 	UncaughtParsingExceptionError,
 	UnexpectedDataFormatError,
 	UnexpectedParsingOutputFormatError,
+	UnparsableContentError,
 } from "./Errors/index.js";
 
 const activeTrackSymbol = Symbol("session.active");
@@ -14,7 +15,11 @@ export class HSSession {
 	private timelines: { [lang: string]: IntervalBinaryTree<CueNode> } = Object.create(null);
 	private [activeTrackSymbol]: string = null;
 
-	constructor(rawContents: RawTrack[], public renderer: InstanceType<HSBaseRendererConstructor>) {
+	constructor(
+		rawContents: RawTrack[],
+		renderer: InstanceType<HSBaseRendererConstructor>,
+		onSafeFailure: (error: Error) => void,
+	) {
 		const { rendererName } = Object.getPrototypeOf(renderer)
 			.constructor as HSBaseRendererConstructor;
 
@@ -43,10 +48,19 @@ export class HSSession {
 
 						this.timelines[lang].addNode(cue);
 					}
+				} else if (parseResult.errors.length >= 1) {
+					throw new UnparsableContentError(rendererName, parseResult.errors[0]);
+				}
+
+				for (const parseResultError of parseResult.errors) {
+					onSafeFailure(parseResultError.error);
 				}
 			}
 		} catch (err: unknown) {
-			if (err instanceof UnexpectedParsingOutputFormatError) {
+			if (
+				err instanceof UnexpectedParsingOutputFormatError ||
+				err instanceof UnparsableContentError
+			) {
 				throw err;
 			}
 

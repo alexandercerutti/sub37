@@ -20,7 +20,7 @@ interface Events {
 	cuestart: CueNode[];
 	cuestop: void;
 	cuesfetch: CueNode[];
-	cueerror: string;
+	cueerror: Error;
 }
 
 interface HSListener<E extends keyof Events = keyof Events> {
@@ -84,7 +84,9 @@ export class HSServer {
 
 			if (Renderer.supportedType === mimeType) {
 				try {
-					this[sessionSymbol] = new HSSession(rawTracks, new Renderer());
+					this[sessionSymbol] = new HSSession(rawTracks, new Renderer(), (error: Error) => {
+						emitEvent(this[listenersSymbol], "cueerror", error);
+					});
 					return;
 				} catch (err: unknown) {
 					throw new ParsingError(err);
