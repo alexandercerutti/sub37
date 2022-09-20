@@ -15,15 +15,17 @@ const renderersSymbol /**/ = Symbol("hs.s.renderers");
 const sessionSymbol /****/ = Symbol("hs.s.session");
 const listenersSymbol /**/ = Symbol("hs.s.listeners");
 
-type HSListener =
-	| {
-			event: "cuestart" | "cuesfetch";
-			handler(cues: CueNode[]): void;
-	  }
-	| {
-			event: "cuestop";
-			handler(): void;
-	  };
+interface Events {
+	cuestart: CueNode[];
+	cuestop: void;
+	cuesfetch: CueNode[];
+	cueerror: string;
+}
+
+interface HSListener<E extends keyof Events = keyof Events> {
+	event: E;
+	handler(data: Events[E]): void;
+}
 
 export class HSServer {
 	private [intervalSymbol]: SuspendableTimer;
@@ -129,7 +131,7 @@ export class HSServer {
 			lastUsedCues = nextCache;
 
 			if (!nextCues.length) {
-				emitEvent(this[listenersSymbol], "cuestop");
+				emitEvent(this[listenersSymbol], "cuestop", undefined);
 				return;
 			}
 
@@ -174,7 +176,7 @@ export class HSServer {
 		this[intervalSymbol]?.stop();
 
 		if (emitStop) {
-			emitEvent(this[listenersSymbol], "cuestop");
+			emitEvent(this[listenersSymbol], "cuestop", undefined);
 		}
 	}
 
@@ -296,9 +298,12 @@ function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
 	return true;
 }
 
-function emitEvent(pool: HSListener[], eventName: HSListener["event"], data?: CueNode[]): void {
-	for (let i = 0; i < pool.length; i++) {
-		const { event, handler } = pool[i];
+function emitEvent<E extends keyof Events>(
+	pool: HSListener<E>[],
+	eventName: E,
+	data: Events[E],
+): void {
+	for (let { event, handler } of pool) {
 		if (event === eventName) {
 			handler(data);
 		}
