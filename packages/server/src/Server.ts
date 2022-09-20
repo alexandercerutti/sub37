@@ -60,6 +60,12 @@ export class HSServer {
 	 * Creates a new subtitles / captions
 	 * distribution session.
 	 *
+	 * Throws if:
+	 *  - No provided renderers support the content mimeType
+	 * 	- If Session cannot be created due to errors (whatever
+	 * 			happens in the selected Renderer and that gets catched
+	 * 			and forwarded).
+	 *
 	 * @param rawTracks
 	 * @param mimeType
 	 * @returns
