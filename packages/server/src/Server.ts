@@ -28,6 +28,21 @@ interface HSListener<E extends keyof Events = keyof Events> {
 	handler(data: Events[E]): void;
 }
 
+/**
+ * Core of the whole captions system.
+ * Instance it with a set of Renderers for the
+ * contents you might receive.
+ *
+ * Protocol-conforming Renderers will be saved
+ * and will survive across different sessions.
+ *
+ * Refer to the documentation for more information
+ * about the protocol.
+ *
+ * @throws if no Renderer is passed to the constructor.
+ * @throws if none of the Renderers is conform to the protocol.
+ */
+
 export class HSServer {
 	private [intervalSymbol]: SuspendableTimer;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
@@ -67,7 +82,7 @@ export class HSServer {
 	 *
 	 * @param rawTracks
 	 * @param mimeType
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public createSession(
@@ -106,7 +121,7 @@ export class HSServer {
 	 *
 	 * @param getCurrentPosition
 	 * @param frequencyMs - defaults to 250ms
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public start(
@@ -163,7 +178,7 @@ export class HSServer {
 	 * @throws if the server is running;
 	 *
 	 * @param currentTime expressed in milliseconds
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public updateTime(currentTime: number): void {
@@ -177,7 +192,7 @@ export class HSServer {
 	 * Suspends serving action without losing
 	 * frequency and `getCurrentPosition` reference.
 	 *
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public suspend(emitStop: boolean = false): void {
@@ -193,21 +208,24 @@ export class HSServer {
 
 	/**
 	 * Resumes serving activity by using the previously
-	 * provided frequency and `getCurrentPosition`.
+	 * provided frequency and position callback.
 	 *
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public resume(): void {
 		assertIntervalStarted(this[intervalSymbol]);
 		assertIntervalNotRunning(this[intervalSymbol]);
 
-		this[intervalSymbol]?.start();
+		this[intervalSymbol].start();
 	}
 
 	/**
-	 * Tells if this session is actively serving
-	 * subtitles
+	 * Returns `true` if session is actively serving
+	 * subtitles. Otherwise `false` (even if session
+	 * has not been created)
+	 *
+	 * @returns {boolean}
 	 */
 
 	public get isRunning(): boolean {
@@ -223,6 +241,8 @@ export class HSServer {
 	/**
 	 * Destroys current session and all the loaded
 	 * subtitles data. Maintains the renderers.
+	 *
+	 * @returns {void}
 	 */
 
 	public destroy(): void {
@@ -238,6 +258,7 @@ export class HSServer {
 	 *
 	 * @param event
 	 * @param handler
+	 * @returns {void}
 	 */
 
 	public addEventListener<K extends keyof Events>(
@@ -253,6 +274,7 @@ export class HSServer {
 	 *
 	 * @param event
 	 * @param handler
+	 * @returns {void}
 	 */
 
 	public removeEventListener(event: keyof Events, handler: Function): void {
@@ -289,7 +311,7 @@ export class HSServer {
 	 * @throws if session has not been created
 	 *
 	 * @param lang
-	 * @returns
+	 * @returns {void}
 	 */
 
 	public selectTextTrack(lang: string | undefined | null): void {
@@ -322,9 +344,9 @@ export class HSServer {
 	 * correctly. Otherwise the renderer might throw.
 	 *
 	 * @throws if session has not been created.
-	 *
 	 * @param content
 	 * @param lang
+	 * @returns {void}
 	 */
 
 	public addTextChunk(content: unknown, lang: string): void {
@@ -360,20 +382,22 @@ function emitEvent<E extends keyof Events>(
 	}
 }
 
-function assertSessionInitialized(session: HSSession): asserts session is HSSession {
+function assertSessionInitialized(session: HSSession | undefined): asserts session is HSSession {
 	if (!session) {
 		throw new Error("No session started. Engine won't serve any subtitles.");
 	}
 }
 
-function assertIntervalStarted(interval: SuspendableTimer): asserts interval is SuspendableTimer {
+function assertIntervalStarted(
+	interval: SuspendableTimer | undefined,
+): asserts interval is SuspendableTimer {
 	if (!interval) {
 		throw new Error("Server has not been started at all. Cannot perform operation.");
 	}
 }
 
 function assertIntervalNotRunning(
-	interval: SuspendableTimer,
+	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer & { isRunning: false } {
 	if (interval?.isRunning) {
 		throw new Error("Server is already running. Cannot perform operation.");
@@ -381,7 +405,7 @@ function assertIntervalNotRunning(
 }
 
 function assertIntervalRunning(
-	interval: SuspendableTimer,
+	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer & { isRunning: true } {
 	if (!interval?.isRunning) {
 		throw new Error("Server has been started but is not running. Cannot perform operation.");
