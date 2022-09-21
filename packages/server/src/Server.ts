@@ -60,9 +60,8 @@ export class HSServer {
 	 * Creates a new subtitles / captions
 	 * distribution session.
 	 *
-	 * Throws if:
-	 *  - No provided renderers support the content mimeType
-	 * 	- If Session cannot be created due to errors (whatever
+	 * @throws if no provided renderers support the content mimeType
+	 * @throws if session cannot be created due to errors (whatever
 	 * 			happens in the selected Renderer and that gets catched
 	 * 			and forwarded).
 	 *
@@ -101,10 +100,9 @@ export class HSServer {
 	 * Allows starting the server.
 	 * It will start sending events through the listeners.
 	 *
-	 * Throws if no session have been started.
-	 *
-	 * Throws if frequency is explicitly set to a _falsy_ value
-	 * or to a value which is not a number.
+	 * @throws if no session have been started.
+	 * @throws if frequency is explicitly set to a _falsy_ value
+	 * 				 or to a value which is not a number.
 	 *
 	 * @param getCurrentPosition
 	 * @param frequencyMs - defaults to 250ms
@@ -186,7 +184,7 @@ export class HSServer {
 		assertIntervalStarted(this[intervalSymbol]);
 		assertIntervalRunning(this[intervalSymbol]);
 
-		this[intervalSymbol]?.stop();
+		this[intervalSymbol].stop();
 
 		if (emitStop) {
 			emitEvent(this[listenersSymbol], "cuestop", undefined);
@@ -273,7 +271,9 @@ export class HSServer {
 	 * Given a language as parameter, it attempts to switch to
 	 * that language, if available among the valid ones. Passing
 	 * a falsy value to `lang` will result in server suspension
-	 * with a `"cuestop"` emission.
+	 * with a `cuestop` event emission.
+	 *
+	 * @throws if session has not been created
 	 *
 	 * @param lang
 	 * @returns
@@ -308,7 +308,7 @@ export class HSServer {
 	 * required to be available also for this chunk for it to get parsed and added
 	 * correctly. Otherwise the renderer might throw.
 	 *
-	 * Throws if session has not been created.
+	 * @throws if session has not been created.
 	 *
 	 * @param content
 	 * @param lang
