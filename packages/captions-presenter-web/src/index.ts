@@ -75,14 +75,19 @@ div#scroll-area p {
 		}
 
 		/**
+		 * Classes must be toggled before rendering,
+		 * otherwise height won't be calculated.
+		 */
+
+		this.container.classList.add("active");
+		this.container.classList.remove("hidden");
+
+		/**
 		 * @TODO Select region to render if needed and
 		 * select / create a new TreeOrchestrator
 		 */
 
 		this.renderArea.renderCuesToHTML(cueData);
-
-		this.container.classList.add("active");
-		this.container.classList.remove("hidden");
 	}
 }
 
