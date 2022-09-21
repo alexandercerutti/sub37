@@ -1,4 +1,4 @@
-export { HSServer } from "./Server.js";
+export { HSServer, Events as HSEvents } from "./Server.js";
 export { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer/index.js";
 export type { Region } from "./model";
 export { CueNode } from "./CueNode.js";

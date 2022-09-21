@@ -16,16 +16,23 @@ const renderersSymbol /**/ = Symbol("hs.s.renderers");
 const sessionSymbol /****/ = Symbol("hs.s.session");
 const listenersSymbol /**/ = Symbol("hs.s.listeners");
 
-interface Events {
-	cuestart: CueNode[];
-	cuestop: void;
-	cuesfetch: CueNode[];
-	cueerror: Error;
+export enum Events {
+	CUE_START = "cuestart",
+	CUE_STOP = "cuestop",
+	CUES_FETCH = "cuesfetch",
+	CUE_ERROR = "cueerror",
 }
 
-interface HSListener<E extends keyof Events = keyof Events> {
+interface EventsPayloadMap {
+	[Events.CUE_START]: CueNode[];
+	[Events.CUE_STOP]: void;
+	[Events.CUES_FETCH]: CueNode[];
+	[Events.CUE_ERROR]: Error;
+}
+
+interface HSListener<E extends Events = Events> {
 	event: E;
-	handler(data: Events[E]): void;
+	handler(data: EventsPayloadMap[E]): void;
 }
 
 /**
@@ -99,7 +106,7 @@ export class HSServer {
 			if (Renderer.supportedType === mimeType) {
 				try {
 					this[sessionSymbol] = new HSSession(rawTracks, new Renderer(), (error: Error) => {
-						emitEvent(this[listenersSymbol], "cueerror", error);
+						emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
 					});
 					return;
 				} catch (err: unknown) {
@@ -141,7 +148,7 @@ export class HSServer {
 			 * Emitting all the cues available so previous and next cues can be
 			 * seen before or after they get highlighted, like in a Karaoke.
 			 */
-			emitEvent(this[listenersSymbol], "cuesfetch", this[sessionSymbol].getAll());
+			emitEvent(this[listenersSymbol], Events.CUES_FETCH, this[sessionSymbol].getAll());
 		}
 
 		let lastUsedCues = new Set<CueNode>();
@@ -157,11 +164,11 @@ export class HSServer {
 			lastUsedCues = nextCache;
 
 			if (!nextCues.length) {
-				emitEvent(this[listenersSymbol], "cuestop", undefined);
+				emitEvent(this[listenersSymbol], Events.CUE_STOP, undefined);
 				return;
 			}
 
-			emitEvent(this[listenersSymbol], "cuestart", nextCues);
+			emitEvent(this[listenersSymbol], Events.CUE_START, nextCues);
 		});
 
 		this[intervalSymbol].start();
@@ -202,7 +209,7 @@ export class HSServer {
 		this[intervalSymbol].stop();
 
 		if (emitStop) {
-			emitEvent(this[listenersSymbol], "cuestop", undefined);
+			emitEvent(this[listenersSymbol], Events.CUE_STOP, undefined);
 		}
 	}
 
@@ -261,9 +268,9 @@ export class HSServer {
 	 * @returns {void}
 	 */
 
-	public addEventListener<K extends keyof Events>(
+	public addEventListener<K extends Events>(
 		event: K,
-		handler: (args: Events[K]) => void,
+		handler: (args: EventsPayloadMap[K]) => void,
 	): void {
 		this[listenersSymbol].push({ event, handler });
 	}
@@ -277,7 +284,7 @@ export class HSServer {
 	 * @returns {void}
 	 */
 
-	public removeEventListener(event: keyof Events, handler: Function): void {
+	public removeEventListener(event: Events, handler: Function): void {
 		const index = this[listenersSymbol].findIndex(
 			(listener) => listener.event === event && listener.handler === handler,
 		);
@@ -370,10 +377,10 @@ function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
 	return true;
 }
 
-function emitEvent<E extends keyof Events>(
+function emitEvent<E extends Events>(
 	pool: HSListener<E>[],
 	eventName: E,
-	data: Events[E],
+	data: EventsPayloadMap[E],
 ): void {
 	for (let { event, handler } of pool) {
 		if (event === eventName) {
