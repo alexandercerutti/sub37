@@ -268,6 +268,19 @@ export class HSServer {
 	}
 
 	/**
+	 * Allows retrieving the list of loaded tracks's languages.
+	 *
+	 * @throws if session has not been created
+	 * @returns {string[]}
+	 */
+
+	public get availableLanguages(): string[] {
+		assertSessionInitialized(this[sessionSymbol]);
+
+		return this[sessionSymbol].availableTracks;
+	}
+
+	/**
 	 * Given a language as parameter, it attempts to switch to
 	 * that language, if available among the valid ones. Passing
 	 * a falsy value to `lang` will result in server suspension
