@@ -142,6 +142,7 @@ function splitCueNodesByBreakpoints(
 	cueNode: CueNode,
 	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
 ): CueNode[] {
+	let idVariations = 0;
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
 
@@ -160,16 +161,30 @@ function splitCueNodesByBreakpoints(
 		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
 			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
 
-			cues.push(
-				Object.create(cueNode, {
-					content: {
-						value: content,
-					},
-					entities: {
-						value: entitiesAtCoordinates,
-					},
-				}),
-			);
+			const cue = Object.create(cueNode, {
+				content: {
+					value: content,
+				},
+				entities: {
+					value: entitiesAtCoordinates,
+				},
+			});
+
+			if (idVariations > 0) {
+				cue.id = `${cue.id}/${idVariations}`;
+			}
+
+			/**
+			 * If we detect a new line, we want to force the creation
+			 * of a new line on the next content. So we increase the variation
+			 * so that rendering will break line on a different cue id.
+			 */
+
+			if (cueNode.content[i] === "\x0A") {
+				idVariations++;
+			}
+
+			cues.push(cue);
 
 			previousContentBreakIndex = i + 1;
 		}
