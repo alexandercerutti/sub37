@@ -235,31 +235,29 @@ export class HSServer {
 	}
 
 	/**
-	 * Allows to receive events when a new set of cues is available to be
-	 * shown (`"cuestart"`) or when they should get hidden (`"cuestop"`).
+	 * Allows to receive events when a new set of cues is available to be shown, hidden,
+	 * used or when error happens.
 	 *
 	 * @param event
 	 * @param handler
 	 */
 
-	public addEventListener(event: "cuestart", handler: (cueData: CueNode[]) => void): void;
-	public addEventListener(event: "cuestop", handler: () => void): void;
-	public addEventListener<K extends "cuestart" | "cuestop">(
+	public addEventListener<K extends keyof Events>(
 		event: K,
-		handler: (cueData?: CueNode[]) => void,
+		handler: (args: Events[K]) => void,
 	): void {
 		this[listenersSymbol].push({ event, handler });
 	}
 
 	/**
-	 * Allows to remove a listener for both `cuestart` and `cuestop`.
-	 * Requires handler to be one added early through `addEventListener`.
+	 * Allows to remove a listener.
+	 * Requires handler to be a function previously added through `addEventListener`.
 	 *
 	 * @param event
 	 * @param handler
 	 */
 
-	public removeEventListener(event: "cuestart" | "cuestop", handler: Function): void {
+	public removeEventListener(event: keyof Events, handler: Function): void {
 		const index = this[listenersSymbol].findIndex(
 			(listener) => listener.event === event && listener.handler === handler,
 		);
