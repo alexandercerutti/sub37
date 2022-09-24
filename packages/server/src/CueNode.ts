@@ -51,7 +51,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		this.startTime = data.startTime;
 		this.endTime = data.endTime;
 		this.content = data.content;
-		this.attributes = data.content;
+		this.attributes = data.attributes;
 		this.region = data.region;
 
 		if (data.entities?.length) {
