@@ -1,23 +1,25 @@
 import { IntervalBinaryTree } from "@hsubs/server";
 import { CueNode, Entities } from "@hsubs/server";
 
+const rootElementSymbol = Symbol("to.root.element");
+
 export default class TreeOrchestrator {
-	private _root = Object.assign(document.createElement("div"), {
+	private [rootElementSymbol] = Object.assign(document.createElement("div"), {
 		id: "scroll-area",
 	});
 
 	public get root(): HTMLDivElement {
-		return this._root;
+		return this[rootElementSymbol];
 	}
 
 	public wipeEffects(): void {
-		this.root.style.transform = "";
-		this.root.style.transition = "";
+		this[rootElementSymbol].style.transform = "";
+		this[rootElementSymbol].style.transition = "";
 	}
 
 	public wipeTree(): void {
-		for (let node: Node; (node = this.root.firstChild); ) {
-			this.root.removeChild(node);
+		for (let node: Node; (node = this[rootElementSymbol].firstChild); ) {
+			this[rootElementSymbol].removeChild(node);
 		}
 	}
 
@@ -67,7 +69,7 @@ export default class TreeOrchestrator {
 			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!latestNode) {
-				this.root.appendChild(line);
+				this[rootElementSymbol].appendChild(line);
 			}
 
 			const nextHeight = getLineHeight(line);
@@ -85,7 +87,7 @@ export default class TreeOrchestrator {
 					node.remove();
 				}
 
-				this.root.appendChild(line);
+				this[rootElementSymbol].appendChild(line);
 			} else if (i > 0) {
 				textNode.textContent = `\x20${textNode.textContent}`;
 			}
@@ -105,14 +107,14 @@ export default class TreeOrchestrator {
 		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
 		 */
 
-		if (this.root.children.length) {
+		if (this[rootElementSymbol].children.length) {
 			/**
 			 * @TODO This should probably be a property of the component
 			 */
 			const MAXIMUM_VISIBLE_ELEMENTS = 2;
 			const {
 				children: { length: childrenAmount },
-			} = this.root;
+			} = this[rootElementSymbol];
 
 			/**
 			 * We need to obtain the number of rows we should scroll of.
@@ -127,12 +129,12 @@ export default class TreeOrchestrator {
 
 			const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
 
-			this.root.style.transform = `translateY(
+			this[rootElementSymbol].style.transform = `translateY(
 				${1.5 * linesToBeScrolled}em
 			)`;
 
 			if (linesToBeScrolled <= 0) {
-				this.root.style.transition = "transform .5s ease-in-out";
+				this[rootElementSymbol].style.transition = "transform .5s ease-in-out";
 			}
 		}
 	}
