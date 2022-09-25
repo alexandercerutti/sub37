@@ -58,7 +58,7 @@ div#scroll-area p {
 }
 `;
 
-		this.container.appendChild(this.renderArea.root);
+		this.renderArea.appendTo(this.container);
 
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.container);

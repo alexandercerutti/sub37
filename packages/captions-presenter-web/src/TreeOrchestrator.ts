@@ -8,6 +8,14 @@ export default class TreeOrchestrator {
 		id: "scroll-area",
 	});
 
+	public appendTo(node: HTMLElement): void {
+		node.appendChild(this[rootElementSymbol]);
+	}
+
+	public remove(): void {
+		this[rootElementSymbol].remove();
+	}
+
 	public get root(): HTMLDivElement {
 		return this[rootElementSymbol];
 	}
