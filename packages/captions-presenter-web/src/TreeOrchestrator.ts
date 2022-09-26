@@ -8,6 +8,12 @@ export default class TreeOrchestrator {
 		id: "scroll-area",
 	});
 
+	public regionId: string;
+
+	public constructor(regionId: string = "default") {
+		this.regionId = regionId;
+	}
+
 	public appendTo(node: HTMLElement): void {
 		node.appendChild(this[rootElementSymbol]);
 	}
