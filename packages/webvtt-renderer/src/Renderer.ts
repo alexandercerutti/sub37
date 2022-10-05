@@ -237,9 +237,11 @@ export default class Renderer extends HSBaseRenderer {
 					block.cursor += 3;
 					block.start = block.cursor - 1;
 				} catch (err) {
+					const error = err instanceof Error ? err : new Error(JSON.stringify(err));
+
 					return HSBaseRenderer.ParseResult(undefined, [
 						{
-							error: err,
+							error,
 							isCritical: true,
 							failedChunk: undefined,
 						},
