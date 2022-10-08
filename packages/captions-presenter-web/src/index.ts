@@ -36,7 +36,8 @@ div#caption-window.active {
 
 div#scroll-area {
 	scroll-behavior: smooth;
-	height: 3em;
+	height: max-content; /** Chromium 46 **/
+	min-height: 3em;
 }
 
 div#scroll-area p {
