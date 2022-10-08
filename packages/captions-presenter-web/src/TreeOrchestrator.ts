@@ -97,7 +97,7 @@ export default class TreeOrchestrator {
 
 			const nextHeight = getLineHeight(line);
 
-			if (nextHeight > latestHeight && latestHeight > 0) {
+			if (latestHeight > 0 && nextHeight >= latestHeight * 2) {
 				let textParentNode = textNode.parentNode as HTMLElement;
 				const subTreeClone = entitiesToDOM(textNode, ...cue.entities);
 
@@ -117,7 +117,15 @@ export default class TreeOrchestrator {
 				this[rootElementSymbol].appendChild(line);
 			}
 
-			latestHeight = nextHeight;
+			if (nextHeight >= latestHeight * 2) {
+				/**
+				 * Height might change of a few PXs due to tags like <ruby> + <rt>.
+				 * We only want to track if a line height changes to take a whole new
+				 * line space.
+				 */
+				latestHeight = nextHeight;
+			}
+
 			latestCueId = cue.id;
 			latestNode = line;
 		}
