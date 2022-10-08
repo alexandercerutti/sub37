@@ -179,9 +179,13 @@ function splitCueNodesByBreakpoints(
 		 * but left nodes are the smallest. In case of a global entity,
 		 * it is inserted as the first node. Hence, it will will result
 		 * as the last entity here. If so, we render wrong elements.
+		 *
+		 * Getting all the current entities and next entities so we can
+		 * check if this is the last character before an entity begin
+		 * (i.e. we have to break).
 		 */
 
-		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes(i) ?? []).sort(
+		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
 			reorderEntitiesComparisonFn,
 		);
 
@@ -193,7 +197,7 @@ function splitCueNodesByBreakpoints(
 					value: content,
 				},
 				entities: {
-					value: entitiesAtCoordinates,
+					value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
 				},
 			});
 
@@ -229,6 +233,7 @@ function shouldCueNodeBreak(
 
 	return (
 		isCharacterWhitespace(char) ||
+		indexMatchesEntityBegin(currentIndex, entitiesAtCoordinates) ||
 		indexMatchesEntityEnd(currentIndex, entitiesAtCoordinates) ||
 		isCueContentEnd(cueNodeContent, currentIndex)
 	);
@@ -236,6 +241,20 @@ function shouldCueNodeBreak(
 
 function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
+}
+
+function indexMatchesEntityBegin(index: number, entities: Entities.GenericEntity[]): boolean {
+	if (!entities.length) {
+		return false;
+	}
+
+	for (const entity of entities) {
+		if (index + 1 === entity.offset) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]): boolean {
