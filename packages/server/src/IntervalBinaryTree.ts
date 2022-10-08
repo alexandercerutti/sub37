@@ -43,10 +43,6 @@ export class IntervalBinaryTree<LeafShape extends object> {
 	public getCurrentNodes(
 		positionOrRange: number | [start: number, end: number],
 	): null | IntervalBinaryLeaf<LeafShape>["node"][] {
-		if (!this.root) {
-			return null;
-		}
-
 		let range: [number, number] = undefined;
 
 		if (positionOrRange instanceof Array) {
