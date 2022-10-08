@@ -86,6 +86,15 @@ export default class TreeOrchestrator {
 				this[rootElementSymbol].appendChild(line);
 			}
 
+			/**
+			 * Space character between words might be responsible
+			 * for going on a new line.
+			 */
+
+			if (i > 0) {
+				textNode.textContent = `\x20${textNode.textContent}`;
+			}
+
 			const nextHeight = getLineHeight(line);
 
 			if (nextHeight > latestHeight && latestHeight > 0) {
@@ -101,9 +110,11 @@ export default class TreeOrchestrator {
 					node.remove();
 				}
 
+				if (textNode.textContent[0] === "\x20") {
+					textNode.textContent = textNode.textContent.slice(1);
+				}
+
 				this[rootElementSymbol].appendChild(line);
-			} else if (i > 0) {
-				textNode.textContent = `\x20${textNode.textContent}`;
 			}
 
 			latestHeight = nextHeight;
