@@ -92,10 +92,11 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 			left: null,
 			right: null,
 			node: this,
-			get min() {
+			max: this.endTime,
+			get low() {
 				return this.node.startTime;
 			},
-			get max() {
+			get high() {
 				return this.node.endTime;
 			},
 		};

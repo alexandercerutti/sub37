@@ -10,8 +10,9 @@ export interface IntervalBinaryLeaf<LeafShape extends object> {
 	left: IntervalBinaryLeaf<LeafShape> | null;
 	right: IntervalBinaryLeaf<LeafShape> | null;
 	node: LeafShape;
-	get min(): number;
-	get max(): number;
+	max: number;
+	get low(): number;
+	get high(): number;
 }
 
 export interface Leafable<LeafShape extends object> {
@@ -29,40 +30,32 @@ export class IntervalBinaryTree<LeafShape extends object> {
 			return;
 		}
 
-		let node = this.root;
-
-		while (node !== null) {
-			if (nextTreeNode.min <= node.min) {
-				if (!node.left) {
-					node.left = nextTreeNode;
-					return;
-				}
-
-				node = node.left;
-			} else {
-				if (!node.right) {
-					node.right = nextTreeNode;
-					return;
-				}
-
-				node = node.right;
-			}
-		}
+		insert(this.root, nextTreeNode);
 	}
 
 	/**
 	 * Retrieves nodes which startTime and endTime are inside
 	 *
-	 * @param query
+	 * @param positionOrRange
 	 * @returns
 	 */
 
-	public getCurrentNodes(query: number): null | IntervalBinaryLeaf<LeafShape>["node"][] {
+	public getCurrentNodes(
+		positionOrRange: number | [start: number, end: number],
+	): null | IntervalBinaryLeaf<LeafShape>["node"][] {
 		if (!this.root) {
 			return null;
 		}
 
-		return accumulateMatchingNodes(this.root, query);
+		let range: [number, number] = undefined;
+
+		if (positionOrRange instanceof Array) {
+			range = positionOrRange;
+		} else {
+			range = [positionOrRange, positionOrRange];
+		}
+
+		return accumulateMatchingNodes(this.root, ...range);
 	}
 
 	/**
@@ -73,6 +66,27 @@ export class IntervalBinaryTree<LeafShape extends object> {
 	public getAll(): IntervalBinaryLeaf<LeafShape>["node"][] {
 		return findAllInSubtree(this.root);
 	}
+}
+
+function insert<LeafShape extends object>(
+	root: IntervalBinaryLeaf<LeafShape>,
+	node: IntervalBinaryLeaf<LeafShape>,
+) {
+	if (!root) {
+		return node;
+	}
+
+	if (node.low <= root.low) {
+		root.left = insert(root.left, node);
+	} else {
+		root.right = insert(root.right, node);
+	}
+
+	if (root.max < node.high) {
+		root.max = node.high;
+	}
+
+	return root;
 }
 
 /**
@@ -87,7 +101,8 @@ export class IntervalBinaryTree<LeafShape extends object> {
 
 function accumulateMatchingNodes<LeafShape extends object>(
 	treeNode: IntervalBinaryLeaf<LeafShape>,
-	query: number,
+	low: number,
+	high: number,
 ): IntervalBinaryLeaf<LeafShape>["node"][] {
 	if (!treeNode) {
 		return [];
@@ -100,8 +115,8 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * on left that might overlap
 	 */
 
-	if (query <= treeNode.max) {
-		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, query));
+	if (treeNode.left && treeNode.left.max >= low) {
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, low, high));
 	}
 
 	/**
@@ -111,11 +126,14 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * correct sequence.
 	 */
 
-	if (treeNode.min <= query && treeNode.max >= query) {
+	if (
+		(low >= treeNode.low && treeNode.high >= low) ||
+		(high >= treeNode.low && treeNode.high >= high)
+	) {
 		matchingNodes.push(treeNode.node);
 	}
 
-	if (treeNode.min <= query) {
+	if (treeNode.right) {
 		/**
 		 * If current node has started already started, we might have
 		 * some nodes that are overlapping or this is just not the node
@@ -123,7 +141,7 @@ function accumulateMatchingNodes<LeafShape extends object>(
 		 * node has finished or not here. Right nodes will be for sure bigger.
 		 */
 
-		matchingNodes.push(...accumulateMatchingNodes(treeNode.right, query));
+		matchingNodes.push(...accumulateMatchingNodes(treeNode.right, low, high));
 	}
 
 	return matchingNodes;

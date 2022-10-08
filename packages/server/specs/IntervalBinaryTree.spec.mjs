@@ -346,11 +346,12 @@ function cueNodeToTreeLeaf(cueNode) {
 		left: null,
 		right: null,
 		node: cueNode,
-		get max() {
-			return this.node.endTime;
-		},
-		get min() {
+		max: cueNode.endTime,
+		get low() {
 			return this.node.startTime;
+		},
+		get high() {
+			return this.node.endTime;
 		},
 	};
 }
