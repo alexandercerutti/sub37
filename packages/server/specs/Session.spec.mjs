@@ -14,11 +14,40 @@ class MockedRenderer extends HSBaseRenderer {
 
 	/**
 	 *
-	 * @param {string} content
+	 * @param {*} content
 	 * @returns {ParseResult}
 	 */
 	parse(content) {
 		return HSBaseRenderer.ParseResult([], []);
+	}
+}
+
+class MockedRendererWithParseResultError {
+	static rendererName = "Mocked Renderer With Parse Result Error";
+
+	/**
+	 *
+	 * @param {string} content
+	 * @returns {ParseResult}
+	 */
+	parse(content) {
+		return HSBaseRenderer.ParseResult(
+			[
+				new CueNode({
+					content,
+					endTime: 0,
+					startTime: 0,
+					id: "mocked",
+				}),
+			],
+			[
+				{
+					error: new Error("mocked renderer error"),
+					failedChunk: "",
+					isCritical: false,
+				},
+			],
+		);
 	}
 }
 
@@ -81,6 +110,7 @@ describe("HSSession", () => {
 					},
 				],
 				new MockedRenderer(),
+				() => {},
 			);
 		}).toThrow(UnexpectedParsingOutputFormatError);
 
@@ -97,7 +127,6 @@ describe("HSSession", () => {
 		 * @returns
 		 */
 
-		// @ts-expect-error
 		MockedRenderer.prototype.parse = function (content) {
 			throw new Error("Mocked Error");
 		};
@@ -115,6 +144,7 @@ describe("HSSession", () => {
 					},
 				],
 				new MockedRenderer(),
+				() => {},
 			);
 		}).toThrowError(UncaughtParsingExceptionError);
 
@@ -144,7 +174,7 @@ describe("HSSession", () => {
 		// *** MOCKING END *** //
 		// ******************* //
 
-		const session = new HSSession(mockedTracks, new MockedRenderer());
+		const session = new HSSession(mockedTracks, new MockedRenderer(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -161,7 +191,7 @@ describe("HSSession", () => {
 	});
 
 	it("should ignore tracks that have no output", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedRenderer());
+		const session = new HSSession(mockedEmptyTracks, new MockedRenderer(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -173,7 +203,7 @@ describe("HSSession", () => {
 	});
 
 	it("should warn if a non existing track is set", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedRenderer());
+		const session = new HSSession(mockedEmptyTracks, new MockedRenderer(), () => {});
 
 		const warn = jest.spyOn(console, "warn");
 		expect(session.activeTrack).toBe(null);
@@ -183,5 +213,31 @@ describe("HSSession", () => {
 		expect(session.activeTrack).toBe(null);
 
 		warn.mockReset();
+	});
+
+	it("should call safeFailure callback when Renderer goes bad", () => {
+		/**
+		 * @param {Error} error
+		 */
+
+		function onSafeFailureCb(error) {}
+
+		/**
+		 * Jest is not happy if we don't do this. Meh
+		 */
+
+		const mockObject = { onSafeFailureCb };
+
+		const spy = jest.spyOn(mockObject, "onSafeFailureCb");
+		const mockedError = new Error("mocked renderer error");
+
+		new HSSession(
+			mockedEmptyTracks,
+			new MockedRendererWithParseResultError(),
+			mockObject.onSafeFailureCb,
+		);
+
+		expect(spy).toHaveBeenCalledTimes(2); /** One error per track */
+		expect(spy).toHaveBeenCalledWith(mockedError);
 	});
 });
