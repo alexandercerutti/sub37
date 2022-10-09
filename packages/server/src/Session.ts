@@ -7,6 +7,7 @@ import {
 	UnexpectedDataFormatError,
 	UnexpectedParsingOutputFormatError,
 	UnparsableContentError,
+	ActiveTrackMissingError,
 } from "./Errors/index.js";
 
 const activeTrackSymbol = Symbol("session.active");
@@ -55,7 +56,7 @@ export class HSSession {
 
 	public getActiveCues(time: number): CueNode[] {
 		if (!this.activeTrack) {
-			throw new Error("No active track found. Cannot retrieve active cues");
+			throw new ActiveTrackMissingError();
 		}
 
 		return this.timelines[this.activeTrack].getCurrentNodes(time);

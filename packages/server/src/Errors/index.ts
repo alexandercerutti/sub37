@@ -7,3 +7,4 @@ export * from "./UncaughtParsingExceptionError.js";
 export * from "./UnexpectedDataFormatError.js";
 export * from "./ParsingError.js";
 export * from "./UnparsableContentError.js";
+export * from "./ActiveTrackMissingError.js";
