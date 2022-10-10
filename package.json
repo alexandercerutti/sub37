@@ -15,7 +15,8 @@
 		"srt"
 	],
 	"scripts": {
-		"test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest -c jest.config.mjs --silent"
+		"test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest -c jest.config.mjs --silent",
+		"sample:serve": "npm --prefix packages/sample run dev"
 	},
 	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
 	"license": "MIT",

@@ -8,14 +8,14 @@
 		"forceConsistentCasingInFileNames": true,
 		"noImplicitAny": true,
 		"noImplicitThis": true,
-		"useUnknownInCatchVariables": false,
+		"useUnknownInCatchVariables": true,
 		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
 		"noPropertyAccessFromIndexSignature": true,
 		"noImplicitOverride": true,
 		"moduleResolution": "node",
+		"noImplicitReturns": true,
 		"lib": ["DOM", "ES2018", "ES2020"]
 	}
 }
