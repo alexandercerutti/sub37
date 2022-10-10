@@ -1,7 +1,7 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
-import { HSServer } from "../lib/Server";
+import { HSServer, Events } from "../lib/Server";
 import { CueNode } from "../lib/CueNode";
 
 class MockedRendererNoExtend {
@@ -147,7 +147,7 @@ describe("HSServer", () => {
 			server.start(mockGetCurrentPositionFactory());
 			server.suspend();
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				expect(nodes.length).toBe(1);
 				expect(nodes[0].content).toBe("This is a sample cue third");
 			});
@@ -234,12 +234,12 @@ describe("HSServer", () => {
 			let currentCues = 0;
 			const expectedCues = 4;
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				/** We expect 4 ticks, one for each cue hardcoded */
 				currentCues++;
 			});
 
-			server.addEventListener("cuestop", () => {
+			server.addEventListener(Events.CUE_STOP, () => {
 				console.log("cuestop reached");
 
 				if (currentCues === expectedCues) {
@@ -339,7 +339,7 @@ describe("HSServer", () => {
 			const expectedCues = 5;
 			const cuesSequence = [];
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				/** We expect 4 ticks, one for each cue hardcoded */
 				cuesSequence.push([...nodes]);
 
@@ -348,7 +348,7 @@ describe("HSServer", () => {
 				}
 			});
 
-			server.addEventListener("cuestop", () => {
+			server.addEventListener(Events.CUE_STOP, () => {
 				console.log("cuestop reached");
 
 				if (cuesSequence.length === expectedCues) {
@@ -485,7 +485,7 @@ describe("HSServer", () => {
 
 			let currentCues = 0;
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				currentCues++;
 
 				if (currentCues === 2) {
@@ -567,7 +567,7 @@ describe("HSServer", () => {
 
 			let currentCues = 0;
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				currentCues++;
 
 				if (currentCues === 2) {
@@ -575,7 +575,7 @@ describe("HSServer", () => {
 				}
 			});
 
-			server.addEventListener("cuestop", () => {
+			server.addEventListener(Events.CUE_STOP, () => {
 				expect(currentCues).toBe(2);
 				expect(server.isRunning).toBe(false);
 				done();
@@ -644,7 +644,7 @@ describe("HSServer", () => {
 
 			let currentCues = 0;
 
-			server.addEventListener("cuestart", (nodes) => {
+			server.addEventListener(Events.CUE_START, (nodes) => {
 				currentCues++;
 
 				if (currentCues === 2) {
@@ -653,7 +653,7 @@ describe("HSServer", () => {
 				}
 			});
 
-			server.addEventListener("cuestop", () => {
+			server.addEventListener(Events.CUE_STOP, () => {
 				server.resume();
 				expect(() => server.resume()).toThrow();
 				server.suspend();
