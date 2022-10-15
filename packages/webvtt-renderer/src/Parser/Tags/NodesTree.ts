@@ -39,9 +39,9 @@ export default class NodeTree {
 		this.root = node;
 	}
 
-	public pop(): Node {
+	public pop(): Node | undefined {
 		if (!this.root) {
-			return;
+			return undefined;
 		}
 
 		const out = this.root;

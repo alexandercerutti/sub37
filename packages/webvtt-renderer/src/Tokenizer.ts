@@ -341,5 +341,7 @@ export class Tokenizer {
 
 			this.cursor++;
 		}
+
+		return null;
 	}
 }

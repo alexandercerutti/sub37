@@ -1,6 +1,6 @@
 const INDENT_REGEX = /\n/g;
 
-function convertError(error: unknown) {
+function convertError(error: unknown): Error {
 	if (error instanceof Error) {
 		return error;
 	}
@@ -9,9 +9,7 @@ function convertError(error: unknown) {
 		return new Error(error);
 	}
 
-	if (typeof error === "object") {
-		return new Error(JSON.stringify(error));
-	}
+	return new Error(JSON.stringify(error));
 }
 
 export function formatError(error: unknown): string {
