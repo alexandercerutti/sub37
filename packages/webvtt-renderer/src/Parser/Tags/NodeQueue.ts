@@ -1,12 +1,11 @@
-import Node from "./Node";
+import type Node from "./Node";
 
 /**
- * "Reversed" tree, where the root is always the
- * root, so we can pop easily and we don't have to
- * drill to perform operations on the last element
+ * LIFO queue, where root is always the first element,
+ * so we can easily pop out and not drill.
  */
 
-export default class NodeTree {
+export default class NodeQueue {
 	private root: Node = null;
 
 	public get current() {

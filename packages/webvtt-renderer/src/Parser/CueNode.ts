@@ -38,21 +38,21 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 		parseAttributes(data.attributes),
 	);
 
-	const openTagsTree = new Tags.NodeTree();
+	const openTagsQueue = new Tags.NodeQueue();
 
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.START_TAG: {
 				if (Tags.isSupported(token.content)) {
-					openTagsTree.push(new Tags.Node(currentCue.text.length, token));
+					openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
 				}
 
 				break;
 			}
 
 			case TokenType.END_TAG: {
-				if (Tags.isSupported(token.content) && openTagsTree.length) {
-					if (!openTagsTree.current) {
+				if (Tags.isSupported(token.content) && openTagsQueue.length) {
+					if (!openTagsQueue.current) {
 						break;
 					}
 
@@ -61,13 +61,13 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					 * Can we be safe about popping twice, one for rt and one for ruby later?
 					 */
 
-					if (token.content === "ruby" && openTagsTree.current.token.content === "rt") {
-						const out = openTagsTree.pop();
+					if (token.content === "ruby" && openTagsQueue.current.token.content === "rt") {
+						const out = openTagsQueue.pop();
 						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 
-					if (openTagsTree.current.token.content === token.content) {
-						const out = openTagsTree.pop();
+					if (openTagsQueue.current.token.content === token.content) {
+						const out = openTagsQueue.pop();
 						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 				}
@@ -94,7 +94,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					 * have some tags still open
 					 */
 
-					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsTree, currentCue));
+					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 					hsCues.push(currentCue);
 				}
 
@@ -122,7 +122,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	 * tags and create entities for them.
 	 */
 
-	addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsTree, currentCue));
+	addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 
 	if (currentCue.text.length) {
 		hsCues.push(currentCue);

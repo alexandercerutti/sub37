@@ -1,7 +1,7 @@
 import { Entities } from "@hsubs/server";
 import type { CueParsedData } from "../CueNode.js";
 import Node from "./Node.js";
-import NodeTree from "./NodesTree.js";
+import NodeQueue from "./NodeQueue.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
 
 export function isSupported(content: string): boolean {
@@ -12,16 +12,16 @@ export function isSupported(content: string): boolean {
  * Creates entities from tree entities that have not been popped
  * out yet, without removing them from the tree
  *
- * @param openTagsTree
+ * @param openTagsQueue
  * @param currentCue
  * @returns
  */
 
 export function createTagEntitiesFromUnpaired(
-	openTagsTree: NodeTree,
+	openTagsQueue: NodeQueue,
 	currentCue: CueParsedData,
 ): Entities.Tag[] {
-	let nodeCursor: Node = openTagsTree.current;
+	let nodeCursor: Node = openTagsQueue.current;
 
 	if (!nodeCursor) {
 		return [];
