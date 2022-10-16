@@ -14,9 +14,12 @@ export default defineConfig({
 	plugins: [
 		tsconfigPaths({
 			loose: true,
+			root: "../..",
 		}),
 		checker({
-			typescript: true,
+			typescript: {
+				root: "../..",
+			},
 		}),
 	],
 	server: {
@@ -25,5 +28,4 @@ export default defineConfig({
 		strictPort: true,
 	},
 	assetsInclude: ["**/*.vtt"],
-	root: "../..",
 });
