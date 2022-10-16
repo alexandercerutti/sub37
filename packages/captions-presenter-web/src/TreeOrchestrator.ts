@@ -5,7 +5,7 @@ const rootElementSymbol = Symbol("to.root.element");
 
 export default class TreeOrchestrator {
 	private [rootElementSymbol] = Object.assign(document.createElement("div"), {
-		id: "scroll-area",
+		className: "region",
 	});
 
 	public regionId: string;

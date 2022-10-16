@@ -34,18 +34,18 @@ div#caption-window.active {
 	background-color: rgba(0,0,0,0.4);
 }
 
-div#scroll-area {
+div.region {
 	scroll-behavior: smooth;
 	height: max-content; /** Chromium 46 **/
 	min-height: 3em;
 }
 
-div#scroll-area p {
+div.region p {
 	margin: 0;
 	box-sizing: border-box;
 }
 
-#scroll-area > p > span {
+div.region > p > span {
 	color: #FFF;
 	background-color: rgba(0,0,0,0.7);
 	padding: 0px 15px;
