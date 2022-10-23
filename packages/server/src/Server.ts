@@ -128,6 +128,7 @@ export class HSServer {
 	 *
 	 * @param getCurrentPosition
 	 * @param frequencyMs - defaults to 250ms
+	 * @param options
 	 * @returns {void}
 	 */
 

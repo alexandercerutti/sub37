@@ -91,7 +91,8 @@ function insert<LeafShape extends object>(
  * an interval containing time parameter
  *
  * @param treeNode
- * @param time
+ * @param low
+ * @param high
  * @returns
  */
 
