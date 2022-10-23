@@ -299,7 +299,7 @@ function getNodeAtDepth(index: number, node: Node) {
 	let latestNodePointer: Node = node;
 
 	while (index > 0 && latestNodePointer.lastChild) {
-		if (latestNodePointer.lastChild.nodeType !== 1) {
+		if (latestNodePointer.lastChild.nodeType !== Node.ELEMENT_NODE) {
 			break;
 		}
 
