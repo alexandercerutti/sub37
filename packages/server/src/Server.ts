@@ -30,9 +30,9 @@ interface EventsPayloadMap {
 	[Events.CUE_ERROR]: Error;
 }
 
-interface HSListener<E extends Events = Events> {
-	event: E;
-	handler(data: EventsPayloadMap[E]): void;
+interface HSListener<EventName extends Events = Events> {
+	event: EventName;
+	handler(data: EventsPayloadMap[EventName]): void;
 }
 
 /**
@@ -269,9 +269,9 @@ export class HSServer {
 	 * @returns {void}
 	 */
 
-	public addEventListener<K extends Events>(
-		event: K,
-		handler: (args: EventsPayloadMap[K]) => void,
+	public addEventListener<EventName extends Events>(
+		event: EventName,
+		handler: (args: EventsPayloadMap[EventName]) => void,
 	): void {
 		this[listenersSymbol].push({ event, handler });
 	}
@@ -378,10 +378,10 @@ function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
 	return true;
 }
 
-function emitEvent<E extends Events>(
-	pool: HSListener<E>[],
-	eventName: E,
-	data: EventsPayloadMap[E],
+function emitEvent<EventName extends Events>(
+	pool: HSListener<EventName>[],
+	eventName: EventName,
+	data: EventsPayloadMap[EventName],
 ): void {
 	for (let { event, handler } of pool) {
 		if (event === eventName) {
