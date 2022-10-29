@@ -40,7 +40,7 @@ export class Tag extends GenericEntity {
 		this.classes = params.classes || [];
 	}
 
-	setStyles(styles: string | Tag["styles"]) {
+	public setStyles(styles: string | Tag["styles"]): void {
 		let stylesObject: { [key: string]: string };
 
 		if (typeof styles === "string") {
