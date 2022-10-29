@@ -41,23 +41,31 @@ export class Tag extends GenericEntity {
 	}
 
 	public setStyles(styles: string | Tag["styles"]): void {
-		let stylesObject: { [key: string]: string };
+		const declarations = getKeyValueFromCSSRawDeclarations(styles);
+		Object.assign(this.styles, declarations);
+	}
+}
 
-		if (typeof styles === "string") {
-			stylesObject = {};
+function getKeyValueFromCSSRawDeclarations(declarationsRaw: string | object): object {
+	if (typeof declarationsRaw !== "string" && typeof declarationsRaw !== "object") {
+		return {};
+	}
 
-			const couples = styles.split(/\s*;\s*/);
+	if (typeof declarationsRaw === "object") {
+		return declarationsRaw;
+	}
 
-			for (let couple of couples) {
-				if (!couple.length) {
-					continue;
-				}
+	const stylesObject: { [key: string]: string } = {};
+	const declarations = declarationsRaw.split(/\s*;\s*/);
 
-				const [key, value] = couple.split(/\s*:\s*/);
-				stylesObject[key] = value;
-			}
+	for (const declaration of declarations) {
+		if (!declaration.length) {
+			continue;
 		}
 
-		Object.assign(this.styles, stylesObject || styles);
+		const [key, value] = declaration.split(/\s*:\s*/);
+		stylesObject[key] = value;
 	}
+
+	return stylesObject;
 }
