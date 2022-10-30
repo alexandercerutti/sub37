@@ -99,6 +99,28 @@ Alberto, come to look at Marcello!
 			);
 		});
 
+		it("should be parsing all the content, from the first character to the last", () => {
+			const GENERIC_RAW_VTT_CONTENT = `
+WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+Never drink liquid nitrogen.
+
+00:00:05.000 --> 00:00:09.000
+— It will perforate your stomach.
+— You could die.
+
+00:00:10.000 --> 00:00:14.000
+The Organisation for Sample Public Service Announcements accepts no liability for the content of this advertisement, or for the consequences of any actions taken on the basis of the information provided.`;
+
+			const parseResult = renderer.parse(GENERIC_RAW_VTT_CONTENT);
+
+			expect(parseResult.data[2]).toBeTruthy();
+			expect(parseResult.data[2].content).toBe(
+				"The Organisation for Sample Public Service Announcements accepts no liability for the content of this advertisement, or for the consequences of any actions taken on the basis of the information provided.",
+			);
+		});
+
 		it("should exclude cues with the same start time and end time", () => {
 			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
 			expect(result.data.length).toEqual(2);
