@@ -4,7 +4,6 @@ import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";
 
-const LF_REGEX = /\n/;
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
 const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*(?<payload>[\w\W]*)/;
 const CUE_MATCH_REGEX =
@@ -68,187 +67,186 @@ export default class Renderer extends HSBaseRenderer {
 			 */
 
 			if (
-				(LF_REGEX.test(content[block.cursor]) && LF_REGEX.test(content[block.cursor + 1])) ||
-				block.cursor === content.length
+				(content[block.cursor] !== "\n" || content[block.cursor + 1] !== "\n") &&
+				block.cursor !== content.length
 			) {
-				console.log("Found block:", content.substring(block.start, block.cursor));
+				block.cursor += 1;
+				continue;
+			}
 
-				try {
-					const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
+			try {
+				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
-					if (isError(blockEvaluationResult)) {
-						failures.push({
-							error: blockEvaluationResult,
-							failedChunk: content.substring(block.start, block.cursor),
-							isCritical: false,
-						});
-
-						/** Skipping \n\n and going to the next character */
-						block.cursor += 3;
-						block.start = block.cursor - 1;
-
-						continue;
-					}
-
-					/**
-					 * According to WebVTT standard, Region and style blocks should be
-					 * placed above the cues. So we try to ignore them if they are mixed.
-					 */
-
-					const shouldProcessNonCues =
-						latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
-
-					if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
-						const [blockType, parsedContent] = blockEvaluationResult;
-
-						if (parsedContent?.id) {
-							latestBlockPhase = blockType;
-							regions[parsedContent.id] = parsedContent;
-						}
-					}
-
-					if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
-						const [blockType, parsedContent] = blockEvaluationResult;
-						latestBlockPhase = blockType;
-						styles.push(parsedContent);
-					}
-
-					if (isCue(blockEvaluationResult)) {
-						const [blockType, parsedContent] = blockEvaluationResult;
-						latestBlockPhase = blockType;
-
-						/**
-						 * Saving the first cue with the id of the next cues
-						 * so we can inherit the different properties and
-						 * always have a reference to the cue timelines cues
-						 * origin from.
-						 */
-
-						let latestRootCue: CueNode = undefined;
-
-						for (const parsedCue of parsedContent) {
-							if (parsedCue.startTime >= parsedCue.endTime) {
-								continue;
-							}
-
-							const cue = CueNode.from(latestRootCue, {
-								id: parsedCue.id,
-								startTime: parsedCue.startTime,
-								endTime: parsedCue.endTime,
-								content: parsedCue.text,
-								attributes: parsedCue.attributes,
-							});
-
-							if (parsedCue.attributes.region) {
-								cue.region = regions[parsedCue.attributes.region];
-							}
-
-							if (!latestRootCue) {
-								latestRootCue = cue;
-							}
-
-							const stylesEntities = styles
-								.filter((style) => {
-									return (
-										(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
-										style.type === Parser.StyleDomain.GLOBAL
-									);
-								})
-								.sort(styleSpecificitySorter);
-
-							const entities: Entities.Tag[] = [];
-
-							if (stylesEntities.length) {
-								/**
-								 * Having the same length of the style entities here allows
-								 * us to prevent having several elements with the same styles
-								 * in presenter.
-								 */
-
-								const superCue = Object.getPrototypeOf(cue);
-								const length =
-									superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
-
-								entities.push(
-									new Entities.Tag({
-										offset: 0,
-										length,
-										tagType: Entities.TagType.SPAN,
-										attributes: new Map(),
-										classes: [],
-									}),
-								);
-
-								for (let style of stylesEntities) {
-									entities[0].setStyles(style.styleString);
-								}
-							}
-
-							for (const tag of parsedCue.tags) {
-								entities.push(tag);
-
-								stylesLoop: for (const style of styles) {
-									if (style.type !== Parser.StyleDomain.TAG) {
-										continue;
-									}
-
-									if (style.tagName && style.tagName !== tag.tagType) {
-										continue;
-									}
-
-									if (style.attributes.size > tag.attributes.size) {
-										continue;
-									}
-
-									if (style.attributes.size && tag.attributes.size) {
-										for (const [key, value] of tag.attributes) {
-											const styleAttributeValue = style.attributes.get(key);
-
-											if (styleAttributeValue === null) {
-												continue stylesLoop;
-											}
-
-											if (styleAttributeValue && styleAttributeValue !== value) {
-												continue stylesLoop;
-											}
-										}
-									}
-
-									if (style.classes.length !== tag.classes.length) {
-										continue;
-									}
-
-									for (const className of tag.classes) {
-										if (!style.classes.includes(className)) {
-											continue stylesLoop;
-										}
-									}
-
-									tag.setStyles(style.styleString);
-								}
-							}
-
-							cue.entities = entities;
-							cues.push(cue);
-						}
-					}
+				if (isError(blockEvaluationResult)) {
+					failures.push({
+						error: blockEvaluationResult,
+						failedChunk: content.substring(block.start, block.cursor),
+						isCritical: false,
+					});
 
 					/** Skipping \n\n and going to the next character */
 					block.cursor += 3;
 					block.start = block.cursor - 1;
-				} catch (err) {
-					const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-					return HSBaseRenderer.ParseResult(undefined, [
-						{
-							error,
-							isCritical: true,
-							failedChunk: undefined,
-						},
-					]);
+					continue;
 				}
-			} else {
-				block.cursor += 1;
+
+				/**
+				 * According to WebVTT standard, Region and style blocks should be
+				 * placed above the cues. So we try to ignore them if they are mixed.
+				 */
+
+				const shouldProcessNonCues =
+					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
+
+				if (isRegion(blockEvaluationResult) && shouldProcessNonCues) {
+					const [blockType, parsedContent] = blockEvaluationResult;
+
+					if (parsedContent?.id) {
+						latestBlockPhase = blockType;
+						regions[parsedContent.id] = parsedContent;
+					}
+				}
+
+				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
+					const [blockType, parsedContent] = blockEvaluationResult;
+					latestBlockPhase = blockType;
+					styles.push(parsedContent);
+				}
+
+				if (isCue(blockEvaluationResult)) {
+					const [blockType, parsedContent] = blockEvaluationResult;
+					latestBlockPhase = blockType;
+
+					/**
+					 * Saving the first cue with the id of the next cues
+					 * so we can inherit the different properties and
+					 * always have a reference to the cue timelines cues
+					 * origin from.
+					 */
+
+					let latestRootCue: CueNode = undefined;
+
+					for (const parsedCue of parsedContent) {
+						if (parsedCue.startTime >= parsedCue.endTime) {
+							continue;
+						}
+
+						const cue = CueNode.from(latestRootCue, {
+							id: parsedCue.id,
+							startTime: parsedCue.startTime,
+							endTime: parsedCue.endTime,
+							content: parsedCue.text,
+							attributes: parsedCue.attributes,
+						});
+
+						if (parsedCue.attributes.region) {
+							cue.region = regions[parsedCue.attributes.region];
+						}
+
+						if (!latestRootCue) {
+							latestRootCue = cue;
+						}
+
+						const stylesEntities = styles
+							.filter((style) => {
+								return (
+									(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
+									style.type === Parser.StyleDomain.GLOBAL
+								);
+							})
+							.sort(styleSpecificitySorter);
+
+						const entities: Entities.Tag[] = [];
+
+						if (stylesEntities.length) {
+							/**
+							 * Having the same length of the style entities here allows
+							 * us to prevent having several elements with the same styles
+							 * in presenter.
+							 */
+
+							const superCue = Object.getPrototypeOf(cue);
+							const length =
+								superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
+
+							entities.push(
+								new Entities.Tag({
+									offset: 0,
+									length,
+									tagType: Entities.TagType.SPAN,
+									attributes: new Map(),
+									classes: [],
+								}),
+							);
+
+							for (let style of stylesEntities) {
+								entities[0].setStyles(style.styleString);
+							}
+						}
+
+						for (const tag of parsedCue.tags) {
+							entities.push(tag);
+
+							stylesLoop: for (const style of styles) {
+								if (style.type !== Parser.StyleDomain.TAG) {
+									continue;
+								}
+
+								if (style.tagName && style.tagName !== tag.tagType) {
+									continue;
+								}
+
+								if (style.attributes.size > tag.attributes.size) {
+									continue;
+								}
+
+								if (style.attributes.size && tag.attributes.size) {
+									for (const [key, value] of tag.attributes) {
+										const styleAttributeValue = style.attributes.get(key);
+
+										if (styleAttributeValue === null) {
+											continue stylesLoop;
+										}
+
+										if (styleAttributeValue && styleAttributeValue !== value) {
+											continue stylesLoop;
+										}
+									}
+								}
+
+								if (style.classes.length !== tag.classes.length) {
+									continue;
+								}
+
+								for (const className of tag.classes) {
+									if (!style.classes.includes(className)) {
+										continue stylesLoop;
+									}
+								}
+
+								tag.setStyles(style.styleString);
+							}
+						}
+
+						cue.entities = entities;
+						cues.push(cue);
+					}
+				}
+
+				/** Skipping \n\n and going to the next character */
+				block.cursor += 3;
+				block.start = block.cursor - 1;
+			} catch (err) {
+				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
+
+				return HSBaseRenderer.ParseResult(undefined, [
+					{
+						error,
+						isCritical: true,
+						failedChunk: undefined,
+					},
+				]);
 			}
 		} while (block.cursor <= content.length);
 
