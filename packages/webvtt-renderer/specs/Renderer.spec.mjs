@@ -19,44 +19,6 @@ describe("WebVTTRenderer", () => {
 	});
 
 	describe("parse", () => {
-		const CLASSIC_CONTENT = `
-WEBVTT
-
-00:00:05.000 --> 00:00:25.000 region:fred align:left
-<v Fred&gt;>Would you like to get &lt; coffee?
-
-00:00:00.000 --> 00:00:20.000 region:fred align:left
-<lang.mimmo en-US>Hi, my name is Fred</lang>`;
-
-		const SAME_START_END_TIMES_CONTENT = `
-WEBVTT
-
-00:00:05.000 --> 00:00:05.000
-This cue should never appear, right?
-
-00:00:06.000 --> 00:00:07.000
-...
-
-00:00:08.000 --> 00:00:10.000
-...Right?
-`;
-
-		const REGION_WITH_ATTRIBUTES = `
-WEBVTT
-
-REGION
-id:fred
-width:40%
-lines:3
-regionanchor:0%,100%
-viewportanchor:10%,90%
-scroll:up
-
-00:00:05.000 --> 00:00:10.000 region:fred
-Mamma mia, Marcello, that's not how you hold a gun.
-Alberto, come to look at Marcello!
-`;
-
 		it("should return an empty ParseResult if rawContent is falsy", () => {
 			const emptyParseResult = HSBaseRenderer.ParseResult(
 				[],
@@ -144,6 +106,19 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 		});
 
 		it("should exclude cues with the same start time and end time", () => {
+			const SAME_START_END_TIMES_CONTENT = `
+WEBVTT
+
+00:00:05.000 --> 00:00:05.000
+This cue should never appear, right?
+
+00:00:06.000 --> 00:00:07.000
+...
+
+00:00:08.000 --> 00:00:10.000
+...Right?
+`;
+
 			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
 			expect(result.data.length).toEqual(2);
 
@@ -155,6 +130,15 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 		});
 
 		it("should return an array containing two cues", () => {
+			const CLASSIC_CONTENT = `
+WEBVTT
+
+00:00:05.000 --> 00:00:25.000 region:fred align:left
+<v Fred&gt;>Would you like to get &lt; coffee?
+
+00:00:00.000 --> 00:00:20.000 region:fred align:left
+<lang.mimmo en-US>Hi, my name is Fred</lang>`;
+
 			const parsingResult = renderer.parse(CLASSIC_CONTENT);
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(2);
@@ -327,6 +311,22 @@ WEBVTT
 		});
 
 		it("should return a cue with a region associated", () => {
+			const REGION_WITH_ATTRIBUTES = `
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up
+
+00:00:05.000 --> 00:00:10.000 region:fred
+Mamma mia, Marcello, that's not how you hold a gun.
+Alberto, come to look at Marcello!
+`;
+
 			const parsingResult = renderer.parse(REGION_WITH_ATTRIBUTES);
 
 			expect(parsingResult.data[0]).toEqual(
