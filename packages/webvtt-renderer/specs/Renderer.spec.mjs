@@ -121,6 +121,28 @@ The Organisation for Sample Public Service Announcements accepts no liability fo
 			);
 		});
 
+		it("should accept cues with minutes as most significant unit", () => {
+			const GENERIC_RAW_VTT_CONTENT = `
+WEBVTT
+
+00:01.000 --> 00:04.000
+Never drink liquid nitrogen.
+
+NOTE EndTime is on purpose with hours. This test should also allow mixed units between start time and end time
+
+10:05.000 --> 00:11:09.000
+— It will perforate your stomach.
+— You could die.`;
+
+			const parseResult = renderer.parse(GENERIC_RAW_VTT_CONTENT);
+
+			expect(parseResult.data.length).toBe(2);
+			expect(parseResult.data[0].startTime).toBe(1000);
+			expect(parseResult.data[0].endTime).toBe(4000);
+			expect(parseResult.data[1].startTime).toBe(605000);
+			expect(parseResult.data[1].endTime).toBe(669000);
+		});
+
 		it("should exclude cues with the same start time and end time", () => {
 			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
 			expect(result.data.length).toEqual(2);
