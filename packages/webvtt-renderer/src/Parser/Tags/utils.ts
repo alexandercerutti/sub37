@@ -1,8 +1,8 @@
 import { Entities } from "@hsubs/server";
-import type { CueParsedData } from "../parseCue.js";
-import Node from "./Node.js";
-import NodeQueue from "./NodeQueue.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
+import type { CueParsedData } from "../parseCue.js";
+import type Node from "./Node.js";
+import type NodeQueue from "./NodeQueue.js";
 
 export function isSupported(content: string): boolean {
 	return EntitiesTokenMap.hasOwnProperty(content);
