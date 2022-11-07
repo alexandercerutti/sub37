@@ -1,5 +1,5 @@
 import { Entities } from "@hsubs/server";
-import type { CueParsedData } from "../CueNode.js";
+import type { CueParsedData } from "../parseCue.js";
 import Node from "./Node.js";
 import NodeQueue from "./NodeQueue.js";
 import { EntitiesTokenMap } from "./tokenEntities.js";
