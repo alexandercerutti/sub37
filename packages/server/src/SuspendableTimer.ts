@@ -11,7 +11,7 @@ function createTicker(tickCallback: (currentTime?: number) => void) {
 }
 
 export class SuspendableTimer {
-	private interval: number = null;
+	private interval: number | undefined = undefined;
 	private ticker: Ticker;
 
 	constructor(private frequency: number, tickCallback: (currentTime?: number) => void) {
@@ -32,7 +32,7 @@ export class SuspendableTimer {
 		}
 
 		window.clearInterval(this.interval);
-		this.interval = null;
+		this.interval = undefined;
 	}
 
 	public get isRunning(): boolean {

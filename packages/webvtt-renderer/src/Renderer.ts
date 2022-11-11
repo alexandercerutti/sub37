@@ -125,7 +125,7 @@ export default class Renderer extends HSBaseRenderer {
 					 * origin from.
 					 */
 
-					let latestRootCue: CueNode = undefined;
+					let latestRootCue: CueNode | undefined = undefined;
 
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {

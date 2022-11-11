@@ -20,7 +20,7 @@ export interface Leafable<LeafShape extends object> {
 }
 
 export class IntervalBinaryTree<LeafShape extends object> {
-	private root: IntervalBinaryLeaf<LeafShape> = null;
+	private root: IntervalBinaryLeaf<LeafShape> | null = null;
 
 	public addNode(newNode: Leafable<LeafShape> | IntervalBinaryLeaf<LeafShape>): void {
 		const nextTreeNode = isLeafable(newNode) ? newNode.toLeaf() : newNode;
@@ -43,7 +43,7 @@ export class IntervalBinaryTree<LeafShape extends object> {
 	public getCurrentNodes(
 		positionOrRange: number | [start: number, end: number],
 	): null | IntervalBinaryLeaf<LeafShape>["node"][] {
-		let range: [number, number] = undefined;
+		let range: [number, number];
 
 		if (positionOrRange instanceof Array) {
 			range = positionOrRange;
@@ -65,7 +65,7 @@ export class IntervalBinaryTree<LeafShape extends object> {
 }
 
 function insert<LeafShape extends object>(
-	root: IntervalBinaryLeaf<LeafShape>,
+	root: IntervalBinaryLeaf<LeafShape> | null,
 	node: IntervalBinaryLeaf<LeafShape>,
 ) {
 	if (!root) {
@@ -97,7 +97,7 @@ function insert<LeafShape extends object>(
  */
 
 function accumulateMatchingNodes<LeafShape extends object>(
-	treeNode: IntervalBinaryLeaf<LeafShape>,
+	treeNode: IntervalBinaryLeaf<LeafShape> | null,
 	low: number,
 	high: number,
 ): IntervalBinaryLeaf<LeafShape>["node"][] {
@@ -153,7 +153,7 @@ function accumulateMatchingNodes<LeafShape extends object>(
  */
 
 function findAllInSubtree<LeafShape extends object>(
-	root: IntervalBinaryLeaf<LeafShape>,
+	root: IntervalBinaryLeaf<LeafShape> | null,
 ): IntervalBinaryLeaf<LeafShape>["node"][] {
 	if (!root) {
 		return [];

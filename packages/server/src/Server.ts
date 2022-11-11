@@ -51,9 +51,9 @@ interface HSListener<EventName extends Events = Events> {
  */
 
 export class HSServer {
-	private [intervalSymbol]: SuspendableTimer;
+	private [intervalSymbol]: SuspendableTimer | undefined = undefined;
 	private [renderersSymbol]: HSBaseRendererConstructor[];
-	private [sessionSymbol]: HSSession = null;
+	private [sessionSymbol]: HSSession | undefined = undefined;
 	private [listenersSymbol]: HSListener[] = [];
 
 	constructor(...renderers: HSBaseRendererConstructor[]) {

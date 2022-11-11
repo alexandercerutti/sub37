@@ -88,7 +88,7 @@ export class Tokenizer {
 		 */
 
 		while (cursor < source.length) {
-			const char = source[cursor];
+			const char = source[cursor] as string;
 			const maybeHTMLEntity = "&" + result + char;
 
 			if (
@@ -124,7 +124,7 @@ export class Tokenizer {
 	// *** INSTANCE METHODS *** //
 	// ************************ //
 
-	public nextToken(): Token {
+	public nextToken(): Token | null {
 		if (this.cursor >= this.rawContent.length) {
 			return null;
 		}
@@ -145,7 +145,7 @@ export class Tokenizer {
 		const classes: string[] = [];
 
 		while (this.cursor <= this.rawContent.length) {
-			const char = this.rawContent[this.cursor];
+			const char = this.rawContent[this.cursor] as string;
 
 			switch (state) {
 				case TokenizerState.DATA: {
