@@ -155,6 +155,13 @@ export class HSServer {
 		let lastUsedCues = new Set<CueNode>();
 
 		this[intervalSymbol] = new SuspendableTimer(frequencyMs, (currentTime?: number) => {
+			try {
+				assertSessionInitialized(this[sessionSymbol]);
+			} catch (err) {
+				this.suspend(true);
+				throw err;
+			}
+
 			const nextCues = this[sessionSymbol].getActiveCues(currentTime || getCurrentPosition());
 			const nextCache = new Set([...nextCues]);
 
