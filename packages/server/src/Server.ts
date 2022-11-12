@@ -69,6 +69,8 @@ export class HSServer {
 					Renderer.toString() !== "default"
 				);
 			} catch (err) {
+				/** Otherwise developers will never know why a Renderer got discarded ¯\_(ツ)_/¯ */
+				console.error(err);
 				return false;
 			}
 		});
