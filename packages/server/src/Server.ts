@@ -66,7 +66,7 @@ export class HSServer {
 				return (
 					Object.getPrototypeOf(Renderer) === HSBaseRenderer &&
 					Renderer.supportedType &&
-					Renderer.rendererName !== "default"
+					Renderer.toString() !== "default"
 				);
 			} catch (err) {
 				return false;

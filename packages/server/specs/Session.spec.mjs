@@ -10,7 +10,13 @@ import {
 } from "../lib/Errors/index.js";
 
 class MockedRenderer extends HSBaseRenderer {
-	static rendererName = "Mocked Renderer";
+	static toString() {
+		return "Mocked Renderer";
+	}
+
+	toString() {
+		return "Mocked Renderer";
+	}
 
 	/**
 	 *
@@ -23,7 +29,13 @@ class MockedRenderer extends HSBaseRenderer {
 }
 
 class MockedRendererWithParseResultError {
-	static rendererName = "Mocked Renderer With Parse Result Error";
+	static toString() {
+		return "Mocked Renderer With Parse Result Error";
+	}
+
+	toString() {
+		return "Mocked Renderer With Parse Result Error";
+	}
 
 	/**
 	 *

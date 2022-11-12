@@ -1,16 +1,27 @@
 import type { CueNode } from "../CueNode.js";
 
 export interface HSBaseRendererConstructor {
-	rendererName: string;
 	supportedType: string;
 
 	ParseResult(data: CueNode[], errors: HSBaseRenderer.ParseError[]): ParseResult;
+
+	/**
+	 * Used for printing Renderer human name
+	 */
+
+	toString(): string;
 
 	new (): HSBaseRenderer;
 }
 
 export interface HSBaseRenderer {
 	parse(rawContent: unknown): ParseResult;
+
+	/**
+	 * Used for printing Renderer human name
+	 */
+
+	toString(): string;
 }
 
 export declare namespace HSBaseRenderer {
@@ -22,13 +33,6 @@ export declare namespace HSBaseRenderer {
 export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	implements HSBaseRenderer
 {
-	/**
-	 * Static property for logging purposes.
-	 * Must be overridden by Renderers
-	 */
-
-	public static rendererName: string = "default";
-
 	/**
 	 * Static property that instructs for which type of subtitles
 	 * this renderer should be used. Must be overridden by Renderers
@@ -54,6 +58,30 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 		errors: HSBaseRenderer.ParseError[] = [],
 	): ParseResult {
 		return new ParseResult(data, errors);
+	}
+
+	/**
+	 * Returns a human name for the renderer. This property
+	 * **must** be overridden by any Renderer passed to the
+	 * server.
+	 *
+	 * @returns
+	 */
+
+	public static toString(): string {
+		return "default";
+	}
+
+	/**
+	 * Returns a human name for the renderer. This property
+	 * **must** be overridden by any Renderer passed to the
+	 * server.
+	 *
+	 * @returns
+	 */
+
+	public toString(): string {
+		return "default";
 	}
 
 	/**

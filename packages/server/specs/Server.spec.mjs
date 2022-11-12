@@ -5,9 +5,16 @@ import { HSServer, Events } from "../lib/Server";
 import { CueNode } from "../lib/CueNode";
 
 class MockedRendererNoExtend {
-	static rendererName = "NoExtendRenderer";
 	static get supportedType() {
 		return "text/vtt";
+	}
+
+	static toString() {
+		return "NoExtendRenderer";
+	}
+
+	toString() {
+		return "NoExtendRenderer";
 	}
 }
 
@@ -15,10 +22,16 @@ class MockedRendererNoSupportedType extends HSBaseRenderer {}
 class MockedRendererNoParse extends HSBaseRenderer {}
 
 class MockedRenderer extends HSBaseRenderer {
-	static rendererName = "MockedRenderer";
+	static toString() {
+		return "MockedRenderer";
+	}
 
 	static get supportedType() {
 		return "text/vtt";
+	}
+
+	toString() {
+		return "MockedRenderer";
 	}
 
 	/**

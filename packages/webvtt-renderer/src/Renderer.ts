@@ -23,10 +23,16 @@ enum BlockType {
 }
 
 export default class Renderer extends HSBaseRenderer {
-	static override rendererName: string = "WebVTT Renderer";
-
 	static override get supportedType() {
 		return "text/vtt";
+	}
+
+	static override toString(): string {
+		return "WebVTT Renderer";
+	}
+
+	override toString(): string {
+		return "WebVTT Renderer";
 	}
 
 	override parse(rawContent: string): HSBaseRenderer.ParseResult {

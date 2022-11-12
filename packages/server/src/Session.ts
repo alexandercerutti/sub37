@@ -1,7 +1,7 @@
 import type { RawTrack } from "./model";
 import { CueNode } from "./CueNode.js";
 import { IntervalBinaryTree } from "./IntervalBinaryTree.js";
-import { HSBaseRenderer, HSBaseRendererConstructor, ParseResult } from "./BaseRenderer/index.js";
+import { HSBaseRendererConstructor, ParseResult } from "./BaseRenderer/index.js";
 import {
 	UncaughtParsingExceptionError,
 	UnexpectedDataFormatError,
@@ -76,8 +76,7 @@ export class HSSession {
 
 				if (!(parseResult instanceof ParseResult)) {
 					/** If parser fails once for this reason, it is worth to stop the whole ride. */
-					const rendererName = getRendererName(this.renderer);
-					throw new UnexpectedParsingOutputFormatError(rendererName, lang, parseResult);
+					throw new UnexpectedParsingOutputFormatError(this.renderer.toString(), lang, parseResult);
 				}
 
 				if (parseResult.data.length) {
@@ -87,10 +86,8 @@ export class HSSession {
 
 					for (const cue of parseResult.data) {
 						if (!(cue instanceof CueNode)) {
-							const rendererName = getRendererName(this.renderer);
-
 							parseResult.errors.push({
-								error: new UnexpectedDataFormatError(rendererName),
+								error: new UnexpectedDataFormatError(this.renderer.toString()),
 								failedChunk: cue,
 								isCritical: false,
 							});
@@ -101,8 +98,7 @@ export class HSSession {
 						this.timelines[lang].addNode(cue);
 					}
 				} else if (parseResult.errors.length >= 1) {
-					const rendererName = getRendererName(this.renderer);
-					throw new UnparsableContentError(rendererName, parseResult.errors[0]);
+					throw new UnparsableContentError(this.renderer.toString(), parseResult.errors[0]);
 				}
 
 				for (const parseResultError of parseResult.errors) {
@@ -117,12 +113,7 @@ export class HSSession {
 				throw err;
 			}
 
-			const rendererName = getRendererName(this.renderer);
-			throw new UncaughtParsingExceptionError(rendererName, err);
+			throw new UncaughtParsingExceptionError(this.renderer.toString(), err);
 		}
 	}
-}
-
-function getRendererName(renderer: HSBaseRenderer) {
-	return (Object.getPrototypeOf(renderer).constructor as HSBaseRendererConstructor).rendererName;
 }
