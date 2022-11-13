@@ -46,6 +46,13 @@
 						videoTag.currentTime = videoTag.currentTime + 10;
 						break;
 					}
+					case "Space": {
+						if (videoTag.paused) {
+							videoTag.play();
+						} else {
+							videoTag.pause();
+						}
+					}
 				}
 			});
 
