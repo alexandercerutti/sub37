@@ -28,7 +28,7 @@ function togglePlayback(videoElement) {
 	}
 }
 
-document.addEventListener("keyup", ({ code }) => {
+document.addEventListener("keydown", ({ code }) => {
 	switch (code) {
 		case "ArrowLeft": {
 			videoTag.currentTime = videoTag.currentTime - 10;
