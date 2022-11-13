@@ -20,6 +20,7 @@ export class FakeHTMLVideoElement {
 	public set currentTime(value: number) {
 		this[currentTimeSymbol] = Math.min(Math.max(0, value), this[durationSymbol]);
 		this.emitEvent("seeked", value);
+		this.emitEvent("timeupdate", value);
 	}
 
 	public get duration(): number {
