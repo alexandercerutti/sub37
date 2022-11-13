@@ -59,10 +59,10 @@ export class FakeHTMLVideoElement {
 
 	public play() {
 		this.playheadInterval = window.setInterval(() => {
-			this.emitEvent("timeupdate", this.currentTime);
-			this.currentTime += 0.25;
+			this.emitEvent("timeupdate", this[currentTimeSymbol]);
+			this[currentTimeSymbol] += 0.25;
 
-			if (this.currentTime >= this.duration) {
+			if (this[currentTimeSymbol] >= this.duration) {
 				this.pause();
 			}
 		}, 250);
