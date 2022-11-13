@@ -50,6 +50,12 @@ videoTag.addEventListener("timeupdate", (time) => {
 	currentTime.innerText = time;
 });
 
+videoTag.addEventListener("seeked", () => {
+	if (videoTag.paused) {
+		server.updateTime(videoTag.currentTime * 1000);
+	}
+});
+
 ranger.addEventListener("input", () => {
 	const time = parseFloat(ranger.value);
 	videoTag.currentTime = time;
