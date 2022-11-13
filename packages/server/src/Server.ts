@@ -9,6 +9,8 @@ import {
 	UnsupportedContentError,
 	OutOfRangeFrequencyError,
 	ParsingError,
+	RendererNotExtendingPrototypeError,
+	RendererNotOverridingToStringError,
 } from "./Errors/index.js";
 
 const intervalSymbol /***/ = Symbol("hs.s.interval");
@@ -63,11 +65,15 @@ export class HSServer {
 
 		this[renderersSymbol] = renderers.filter((Renderer) => {
 			try {
-				return (
-					Object.getPrototypeOf(Renderer) === HSBaseRenderer &&
-					Renderer.supportedType &&
-					Renderer.toString() !== "default"
-				);
+				if (Renderer.toString() === "default") {
+					throw new RendererNotOverridingToStringError();
+				}
+
+				if (Object.getPrototypeOf(Renderer) !== HSBaseRenderer) {
+					throw new RendererNotExtendingPrototypeError(Renderer.toString());
+				}
+
+				return Boolean(Renderer.supportedType);
 			} catch (err) {
 				/** Otherwise developers will never know why a Renderer got discarded ¯\_(ツ)_/¯ */
 				console.error(err);

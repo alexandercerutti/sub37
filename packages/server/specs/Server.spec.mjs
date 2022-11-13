@@ -2,6 +2,11 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
 import { HSServer, Events } from "../lib/Server";
+import {
+	RendererNotOverridingToStringError,
+	RendererNotExtendingPrototypeError,
+	RendererNotOverridingSupportedTypesError,
+} from "../lib/Errors/index.js";
 import { CueNode } from "../lib/CueNode";
 
 class MockedRendererNoExtend {
@@ -18,8 +23,22 @@ class MockedRendererNoExtend {
 	}
 }
 
-class MockedRendererNoSupportedType extends HSBaseRenderer {}
+class MockedRendererNoSupportedType extends HSBaseRenderer {
+	static toString() {
+		return "MockedRendererNoSupportedType";
+	}
+
+	toString() {
+		return "MockedRendererNoSupportedType";
+	}
+}
 class MockedRendererNoParse extends HSBaseRenderer {}
+
+class MockedRendererNoStaticToString extends HSBaseRenderer {
+	static get supportedType() {
+		return "text/vtt";
+	}
+}
 
 class MockedRenderer extends HSBaseRenderer {
 	static toString() {
@@ -63,6 +82,33 @@ function mockGetCurrentPositionFactory() {
 describe("HSServer", () => {
 	it("should throw if no renderer is passed when a server is initialized", () => {
 		expect(() => new HSServer()).toThrowError();
+	});
+
+	it("should log errors out if a server is initialized with not compliant renderers", () => {
+		const error = jest.spyOn(console, "error");
+
+		/**
+		 * @type {Array<import("../lib").HSBaseRendererConstructor>}
+		 */
+
+		const renderers = [
+			MockedRendererNoStaticToString,
+			// @ts-expect-error
+			MockedRendererNoExtend,
+			MockedRendererNoSupportedType,
+			// Last one is valid so it doesn't actually crash
+			MockedRenderer,
+		];
+
+		new HSServer(...renderers);
+
+		expect(error).toHaveBeenCalledTimes(3);
+
+		expect(error).toHaveBeenCalledWith(new RendererNotOverridingToStringError());
+		expect(error).toHaveBeenCalledWith(new RendererNotExtendingPrototypeError("NoExtendRenderer"));
+		expect(error).toHaveBeenCalledWith(
+			new RendererNotOverridingSupportedTypesError("MockedRendererNoSupportedType"),
+		);
 	});
 
 	it("should throw if no valid renderer is left after filtering out invalid ones", () => {

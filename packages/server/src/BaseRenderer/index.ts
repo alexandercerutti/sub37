@@ -1,4 +1,5 @@
 import type { CueNode } from "../CueNode.js";
+import { RendererNotOverridingSupportedTypesError } from "../Errors/index.js";
 
 export interface HSBaseRendererConstructor {
 	supportedType: string;
@@ -39,9 +40,7 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	 */
 
 	public static get supportedType(): string {
-		throw new Error(
-			"Renderer didn't specify any static supportedType property. Renderer will be ignored.",
-		);
+		throw new RendererNotOverridingSupportedTypesError(this.toString());
 	}
 
 	/**

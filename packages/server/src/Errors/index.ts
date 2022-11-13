@@ -8,3 +8,6 @@ export * from "./UnexpectedDataFormatError.js";
 export * from "./ParsingError.js";
 export * from "./UnparsableContentError.js";
 export * from "./ActiveTrackMissingError.js";
+export * from "./RendererNotExtendingPrototypeError.js";
+export * from "./RendererNotOverridingToStringError.js";
+export * from "./RendererNotOverridingSupportedTypesError.js";
