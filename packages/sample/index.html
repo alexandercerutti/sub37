@@ -81,14 +81,6 @@
 				server.updateTime(time * 1000);
 			});
 
-			videoTag.addEventListener("pause", () => {
-				playbackBtn.textContent = "Resume";
-			});
-
-			videoTag.addEventListener("playing", () => {
-				playbackBtn.textContent = "Pause";
-			});
-
 			playbackBtn.addEventListener("click", () => {
 				togglePlayback(videoTag);
 			});
@@ -186,10 +178,13 @@
 				server.start(() => {
 					return parseFloat(ranger.value) * 1000;
 				});
+
+				playbackBtn.textContent = "Pause";
 			});
 
 			videoTag.addEventListener("pause", () => {
 				server.suspend();
+				playbackBtn.textContent = "Resume";
 			});
 
 			const presenter = document.getElementById("presenter");
