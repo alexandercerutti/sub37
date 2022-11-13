@@ -25,6 +25,8 @@ export default class TreeOrchestrator {
 		if (settings && typeof settings === "object") {
 			this.settings = { ...this.settings, ...settings };
 		}
+
+		this[rootElementSymbol].style.height = `${this.settings.lines * 1.5}em`;
 	}
 
 	public appendTo(node: HTMLElement): void {
