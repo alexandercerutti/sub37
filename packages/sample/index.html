@@ -18,7 +18,7 @@
 			</div>
 			<captions-presenter id="presenter"></captions-presenter>
 		</div>
-		<button id="playback-btn" data-paused="false">PAUSE</button>
+		<button id="playback-btn" data-paused="false">Pause</button>
 		<script type="module">
 			import "@hsubs/captions-presenter-web";
 			import { HSServer } from "@hsubs/server";
@@ -34,7 +34,16 @@
 			const server = new HSServer(WebVTTRenderer);
 			const ranger = document.querySelector("#ranger input");
 			const currentTime = document.getElementById("currentTime");
+			const playbackBtn = document.getElementById("playback-btn");
 			const videoTag = new FakeHTMLVideoElement(parseFloat(ranger.getAttribute("max")));
+
+			function togglePlayback(videoElement) {
+				if (videoElement.paused) {
+					videoElement.play();
+				} else {
+					videoElement.pause();
+				}
+			}
 
 			document.addEventListener("keyup", ({ code }) => {
 				switch (code) {
@@ -47,11 +56,8 @@
 						break;
 					}
 					case "Space": {
-						if (videoTag.paused) {
-							videoTag.play();
-						} else {
-							videoTag.pause();
-						}
+						togglePlayback(videoTag);
+						break;
 					}
 				}
 			});
@@ -83,14 +89,8 @@
 				playbackBtn.textContent = "Pause";
 			});
 
-			const playbackBtn = document.getElementById("playback-btn");
-
 			playbackBtn.addEventListener("click", () => {
-				if (videoTag.paused) {
-					videoTag.play();
-				} else {
-					videoTag.pause();
-				}
+				togglePlayback(videoTag);
 			});
 
 			// server.createSession(
