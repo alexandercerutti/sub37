@@ -3,15 +3,28 @@ import { CueNode, Entities } from "@hsubs/server";
 
 const rootElementSymbol = Symbol("to.root.element");
 
+interface OrchestratorSettings {
+	lines: number;
+}
+
 export default class TreeOrchestrator {
+	private static DEFAULT_SETTINGS: OrchestratorSettings = {
+		lines: 2,
+	};
+
 	private [rootElementSymbol] = Object.assign(document.createElement("div"), {
 		className: "region",
 	});
 
-	public regionId: string;
+	public regionId: string = "default";
+	private settings: OrchestratorSettings = { ...TreeOrchestrator.DEFAULT_SETTINGS };
 
-	public constructor(regionId: string = "default") {
+	public constructor(regionId: string = "default", settings?: OrchestratorSettings) {
 		this.regionId = regionId;
+
+		if (settings && typeof settings === "object") {
+			this.settings = { ...this.settings, ...settings };
+		}
 	}
 
 	public appendTo(node: HTMLElement): void {
@@ -141,10 +154,6 @@ export default class TreeOrchestrator {
 		 */
 
 		if (this[rootElementSymbol].children.length) {
-			/**
-			 * @TODO This should probably be a property of the component
-			 */
-			const MAXIMUM_VISIBLE_ELEMENTS = 2;
 			const {
 				children: { length: childrenAmount },
 			} = this[rootElementSymbol];
@@ -160,7 +169,7 @@ export default class TreeOrchestrator {
 			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
 			 */
 
-			const linesToBeScrolled = -childrenAmount + MAXIMUM_VISIBLE_ELEMENTS;
+			const linesToBeScrolled = -childrenAmount + this.settings.lines;
 
 			this[rootElementSymbol].style.transform = `translateY(
 				${1.5 * linesToBeScrolled}em
