@@ -75,14 +75,20 @@
 				server.updateTime(time * 1000);
 			});
 
+			videoTag.addEventListener("pause", () => {
+				playbackBtn.textContent = "Resume";
+			});
+
+			videoTag.addEventListener("playing", () => {
+				playbackBtn.textContent = "Pause";
+			});
+
 			const playbackBtn = document.getElementById("playback-btn");
 
-			playbackBtn.addEventListener("click", (e) => {
+			playbackBtn.addEventListener("click", () => {
 				if (videoTag.paused) {
 					videoTag.play();
-					e.currentTarget.textContent = "Pause";
 				} else {
-					e.currentTarget.textContent = "Resume";
 					videoTag.pause();
 				}
 			});
