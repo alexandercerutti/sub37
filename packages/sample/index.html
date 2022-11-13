@@ -36,6 +36,19 @@
 			const currentTime = document.getElementById("currentTime");
 			const videoTag = new FakeHTMLVideoElement(parseFloat(ranger.getAttribute("max")));
 
+			document.addEventListener("keyup", ({ code }) => {
+				switch (code) {
+					case "ArrowLeft": {
+						videoTag.currentTime = videoTag.currentTime - 10;
+						break;
+					}
+					case "ArrowRight": {
+						videoTag.currentTime = videoTag.currentTime + 10;
+						break;
+					}
+				}
+			});
+
 			videoTag.addEventListener("timeupdate", (time) => {
 				ranger.value = time;
 				currentTime.innerText = time;
