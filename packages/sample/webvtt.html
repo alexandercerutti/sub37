@@ -86,7 +86,7 @@
 					const latestTrack = localStorage.getItem(LOCAL_STORAGE_KEY);
 
 					if (latestTrack) {
-						this.schedule(latestTrack);
+						this.#commit(latestTrack);
 						textContainer.querySelector("textarea").value = latestTrack;
 					}
 				}
@@ -101,43 +101,45 @@
 				}
 
 				schedule(text) {
-					this.operation = () => {
-						const currentVideo = videoContainer.querySelector("video");
-						const currentTrack = Array.prototype.find.call(
-							currentVideo.childNodes,
-							(child) => child.nodeName === "TRACK",
-						);
+					this.operation = () => this.#commit(text);
+				}
 
-						if (currentTrack?.src) {
-							this.#disposeTrackURL(currentTrack.src);
-						}
+				#commit(text) {
+					const currentVideo = videoContainer.querySelector("video");
+					const currentTrack = Array.prototype.find.call(
+						currentVideo.childNodes,
+						(child) => child.nodeName === "TRACK",
+					);
 
-						const newTrackURL = this.#createTrackURL(text);
+					if (currentTrack?.src) {
+						this.#disposeTrackURL(currentTrack.src);
+					}
 
-						/**
-						 * Creating again the video tag due to a bug in Chrome
-						 * for which removing a textTrack element and adding a new one
-						 * lefts the UI dirty
-						 */
+					const newTrackURL = this.#createTrackURL(text);
 
-						const videoElement = Object.assign(document.createElement("video"), {
-							controls: true,
-							muted: true,
-							src: "./big_buck_bunny_1080p_60fps.mp4",
-							autoplay: true,
-						});
+					/**
+					 * Creating again the video tag due to a bug in Chrome
+					 * for which removing a textTrack element and adding a new one
+					 * lefts the UI dirty
+					 */
 
-						const track = Object.assign(document.createElement("track"), {
-							src: newTrackURL,
-							mode: "showing",
-							default: true,
-						});
+					const videoElement = Object.assign(document.createElement("video"), {
+						controls: true,
+						muted: true,
+						src: "./big_buck_bunny_1080p_60fps.mp4",
+						autoplay: true,
+					});
 
-						videoElement.appendChild(track);
+					const track = Object.assign(document.createElement("track"), {
+						src: newTrackURL,
+						mode: "showing",
+						default: true,
+					});
 
-						videoContainer.querySelector("video").remove();
-						videoContainer.appendChild(videoElement);
-					};
+					videoElement.appendChild(track);
+
+					videoContainer.querySelector("video").remove();
+					videoContainer.appendChild(videoElement);
 				}
 
 				#createTrackURL(text) {
