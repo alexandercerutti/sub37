@@ -40,11 +40,20 @@
 				border-radius: 3px;
 			}
 
-			main div > p {
+			main div > h3 {
 				text-transform: uppercase;
 				color: rgb(197, 66, 6);
 				font-weight: 400;
 				font-size: 1.8rem;
+			}
+
+			main div > p#firefox-not-showing-warning {
+				font-size: 1.8rem;
+				font-weight: 300;
+				border-radius: 3px;
+				border: 2px solid #ffdeb4;
+				background-color: orange;
+				padding: 10px;
 			}
 
 			textarea {
@@ -68,11 +77,15 @@
 	<body>
 		<main>
 			<div id="text-area-container">
-				<p>WebVTT Text Track</p>
+				<h3>WebVTT Text Track</h3>
 				<textarea id="webvtt-content" placeholder="WEBVTT..."></textarea>
 			</div>
 			<div id="video-container">
-				<p>Example Video</p>
+				<h3>Example Video</h3>
+				<p id="firefox-not-showing-warning">
+					Please note that Firefox is glitched and might decide not render anymore subtitles for
+					unknown reasons, even if reloading. You might need to open this tab in incognito again.
+				</p>
 				<video controls muted autoplay src="./big_buck_bunny_1080p_60fps.mp4"></video>
 			</div>
 		</main>
