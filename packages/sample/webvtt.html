@@ -67,7 +67,7 @@
 	</head>
 	<body>
 		<main>
-			<div>
+			<div id="text-area-container">
 				<p>WebVTT Text Track</p>
 				<textarea id="webvtt-content" placeholder="WEBVTT..."></textarea>
 			</div>
@@ -78,8 +78,19 @@
 		</main>
 		<script>
 			const videoContainer = document.getElementById("video-container");
+			const textContainer = document.getElementById("text-area-container");
+			const LOCAL_STORAGE_KEY = "latest-track-text";
 
 			class TrackScheduler {
+				constructor() {
+					const latestTrack = localStorage.getItem(LOCAL_STORAGE_KEY);
+
+					if (latestTrack) {
+						this.schedule(latestTrack);
+						textContainer.querySelector("textarea").value = latestTrack;
+					}
+				}
+
 				get operation() {
 					return this[Symbol.for("trackschedulerop")];
 				}
@@ -130,6 +141,7 @@
 				}
 
 				#createTrackURL(text) {
+					localStorage.setItem(LOCAL_STORAGE_KEY, text);
 					const blob = new Blob([text], { type: "text/vtt" });
 					return URL.createObjectURL(blob);
 				}
