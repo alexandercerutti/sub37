@@ -118,6 +118,10 @@
 				}
 
 				#commit(text) {
+					if (!text.length) {
+						return;
+					}
+
 					const currentVideo = videoContainer.querySelector("video");
 					const currentTrack = Array.prototype.find.call(
 						currentVideo.childNodes,
