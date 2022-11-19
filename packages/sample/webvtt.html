@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WebVTT Custom Viewer</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				font-size: 62.5%;
+			}
+
+			* {
+				box-sizing: border-box;
+				font-family: "Roboto", sans-serif;
+			}
+
+			main {
+				margin: 20px;
+				display: grid;
+				grid-template-columns: 1fr 2fr;
+				justify-items: center;
+				column-gap: 20px;
+			}
+
+			main > * {
+				width: 100%;
+			}
+
+			main div {
+				border-radius: 3px;
+			}
+
+			main div > p {
+				text-transform: uppercase;
+				color: rgb(197, 66, 6);
+				font-weight: 400;
+				font-size: 1.8rem;
+			}
+
+			textarea {
+				padding: 10px;
+				width: 100%;
+				outline-color: rgb(197, 66, 6);
+				height: 500px;
+				font-size: 1.5rem;
+				resize: none;
+				font-weight: 300;
+			}
+
+			video {
+				width: 100%;
+				border: 1px solid rgb(197, 66, 6);
+				aspect-ratio: 16 / 9;
+				max-width: 700px;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<div>
+				<p>WebVTT Text Track</p>
+				<textarea id="webvtt-content" placeholder="WEBVTT..."></textarea>
+			</div>
+			<div>
+				<p>Example Video</p>
+				<video controls muted src="./big_buck_bunny_1080p_60fps.mp4"></video>
+			</div>
+		</main>
+		<script>
+			const video = document.getElementsByTagName("video")[0];
+
+			class TrackScheduler {
+				get operation() {
+					return this[Symbol.for("trackschedulerop")];
+				}
+
+				set operation(fn) {
+					DebouncedOperation.clear(this[Symbol.for("trackschedulerop")]);
+					this[Symbol.for("trackschedulerop")] = DebouncedOperation.create(fn);
+				}
+
+				schedule(text) {
+					this.operation = () => {
+						const newTrackURL = this.#createTrackURL(text);
+
+						video.getElementsByTagName("track")[0]?.remove();
+						this.#disposeTrackURL(this.currentTrackURL);
+
+						const track = document.createElement("track");
+						track.src = newTrackURL;
+
+						video.appendChild(track);
+
+						this.currentTrackURL = newTrackURL;
+					};
+				}
+
+				#createTrackURL(text) {
+					const blob = new Blob([text], { type: "text/vtt" });
+					return URL.createObjectURL(blob);
+				}
+
+				#disposeTrackURL(trackUrl) {
+					URL.revokeObjectURL(trackUrl);
+				}
+			}
+
+			class DebouncedOperation {
+				static clear(operation) {
+					if (operation) {
+						window.clearTimeout(operation.timer);
+					}
+				}
+
+				static create(fn) {
+					return {
+						fn,
+						timer: window.setTimeout(fn, 1500),
+					};
+				}
+			}
+
+			const webvttTextArea = document.getElementById("webvtt-content");
+			const scheduler = new TrackScheduler();
+			webvttTextArea.addEventListener("input", ({ target }) => {
+				scheduler.schedule(target.value);
+			});
+		</script>
+	</body>
+</html>
