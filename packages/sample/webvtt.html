@@ -71,13 +71,13 @@
 				<p>WebVTT Text Track</p>
 				<textarea id="webvtt-content" placeholder="WEBVTT..."></textarea>
 			</div>
-			<div>
+			<div id="video-container">
 				<p>Example Video</p>
-				<video controls muted src="./big_buck_bunny_1080p_60fps.mp4"></video>
+				<video controls muted autoplay src="./big_buck_bunny_1080p_60fps.mp4"></video>
 			</div>
 		</main>
 		<script>
-			const video = document.getElementsByTagName("video")[0];
+			const videoContainer = document.getElementById("video-container");
 
 			class TrackScheduler {
 				get operation() {
@@ -91,17 +91,41 @@
 
 				schedule(text) {
 					this.operation = () => {
+						const currentVideo = videoContainer.querySelector("video");
+						const currentTrack = Array.prototype.find.call(
+							currentVideo.childNodes,
+							(child) => child.nodeName === "TRACK",
+						);
+
+						if (currentTrack?.src) {
+							this.#disposeTrackURL(currentTrack.src);
+						}
+
 						const newTrackURL = this.#createTrackURL(text);
 
-						video.getElementsByTagName("track")[0]?.remove();
-						this.#disposeTrackURL(this.currentTrackURL);
+						/**
+						 * Creating again the video tag due to a bug in Chrome
+						 * for which removing a textTrack element and adding a new one
+						 * lefts the UI dirty
+						 */
 
-						const track = document.createElement("track");
-						track.src = newTrackURL;
+						const videoElement = Object.assign(document.createElement("video"), {
+							controls: true,
+							muted: true,
+							src: "./big_buck_bunny_1080p_60fps.mp4",
+							autoplay: true,
+						});
 
-						video.appendChild(track);
+						const track = Object.assign(document.createElement("track"), {
+							src: newTrackURL,
+							mode: "showing",
+							default: true,
+						});
 
-						this.currentTrackURL = newTrackURL;
+						videoElement.appendChild(track);
+
+						videoContainer.querySelector("video").remove();
+						videoContainer.appendChild(videoElement);
 					};
 				}
 
