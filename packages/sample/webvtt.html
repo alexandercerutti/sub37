@@ -168,9 +168,8 @@
 				}
 			}
 
-			const webvttTextArea = document.getElementById("webvtt-content");
 			const scheduler = new TrackScheduler();
-			webvttTextArea.addEventListener("input", ({ target }) => {
+			textContainer.querySelector("textarea").addEventListener("input", ({ target }) => {
 				scheduler.schedule(target.value);
 			});
 		</script>
