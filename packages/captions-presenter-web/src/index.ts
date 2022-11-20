@@ -2,7 +2,7 @@ import type { CueNode } from "@hsubs/server";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Presenter extends HTMLElement {
-	private container = Object.assign(document.createElement("div"), {
+	private container = Object.assign(document.createElement("main"), {
 		id: "caption-window",
 		className: "hidden",
 	});
@@ -26,18 +26,23 @@ export class Presenter extends HTMLElement {
 	justify-content: center;
 }
 
-div#caption-window.hidden {
+main#caption-window {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+main#caption-window.hidden {
 	display: none;
 }
 
-div#caption-window.active {
-	margin-bottom: 10px;
-	width: 300px;
-	overflow-y: hidden;
-	background-color: rgba(0,0,0,0.4);
+main#caption-window.active {
+	display: block;
 }
 
 div.region {
+	background-color: rgba(0,0,0,0.4);
 	scroll-behavior: smooth;
 	height: max-content; /** Chromium 46 **/
 	min-height: 3em;
