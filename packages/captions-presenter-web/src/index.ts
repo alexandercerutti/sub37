@@ -17,7 +17,11 @@ export class Presenter extends HTMLElement {
 		style.id = "host-styles";
 		style.textContent = `
 :host {
-	left: 0; right: 0; bottom: 0; top: 0; position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	position: absolute;
 	display: flex;
 	align-items: end;
 	justify-content: center;
