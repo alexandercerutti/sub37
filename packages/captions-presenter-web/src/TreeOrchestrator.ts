@@ -59,6 +59,7 @@ export default class TreeOrchestrator {
 		 */
 
 		this.wipeTree();
+		this.wipeEffects();
 
 		const cues: CueNode[] = [];
 

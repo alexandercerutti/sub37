@@ -70,12 +70,11 @@ div.region > p > span {
 	}
 
 	public setCue(cueData?: CueNode[]): void {
+		this.wipeContainer();
+
 		if (!cueData?.length) {
 			this.container.classList.remove("active");
 			this.container.classList.add("hidden");
-
-			this.renderArea.wipeTree();
-			this.renderArea.wipeEffects();
 			return;
 		}
 
@@ -92,7 +91,14 @@ div.region > p > span {
 		 * select / create a new TreeOrchestrator
 		 */
 
+		this.renderArea.appendTo(this.container);
 		this.renderArea.renderCuesToHTML(cueData);
+	}
+
+	private wipeContainer() {
+		for (let i = 0; i < this.container.children.length; i++) {
+			this.container.children[i].remove();
+		}
 	}
 }
 
