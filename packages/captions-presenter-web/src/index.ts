@@ -6,7 +6,6 @@ export class Presenter extends HTMLElement {
 		id: "caption-window",
 		className: "hidden",
 	});
-	private renderArea = new TreeOrchestrator();
 
 	public constructor() {
 		super();
@@ -63,8 +62,6 @@ div.region > p > span {
 }
 `;
 
-		this.renderArea.appendTo(this.container);
-
 		shadowRoot.appendChild(style);
 		shadowRoot.appendChild(this.container);
 	}
@@ -86,13 +83,23 @@ div.region > p > span {
 		this.container.classList.add("active");
 		this.container.classList.remove("hidden");
 
-		/**
-		 * @TODO Select region to render if needed and
-		 * select / create a new TreeOrchestrator
-		 */
+		const cueGroupsByRegion: { [key: string]: CueNode[] } = {};
 
-		this.renderArea.appendTo(this.container);
-		this.renderArea.renderCuesToHTML(cueData);
+		for (const cue of cueData) {
+			const region = cue.region?.id || "default";
+
+			if (!cueGroupsByRegion[region]) {
+				cueGroupsByRegion[region] = [];
+			}
+
+			cueGroupsByRegion[region].push(cue);
+		}
+
+		for (const [id, cues] of Object.entries(cueGroupsByRegion)) {
+			const tree = new TreeOrchestrator(id);
+			tree.appendTo(this.container);
+			tree.renderCuesToHTML(cues);
+		}
 	}
 
 	private wipeContainer() {
