@@ -42,6 +42,9 @@ main#caption-window.active {
 }
 
 div.region {
+	position: absolute;
+	bottom: 3em;
+
 	background-color: rgba(0,0,0,0.4);
 	scroll-behavior: smooth;
 	height: max-content; /** Chromium 46 **/
