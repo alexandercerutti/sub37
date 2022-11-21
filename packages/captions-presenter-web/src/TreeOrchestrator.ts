@@ -1,5 +1,5 @@
-import { IntervalBinaryTree } from "@hsubs/server";
-import { CueNode, Entities } from "@hsubs/server";
+import { IntervalBinaryTree, Entities } from "@hsubs/server";
+import type { CueNode } from "@hsubs/server";
 
 const rootElementSymbol = Symbol("to.root.element");
 
