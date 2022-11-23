@@ -103,8 +103,8 @@ div.region > p > span {
 			cueGroupsByRegion[region].push(cue);
 		}
 
-		for (const [id, cues] of Object.entries(cueGroupsByRegion)) {
-			const tree = new TreeOrchestrator(id);
+		for (const cues of Object.values(cueGroupsByRegion)) {
+			const tree = new TreeOrchestrator(cues[0].region);
 			tree.appendTo(this.container);
 			tree.renderCuesToHTML(cues);
 		}

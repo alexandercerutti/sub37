@@ -1,5 +1,5 @@
 import { IntervalBinaryTree, Entities } from "@hsubs/server";
-import type { CueNode } from "@hsubs/server";
+import type { CueNode, Region } from "@hsubs/server";
 
 const rootElementSymbol = Symbol("to.root.element");
 
@@ -16,12 +16,9 @@ export default class TreeOrchestrator {
 		className: "region",
 	});
 
-	public regionId: string = "default";
 	private settings: OrchestratorSettings = { ...TreeOrchestrator.DEFAULT_SETTINGS };
 
-	public constructor(regionId: string = "default", settings?: OrchestratorSettings) {
-		this.regionId = regionId;
-
+	public constructor(regionSettings: Region, settings?: OrchestratorSettings) {
 		if (settings && typeof settings === "object") {
 			this.settings = { ...this.settings, ...settings };
 		}
