@@ -23,7 +23,10 @@ export default class TreeOrchestrator {
 			this.settings = { ...this.settings, ...settings };
 		}
 
-		this[rootElementSymbol].style.height = `${this.settings.lines * 1.5}em`;
+		Object.assign(this[rootElementSymbol].style, {
+			width: regionSettings.width || "100%",
+			height: `${(this.settings.lines || regionSettings.lines) * 1.5}em`,
+		});
 	}
 
 	public appendTo(node: HTMLElement): void {
