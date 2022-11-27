@@ -1,6 +1,6 @@
 import type * as Entities from "./Entities";
 import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree.js";
-import type { Region } from "./model";
+import type { Region } from "./Region";
 
 const entitiesSymbol = Symbol("hs.entities");
 const regionSymbol = Symbol("hs.region");
