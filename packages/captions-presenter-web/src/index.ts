@@ -110,8 +110,10 @@ div.region > p > span {
 	}
 
 	private wipeContainer() {
-		for (let i = 0; i < this.container.children.length; i++) {
-			this.container.children[i].remove();
+		let region: ChildNode;
+
+		while ((region = this.container.firstChild)) {
+			region.remove();
 		}
 	}
 }
