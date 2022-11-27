@@ -18,10 +18,12 @@ export default class TreeOrchestrator {
 
 	private settings: OrchestratorSettings = { ...TreeOrchestrator.DEFAULT_SETTINGS };
 
-	public constructor(regionSettings: Region, settings?: OrchestratorSettings) {
+	public constructor(regionSettings: Region, parent: HTMLElement, settings?: OrchestratorSettings) {
 		if (settings && typeof settings === "object") {
 			this.settings = { ...this.settings, ...settings };
 		}
+
+		this.appendTo(parent);
 
 		Object.assign(this[rootElementSymbol].style, {
 			width: regionSettings.width || "100%",
