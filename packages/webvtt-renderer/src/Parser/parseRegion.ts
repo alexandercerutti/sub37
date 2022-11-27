@@ -1,31 +1,51 @@
 import type { Region } from "@hsubs/server";
 
-interface WebVTTRegion {
-	id: string;
-	width?: string;
-	lines?: number;
-	scroll?: "up" | "none";
-	regionanchor?: [`${number}%`, `${number}%`];
-	viewportanchor?: [`${number}%`, `${number}%`];
-}
-
 /**
  * @param rawRegionData
  */
 
 export function parseRegion(rawRegionData: string): Region {
-	const region = {} as Region;
+	const region = new WebVTTRegion();
 	const attributes = rawRegionData.split(/[\n\t\s]+/);
 
 	for (let i = 0; i < attributes.length; i++) {
 		const [key, value] = attributes[i].split(":") as [keyof WebVTTRegion, string];
 
-		if (!value || !(key in regionMappers)) {
+		if (!value || !key) {
 			continue;
 		}
 
-		const mappedSubset = regionMappers[key](value);
-		Object.assign(region, mappedSubset);
+		switch (key) {
+			case "regionanchor":
+			case "viewportanchor": {
+				const [x = "0%", y = "0%"] = value.split(",");
+				region[key] = [parseInt(x), parseInt(y)];
+				break;
+			}
+
+			case "scroll": {
+				if (value !== "up" && value !== "none") {
+					break;
+				}
+
+				region[key] = value;
+				break;
+			}
+
+			case "id": {
+				region[key] = value;
+				break;
+			}
+
+			case "lines":
+			case "width": {
+				region[key] = parseInt(value);
+				break;
+			}
+
+			default:
+				break;
+		}
 	}
 
 	if (!region.id) {
@@ -35,44 +55,60 @@ export function parseRegion(rawRegionData: string): Region {
 	return region;
 }
 
-interface MappedValue {
-	id: "id";
-	scroll: "displayStrategy";
-	lines: "lines";
-	viewportanchor: "origin";
-	width: "width";
+/**
+ * One line's height in VH units.
+ * This probably assumes that each line in presenter is
+ * of the same height. So this might lead to some issues
+ * in the future.
+ *
+ * I still don't have clear why Chrome does have this
+ * constant while all the standard version of VTT standard
+ * says "6vh".
+ *
+ * @see https://github.com/chromium/chromium/blob/c4d3c31083a2e1481253ff2d24298a1dfe19c754/third_party/blink/renderer/core/html/track/vtt/vtt_region.cc#L70
+ * @see https://www.w3.org/TR/webvtt1/#processing-model
+ */
+
+const VH_LINE_HEIGHT = 5.33;
+
+class WebVTTRegion implements Region {
+	public id: string;
+	/**
+	 * Region width expressed in percentage
+	 */
+	public width: number = 100;
+	public lines: number = 3;
+	public scroll?: "up" | "none";
+
+	/**
+	 * Position of region based on video region.
+	 * Couple of numbers expressed in percentage
+	 */
+	public viewportanchor?: [number, number];
+
+	/**
+	 * Position of region based on viewportAnchor
+	 * Couple of numbers expressed in percentage
+	 */
+	public regionanchor?: [number, number];
+
+	public getOrigin(): [x: number, y: number] {
+		const height = VH_LINE_HEIGHT * this.lines;
+
+		const [regionAnchorWidth = 0, regionAnchorHeight = 0] = this.regionanchor || [];
+		const [viewportAnchorWidth = 0, viewportAnchorHeight = 0] = this.viewportanchor || [];
+
+		/**
+		 * It is still not very clear to me why we base on current width and height, but
+		 * a thing that I know is that we need low numbers.
+		 */
+
+		const leftOffset = (regionAnchorWidth * this.width) / 100;
+		const topOffset = (regionAnchorHeight * height) / 100;
+
+		const originX = viewportAnchorWidth - leftOffset;
+		const originY = viewportAnchorHeight - topOffset;
+
+		return [originX, originY];
+	}
 }
-
-type RegionMapper = {
-	[K in keyof WebVTTRegion]: K extends keyof MappedValue
-		? (value: string) => Record<MappedValue[K], Region[MappedValue[K]]>
-		: never;
-};
-
-const regionMappers: RegionMapper = Object.create(null, {
-	scroll: {
-		value: (value: string): Pick<Region, "displayStrategy"> => ({
-			displayStrategy: value === "up" ? "push" : "replace",
-		}),
-	},
-	id: {
-		value: (value: string): Pick<Region, "id"> => ({ id: value }),
-	},
-	lines: {
-		value: (value: string): Pick<Region, "lines"> => ({ lines: parseInt(value) }),
-	},
-	viewportanchor: {
-		value: (value: string): Pick<Region, "origin"> => {
-			const origin = value.split(",") as Region["origin"];
-
-			if (origin.length !== 2) {
-				return undefined;
-			}
-
-			return { origin };
-		},
-	},
-	width: {
-		value: (value: string): Pick<Region, "width"> => ({ width: value }),
-	},
-});
