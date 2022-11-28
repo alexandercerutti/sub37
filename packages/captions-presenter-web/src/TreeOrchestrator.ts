@@ -25,11 +25,14 @@ export default class TreeOrchestrator {
 
 		this.appendTo(parent);
 
-		const [originX, originY] = regionSettings.getOrigin(parent.offsetWidth, parent.offsetHeight);
+		const [originX, originY] = regionSettings?.getOrigin(
+			parent.offsetWidth,
+			parent.offsetHeight,
+		) ?? [0, 70];
 
 		Object.assign(this[rootElementSymbol].style, {
-			width: `${regionSettings.width ?? 100}%`,
-			height: `${(this.settings.lines || regionSettings.lines) * 1.5}em`,
+			width: `${regionSettings?.width ?? 100}%`,
+			height: `${(regionSettings?.lines || this.settings.lines) * 1.5}em`,
 			left: `${originX}%`,
 			top: `${originY}%`,
 		});
