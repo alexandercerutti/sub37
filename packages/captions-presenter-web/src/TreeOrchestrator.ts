@@ -23,7 +23,7 @@ export default class TreeOrchestrator {
 			this.settings = { ...this.settings, ...settings };
 		}
 
-		this.appendTo(parent);
+		parent.appendChild(root);
 
 		const [originX, originY] = regionSettings?.getOrigin(
 			parent.offsetWidth,
@@ -36,10 +36,6 @@ export default class TreeOrchestrator {
 			left: `${originX}%`,
 			top: `${originY}%`,
 		});
-	}
-
-	public appendTo(node: HTMLElement): void {
-		node.appendChild(this[rootElementSymbol]);
 	}
 
 	public remove(): void {
