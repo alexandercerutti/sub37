@@ -12,30 +12,34 @@ export default class TreeOrchestrator {
 		lines: 2,
 	};
 
-	private [rootElementSymbol] = Object.assign(document.createElement("div"), {
-		className: "region",
-	});
+	private [rootElementSymbol]: HTMLDivElement;
 
 	private settings: OrchestratorSettings = { ...TreeOrchestrator.DEFAULT_SETTINGS };
 
 	public constructor(regionSettings: Region, parent: HTMLElement, settings?: OrchestratorSettings) {
+		const root = Object.assign(document.createElement("div"), {
+			className: "region",
+		});
+
+		this[rootElementSymbol] = root.appendChild(document.createElement("div"));
+
 		if (settings && typeof settings === "object") {
 			this.settings = { ...this.settings, ...settings };
 		}
-
-		parent.appendChild(root);
 
 		const [originX, originY] = regionSettings?.getOrigin(
 			parent.offsetWidth,
 			parent.offsetHeight,
 		) ?? [0, 70];
 
-		Object.assign(this[rootElementSymbol].style, {
+		Object.assign(root.style, {
 			width: `${regionSettings?.width ?? 100}%`,
 			height: `${(regionSettings?.lines || this.settings.lines) * 1.5}em`,
 			left: `${originX}%`,
 			top: `${originY}%`,
 		});
+
+		parent.appendChild(root);
 	}
 
 	public remove(): void {

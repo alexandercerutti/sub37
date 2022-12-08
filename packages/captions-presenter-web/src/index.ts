@@ -51,12 +51,12 @@ div.region {
 	min-height: 3em;
 }
 
-div.region p {
+div.region > div > p {
 	margin: 0;
 	box-sizing: border-box;
 }
 
-div.region > p > span {
+div.region > div > p > span {
 	color: #FFF;
 	background-color: rgba(0,0,0,0.7);
 	padding: 0px 15px;
