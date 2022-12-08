@@ -14,7 +14,7 @@ export default class TreeOrchestrator {
 
 	private [rootElementSymbol]: HTMLDivElement;
 
-	private settings: OrchestratorSettings = { ...TreeOrchestrator.DEFAULT_SETTINGS };
+	private settings: OrchestratorSettings;
 
 	public constructor(regionSettings: Region, parent: HTMLElement, settings?: OrchestratorSettings) {
 		const root = Object.assign(document.createElement("div"), {
@@ -23,9 +23,11 @@ export default class TreeOrchestrator {
 
 		this[rootElementSymbol] = root.appendChild(document.createElement("div"));
 
-		if (settings && typeof settings === "object") {
-			this.settings = { ...this.settings, ...settings };
-		}
+		this.settings = {
+			...TreeOrchestrator.DEFAULT_SETTINGS,
+			...settings,
+			lines: regionSettings?.lines || settings?.lines || this.settings.lines,
+		};
 
 		const [originX, originY] = regionSettings?.getOrigin(
 			parent.offsetWidth,
