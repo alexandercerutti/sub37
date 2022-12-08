@@ -43,12 +43,13 @@ main#caption-window.active {
 
 div.region {
 	position: absolute;
-	bottom: 3em;
+	overflow-y: hidden;
+	min-height: 1.5em
+}
 
+div.region > div {
 	background-color: rgba(0,0,0,0.4);
 	scroll-behavior: smooth;
-	height: max-content; /** Chromium 46 **/
-	min-height: 3em;
 }
 
 div.region > div > p {
