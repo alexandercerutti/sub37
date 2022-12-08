@@ -181,9 +181,12 @@ export default class TreeOrchestrator {
 			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
 			 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
 			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
+			 *
+			 * Limiting to 1 to prevent scrolling issues and hiding
+			 * due to overflow.
 			 */
 
-			const linesToBeScrolled = -childrenAmount + this.settings.lines;
+			const linesToBeScrolled = Math.min(1, -childrenAmount + this.settings.lines);
 
 			this[rootElementSymbol].style.transform = `translateY(
 				${1.5 * linesToBeScrolled}em
