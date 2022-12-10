@@ -47,16 +47,11 @@ export default class TreeOrchestrator {
 	}
 
 	public remove(): void {
-		this[rootElementSymbol].remove();
+		this.root.remove();
 	}
 
 	public get root(): HTMLElement {
 		return this[rootElementSymbol].parentElement;
-	}
-
-	public wipeEffects(): void {
-		this[rootElementSymbol].style.transform = "";
-		this[rootElementSymbol].style.transition = "";
 	}
 
 	public wipeTree(): void {
@@ -66,14 +61,6 @@ export default class TreeOrchestrator {
 	}
 
 	public renderCuesToHTML(cueNodes: CueNode[]): void {
-		/**
-		 * @TODO Should we cache HTML Elements?
-		 * By doing so sub-DOM might not get reloaded entirely
-		 */
-
-		this.wipeTree();
-		this.wipeEffects();
-
 		const cues: CueNode[] = [];
 
 		for (let i = 0; i < cueNodes.length; i++) {

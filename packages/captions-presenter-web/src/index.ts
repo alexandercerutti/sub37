@@ -125,8 +125,6 @@ div.region > div > p > span {
 				tree = new TreeOrchestrator(cues[0].region, this.container);
 			}
 
-			tree.wipeTree();
-
 			/**
 			 * Appending is required to happen before wiping
 			 * so that re-used tree containers will render
@@ -142,11 +140,10 @@ div.region > div > p > span {
 		this.activeRegions = nextActiveRegions;
 	}
 
-	private wipeContainer() {
-		let region: ChildNode;
-
-		while ((region = this.container.firstChild)) {
-			region.remove();
+	private wipeContainer(): void {
+		for (const tree of Object.values(this.activeRegions)) {
+			tree.wipeTree();
+			tree.remove();
 		}
 	}
 
