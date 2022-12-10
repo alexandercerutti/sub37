@@ -147,7 +147,7 @@ div.region > div > p > span {
 		}
 	}
 
-	private appendTree(tree: TreeOrchestrator) {
+	private appendTree(tree: TreeOrchestrator): void {
 		this.container.appendChild(tree.root);
 	}
 }
