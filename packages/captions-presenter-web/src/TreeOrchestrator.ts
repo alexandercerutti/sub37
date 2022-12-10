@@ -38,7 +38,7 @@ export default class TreeOrchestrator {
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
 			...settings,
-			lines: regionSettings?.lines || settings?.lines || this.settings.lines,
+			lines: regionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
 
 		const [originX, originY] = regionSettings?.getOrigin(
