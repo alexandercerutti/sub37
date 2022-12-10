@@ -44,16 +44,14 @@ export default class TreeOrchestrator {
 		};
 
 		Object.assign(root.style, rootStyles);
-
-		parent.appendChild(root);
 	}
 
 	public remove(): void {
 		this[rootElementSymbol].remove();
 	}
 
-	public get root(): HTMLDivElement {
-		return this[rootElementSymbol];
+	public get root(): HTMLElement {
+		return this[rootElementSymbol].parentElement;
 	}
 
 	public wipeEffects(): void {

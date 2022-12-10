@@ -7,6 +7,17 @@ export class Presenter extends HTMLElement {
 		className: "hidden",
 	});
 
+	/**
+	 * Active regions are needed to have a state in case
+	 * of animations. For example, in case of Youtube simulation
+	 * translateY might go to 0ems, but we were at 1.5em.
+	 *
+	 * Creating the element again will reset the translation to
+	 * 0 and will cause no animation.
+	 */
+
+	private activeRegions: { [region: string]: TreeOrchestrator } = {};
+
 	public constructor() {
 		super();
 
@@ -93,6 +104,7 @@ div.region > div > p > span {
 		this.container.classList.remove("hidden");
 
 		const cueGroupsByRegion: { [key: string]: CueNode[] } = {};
+		const nextActiveRegions: Presenter["activeRegions"] = {};
 
 		for (const cue of cueData) {
 			const region = cue.region?.id || "default";
@@ -104,10 +116,30 @@ div.region > div > p > span {
 			cueGroupsByRegion[region].push(cue);
 		}
 
-		for (const cues of Object.values(cueGroupsByRegion)) {
-			const tree = new TreeOrchestrator(cues[0].region, this.container);
+		for (const [regionId, cues] of Object.entries(cueGroupsByRegion)) {
+			let tree: TreeOrchestrator;
+
+			if (this.activeRegions[regionId]) {
+				tree = this.activeRegions[regionId];
+			} else {
+				tree = new TreeOrchestrator(cues[0].region, this.container);
+			}
+
+			tree.wipeTree();
+
+			/**
+			 * Appending is required to happen before wiping
+			 * so that re-used tree containers will render
+			 * correctly and won't show previous elements.
+			 */
+
+			this.appendTree(tree);
 			tree.renderCuesToHTML(cues);
+
+			nextActiveRegions[regionId] = tree;
 		}
+
+		this.activeRegions = nextActiveRegions;
 	}
 
 	private wipeContainer() {
@@ -116,6 +148,10 @@ div.region > div > p > span {
 		while ((region = this.container.firstChild)) {
 			region.remove();
 		}
+	}
+
+	private appendTree(tree: TreeOrchestrator) {
+		this.container.appendChild(tree.root);
 	}
 }
 
