@@ -5,11 +5,13 @@ const rootElementSymbol = Symbol("to.root.element");
 
 interface OrchestratorSettings {
 	lines: number;
+	shiftDownFirstLine?: boolean;
 }
 
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
+		shiftDownFirstLine: true,
 	};
 
 	private [rootElementSymbol]: HTMLDivElement;
@@ -34,12 +36,14 @@ export default class TreeOrchestrator {
 			parent.offsetHeight,
 		) ?? [0, 70];
 
-		Object.assign(root.style, {
+		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${regionSettings?.width ?? 100}%`,
-			height: `${(regionSettings?.lines || this.settings.lines) * 1.5}em`,
+			height: `${this.settings.lines * 1.5}em`,
 			left: `${originX}%`,
 			top: `${originY}%`,
-		});
+		};
+
+		Object.assign(root.style, rootStyles);
 
 		parent.appendChild(root);
 	}
@@ -182,11 +186,15 @@ export default class TreeOrchestrator {
 			 * (-3) + 2 = -1  =>  1.5 * -1 = -1.5
 			 * (-4) + 2 = -2  =>  1.5 * -2 = -3.0
 			 *
-			 * Limiting to 1 to prevent scrolling issues and hiding
-			 * due to overflow.
+			 * We have to limit the upper bound limit to prevent issues with
+			 * overflow and scrolling. 1 if we want to simulate Youtube,
+			 * 0 otherwise.
 			 */
 
-			const linesToBeScrolled = Math.min(1, -childrenAmount + this.settings.lines);
+			const upperBoundLimit = Number(
+				this.settings.shiftDownFirstLine && childrenAmount === 1 && this.settings.lines > 1,
+			);
+			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + this.settings.lines);
 
 			this[rootElementSymbol].style.transform = `translateY(
 				${1.5 * linesToBeScrolled}em

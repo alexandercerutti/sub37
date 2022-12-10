@@ -44,7 +44,7 @@ main#caption-window.active {
 div.region {
 	position: absolute;
 	overflow-y: hidden;
-	min-height: 1.5em
+	min-height: 1.5em;
 }
 
 div.region > div {
