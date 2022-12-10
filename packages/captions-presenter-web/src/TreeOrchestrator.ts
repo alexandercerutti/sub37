@@ -8,6 +8,16 @@ interface OrchestratorSettings {
 	shiftDownFirstLine?: boolean;
 }
 
+/**
+ * This is the minimum frequency time of the
+ * server. If a lower frequency is specified
+ * in the server and some timed cues are distant
+ * less than 250ms each other, some bad ui effects
+ * might happen.
+ */
+
+const LINES_TRANSITION_TIME_MS = 250;
+
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
@@ -186,7 +196,8 @@ export default class TreeOrchestrator {
 			)`;
 
 			if (linesToBeScrolled <= 0) {
-				this[rootElementSymbol].style.transition = "transform .5s ease-in-out";
+				const transformCSS = `transform ${LINES_TRANSITION_TIME_MS}ms cubic-bezier(0.25, 0.46, 0.2, 1.0) 0s`;
+				this[rootElementSymbol].style.transition = transformCSS;
 			}
 		}
 	}
