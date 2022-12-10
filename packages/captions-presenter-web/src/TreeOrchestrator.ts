@@ -11,7 +11,7 @@ interface OrchestratorSettings {
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
-		shiftDownFirstLine: true,
+		shiftDownFirstLine: false,
 	};
 
 	private [rootElementSymbol]: HTMLDivElement;
