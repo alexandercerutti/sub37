@@ -1,22 +1,35 @@
 import "@hsubs/captions-presenter-web";
 import { HSServer } from "@hsubs/server";
 import { WebVTTRenderer } from "@hsubs/webvtt-renderer";
-import { FakeHTMLVideoElement } from "./FakeHTMLVideoElement";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
+import "./FakeHTMLVideoElement/index";
+
+/**
+ * @typedef {import("./FakeHTMLVideoElement/index").FakeHTMLVideoElement} FakeHTMLVideoElement
+ * @typedef {import("@hsubs/captions-presenter-web").Presenter} CaptionsPresenter
+ */
 
 /**
  * @type {HSServer}
  */
 
 const server = new HSServer(WebVTTRenderer);
-const ranger = document.querySelector("#ranger input");
-const currentTime = document.getElementById("currentTime");
-const playbackBtn = document.getElementById("playback-btn");
-const videoTag = new FakeHTMLVideoElement(parseFloat(ranger.getAttribute("max")));
 
 /**
- *
+ * @type {FakeHTMLVideoElement}
+ */
+
+const videoTag = document.getElementsByTagName("fake-video")[0];
+videoTag.duration = 7646;
+
+/**
+ * @type {CaptionsPresenter}
+ */
+
+const presenter = document.getElementById("presenter");
+
+/**
  * @param {FakeHTMLVideoElement} videoElement
  */
 
@@ -45,33 +58,25 @@ document.addEventListener("keydown", ({ code }) => {
 	}
 });
 
-videoTag.addEventListener("timeupdate", (time) => {
-	ranger.value = time;
-	currentTime.innerText = time;
-});
-
 videoTag.addEventListener("seeked", () => {
 	if (videoTag.paused) {
 		server.updateTime(videoTag.currentTime * 1000);
 	}
 });
 
-ranger.addEventListener("input", () => {
-	const time = parseFloat(ranger.value);
-	videoTag.currentTime = time;
-
-	ranger.value = time;
-	currentTime.innerText = time;
-
+videoTag.addEventListener("playing", () => {
 	if (server.isRunning) {
+		server.resume();
 		return;
 	}
 
-	server.updateTime(time * 1000);
+	server.start(() => {
+		return parseFloat(videoTag.currentTime) * 1000;
+	});
 });
 
-playbackBtn.addEventListener("click", () => {
-	togglePlayback(videoTag);
+videoTag.addEventListener("pause", () => {
+	server.suspend();
 });
 
 // server.createSession(
@@ -157,26 +162,6 @@ console.info(
 	`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
 	"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
 );
-
-videoTag.addEventListener("playing", () => {
-	if (server.isRunning) {
-		server.resume();
-		return;
-	}
-
-	server.start(() => {
-		return parseFloat(ranger.value) * 1000;
-	});
-
-	playbackBtn.textContent = "Pause";
-});
-
-videoTag.addEventListener("pause", () => {
-	server.suspend();
-	playbackBtn.textContent = "Resume";
-});
-
-const presenter = document.getElementById("presenter");
 
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();

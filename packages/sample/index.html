@@ -9,16 +9,9 @@
 	</head>
 	<body>
 		<div id="video-container">
-			<div id="ranger">
-				<input type="range" min="0" max="7646" value="0" step="0.25" />
-				<div id="timers">
-					<span id="currentTime">0</span>
-					<span id="durationTime">7646</span>
-				</div>
-			</div>
+			<fake-video controls></fake-video>
 			<captions-presenter id="presenter"></captions-presenter>
 		</div>
-		<button id="playback-btn" data-paused="false">Pause</button>
 		<script type="module" src="./src/script.mjs"></script>
 	</body>
 </html>
