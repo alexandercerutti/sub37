@@ -56,16 +56,6 @@
 				padding: 10px;
 			}
 
-			textarea {
-				padding: 10px;
-				width: 100%;
-				outline-color: rgb(197, 66, 6);
-				height: 500px;
-				font-size: 1.5rem;
-				resize: none;
-				font-weight: 300;
-			}
-
 			video {
 				width: 100%;
 				border: 1px solid rgb(197, 66, 6);
@@ -78,7 +68,7 @@
 		<main>
 			<div id="text-area-container">
 				<h3>WebVTT Text Track</h3>
-				<textarea id="webvtt-content" placeholder="WEBVTT..."></textarea>
+				<scheduled-textarea placeholder="WEBVTT..."></scheduled-textarea>
 			</div>
 			<div id="video-container">
 				<h3>Example Video</h3>
@@ -90,10 +80,7 @@
 			</div>
 		</main>
 		<script type="module">
-			import { TrackScheduler } from "./src/TrackScheduler/index";
-
-			const videoContainer = document.getElementById("video-container");
-			const textContainer = document.getElementById("text-area-container");
+			import "./src/scheduled-textarea";
 
 			/**
 			 * @type {string} text
@@ -113,7 +100,10 @@
 				URL.revokeObjectURL(trackUrl);
 			}
 
-			const scheduler = new TrackScheduler(textContainer, (text) => {
+			const videoContainer = document.getElementById("video-container");
+			const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[0];
+
+			scheduledTextArea.addEventListener("commit", ({ details: text }) => {
 				const currentVideo = videoContainer.querySelector("video");
 				const currentTrack = Array.prototype.find.call(
 					currentVideo.childNodes,
