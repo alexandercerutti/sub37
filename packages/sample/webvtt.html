@@ -89,107 +89,13 @@
 				<video controls muted autoplay src="./big_buck_bunny_1080p_60fps.mp4"></video>
 			</div>
 		</main>
-		<script>
+		<script type="module">
+			import { TrackScheduler } from "./src/TrackScheduler/index";
+
 			const videoContainer = document.getElementById("video-container");
 			const textContainer = document.getElementById("text-area-container");
-			const LOCAL_STORAGE_KEY = "latest-track-text";
 
-			class TrackScheduler {
-				constructor() {
-					const latestTrack = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-					if (latestTrack) {
-						this.#commit(latestTrack);
-						textContainer.querySelector("textarea").value = latestTrack;
-					}
-				}
-
-				get operation() {
-					return this[Symbol.for("trackschedulerop")];
-				}
-
-				set operation(fn) {
-					DebouncedOperation.clear(this[Symbol.for("trackschedulerop")]);
-					this[Symbol.for("trackschedulerop")] = DebouncedOperation.create(fn);
-				}
-
-				schedule(text) {
-					this.operation = () => this.#commit(text);
-				}
-
-				#commit(text) {
-					if (!text.length) {
-						return;
-					}
-
-					const currentVideo = videoContainer.querySelector("video");
-					const currentTrack = Array.prototype.find.call(
-						currentVideo.childNodes,
-						(child) => child.nodeName === "TRACK",
-					);
-
-					if (currentTrack?.src) {
-						this.#disposeTrackURL(currentTrack.src);
-					}
-
-					const newTrackURL = this.#createTrackURL(text);
-
-					/**
-					 * Creating again the video tag due to a bug in Chrome
-					 * for which removing a textTrack element and adding a new one
-					 * lefts the UI dirty
-					 */
-
-					const videoElement = Object.assign(document.createElement("video"), {
-						controls: true,
-						muted: true,
-						src: "./big_buck_bunny_1080p_60fps.mp4",
-						autoplay: true,
-					});
-
-					const track = Object.assign(document.createElement("track"), {
-						src: newTrackURL,
-						mode: "showing",
-						default: true,
-						label: "Test track",
-					});
-
-					videoElement.appendChild(track);
-
-					videoContainer.querySelector("video").remove();
-					videoContainer.appendChild(videoElement);
-				}
-
-				#createTrackURL(text) {
-					localStorage.setItem(LOCAL_STORAGE_KEY, text);
-					const blob = new Blob([text], { type: "text/vtt" });
-					return URL.createObjectURL(blob);
-				}
-
-				#disposeTrackURL(trackUrl) {
-					URL.revokeObjectURL(trackUrl);
-				}
-			}
-
-			class DebouncedOperation {
-				static clear(operation) {
-					if (operation) {
-						window.clearTimeout(operation.timer);
-					}
-				}
-
-				static create(fn) {
-					return {
-						fn,
-						timer: window.setTimeout(fn, 1500),
-					};
-				}
-			}
-
-			const scheduler = new TrackScheduler();
-			textContainer.querySelector("textarea").addEventListener("input", ({ target }) => {
-				scheduler.schedule(target.value);
-			});
+			const scheduler = new TrackScheduler(videoContainer, textContainer);
 		</script>
 	</body>
 </html>
