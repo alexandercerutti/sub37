@@ -9,7 +9,17 @@
 	</head>
 	<body>
 		<main>
-			<scheduled-textarea placeholder="WEBVTT..."></scheduled-textarea>
+			<div>
+				<scheduled-textarea placeholder="WEBVTT..."></scheduled-textarea>
+				<h4>Content type:</h4>
+				<!-- form id and input names are hardcoded inside the code -->
+				<form id="content-type">
+					<input type="radio" id="webvtt" name="caption-type" value="text/vtt" checked />
+					<label for="webvtt">WebVTT (text/vtt)</label>
+					<!-- <input type="radio" id="ttml" name="caption-type" value="text/xml+ttml" />
+					<label for="ttml">TTML (text/xml+ttml)</label> -->
+				</form>
+			</div>
 			<div id="video-container">
 				<fake-video controls></fake-video>
 				<captions-presenter id="presenter"></captions-presenter>

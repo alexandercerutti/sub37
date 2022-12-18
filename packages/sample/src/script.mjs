@@ -87,6 +87,8 @@ scheduledTextArea.addEventListener("commit", ({ detail: vttTrack }) => {
 		server.destroy();
 	}
 
+	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
+
 	const timeStart = performance.now();
 
 	try {
@@ -97,7 +99,7 @@ scheduledTextArea.addEventListener("commit", ({ detail: vttTrack }) => {
 					content: vttTrack,
 				},
 			],
-			"text/vtt",
+			contentMimeType,
 		);
 		console.info(
 			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
