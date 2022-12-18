@@ -35,6 +35,13 @@ main div > p#firefox-not-showing-warning {
 	padding: 10px;
 }
 
+button#load-default-track {
+	padding: 5px 10px;
+	outline: none;
+	box-shadow: none;
+	border-radius: 3px;
+}
+
 #video-container {
 	position: relative;
 	height: 400px;

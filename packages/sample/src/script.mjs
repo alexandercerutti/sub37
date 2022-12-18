@@ -8,8 +8,15 @@ import "./FakeHTMLVideoElement/index";
 
 /**
  * @typedef {import("./FakeHTMLVideoElement/index").FakeHTMLVideoElement} FakeHTMLVideoElement
+ * @typedef {import("./scheduled-textarea").ScheduledTextArea} ScheduledTextArea
  * @typedef {import("@hsubs/captions-presenter-web").Presenter} CaptionsPresenter
  */
+
+/**
+ * @type {HTMLButtonElement}
+ */
+
+const defaultTrackLoadBtn = document.getElementById("load-default-track");
 
 /**
  * @type {HSServer}
@@ -23,6 +30,10 @@ const server = new HSServer(WebVTTRenderer);
 
 const videoTag = document.getElementsByTagName("fake-video")[0];
 videoTag.duration = 7646;
+
+/**
+ * @type {ScheduledTextArea}
+ */
 
 const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[0];
 
@@ -43,6 +54,52 @@ function togglePlayback(videoElement) {
 		videoElement.pause();
 	}
 }
+
+defaultTrackLoadBtn.addEventListener("click", async () => {
+	// 			WEBVTT
+
+	// REGION
+	// id:fred
+	// width:40%
+	// lines:3
+	// align:center
+	// regionanchor:0%,100%
+	// viewportanchor:10%,90%
+	// scroll:up
+
+	// REGION
+	// id:bill
+	// align:right
+	// width:40%
+	// lines:3
+	// regionanchor:0%,100%
+	// viewportanchor:10%,90%
+	// scroll:up
+
+	// 00:00:00.000 --> 00:10:00.000 region:fred align:left
+	// Hello world.
+
+	// 00:00:03.000 --> 00:10:00.000 region:bill align:right
+	// Hello milady ;)
+
+	// 00:00:04.000 --> 00:10:00.000 region:fred align:left
+	// Hello world, bibi
+
+	document.querySelector('input[name="caption-type"][id="webvtt"]').setAttribute("checked", true);
+	defaultTrackLoadBtn.disabled = true;
+
+	const [vttTrack, vttChunk] = await Promise.all([
+		fetch(longTextTrackVTTPath).then((e) => e.text()),
+		fetch(longTextTrackVTTPathChunk).then((e) => e.text()),
+	]);
+
+	setTimeout(() => {
+		server.addTextChunk(vttChunk, "it");
+	}, 3000);
+
+	scheduledTextArea.value = vttTrack;
+	defaultTrackLoadBtn.disabled = false;
+});
 
 document.addEventListener("keydown", ({ code }) => {
 	switch (code) {
@@ -147,42 +204,6 @@ server.addEventListener("cueerror", (error) => {
 	console.warn(error);
 });
 
-// 			WEBVTT
-
-// REGION
-// id:fred
-// width:40%
-// lines:3
-// align:center
-// regionanchor:0%,100%
-// viewportanchor:10%,90%
-// scroll:up
-
-// REGION
-// id:bill
-// align:right
-// width:40%
-// lines:3
-// regionanchor:0%,100%
-// viewportanchor:10%,90%
-// scroll:up
-
-// 00:00:00.000 --> 00:10:00.000 region:fred align:left
-// Hello world.
-
-// 00:00:03.000 --> 00:10:00.000 region:bill align:right
-// Hello milady ;)
-
-// 00:00:04.000 --> 00:10:00.000 region:fred align:left
-// Hello world, bibi
-
-const [vttTrack, vttChunk] = await Promise.all([
-	fetch(longTextTrackVTTPath).then((e) => e.text()),
-	fetch(longTextTrackVTTPathChunk).then((e) => e.text()),
-]);
-
-scheduledTextArea.value = vttTrack;
-
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
 	// console.log("CUE START:", cues);
@@ -198,7 +219,3 @@ server.addEventListener("cuestop", () => {
 	console.log("CUES STOP");
 	presenter.setCue();
 });
-
-setTimeout(() => {
-	server.addTextChunk(vttChunk, "it");
-}, 3000);

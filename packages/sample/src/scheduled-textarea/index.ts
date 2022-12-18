@@ -31,12 +31,19 @@ textarea {
 			this.scheduler.schedule((target as HTMLInputElement).value);
 		});
 
-		this.scheduler = new TrackScheduler((text) => {
-			/** Keep em sync, especially on first commit */
-			textArea.value = text;
-			const event = new CustomEvent("commit", { detail: text });
-			this.dispatchEvent(event);
-		});
+		/**
+		 * We want to wait for listeners to setup outside before creating
+		 * the scheduler.
+		 */
+
+		window.setTimeout(() => {
+			this.scheduler = new TrackScheduler((text) => {
+				/** Keep em sync, especially on first commit */
+				textArea.value = text;
+				const event = new CustomEvent("commit", { detail: text });
+				this.dispatchEvent(event);
+			});
+		}, 0);
 
 		this.shadowRoot.appendChild(textArea);
 	}
