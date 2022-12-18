@@ -3,12 +3,12 @@ import { HSServer } from "@hsubs/server";
 import { WebVTTRenderer } from "@hsubs/webvtt-renderer";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
-import "./scheduled-textarea";
-import "./FakeHTMLVideoElement/index";
+import "./customElements/scheduled-textarea";
+import "./customElements/fake-video";
 
 /**
- * @typedef {import("./FakeHTMLVideoElement/index").FakeHTMLVideoElement} FakeHTMLVideoElement
- * @typedef {import("./scheduled-textarea").ScheduledTextArea} ScheduledTextArea
+ * @typedef {import("./customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
+ * @typedef {import("./customElements/scheduled-textarea").ScheduledTextArea} ScheduledTextArea
  * @typedef {import("@hsubs/captions-presenter-web").Presenter} CaptionsPresenter
  */
 

@@ -1,4 +1,4 @@
-import { TrackScheduler } from "../TrackScheduler";
+import { TrackScheduler } from "../../TrackScheduler";
 
 export class ScheduledTextArea extends HTMLElement {
 	private scheduler: TrackScheduler;
