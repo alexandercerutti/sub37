@@ -105,6 +105,11 @@ export class FakeHTMLVideoElement extends HTMLElement {
 	}
 
 	public play() {
+		if (this.playheadInterval) {
+			window.clearInterval(this.playheadInterval);
+			this.playheadInterval = undefined;
+		}
+
 		this.playheadInterval = window.setInterval(() => {
 			const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
 
