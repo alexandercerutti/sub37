@@ -139,7 +139,7 @@ videoTag.addEventListener("pause", () => {
 	server.suspend();
 });
 
-scheduledTextArea.addEventListener("commit", ({ detail: vttTrack }) => {
+scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 	if (server.isRunning) {
 		server.destroy();
 	}
@@ -149,6 +149,15 @@ scheduledTextArea.addEventListener("commit", ({ detail: vttTrack }) => {
 	const timeStart = performance.now();
 
 	try {
+		/**
+		 * Just a trick to not let the browser complaining
+		 * about the commit timeout taking too long to complete
+		 * and defer the parsing.
+		 * (the default track should take like 160ms to parse)
+		 */
+
+		await Promise.resolve();
+
 		server.createSession(
 			[
 				{
