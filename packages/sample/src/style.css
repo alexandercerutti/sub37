@@ -1,3 +1,40 @@
+* {
+	box-sizing: border-box;
+	font-family: "Roboto", sans-serif;
+}
+
+main {
+	margin: 20px;
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+	justify-items: center;
+	column-gap: 20px;
+}
+
+main > * {
+	width: 100%;
+}
+
+main div {
+	border-radius: 3px;
+}
+
+main div > h3 {
+	text-transform: uppercase;
+	color: rgb(197, 66, 6);
+	font-weight: 400;
+	font-size: 1.8rem;
+}
+
+main div > p#firefox-not-showing-warning {
+	font-size: 1.8rem;
+	font-weight: 300;
+	border-radius: 3px;
+	border: 2px solid #ffdeb4;
+	background-color: orange;
+	padding: 10px;
+}
+
 #video-container {
 	position: relative;
 	height: 400px;

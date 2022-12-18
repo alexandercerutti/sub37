@@ -8,10 +8,13 @@
 		<link href="./src/style.css" rel="stylesheet" />
 	</head>
 	<body>
-		<div id="video-container">
-			<fake-video controls></fake-video>
-			<captions-presenter id="presenter"></captions-presenter>
-		</div>
+		<main>
+			<scheduled-textarea placeholder="WEBVTT..."></scheduled-textarea>
+			<div id="video-container">
+				<fake-video controls></fake-video>
+				<captions-presenter id="presenter"></captions-presenter>
+			</div>
+		</main>
 		<script type="module" src="./src/script.mjs"></script>
 	</body>
 </html>

@@ -1,6 +1,8 @@
 import { TrackScheduler } from "../TrackScheduler";
 
 export class ScheduledTextArea extends HTMLElement {
+	private scheduler: TrackScheduler;
+
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
@@ -26,10 +28,10 @@ textarea {
 		});
 
 		textArea.addEventListener("input", ({ target }) => {
-			scheduler.schedule((target as HTMLInputElement).value);
+			this.scheduler.schedule((target as HTMLInputElement).value);
 		});
 
-		const scheduler = new TrackScheduler((text) => {
+		this.scheduler = new TrackScheduler((text) => {
 			/** Keep em sync, especially on first commit */
 			textArea.value = text;
 			const event = new CustomEvent("commit", { detail: text });
@@ -37,6 +39,15 @@ textarea {
 		});
 
 		this.shadowRoot.appendChild(textArea);
+	}
+
+	public set value(value: string) {
+		(this.shadowRoot.querySelector("textarea") as HTMLTextAreaElement).value = value;
+		this.scheduler.schedule(value);
+	}
+
+	public get value(): string {
+		return (this.shadowRoot.querySelector("textarea") as HTMLTextAreaElement).value;
 	}
 }
 

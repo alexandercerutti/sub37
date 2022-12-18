@@ -3,6 +3,7 @@ import { HSServer } from "@hsubs/server";
 import { WebVTTRenderer } from "@hsubs/webvtt-renderer";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
+import "./scheduled-textarea";
 import "./FakeHTMLVideoElement/index";
 
 /**
@@ -22,6 +23,8 @@ const server = new HSServer(WebVTTRenderer);
 
 const videoTag = document.getElementsByTagName("fake-video")[0];
 videoTag.duration = 7646;
+
+const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[0];
 
 /**
  * @type {CaptionsPresenter}
@@ -77,6 +80,35 @@ videoTag.addEventListener("playing", () => {
 
 videoTag.addEventListener("pause", () => {
 	server.suspend();
+});
+
+scheduledTextArea.addEventListener("commit", ({ detail: vttTrack }) => {
+	if (server.isRunning) {
+		server.destroy();
+	}
+
+	const timeStart = performance.now();
+
+	try {
+		server.createSession(
+			[
+				{
+					lang: "any",
+					content: vttTrack,
+				},
+			],
+			"text/vtt",
+		);
+		console.info(
+			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
+			"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
+		);
+	} catch (err) {
+		console.error(err);
+	}
+
+	videoTag.play();
+	videoTag.currentTime = 0;
 });
 
 // server.createSession(
@@ -147,21 +179,7 @@ const [vttTrack, vttChunk] = await Promise.all([
 	fetch(longTextTrackVTTPathChunk).then((e) => e.text()),
 ]);
 
-const timeStart = performance.now();
-
-server.createSession(
-	[
-		{
-			lang: "it",
-			content: vttTrack,
-		},
-	],
-	"text/vtt",
-);
-console.info(
-	`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
-	"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
-);
+scheduledTextArea.value = vttTrack;
 
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
@@ -173,12 +191,11 @@ server.addEventListener("cuestart", (cues) => {
 		cues,
 	);
 });
+
 server.addEventListener("cuestop", () => {
 	console.log("CUES STOP");
 	presenter.setCue();
 });
-
-videoTag.play();
 
 setTimeout(() => {
 	server.addTextChunk(vttChunk, "it");
