@@ -84,8 +84,14 @@ export class FakeHTMLVideoElement extends HTMLElement {
 	}
 
 	public set currentTime(value: number) {
+		const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+
 		this[currentTimeSymbol] = Math.min(Math.max(0, value), this[durationSymbol]);
 		const events: Event[] = [new Event("seeked"), new Event("timeupdate")];
+
+		if (controlsView) {
+			controlsView.currentTime = this[currentTimeSymbol];
+		}
 
 		for (const event of events) {
 			this.dispatchEvent(event);
@@ -111,18 +117,11 @@ export class FakeHTMLVideoElement extends HTMLElement {
 		}
 
 		this.playheadInterval = window.setInterval(() => {
-			const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
-
 			const event = new Event("timeupdate");
 			this.dispatchEvent(event);
-			// this.emitEvent("timeupdate", this[currentTimeSymbol]);
-			this[currentTimeSymbol] += 0.25;
+			this.currentTime += 0.25;
 
-			if (controlsView) {
-				controlsView.currentTime = this[currentTimeSymbol];
-			}
-
-			if (this[currentTimeSymbol] >= this.duration) {
+			if (this.currentTime >= this.duration) {
 				this.pause();
 			}
 		}, 250);
