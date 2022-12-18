@@ -128,7 +128,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 		}, 250);
 
 		const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
-		controlsView.play();
+		controlsView?.play();
 
 		const event = new Event("playing");
 		this.dispatchEvent(event);
