@@ -12,7 +12,7 @@ textarea {
 	width: 100%;
 	outline-color: rgb(197, 66, 6);
 	height: 500px;
-	font-size: 1.5rem;
+	font-size: inherit;
 	resize: none;
 	font-weight: 300;
 	box-sizing: border-box;
