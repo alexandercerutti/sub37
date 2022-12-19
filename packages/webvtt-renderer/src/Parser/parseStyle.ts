@@ -74,7 +74,7 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 
 	const selectorComponents = getSelectorComponents(selector);
 
-	if (!selectorComponents.tagName && !classesChain.length) {
+	if (!selectorComponents.tagName && !selectorComponents.attributes.size && !classesChain.length) {
 		/** Invalid */
 		return undefined;
 	}
