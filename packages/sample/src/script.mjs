@@ -1,4 +1,4 @@
-import "@hsubs/captions-presenter-web";
+import "@hsubs/captions-renderer";
 import { HSServer } from "@hsubs/server";
 import { WebVTTAdapter } from "@hsubs/webvtt-adapter";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
@@ -9,7 +9,7 @@ import "./customElements/fake-video";
 /**
  * @typedef {import("./customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
  * @typedef {import("./customElements/scheduled-textarea").ScheduledTextArea} ScheduledTextArea
- * @typedef {import("@hsubs/captions-presenter-web").Presenter} CaptionsPresenter
+ * @typedef {import("../../captions-renderer/lib").Renderer} CaptionsRenderer
  */
 
 /**
@@ -38,7 +38,7 @@ videoTag.duration = 7646;
 const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[0];
 
 /**
- * @type {CaptionsPresenter}
+ * @type {CaptionsRenderer}
  */
 
 const presenter = document.getElementById("presenter");

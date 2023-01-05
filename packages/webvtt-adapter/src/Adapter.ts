@@ -169,7 +169,7 @@ export default class Adapter extends BaseAdapter {
 							/**
 							 * Having the same length of the style entities here allows
 							 * us to prevent having several elements with the same styles
-							 * in presenter.
+							 * in renderer.
 							 */
 
 							const superCue = Object.getPrototypeOf(cue);

@@ -57,7 +57,7 @@ export function parseRegion(rawRegionData: string): Region {
 
 /**
  * One line's height in VH units.
- * This probably assumes that each line in presenter is
+ * This probably assumes that each line in renderer is
  * of the same height. So this might lead to some issues
  * in the future.
  *

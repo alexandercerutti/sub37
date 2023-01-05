@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import type { FakeHTMLVideoElement } from "../../sample/src/customElements/fake-video";
 
-test("Presenter should render two regions if the tracks owns two regions", async ({ page }) => {
+test("Renderer should render two regions if the tracks owns two regions", async ({ page }) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -54,10 +54,10 @@ scroll:up
 		element.currentTime = 3;
 	});
 
-	expect((await page.$$("captions-presenter > main > div")).length).toBe(2);
+	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
-test("Presenter should render two regions, one of them is the default one", async ({ page }) => {
+test("Renderer should render two regions, one of them is the default one", async ({ page }) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -102,10 +102,10 @@ scroll:up
 		element.currentTime = 3;
 	});
 
-	expect((await page.$$("captions-presenter > main > div")).length).toBe(2);
+	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
-test("Presenter should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
+test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
 	page,
 }) => {
 	/**
@@ -166,7 +166,7 @@ STYLE
 		element.currentTime = 3;
 	});
 
-	const regionsLocator = page.locator("captions-presenter > main > .region");
+	const regionsLocator = page.locator("captions-renderer > main > .region");
 
 	const [bgColor1, bgColor2] = await Promise.all([
 		regionsLocator

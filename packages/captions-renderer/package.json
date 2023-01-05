@@ -1,7 +1,7 @@
 {
-	"name": "@hsubs/captions-presenter-web",
+	"name": "@hsubs/captions-renderer",
 	"version": "0.1.0",
-	"description": "A caption presenter written with Web Components",
+	"description": "A caption renderer written with Web Components",
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {

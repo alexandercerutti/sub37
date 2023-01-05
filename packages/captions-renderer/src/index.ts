@@ -1,7 +1,7 @@
 import type { CueNode } from "@hsubs/server";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
-export class Presenter extends HTMLElement {
+export class Renderer extends HTMLElement {
 	private container = Object.assign(document.createElement("main"), {
 		id: "caption-window",
 		className: "hidden",
@@ -104,7 +104,7 @@ div.region > div > p > span {
 		this.container.classList.remove("hidden");
 
 		const cueGroupsByRegion: { [key: string]: CueNode[] } = {};
-		const nextActiveRegions: Presenter["activeRegions"] = {};
+		const nextActiveRegions: Renderer["activeRegions"] = {};
 
 		for (const cue of cueData) {
 			const region = cue.region?.id || "default";
@@ -152,4 +152,4 @@ div.region > div > p > span {
 	}
 }
 
-customElements.define("captions-presenter", Presenter);
+customElements.define("captions-renderer", Renderer);
