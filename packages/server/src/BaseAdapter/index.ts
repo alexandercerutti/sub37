@@ -1,51 +1,49 @@
 import type { CueNode } from "../CueNode.js";
-import { RendererNotOverridingSupportedTypesError } from "../Errors/index.js";
+import { AdapterNotOverridingSupportedTypesError } from "../Errors/index.js";
 
-export interface HSBaseRendererConstructor {
+export interface BaseAdapterConstructor {
 	supportedType: string;
 
-	ParseResult(data: CueNode[], errors: HSBaseRenderer.ParseError[]): ParseResult;
+	ParseResult(data: CueNode[], errors: BaseAdapter.ParseError[]): ParseResult;
 
 	/**
-	 * Used for printing Renderer human name
+	 * Used for printing Adapter human name
 	 */
 
 	toString(): string;
 
-	new (): HSBaseRenderer;
+	new (): BaseAdapter;
 }
 
-export interface HSBaseRenderer {
+export interface BaseAdapter {
 	parse(rawContent: unknown): ParseResult;
 
 	/**
-	 * Used for printing Renderer human name
+	 * Used for printing Adapter human name
 	 */
 
 	toString(): string;
 }
 
-export declare namespace HSBaseRenderer {
+export declare namespace BaseAdapter {
 	type ParseResult = InstanceType<typeof ParseResult>;
 	type ParseError = InstanceType<typeof ParseError>;
 }
 
 /** By doing this way, we also have static props type-checking */
-export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
-	implements HSBaseRenderer
-{
+export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements BaseAdapter {
 	/**
 	 * Static property that instructs for which type of subtitles
-	 * this renderer should be used. Must be overridden by Renderers
+	 * this adapter should be used. Must be overridden by Adapters
 	 */
 
 	public static get supportedType(): string {
-		throw new RendererNotOverridingSupportedTypesError(this.toString());
+		throw new AdapterNotOverridingSupportedTypesError(this.toString());
 	}
 
 	/**
-	 * The result of any operation performed by any renderer that
-	 * extend BaseRenderer
+	 * The result of any operation performed by any adapter that
+	 * extend BaseAdapter
 	 *
 	 * @param data
 	 * @param errors
@@ -54,14 +52,14 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 
 	public static ParseResult(
 		data: CueNode[] = [],
-		errors: HSBaseRenderer.ParseError[] = [],
+		errors: BaseAdapter.ParseError[] = [],
 	): ParseResult {
 		return new ParseResult(data, errors);
 	}
 
 	/**
-	 * Returns a human name for the renderer. This property
-	 * **must** be overridden by any Renderer passed to the
+	 * Returns a human name for the adapter. This property
+	 * **must** be overridden by any Adapter passed to the
 	 * server.
 	 *
 	 * @returns
@@ -72,8 +70,8 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	}
 
 	/**
-	 * Returns a human name for the renderer. This property
-	 * **must** be overridden by any Renderer passed to the
+	 * Returns a human name for the adapter. This property
+	 * **must** be overridden by any Adapter passed to the
 	 * server.
 	 *
 	 * @returns
@@ -86,23 +84,20 @@ export const HSBaseRenderer: HSBaseRendererConstructor = class HSBaseRenderer
 	/**
 	 * Parses the content of the type specified by supportedType.
 	 * It will be called by HSServer and **must** be overridden by
-	 * any Renderer passed to server.
+	 * any Adapter passed to server.
 	 *
 	 * @param rawContent
 	 */
 
 	public parse(rawContent: unknown): ParseResult {
 		throw new Error(
-			"Renderer doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
+			"Adapter doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
 		);
 	}
 };
 
 export class ParseResult {
-	public constructor(
-		public data: CueNode[] = [],
-		public errors: HSBaseRenderer.ParseError[] = [],
-	) {}
+	public constructor(public data: CueNode[] = [], public errors: BaseAdapter.ParseError[] = []) {}
 }
 
 export class ParseError {

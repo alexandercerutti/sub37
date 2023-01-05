@@ -1,6 +1,6 @@
 /**
  * BRING YOUR OWN REGION.
- * Each renderer should be able to define the properties
+ * Each adapter should be able to define the properties
  * in the structure, but letting us to use them
  * through a common interface.
  */

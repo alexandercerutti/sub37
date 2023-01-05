@@ -1,48 +1,48 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
+import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
 import { HSServer, Events } from "../lib/Server";
 import {
-	RendererNotOverridingToStringError,
-	RendererNotExtendingPrototypeError,
-	RendererNotOverridingSupportedTypesError,
+	AdapterNotOverridingToStringError,
+	AdapterNotExtendingPrototypeError,
+	AdapterNotOverridingSupportedTypesError,
 } from "../lib/Errors/index.js";
 import { CueNode } from "../lib/CueNode";
 
-class MockedRendererNoExtend {
+class MockedAdapterNoExtend {
 	static get supportedType() {
 		return "text/vtt";
 	}
 
 	static toString() {
-		return "NoExtendRenderer";
+		return "NoExtendAdapter";
 	}
 
 	toString() {
-		return "NoExtendRenderer";
+		return "NoExtendAdapter";
 	}
 }
 
-class MockedRendererNoSupportedType extends HSBaseRenderer {
+class MockedAdapterNoSupportedType extends BaseAdapter {
 	static toString() {
-		return "MockedRendererNoSupportedType";
+		return "MockedAdapterNoSupportedType";
 	}
 
 	toString() {
-		return "MockedRendererNoSupportedType";
+		return "MockedAdapterNoSupportedType";
 	}
 }
-class MockedRendererNoParse extends HSBaseRenderer {}
+class MockedAdapterNoParse extends BaseAdapter {}
 
-class MockedRendererNoStaticToString extends HSBaseRenderer {
+class MockedAdapterNoStaticToString extends BaseAdapter {
 	static get supportedType() {
 		return "text/vtt";
 	}
 }
 
-class MockedRenderer extends HSBaseRenderer {
+class MockedAdapter extends BaseAdapter {
 	static toString() {
-		return "MockedRenderer";
+		return "MockedAdapter";
 	}
 
 	static get supportedType() {
@@ -50,7 +50,7 @@ class MockedRenderer extends HSBaseRenderer {
 	}
 
 	toString() {
-		return "MockedRenderer";
+		return "MockedAdapter";
 	}
 
 	/**
@@ -58,11 +58,11 @@ class MockedRenderer extends HSBaseRenderer {
 	 * @returns {ParseResult}
 	 */
 	parse(content) {
-		return HSBaseRenderer.ParseResult([], []);
+		return BaseAdapter.ParseResult([], []);
 	}
 }
 
-const originalRendererParse = MockedRenderer.prototype.parse;
+const originalAdapterParse = MockedAdapter.prototype.parse;
 
 function mockGetCurrentPositionFactory() {
 	let second = 0;
@@ -80,48 +80,48 @@ function mockGetCurrentPositionFactory() {
 // ********************** //
 
 describe("HSServer", () => {
-	it("should throw if no renderer is passed when a server is initialized", () => {
+	it("should throw if no adapter is passed when a server is initialized", () => {
 		expect(() => new HSServer()).toThrowError();
 	});
 
-	it("should log errors out if a server is initialized with not compliant renderers", () => {
+	it("should log errors out if a server is initialized with not compliant adapters", () => {
 		const error = jest.spyOn(console, "error");
 
 		/**
-		 * @type {Array<import("../lib").HSBaseRendererConstructor>}
+		 * @type {Array<import("../lib").BaseAdapterConstructor>}
 		 */
 
-		const renderers = [
-			MockedRendererNoStaticToString,
+		const adapters = [
+			MockedAdapterNoStaticToString,
 			// @ts-expect-error
-			MockedRendererNoExtend,
-			MockedRendererNoSupportedType,
+			MockedAdapterNoExtend,
+			MockedAdapterNoSupportedType,
 			// Last one is valid so it doesn't actually crash
-			MockedRenderer,
+			MockedAdapter,
 		];
 
-		new HSServer(...renderers);
+		new HSServer(...adapters);
 
 		expect(error).toHaveBeenCalledTimes(3);
 
-		expect(error).toHaveBeenCalledWith(new RendererNotOverridingToStringError());
-		expect(error).toHaveBeenCalledWith(new RendererNotExtendingPrototypeError("NoExtendRenderer"));
+		expect(error).toHaveBeenCalledWith(new AdapterNotOverridingToStringError());
+		expect(error).toHaveBeenCalledWith(new AdapterNotExtendingPrototypeError("NoExtendAdapter"));
 		expect(error).toHaveBeenCalledWith(
-			new RendererNotOverridingSupportedTypesError("MockedRendererNoSupportedType"),
+			new AdapterNotOverridingSupportedTypesError("MockedAdapterNoSupportedType"),
 		);
 	});
 
-	it("should throw if no valid renderer is left after filtering out invalid ones", () => {
+	it("should throw if no valid adapter is left after filtering out invalid ones", () => {
 		// @ts-expect-error
-		expect(() => new HSServer(MockedRendererNoExtend)).toThrowError();
-		expect(() => new HSServer(MockedRendererNoSupportedType)).toThrowError();
-		expect(() => new HSServer(MockedRendererNoParse)).toThrowError();
+		expect(() => new HSServer(MockedAdapterNoExtend)).toThrowError();
+		expect(() => new HSServer(MockedAdapterNoSupportedType)).toThrowError();
+		expect(() => new HSServer(MockedAdapterNoParse)).toThrowError();
 	});
 
 	describe("createSession", () => {
-		it("should throw on missing supported renderers", () => {
+		it("should throw on missing supported adapters", () => {
 			expect(() => {
-				const server = new HSServer(MockedRenderer);
+				const server = new HSServer(MockedAdapter);
 				server.createSession(
 					[
 						{
@@ -147,12 +147,12 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			MockedRenderer.prototype.parse = function () {
+			MockedAdapter.prototype.parse = function () {
 				// Low times to reduce test duration
 				// Mocked position factory steps by 1,
 				// but video tags step 4 times per second
 
-				return HSBaseRenderer.ParseResult(
+				return BaseAdapter.ParseResult(
 					[
 						new CueNode({
 							content: "This is a sample cue",
@@ -185,7 +185,7 @@ describe("HSServer", () => {
 		});
 
 		beforeEach(() => {
-			server = new HSServer(MockedRenderer);
+			server = new HSServer(MockedAdapter);
 
 			server.createSession(
 				[
@@ -199,7 +199,7 @@ describe("HSServer", () => {
 		});
 
 		afterAll(() => {
-			MockedRenderer.prototype.parse = originalRendererParse;
+			MockedAdapter.prototype.parse = originalAdapterParse;
 		});
 
 		it("should allow updating the manually the time if the server is paused", () => {
@@ -226,7 +226,7 @@ describe("HSServer", () => {
 
 	describe("start", () => {
 		it("should throw if no session has been created first", () => {
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			expect(() => server.start(mockGetCurrentPositionFactory())).toThrowError(
 				"No session started. Engine won't serve any subtitles.",
@@ -238,12 +238,12 @@ describe("HSServer", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			MockedRenderer.prototype.parse = function () {
+			MockedAdapter.prototype.parse = function () {
 				// Low times to reduce test duration
 				// Mocked position factory steps by 1,
 				// but video tags step 4 times per second
 
-				return HSBaseRenderer.ParseResult(
+				return BaseAdapter.ParseResult(
 					[
 						new CueNode({
 							content: "This is a sample cue",
@@ -278,7 +278,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			server.createSession(
 				[
@@ -303,7 +303,7 @@ describe("HSServer", () => {
 
 				if (currentCues === expectedCues) {
 					done();
-					MockedRenderer.prototype.parse = originalRendererParse;
+					MockedAdapter.prototype.parse = originalAdapterParse;
 				}
 			});
 
@@ -320,15 +320,15 @@ describe("HSServer", () => {
 			 * @returns
 			 */
 
-			MockedRenderer.prototype.parse = function (content) {
-				return HSBaseRenderer.ParseResult(content, []);
+			MockedAdapter.prototype.parse = function (content) {
+				return BaseAdapter.ParseResult(content, []);
 			};
 
 			// ******************* //
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			server.createSession(
 				[
@@ -480,7 +480,7 @@ describe("HSServer", () => {
 					]);
 
 					done();
-					MockedRenderer.prototype.parse = originalRendererParse;
+					MockedAdapter.prototype.parse = originalAdapterParse;
 				}
 			});
 
@@ -497,15 +497,15 @@ describe("HSServer", () => {
 			 * @returns
 			 */
 
-			MockedRenderer.prototype.parse = function (content) {
-				return HSBaseRenderer.ParseResult(content, []);
+			MockedAdapter.prototype.parse = function (content) {
+				return BaseAdapter.ParseResult(content, []);
 			};
 
 			// ******************* //
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			server.createSession(
 				[
@@ -558,7 +558,7 @@ describe("HSServer", () => {
 						const checkInterval = window.setInterval(() => {
 							if (currentCues > 2) {
 								window.clearInterval(checkInterval);
-								MockedRenderer.prototype.parse = originalRendererParse;
+								MockedAdapter.prototype.parse = originalAdapterParse;
 								done();
 							}
 						}, 500);
@@ -579,15 +579,15 @@ describe("HSServer", () => {
 			 * @returns
 			 */
 
-			MockedRenderer.prototype.parse = function (content) {
-				return HSBaseRenderer.ParseResult(content, []);
+			MockedAdapter.prototype.parse = function (content) {
+				return BaseAdapter.ParseResult(content, []);
 			};
 
 			// ******************* //
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			server.createSession(
 				[
@@ -653,15 +653,15 @@ describe("HSServer", () => {
 			 * @returns
 			 */
 
-			MockedRenderer.prototype.parse = function (content) {
-				return HSBaseRenderer.ParseResult(content, []);
+			MockedAdapter.prototype.parse = function (content) {
+				return BaseAdapter.ParseResult(content, []);
 			};
 
 			// ******************* //
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedRenderer);
+			const server = new HSServer(MockedAdapter);
 
 			expect(() => server.suspend()).toThrow();
 			expect(() => server.resume()).toThrow();

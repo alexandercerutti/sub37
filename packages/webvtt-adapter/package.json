@@ -1,7 +1,7 @@
 {
-	"name": "@hsubs/webvtt-renderer",
+	"name": "@hsubs/webvtt-adapter",
 	"version": "0.1.0",
-	"description": "A subtitles renderer for WebVTT subtitles",
+	"description": "A subtitles adapter for WebVTT subtitles",
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {

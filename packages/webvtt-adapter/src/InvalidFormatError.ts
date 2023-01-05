@@ -11,12 +11,12 @@ export class InvalidFormatError extends Error {
 		this.name = "InvalidFormatError";
 
 		if (reason === "WEBVTT_HEADER_MISSING") {
-			this.message = `Content provided to WebVTTRenderer cannot be parsed.
+			this.message = `Content provided to WebVTTAdapter cannot be parsed.
 
 	Reason code: ${reason}
 			`;
 		} else {
-			this.message = `Content provided to WebVTTRenderer cannot be parsed.
+			this.message = `Content provided to WebVTTAdapter cannot be parsed.
 			
 	Reason code: ${reason}
 	

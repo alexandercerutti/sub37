@@ -1,7 +1,3 @@
-/**
- * When Server will be instantiated without renderers, this will be the resulting error
- */
-
 export class ActiveTrackMissingError extends Error {
 	constructor() {
 		super();

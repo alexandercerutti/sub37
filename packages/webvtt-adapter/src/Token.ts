@@ -15,7 +15,7 @@ export class Token {
 
 	private constructor(public readonly type: TokenType, public readonly content: string) {}
 
-	static String(content: string, boundaries: Boundaries): Token {
+	public static String(content: string, boundaries: Boundaries): Token {
 		const token = new Token(TokenType.STRING, content);
 
 		token.length = boundaries.end - boundaries.start;
@@ -24,7 +24,7 @@ export class Token {
 		return token;
 	}
 
-	static StartTag(
+	public static StartTag(
 		tagName: string,
 		boundaries: Boundaries,
 		classes: string[] = [],
@@ -40,7 +40,7 @@ export class Token {
 		return token;
 	}
 
-	static EndTag(tagName: string, boundaries: Boundaries): Token {
+	public static EndTag(tagName: string, boundaries: Boundaries): Token {
 		const token = new Token(TokenType.END_TAG, tagName);
 
 		token.length = boundaries.end - boundaries.start;
@@ -49,7 +49,7 @@ export class Token {
 		return token;
 	}
 
-	static TimestampTag(timestampRaw: string, boundaries: Boundaries): Token {
+	public static TimestampTag(timestampRaw: string, boundaries: Boundaries): Token {
 		const token = new Token(TokenType.TIMESTAMP, timestampRaw);
 
 		token.length = boundaries.end - boundaries.start;

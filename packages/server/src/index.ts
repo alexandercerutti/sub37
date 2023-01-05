@@ -1,6 +1,6 @@
 export { HSServer, Events as HSEvents } from "./Server.js";
-export { HSBaseRenderer } from "./BaseRenderer/index.js";
-export type { HSBaseRendererConstructor } from "./BaseRenderer/index.js";
+export { BaseAdapter } from "./BaseAdapter/index.js";
+export type { BaseAdapterConstructor } from "./BaseAdapter/index.js";
 export type { Region } from "./Region";
 export { CueNode } from "./CueNode.js";
 export * as Entities from "./Entities/index.js";

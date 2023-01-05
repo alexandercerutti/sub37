@@ -1,7 +1,7 @@
 import type { RawTrack } from "./model";
 import { CueNode } from "./CueNode.js";
 import { IntervalBinaryTree } from "./IntervalBinaryTree.js";
-import { HSBaseRendererConstructor, ParseResult } from "./BaseRenderer/index.js";
+import { BaseAdapterConstructor, ParseResult } from "./BaseAdapter/index.js";
 import {
 	UncaughtParsingExceptionError,
 	UnexpectedDataFormatError,
@@ -15,15 +15,15 @@ const activeTrackSymbol = Symbol("session.active");
 export class HSSession {
 	private timelines: { [lang: string]: IntervalBinaryTree<CueNode> } = Object.create(null);
 	private [activeTrackSymbol]: string = null;
-	private renderer: InstanceType<HSBaseRendererConstructor>;
+	private adapter: InstanceType<BaseAdapterConstructor>;
 	private onSafeFailure: (error: Error) => void;
 
 	constructor(
 		rawContents: RawTrack[],
-		renderer: HSSession["renderer"],
+		adapter: HSSession["adapter"],
 		onSafeFailure: HSSession["onSafeFailure"],
 	) {
-		this.renderer = renderer;
+		this.adapter = adapter;
 		this.onSafeFailure = onSafeFailure;
 
 		this.addChunks(...rawContents);
@@ -63,7 +63,7 @@ export class HSSession {
 	}
 
 	/**
-	 * Allows adding a chunks to be processed by a renderer
+	 * Allows adding a chunks to be processed by a adapter
 	 * and get inserted into a timeline.
 	 *
 	 * @param tracks
@@ -72,11 +72,11 @@ export class HSSession {
 	public addChunks(...tracks: RawTrack[]) {
 		try {
 			for (const { lang, content } of tracks) {
-				const parseResult = this.renderer.parse(content);
+				const parseResult = this.adapter.parse(content);
 
 				if (!(parseResult instanceof ParseResult)) {
 					/** If parser fails once for this reason, it is worth to stop the whole ride. */
-					throw new UnexpectedParsingOutputFormatError(this.renderer.toString(), lang, parseResult);
+					throw new UnexpectedParsingOutputFormatError(this.adapter.toString(), lang, parseResult);
 				}
 
 				if (parseResult.data.length) {
@@ -87,7 +87,7 @@ export class HSSession {
 					for (const cue of parseResult.data) {
 						if (!(cue instanceof CueNode)) {
 							parseResult.errors.push({
-								error: new UnexpectedDataFormatError(this.renderer.toString()),
+								error: new UnexpectedDataFormatError(this.adapter.toString()),
 								failedChunk: cue,
 								isCritical: false,
 							});
@@ -98,7 +98,7 @@ export class HSSession {
 						this.timelines[lang].addNode(cue);
 					}
 				} else if (parseResult.errors.length >= 1) {
-					throw new UnparsableContentError(this.renderer.toString(), parseResult.errors[0]);
+					throw new UnparsableContentError(this.adapter.toString(), parseResult.errors[0]);
 				}
 
 				for (const parseResultError of parseResult.errors) {
@@ -113,7 +113,7 @@ export class HSSession {
 				throw err;
 			}
 
-			throw new UncaughtParsingExceptionError(this.renderer.toString(), err);
+			throw new UncaughtParsingExceptionError(this.adapter.toString(), err);
 		}
 	}
 }

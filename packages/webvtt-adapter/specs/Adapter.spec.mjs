@@ -1,26 +1,26 @@
 // @ts-check
-import { Entities, CueNode, HSBaseRenderer } from "@hsubs/server";
-import { ParseResult } from "@hsubs/server/lib/BaseRenderer/index.js";
+import { Entities, CueNode, BaseAdapter } from "@hsubs/server";
+import { ParseResult } from "@hsubs/server/lib/BaseAdapter/index.js";
 import { describe, beforeEach, it, expect } from "@jest/globals";
-import WebVTTRenderer from "../lib/Renderer.js";
+import WebVTTAdapter from "../lib/Adapter.js";
 import { MissingContentError } from "../lib/MissingContentError.js";
 import { InvalidFormatError } from "../lib/InvalidFormatError.js";
 
-describe("WebVTTRenderer", () => {
-	/** @type {WebVTTRenderer} */
-	let renderer;
+describe("WebVTTAdapter", () => {
+	/** @type {WebVTTAdapter} */
+	let adapter;
 
 	beforeEach(() => {
-		renderer = new WebVTTRenderer();
+		adapter = new WebVTTAdapter();
 	});
 
 	it("should always return a supported type", () => {
-		expect(WebVTTRenderer.supportedType).toEqual("text/vtt");
+		expect(WebVTTAdapter.supportedType).toEqual("text/vtt");
 	});
 
 	describe("parse", () => {
 		it("should return an empty ParseResult if rawContent is falsy", () => {
-			const emptyParseResult = HSBaseRenderer.ParseResult(
+			const emptyParseResult = BaseAdapter.ParseResult(
 				[],
 				[
 					{
@@ -32,31 +32,31 @@ describe("WebVTTRenderer", () => {
 			);
 
 			// @ts-expect-error
-			expect(renderer.parse(undefined)).toEqual(emptyParseResult);
+			expect(adapter.parse(undefined)).toEqual(emptyParseResult);
 			// @ts-expect-error
-			expect(renderer.parse(null)).toEqual(emptyParseResult);
-			expect(renderer.parse("")).toEqual(emptyParseResult);
+			expect(adapter.parse(null)).toEqual(emptyParseResult);
+			expect(adapter.parse("")).toEqual(emptyParseResult);
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
 			// @ts-expect-error
-			expect(renderer.parse(true)).toBeInstanceOf(ParseResult);
+			expect(adapter.parse(true)).toBeInstanceOf(ParseResult);
 			// @ts-expect-error
-			expect(renderer.parse(true).data.length).toBe(0);
+			expect(adapter.parse(true).data.length).toBe(0);
 			// @ts-expect-error
-			expect(renderer.parse(true).errors.length).toBe(1);
+			expect(adapter.parse(true).errors.length).toBe(1);
 			// @ts-expect-error
-			expect(renderer.parse(true).errors[0].error).toEqual(
+			expect(adapter.parse(true).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 			// @ts-expect-error
-			expect(renderer.parse(true).errors[0].isCritical).toBe(true);
+			expect(adapter.parse(true).errors[0].isCritical).toBe(true);
 
 			// @ts-expect-error
-			expect(renderer.parse(10).errors[0].error).toEqual(
+			expect(adapter.parse(10).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
-			expect(renderer.parse("Look, a phoenix!").errors[0].error).toEqual(
+			expect(adapter.parse("Look, a phoenix!").errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 		});
@@ -75,7 +75,7 @@ Never drink liquid nitrogen.
 00:00:10.000 --> 00:00:14.000
 The Organisation for Sample Public Service Announcements accepts no liability for the content of this advertisement, or for the consequences of any actions taken on the basis of the information provided.`;
 
-			const parseResult = renderer.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
 
 			expect(parseResult.data[2]).toBeTruthy();
 			expect(parseResult.data[2].content).toBe(
@@ -96,7 +96,7 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 — It will perforate your stomach.
 — You could die.`;
 
-			const parseResult = renderer.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
 
 			expect(parseResult.data.length).toBe(2);
 			expect(parseResult.data[0].startTime).toBe(1000);
@@ -119,7 +119,7 @@ This cue should never appear, right?
 ...Right?
 `;
 
-			const result = renderer.parse(SAME_START_END_TIMES_CONTENT);
+			const result = adapter.parse(SAME_START_END_TIMES_CONTENT);
 			expect(result.data.length).toEqual(2);
 
 			expect(result.data[0].startTime).toEqual(6000);
@@ -139,7 +139,7 @@ WEBVTT
 00:00:00.000 --> 00:00:20.000 region:fred align:left
 <lang.mimmo en-US>Hi, my name is Fred</lang>`;
 
-			const parsingResult = renderer.parse(CLASSIC_CONTENT);
+			const parsingResult = adapter.parse(CLASSIC_CONTENT);
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(2);
 
@@ -200,7 +200,7 @@ WEBVTT
 <00:00:24.000>
 			`;
 
-			const parsingResult = renderer.parse(TIMESTAMPS_CUES_CONTENT);
+			const parsingResult = adapter.parse(TIMESTAMPS_CUES_CONTENT);
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(4);
 
@@ -272,7 +272,7 @@ WEBVTT
 <ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
 			`;
 
-			const parsingResult = renderer.parse(RUBY_RT_AUTOCLOSE);
+			const parsingResult = adapter.parse(RUBY_RT_AUTOCLOSE);
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(1);
 
@@ -327,7 +327,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 `;
 
-			const parsingResult = renderer.parse(REGION_WITH_ATTRIBUTES);
+			const parsingResult = adapter.parse(REGION_WITH_ATTRIBUTES);
 
 			expect(parsingResult.data[0]).toEqual(
 				new CueNode({
@@ -368,7 +368,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult = renderer.parse(CUE_WITH_STYLE_WITHOUT_ID);
+					const parsingResult = adapter.parse(CUE_WITH_STYLE_WITHOUT_ID);
 
 					const content =
 						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
@@ -425,7 +425,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_ID);
+					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID);
 
 					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
@@ -472,7 +472,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
+					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
 
 					expect(parsingResult2.data[0]).toEqual(
 						new CueNode({
@@ -524,7 +524,7 @@ STYLE
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
 					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
@@ -575,7 +575,7 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
 					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
@@ -636,7 +636,7 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
+					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
 
 					expect(parsingResult1.data[0]).toEqual(
 						new CueNode({
@@ -686,7 +686,7 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = renderer.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
+					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
 
 					expect(parsingResult2.data[0]).toEqual(
 						new CueNode({

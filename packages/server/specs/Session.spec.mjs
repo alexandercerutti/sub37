@@ -2,20 +2,20 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HSSession } from "../lib/Session.js";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
-import { HSBaseRenderer, ParseResult } from "../lib/BaseRenderer";
+import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
 import { CueNode } from "../lib/CueNode.js";
 import {
 	UnexpectedParsingOutputFormatError,
 	UncaughtParsingExceptionError,
 } from "../lib/Errors/index.js";
 
-class MockedRenderer extends HSBaseRenderer {
+class MockedAdapter extends BaseAdapter {
 	static toString() {
-		return "Mocked Renderer";
+		return "Mocked Adapter";
 	}
 
 	toString() {
-		return "Mocked Renderer";
+		return "Mocked Adapter";
 	}
 
 	/**
@@ -24,17 +24,17 @@ class MockedRenderer extends HSBaseRenderer {
 	 * @returns {ParseResult}
 	 */
 	parse(content) {
-		return HSBaseRenderer.ParseResult([], []);
+		return BaseAdapter.ParseResult([], []);
 	}
 }
 
-class MockedRendererWithParseResultError {
+class MockedAdapterWithParseResultError {
 	static toString() {
-		return "Mocked Renderer With Parse Result Error";
+		return "Mocked Adapter With Parse Result Error";
 	}
 
 	toString() {
-		return "Mocked Renderer With Parse Result Error";
+		return "Mocked Adapter With Parse Result Error";
 	}
 
 	/**
@@ -43,7 +43,7 @@ class MockedRendererWithParseResultError {
 	 * @returns {ParseResult}
 	 */
 	parse(content) {
-		return HSBaseRenderer.ParseResult(
+		return BaseAdapter.ParseResult(
 			[
 				new CueNode({
 					content,
@@ -54,7 +54,7 @@ class MockedRendererWithParseResultError {
 			],
 			[
 				{
-					error: new Error("mocked renderer error"),
+					error: new Error("mocked adapter error"),
 					failedChunk: "",
 					isCritical: false,
 				},
@@ -63,7 +63,7 @@ class MockedRendererWithParseResultError {
 	}
 }
 
-const originalParseMethod = MockedRenderer.prototype.parse;
+const originalParseMethod = MockedAdapter.prototype.parse;
 
 describe("HSSession", () => {
 	/** @type {import("../lib/model").RawTrack[]} */
@@ -91,10 +91,10 @@ describe("HSSession", () => {
 	];
 
 	beforeEach(() => {
-		MockedRenderer.prototype.parse = originalParseMethod;
+		MockedAdapter.prototype.parse = originalParseMethod;
 	});
 
-	it("Should throw if Renderer doesn't return expected data structure", () => {
+	it("Should throw if adapter doesn't return expected data structure", () => {
 		// ********************* //
 		// *** MOCKING START *** //
 		// ********************* //
@@ -105,7 +105,7 @@ describe("HSSession", () => {
 		 */
 
 		// @ts-expect-error
-		MockedRenderer.prototype.parse = function (content) {
+		MockedAdapter.prototype.parse = function (content) {
 			return content;
 		};
 
@@ -117,19 +117,19 @@ describe("HSSession", () => {
 			new HSSession(
 				[
 					{
-						content: "This content format is not actually important. Renderer is mocked",
+						content: "This content format is not actually important. adapter is mocked",
 						lang: "eng",
 					},
 				],
-				new MockedRenderer(),
+				new MockedAdapter(),
 				() => {},
 			);
 		}).toThrow(UnexpectedParsingOutputFormatError);
 
-		MockedRenderer.prototype.parse = originalParseMethod;
+		MockedAdapter.prototype.parse = originalParseMethod;
 	});
 
-	it("Should throw if Renderer crashes", () => {
+	it("Should throw if adapter crashes", () => {
 		// ********************* //
 		// *** MOCKING START *** //
 		// ********************* //
@@ -139,7 +139,7 @@ describe("HSSession", () => {
 		 * @returns
 		 */
 
-		MockedRenderer.prototype.parse = function (content) {
+		MockedAdapter.prototype.parse = function (content) {
 			throw new Error("Mocked Error");
 		};
 
@@ -151,16 +151,16 @@ describe("HSSession", () => {
 			new HSSession(
 				[
 					{
-						content: "This content format is not actually important. Renderer is mocked",
+						content: "This content format is not actually important. adapter is mocked",
 						lang: "eng",
 					},
 				],
-				new MockedRenderer(),
+				new MockedAdapter(),
 				() => {},
 			);
 		}).toThrowError(UncaughtParsingExceptionError);
 
-		MockedRenderer.prototype.parse = originalParseMethod;
+		MockedAdapter.prototype.parse = originalParseMethod;
 	});
 
 	it("should create a timeline for each passed track that has content and didn't throw", () => {
@@ -168,8 +168,8 @@ describe("HSSession", () => {
 		// *** MOCKING *** //
 		// *************** //
 
-		MockedRenderer.prototype.parse = function () {
-			return HSBaseRenderer.ParseResult(
+		MockedAdapter.prototype.parse = function () {
+			return BaseAdapter.ParseResult(
 				[
 					new CueNode({
 						id: "any",
@@ -186,7 +186,7 @@ describe("HSSession", () => {
 		// *** MOCKING END *** //
 		// ******************* //
 
-		const session = new HSSession(mockedTracks, new MockedRenderer(), () => {});
+		const session = new HSSession(mockedTracks, new MockedAdapter(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -203,7 +203,7 @@ describe("HSSession", () => {
 	});
 
 	it("should ignore tracks that have no output", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedRenderer(), () => {});
+		const session = new HSSession(mockedEmptyTracks, new MockedAdapter(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -215,7 +215,7 @@ describe("HSSession", () => {
 	});
 
 	it("should warn if a non existing track is set", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedRenderer(), () => {});
+		const session = new HSSession(mockedEmptyTracks, new MockedAdapter(), () => {});
 
 		const warn = jest.spyOn(console, "warn");
 		expect(session.activeTrack).toBe(null);
@@ -227,7 +227,7 @@ describe("HSSession", () => {
 		warn.mockReset();
 	});
 
-	it("should call safeFailure callback when Renderer goes bad", () => {
+	it("should call safeFailure callback when adapter goes bad", () => {
 		/**
 		 * @param {Error} error
 		 */
@@ -241,11 +241,11 @@ describe("HSSession", () => {
 		const mockObject = { onSafeFailureCb };
 
 		const spy = jest.spyOn(mockObject, "onSafeFailureCb");
-		const mockedError = new Error("mocked renderer error");
+		const mockedError = new Error("mocked adapter error");
 
 		new HSSession(
 			mockedEmptyTracks,
-			new MockedRendererWithParseResultError(),
+			new MockedAdapterWithParseResultError(),
 			mockObject.onSafeFailureCb,
 		);
 

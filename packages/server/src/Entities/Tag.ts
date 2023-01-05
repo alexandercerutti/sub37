@@ -2,7 +2,7 @@ import { GenericEntity, Type } from "./Generic.js";
 
 /**
  * TagType is an enum containing
- * recognized types in renderers
+ * recognized types in adapters
  * like vtt
  */
 

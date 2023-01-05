@@ -1,5 +1,5 @@
 /**
- * When Server will be instantiated without renderers, this will be the resulting error
+ * When Server will be instantiated without adapters, this will be the resulting error
  */
 
 export class OutOfRangeFrequencyError extends Error {

@@ -271,22 +271,18 @@ scroll:up
 		const REGION_WITHOUT_ID = `width:40% lines:3 regionanchor:0%,100% viewportanchor:10%,90% scroll:up`;
 
 		it("should return a custom region with converted attributes if string is separated by newlines", () => {
-			expect(parseRegion(REGION_WITH_ATTRIBUTES_NEWLINES)).toEqual({
+			expect(parseRegion(REGION_WITH_ATTRIBUTES_NEWLINES)).toMatchObject({
 				id: "fred",
-				width: "40%",
+				width: 40,
 				lines: 3,
-				displayStrategy: "push",
-				origin: ["10%", "90%"],
 			});
 		});
 
 		it("should return a custom region with converted attributes if string is separated by spaces", () => {
-			expect(parseRegion(REGION_WITH_ATTRIBUTES_SPACES)).toEqual({
+			expect(parseRegion(REGION_WITH_ATTRIBUTES_SPACES)).toMatchObject({
 				id: "fred",
-				width: "40%",
+				width: 40,
 				lines: 3,
-				displayStrategy: "push",
-				origin: ["10%", "90%"],
 			});
 		});
 

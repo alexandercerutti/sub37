@@ -1,5 +1,5 @@
 import type { Region } from "@hsubs/server";
-import { HSBaseRenderer, CueNode, Entities } from "@hsubs/server";
+import { BaseAdapter, CueNode, Entities } from "@hsubs/server";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";
@@ -22,22 +22,22 @@ enum BlockType {
 	CUE /*******/ = 0b1000,
 }
 
-export default class Renderer extends HSBaseRenderer {
+export default class Adapter extends BaseAdapter {
 	static override get supportedType() {
 		return "text/vtt";
 	}
 
 	static override toString(): string {
-		return "WebVTT Renderer";
+		return "WebVTT Adapter";
 	}
 
 	override toString(): string {
-		return "WebVTT Renderer";
+		return "WebVTT Adapter";
 	}
 
-	override parse(rawContent: string): HSBaseRenderer.ParseResult {
+	override parse(rawContent: string): BaseAdapter.ParseResult {
 		if (!rawContent) {
-			return HSBaseRenderer.ParseResult(undefined, [
+			return BaseAdapter.ParseResult(undefined, [
 				{
 					error: new MissingContentError(),
 					failedChunk: "",
@@ -56,7 +56,7 @@ export default class Renderer extends HSBaseRenderer {
 		const regions: { [id: string]: Region } = Object.create(null);
 		const styles: Parser.Style[] = [];
 
-		const failures: HSBaseRenderer.ParseError[] = [];
+		const failures: BaseAdapter.ParseError[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -246,7 +246,7 @@ export default class Renderer extends HSBaseRenderer {
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-				return HSBaseRenderer.ParseResult(undefined, [
+				return BaseAdapter.ParseResult(undefined, [
 					{
 						error,
 						isCritical: true,
@@ -256,7 +256,7 @@ export default class Renderer extends HSBaseRenderer {
 			}
 		} while (block.cursor <= content.length);
 
-		return HSBaseRenderer.ParseResult(cues, failures);
+		return BaseAdapter.ParseResult(cues, failures);
 	}
 }
 

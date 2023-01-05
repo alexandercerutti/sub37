@@ -5,10 +5,10 @@
 import { formatError } from "./utils.js";
 
 export class UnparsableContentError extends Error {
-	constructor(rendererName: string, error: unknown) {
+	constructor(adapterName: string, error: unknown) {
 		super();
 
-		const message = `${rendererName} failed on every section of the provided content or critically failed on a point.
+		const message = `${adapterName} failed on every section of the provided content or critically failed on a point.
 		
 		${formatError(error)}
 		`;

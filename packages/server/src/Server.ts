@@ -1,20 +1,20 @@
 import type { RawTrack } from "./model";
 import type { CueNode } from "./CueNode.js";
-import { HSBaseRenderer, HSBaseRendererConstructor } from "./BaseRenderer/index.js";
+import { BaseAdapter, BaseAdapterConstructor } from "./BaseAdapter/index.js";
 import { HSSession } from "./Session.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
 import {
-	RenderersMissingError,
-	NoRenderersFoundError,
+	AdaptersMissingError,
+	NoAdaptersFoundError,
 	UnsupportedContentError,
 	OutOfRangeFrequencyError,
 	ParsingError,
-	RendererNotExtendingPrototypeError,
-	RendererNotOverridingToStringError,
+	AdapterNotExtendingPrototypeError,
+	AdapterNotOverridingToStringError,
 } from "./Errors/index.js";
 
 const intervalSymbol /***/ = Symbol("hs.s.interval");
-const renderersSymbol /**/ = Symbol("hs.s.renderers");
+const adaptersSymbol /**/ = Symbol("hs.s.adapters");
 const sessionSymbol /****/ = Symbol("hs.s.session");
 const listenersSymbol /**/ = Symbol("hs.s.listeners");
 
@@ -39,50 +39,50 @@ interface HSListener<EventName extends Events = Events> {
 
 /**
  * Core of the whole captions system.
- * Instance it with a set of Renderers for the
+ * Instance it with a set of adapterss for the
  * contents you might receive.
  *
- * Protocol-conforming Renderers will be saved
+ * Protocol-conforming Adapterss will be saved
  * and will survive across different sessions.
  *
  * Refer to the documentation for more information
  * about the protocol.
  *
- * @throws if no Renderer is passed to the constructor.
- * @throws if none of the Renderers is conform to the protocol.
+ * @throws if no Adapter is passed to the constructor.
+ * @throws if none of the Adapters is conform to the protocol.
  */
 
 export class HSServer {
 	private [intervalSymbol]: SuspendableTimer | undefined = undefined;
-	private [renderersSymbol]: HSBaseRendererConstructor[];
+	private [adaptersSymbol]: BaseAdapterConstructor[];
 	private [sessionSymbol]: HSSession | undefined = undefined;
 	private [listenersSymbol]: HSListener[] = [];
 
-	constructor(...renderers: HSBaseRendererConstructor[]) {
-		if (!renderers.length) {
-			throw new RenderersMissingError();
+	constructor(...adapters: BaseAdapterConstructor[]) {
+		if (!adapters.length) {
+			throw new AdaptersMissingError();
 		}
 
-		this[renderersSymbol] = renderers.filter((Renderer) => {
+		this[adaptersSymbol] = adapters.filter((Adapter) => {
 			try {
-				if (Renderer.toString() === "default") {
-					throw new RendererNotOverridingToStringError();
+				if (Adapter.toString() === "default") {
+					throw new AdapterNotOverridingToStringError();
 				}
 
-				if (Object.getPrototypeOf(Renderer) !== HSBaseRenderer) {
-					throw new RendererNotExtendingPrototypeError(Renderer.toString());
+				if (Object.getPrototypeOf(Adapter) !== BaseAdapter) {
+					throw new AdapterNotExtendingPrototypeError(Adapter.toString());
 				}
 
-				return Boolean(Renderer.supportedType);
+				return Boolean(Adapter.supportedType);
 			} catch (err) {
-				/** Otherwise developers will never know why a Renderer got discarded ¯\_(ツ)_/¯ */
+				/** Otherwise developers will never know why a Adapter got discarded ¯\_(ツ)_/¯ */
 				console.error(err);
 				return false;
 			}
 		});
 
-		if (!this[renderersSymbol].length) {
-			throw new NoRenderersFoundError();
+		if (!this[adaptersSymbol].length) {
+			throw new NoAdaptersFoundError();
 		}
 	}
 
@@ -90,9 +90,9 @@ export class HSServer {
 	 * Creates a new subtitles / captions
 	 * distribution session.
 	 *
-	 * @throws if no provided renderers support the content mimeType
+	 * @throws if no provided adapters support the content mimeType
 	 * @throws if session cannot be created due to errors (whatever
-	 * 			happens in the selected Renderer and that gets catched
+	 * 			happens in the selected adapter and that gets catched
 	 * 			and forwarded).
 	 *
 	 * @param rawTracks
@@ -108,12 +108,12 @@ export class HSServer {
 			this.destroy();
 		} catch {}
 
-		for (let i = 0; i < this[renderersSymbol].length; i++) {
-			const Renderer = this[renderersSymbol][i];
+		for (let i = 0; i < this[adaptersSymbol].length; i++) {
+			const Adapter = this[adaptersSymbol][i];
 
-			if (Renderer.supportedType === mimeType) {
+			if (Adapter.supportedType === mimeType) {
 				try {
-					this[sessionSymbol] = new HSSession(rawTracks, new Renderer(), (error: Error) => {
+					this[sessionSymbol] = new HSSession(rawTracks, new Adapter(), (error: Error) => {
 						emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
 					});
 					return;
@@ -263,7 +263,7 @@ export class HSServer {
 
 	/**
 	 * Destroys current session and all the loaded
-	 * subtitles data. Maintains the renderers.
+	 * subtitles data. Maintains the adapters.
 	 *
 	 * @returns {void}
 	 */
@@ -362,9 +362,9 @@ export class HSServer {
 	 * Please note that the content must respect all the rules of the other chunks's
 	 * content and **it is not relative to previously added chunks**.
 	 *
-	 * E.g. if a renderer requires an header part (like "WEBVTT") to be set, it is
+	 * E.g. if a adapter requires an header part (like "WEBVTT") to be set, it is
 	 * required to be available also for this chunk for it to get parsed and added
-	 * correctly. Otherwise the renderer might throw.
+	 * correctly. Otherwise the adapter might throw.
 	 *
 	 * @throws if session has not been created.
 	 * @param content

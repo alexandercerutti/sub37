@@ -1,6 +1,6 @@
 import "@hsubs/captions-presenter-web";
 import { HSServer } from "@hsubs/server";
-import { WebVTTRenderer } from "@hsubs/webvtt-renderer";
+import { WebVTTAdapter } from "@hsubs/webvtt-adapter";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
 import "./customElements/scheduled-textarea";
@@ -22,7 +22,7 @@ const defaultTrackLoadBtn = document.getElementById("load-default-track");
  * @type {HSServer}
  */
 
-const server = new HSServer(WebVTTRenderer);
+const server = new HSServer(WebVTTAdapter);
 
 /**
  * @type {FakeHTMLVideoElement}
