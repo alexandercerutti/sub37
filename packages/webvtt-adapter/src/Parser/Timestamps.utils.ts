@@ -12,14 +12,14 @@ export function parseMs(timestring: string): number {
 		groups: { hours, minutes, seconds, milliseconds },
 	} = timeMatch;
 
-	const hoursInSeconds = parseIntFallback(hours) * 60 * 60;
-	const minutesInSeconds = parseIntFallback(minutes) * 60;
-	const parsedSeconds = parseIntFallback(seconds);
-	const parsedMs = parseIntFallback(milliseconds) / 1000;
+	const hoursInSeconds = zeroFallback(parseInt(hours)) * 60 * 60;
+	const minutesInSeconds = zeroFallback(parseInt(minutes)) * 60;
+	const parsedSeconds = zeroFallback(parseInt(seconds));
+	const parsedMs = zeroFallback(parseInt(milliseconds)) / 1000;
 
 	return (hoursInSeconds + minutesInSeconds + parsedSeconds + parsedMs) * 1000;
 }
 
-function parseIntFallback(string: string): number {
-	return parseInt(string) || 0;
+function zeroFallback(value: number): number {
+	return value || 0;
 }
