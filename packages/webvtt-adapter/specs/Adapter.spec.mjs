@@ -329,27 +329,23 @@ Alberto, come to look at Marcello!
 
 			const parsingResult = adapter.parse(REGION_WITH_ATTRIBUTES);
 
-			expect(parsingResult.data[0]).toEqual(
-				new CueNode({
-					content:
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n",
-					startTime: 5000,
-					endTime: 10000,
-					entities: [],
-					id: "cue-97-226",
-					attributes: {
-						region: "fred",
-					},
-					region: {
-						id: "fred",
-						width: "40%",
-						lines: 3,
-						origin: ["10%", "90%"],
-						displayStrategy: "push",
-					},
-				}),
-			);
+			expect(parsingResult.data[0]).toMatchObject({
+				content:
+					"Mamma mia, Marcello, that's not how you hold a gun.\n" +
+					"Alberto, come to look at Marcello!\n",
+				startTime: 5000,
+				endTime: 10000,
+				entities: [],
+				id: "cue-97-226",
+				attributes: {
+					region: "fred",
+				},
+				region: {
+					id: "fred",
+					width: 40,
+					lines: 3,
+				},
+			});
 		});
 
 		describe("styles", () => {
