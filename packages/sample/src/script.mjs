@@ -1,6 +1,6 @@
-import "@hsubs/captions-renderer";
-import { HSServer } from "@hsubs/server";
-import { WebVTTAdapter } from "@hsubs/webvtt-adapter";
+import "@sub37/captions-renderer";
+import { Server } from "@sub37/server";
+import { WebVTTAdapter } from "@sub37/webvtt-adapter";
 import longTextTrackVTTPath from "./longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
 import "./customElements/scheduled-textarea";
@@ -19,10 +19,10 @@ import "./customElements/fake-video";
 const defaultTrackLoadBtn = document.getElementById("load-default-track");
 
 /**
- * @type {HSServer}
+ * @type {Server}
  */
 
-const server = new HSServer(WebVTTAdapter);
+const server = new Server(WebVTTAdapter);
 
 /**
  * @type {FakeHTMLVideoElement}

@@ -1,4 +1,4 @@
-export { HSServer, Events as HSEvents } from "./Server.js";
+export { Server, Events } from "./Server.js";
 export { BaseAdapter } from "./BaseAdapter/index.js";
 export type { BaseAdapterConstructor } from "./BaseAdapter/index.js";
 export type { Region } from "./Region";

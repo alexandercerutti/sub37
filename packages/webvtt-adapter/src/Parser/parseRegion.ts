@@ -1,4 +1,4 @@
-import type { Region } from "@hsubs/server";
+import type { Region } from "@sub37/server";
 
 /**
  * @param rawRegionData

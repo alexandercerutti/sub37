@@ -1,7 +1,7 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
-import { HSServer, Events } from "../lib/Server";
+import { Server, Events } from "../lib/Server";
 import {
 	AdapterNotOverridingToStringError,
 	AdapterNotExtendingPrototypeError,
@@ -79,9 +79,9 @@ function mockGetCurrentPositionFactory() {
 // *** SPECIFICATIONS *** //
 // ********************** //
 
-describe("HSServer", () => {
+describe("Server", () => {
 	it("should throw if no adapter is passed when a server is initialized", () => {
-		expect(() => new HSServer()).toThrowError();
+		expect(() => new Server()).toThrowError();
 	});
 
 	it("should log errors out if a server is initialized with not compliant adapters", () => {
@@ -100,7 +100,7 @@ describe("HSServer", () => {
 			MockedAdapter,
 		];
 
-		new HSServer(...adapters);
+		new Server(...adapters);
 
 		expect(error).toHaveBeenCalledTimes(3);
 
@@ -113,15 +113,15 @@ describe("HSServer", () => {
 
 	it("should throw if no valid adapter is left after filtering out invalid ones", () => {
 		// @ts-expect-error
-		expect(() => new HSServer(MockedAdapterNoExtend)).toThrowError();
-		expect(() => new HSServer(MockedAdapterNoSupportedType)).toThrowError();
-		expect(() => new HSServer(MockedAdapterNoParse)).toThrowError();
+		expect(() => new Server(MockedAdapterNoExtend)).toThrowError();
+		expect(() => new Server(MockedAdapterNoSupportedType)).toThrowError();
+		expect(() => new Server(MockedAdapterNoParse)).toThrowError();
 	});
 
 	describe("createSession", () => {
 		it("should throw on missing supported adapters", () => {
 			expect(() => {
-				const server = new HSServer(MockedAdapter);
+				const server = new Server(MockedAdapter);
 				server.createSession(
 					[
 						{
@@ -137,7 +137,7 @@ describe("HSServer", () => {
 
 	describe("updateTime", () => {
 		/**
-		 * @type {HSServer}
+		 * @type {Server}
 		 */
 
 		let server;
@@ -185,7 +185,7 @@ describe("HSServer", () => {
 		});
 
 		beforeEach(() => {
-			server = new HSServer(MockedAdapter);
+			server = new Server(MockedAdapter);
 
 			server.createSession(
 				[
@@ -226,7 +226,7 @@ describe("HSServer", () => {
 
 	describe("start", () => {
 		it("should throw if no session has been created first", () => {
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			expect(() => server.start(mockGetCurrentPositionFactory())).toThrowError(
 				"No session started. Engine won't serve any subtitles.",
@@ -278,7 +278,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			server.createSession(
 				[
@@ -328,7 +328,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			server.createSession(
 				[
@@ -505,7 +505,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			server.createSession(
 				[
@@ -587,7 +587,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			server.createSession(
 				[
@@ -661,7 +661,7 @@ describe("HSServer", () => {
 			// *** MOCKING END *** //
 			// ******************* //
 
-			const server = new HSServer(MockedAdapter);
+			const server = new Server(MockedAdapter);
 
 			expect(() => server.suspend()).toThrow();
 			expect(() => server.resume()).toThrow();

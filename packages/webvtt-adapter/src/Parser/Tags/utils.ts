@@ -1,4 +1,4 @@
-import { Entities } from "@hsubs/server";
+import { Entities } from "@sub37/server";
 import { EntitiesTokenMap } from "./tokenEntities.js";
 import type { CueParsedData } from "../parseCue.js";
 import type Node from "./Node.js";

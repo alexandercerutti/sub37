@@ -1,4 +1,4 @@
-import type { CueNode } from "@hsubs/server";
+import type { CueNode } from "@sub37/server";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Renderer extends HTMLElement {

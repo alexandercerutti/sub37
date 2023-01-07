@@ -2,8 +2,8 @@ import type * as Entities from "./Entities";
 import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree.js";
 import type { Region } from "./Region";
 
-const entitiesSymbol = Symbol("hs.entities");
-const regionSymbol = Symbol("hs.region");
+const entitiesSymbol = Symbol("sub37.entities");
+const regionSymbol = Symbol("sub37.region");
 
 interface CueProps {
 	id: string;

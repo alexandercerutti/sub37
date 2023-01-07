@@ -1,4 +1,4 @@
-import type { Entities } from "@hsubs/server";
+import type { Entities } from "@sub37/server";
 import { EntitiesTokenMap } from "./Tags/tokenEntities.js";
 
 const CSS_RULESET_REGEX = /::cue(?:\(([^.]*?)(?:\.(.+))*\))?\s*\{\s*([\s\S]+)\}/;

@@ -1,5 +1,5 @@
 {
-	"name": "@hsubs/server",
+	"name": "@sub37/server",
 	"version": "0.1.0",
 	"description": "Server component for subtitles",
 	"main": "lib/index.js",
@@ -13,7 +13,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/alexandercerutti/hyper-subtitles.git"
+		"url": "git+https://github.com/alexandercerutti/sub37.git"
 	},
 	"keywords": [
 		"vtt",
@@ -23,7 +23,7 @@
 	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/alexandercerutti/hyper-subtitles/issues"
+		"url": "https://github.com/alexandercerutti/sub37/issues"
 	},
-	"homepage": "https://github.com/alexandercerutti/hyper-subtitles#readme"
+	"homepage": "https://github.com/alexandercerutti/sub37#readme"
 }

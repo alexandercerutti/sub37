@@ -1,11 +1,11 @@
 {
-	"name": "@hsubs/captions-renderer",
+	"name": "@sub37/captions-renderer",
 	"version": "0.1.0",
 	"description": "A caption renderer written with Web Components",
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
-		"@hsubs/server": "^0.1.0"
+		"@sub37/server": "^0.1.0"
 	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
@@ -14,14 +14,14 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/alexandercerutti/hyper-subtitles.git"
+		"url": "git+https://github.com/alexandercerutti/sub37.git"
 	},
 	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/alexandercerutti/hyper-subtitles/issues"
+		"url": "https://github.com/alexandercerutti/sub37/issues"
 	},
-	"homepage": "https://github.com/alexandercerutti/hyper-subtitles#readme",
+	"homepage": "https://github.com/alexandercerutti/sub37#readme",
 	"devDependencies": {
 		"@playwright/test": "^1.28.1"
 	}

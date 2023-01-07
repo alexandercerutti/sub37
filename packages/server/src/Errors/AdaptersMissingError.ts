@@ -4,7 +4,7 @@
 
 export class AdaptersMissingError extends Error {
 	constructor() {
-		super("HSServer is expected to be initialized with adapters. Received none.");
+		super("Server is expected to be initialized with adapters. Received none.");
 		this.name = "AdaptersMissingError";
 	}
 }

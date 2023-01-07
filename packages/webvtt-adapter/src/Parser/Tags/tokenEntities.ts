@@ -1,4 +1,4 @@
-import { Entities } from "@hsubs/server";
+import { Entities } from "@sub37/server";
 
 export const EntitiesTokenMap: { [key: string]: Entities.TagType } = {
 	b: Entities.TagType.BOLD,

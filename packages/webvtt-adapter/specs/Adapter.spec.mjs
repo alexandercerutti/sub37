@@ -1,6 +1,6 @@
 // @ts-check
-import { Entities, CueNode, BaseAdapter } from "@hsubs/server";
-import { ParseResult } from "@hsubs/server/lib/BaseAdapter/index.js";
+import { Entities, CueNode, BaseAdapter } from "@sub37/server";
+import { ParseResult } from "@sub37/server/lib/BaseAdapter/index.js";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTAdapter from "../lib/Adapter.js";
 import { MissingContentError } from "../lib/MissingContentError.js";

@@ -1,5 +1,5 @@
-import type { Region } from "@hsubs/server";
-import { BaseAdapter, CueNode, Entities } from "@hsubs/server";
+import type { Region } from "@sub37/server";
+import { BaseAdapter, CueNode, Entities } from "@sub37/server";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";

@@ -83,7 +83,7 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 
 	/**
 	 * Parses the content of the type specified by supportedType.
-	 * It will be called by HSServer and **must** be overridden by
+	 * It will be called by Server and **must** be overridden by
 	 * any Adapter passed to server.
 	 *
 	 * @param rawContent

@@ -13,10 +13,10 @@ import {
 	AdapterNotOverridingToStringError,
 } from "./Errors/index.js";
 
-const intervalSymbol /***/ = Symbol("hs.s.interval");
-const adaptersSymbol /**/ = Symbol("hs.s.adapters");
-const sessionSymbol /****/ = Symbol("hs.s.session");
-const listenersSymbol /**/ = Symbol("hs.s.listeners");
+const intervalSymbol /***/ = Symbol("sub37.s.interval");
+const adaptersSymbol /**/ = Symbol("sub37.s.adapters");
+const sessionSymbol /****/ = Symbol("sub37.s.session");
+const listenersSymbol /**/ = Symbol("sub37.s.listeners");
 
 export enum Events {
 	CUE_START = "cuestart",
@@ -52,7 +52,7 @@ interface HSListener<EventName extends Events = Events> {
  * @throws if none of the Adapters is conform to the protocol.
  */
 
-export class HSServer {
+export class Server {
 	private [intervalSymbol]: SuspendableTimer | undefined = undefined;
 	private [adaptersSymbol]: BaseAdapterConstructor[];
 	private [sessionSymbol]: HSSession | undefined = undefined;

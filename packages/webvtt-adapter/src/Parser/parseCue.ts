@@ -1,4 +1,4 @@
-import type { Entities } from "@hsubs/server";
+import type { Entities } from "@sub37/server";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";

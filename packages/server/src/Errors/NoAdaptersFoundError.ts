@@ -6,7 +6,7 @@ export class NoAdaptersFoundError extends Error {
 	constructor() {
 		super();
 
-		const message = `HSServer didn't find any valid adapter.
+		const message = `Server didn't find any valid adapter.
 
 	If you are a adapter developer, please ensure yourself that your adapter satisfies all the API requirements. See documentation for more details.
 		`;
