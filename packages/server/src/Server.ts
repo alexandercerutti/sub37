@@ -1,7 +1,7 @@
 import type { RawTrack } from "./model";
 import type { CueNode } from "./CueNode.js";
 import { BaseAdapter, BaseAdapterConstructor } from "./BaseAdapter/index.js";
-import { HSSession } from "./Session.js";
+import { DistributionSession } from "./DistributionSession.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
 import {
 	AdaptersMissingError,
@@ -55,7 +55,7 @@ interface HSListener<EventName extends Events = Events> {
 export class Server {
 	private [intervalSymbol]: SuspendableTimer | undefined = undefined;
 	private [adaptersSymbol]: BaseAdapterConstructor[];
-	private [sessionSymbol]: HSSession | undefined = undefined;
+	private [sessionSymbol]: DistributionSession | undefined = undefined;
 	private [listenersSymbol]: HSListener[] = [];
 
 	constructor(...adapters: BaseAdapterConstructor[]) {
@@ -113,9 +113,13 @@ export class Server {
 
 			if (Adapter.supportedType === mimeType) {
 				try {
-					this[sessionSymbol] = new HSSession(rawTracks, new Adapter(), (error: Error) => {
-						emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
-					});
+					this[sessionSymbol] = new DistributionSession(
+						rawTracks,
+						new Adapter(),
+						(error: Error) => {
+							emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
+						},
+					);
 					return;
 				} catch (err: unknown) {
 					throw new ParsingError(err);
@@ -405,7 +409,9 @@ function emitEvent<EventName extends Events>(
 	}
 }
 
-function assertSessionInitialized(session: HSSession | undefined): asserts session is HSSession {
+function assertSessionInitialized(
+	session: DistributionSession | undefined,
+): asserts session is DistributionSession {
 	if (!session) {
 		throw new Error("No session started. Engine won't serve any subtitles.");
 	}

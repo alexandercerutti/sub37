@@ -1,6 +1,6 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { HSSession } from "../lib/Session.js";
+import { DistributionSession } from "../lib/DistributionSession.js";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
 import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
 import { CueNode } from "../lib/CueNode.js";
@@ -65,7 +65,7 @@ class MockedAdapterWithParseResultError {
 
 const originalParseMethod = MockedAdapter.prototype.parse;
 
-describe("HSSession", () => {
+describe("DistributionSession", () => {
 	/** @type {import("../lib/model").RawTrack[]} */
 	const mockedTracks = [
 		{
@@ -114,7 +114,7 @@ describe("HSSession", () => {
 		// ******************* //
 
 		expect(() => {
-			new HSSession(
+			new DistributionSession(
 				[
 					{
 						content: "This content format is not actually important. adapter is mocked",
@@ -148,7 +148,7 @@ describe("HSSession", () => {
 		// ******************* //
 
 		expect(() => {
-			new HSSession(
+			new DistributionSession(
 				[
 					{
 						content: "This content format is not actually important. adapter is mocked",
@@ -186,7 +186,7 @@ describe("HSSession", () => {
 		// *** MOCKING END *** //
 		// ******************* //
 
-		const session = new HSSession(mockedTracks, new MockedAdapter(), () => {});
+		const session = new DistributionSession(mockedTracks, new MockedAdapter(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -203,7 +203,7 @@ describe("HSSession", () => {
 	});
 
 	it("should ignore tracks that have no output", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedAdapter(), () => {});
+		const session = new DistributionSession(mockedEmptyTracks, new MockedAdapter(), () => {});
 
 		/** @type {Array<[string, IntervalBinaryTree]>} */
 		const timelines = Object.entries(
@@ -215,7 +215,7 @@ describe("HSSession", () => {
 	});
 
 	it("should warn if a non existing track is set", () => {
-		const session = new HSSession(mockedEmptyTracks, new MockedAdapter(), () => {});
+		const session = new DistributionSession(mockedEmptyTracks, new MockedAdapter(), () => {});
 
 		const warn = jest.spyOn(console, "warn");
 		expect(session.activeTrack).toBe(null);
@@ -243,7 +243,7 @@ describe("HSSession", () => {
 		const spy = jest.spyOn(mockObject, "onSafeFailureCb");
 		const mockedError = new Error("mocked adapter error");
 
-		new HSSession(
+		new DistributionSession(
 			mockedEmptyTracks,
 			new MockedAdapterWithParseResultError(),
 			mockObject.onSafeFailureCb,

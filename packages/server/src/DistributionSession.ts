@@ -12,7 +12,7 @@ import {
 
 const activeTrackSymbol = Symbol("session.active");
 
-export class HSSession {
+export class DistributionSession {
 	private timelines: { [lang: string]: IntervalBinaryTree<CueNode> } = Object.create(null);
 	private [activeTrackSymbol]: string = null;
 	private adapter: InstanceType<BaseAdapterConstructor>;
@@ -20,8 +20,8 @@ export class HSSession {
 
 	constructor(
 		rawContents: RawTrack[],
-		adapter: HSSession["adapter"],
-		onSafeFailure: HSSession["onSafeFailure"],
+		adapter: DistributionSession["adapter"],
+		onSafeFailure: DistributionSession["onSafeFailure"],
 	) {
 		this.adapter = adapter;
 		this.onSafeFailure = onSafeFailure;
