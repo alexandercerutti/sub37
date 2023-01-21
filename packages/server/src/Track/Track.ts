@@ -1,17 +1,18 @@
 import type { BaseAdapter } from "../BaseAdapter";
 import type { CueNode } from "../CueNode";
 import type { SessionTrack } from "../DistributionSession";
+import type { TrackRecord } from "./TrackRecord";
 import { appendChunkToTrack } from "./appendChunkToTrack";
 import { IntervalBinaryTree } from "../IntervalBinaryTree";
 
 export const addCuesSymbol = Symbol("track.addcues");
 
-export default class Track {
+export default class Track implements Omit<TrackRecord, "content"> {
 	private readonly timeline: IntervalBinaryTree<CueNode>;
 	private readonly onSafeFailure: (error: Error) => void;
 	public readonly adapter: BaseAdapter;
 	public readonly lang: string;
-	public readonly mimeType: string;
+	public readonly mimeType: `${string}/${string}`;
 
 	public active: boolean = false;
 
