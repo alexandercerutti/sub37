@@ -318,12 +318,24 @@ export class Server {
 
 	/**
 	 * Allows retrieving the list of loaded tracks's languages.
+	 * Shortcut for using map on `Server.prototype.tracks`.
 	 *
 	 * @throws if session has not been created
 	 * @returns {string[]}
 	 */
 
 	public get availableLanguages(): string[] {
+		return this.tracks.map((track) => track.lang);
+	}
+
+	/**
+	 * Allows retrieving the available tracks.
+	 *
+	 * @throws if session has not been created
+	 * @returns {Track[]}
+	 */
+
+	public get tracks(): Track[] {
 		assertSessionInitialized(this[sessionSymbol]);
 
 		return this[sessionSymbol].availableTracks;
