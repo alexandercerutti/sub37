@@ -355,32 +355,6 @@ export class Server {
 
 		this[sessionSymbol].activeTrack = lang;
 	}
-
-	/**
-	 * Allows adding a raw chunk to be parsed later, after the session has started.
-	 * Useful for lazy loading and streaming of text tracks.
-	 *
-	 * If lang has not been previously added, it will be created internally and will
-	 * become available for selection.
-	 *
-	 * Please note that the content must respect all the rules of the other chunks's
-	 * content and **it is not relative to previously added chunks**.
-	 *
-	 * E.g. if a adapter requires an header part (like "WEBVTT") to be set, it is
-	 * required to be available also for this chunk for it to get parsed and added
-	 * correctly. Otherwise the adapter might throw.
-	 *
-	 * @throws if session has not been created.
-	 * @param content
-	 * @param lang
-	 * @returns {void}
-	 */
-
-	public addTextChunk(content: unknown, lang: string): void {
-		assertSessionInitialized(this[sessionSymbol]);
-
-		this[sessionSymbol].addChunks({ content, lang });
-	}
 }
 
 function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
