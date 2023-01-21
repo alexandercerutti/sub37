@@ -1,8 +1,9 @@
 import type { RawTrack } from "./model";
 import type { CueNode } from "./CueNode.js";
 import { BaseAdapter, BaseAdapterConstructor } from "./BaseAdapter/index.js";
-import { DistributionSession } from "./DistributionSession.js";
+import { SessionTrack, DistributionSession } from "./DistributionSession.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
+import type { Track } from "./Track";
 import {
 	AdaptersMissingError,
 	NoAdaptersFoundError,
@@ -90,44 +91,43 @@ export class Server {
 	 * Creates a new subtitles / captions
 	 * distribution session.
 	 *
-	 * @throws if no provided adapters support the content mimeType
+	 * @throws if any of the tracks is not supported by any adapter
 	 * @throws if session cannot be created due to errors (whatever
 	 * 			happens in the selected adapter and that gets catched
 	 * 			and forwarded).
 	 *
 	 * @param rawTracks
-	 * @param mimeType
 	 * @returns {void}
 	 */
 
-	public createSession(
-		rawTracks: RawTrack[],
-		mimeType: `${"application" | "text"}/${string}`,
-	): void {
+	public createSession(rawTracks: RawTrack[]): void {
 		try {
 			this.destroy();
 		} catch {}
 
-		for (let i = 0; i < this[adaptersSymbol].length; i++) {
-			const Adapter = this[adaptersSymbol][i];
+		const sessionTracks: SessionTrack[] = rawTracks.map((track) => {
+			const Adapter = this[adaptersSymbol].find(
+				(adapter) => adapter.supportedType === track.mimeType,
+			);
 
-			if (Adapter.supportedType === mimeType) {
-				try {
-					this[sessionSymbol] = new DistributionSession(
-						rawTracks,
-						new Adapter(),
-						(error: Error) => {
-							emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
-						},
-					);
-					return;
-				} catch (err: unknown) {
-					throw new ParsingError(err);
-				}
+			if (!Adapter) {
+				throw new UnsupportedContentError(track.mimeType);
 			}
-		}
 
-		throw new UnsupportedContentError(mimeType);
+			return {
+				...track,
+				adapter: new Adapter(),
+			};
+		});
+
+		try {
+			this[sessionSymbol] = new DistributionSession(sessionTracks, (error: Error) => {
+				emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
+			});
+			return;
+		} catch (err: unknown) {
+			throw new ParsingError(err);
+		}
 	}
 
 	/**
