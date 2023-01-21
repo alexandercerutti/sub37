@@ -1,8 +1,8 @@
-import { appendChunkToTrack } from "./appendChunkToTrack";
 import type { BaseAdapter } from "../BaseAdapter";
 import type { CueNode } from "../CueNode";
+import type { SessionTrack } from "../DistributionSession";
+import { appendChunkToTrack } from "./appendChunkToTrack";
 import { IntervalBinaryTree } from "../IntervalBinaryTree";
-import { RawTrack } from "../model";
 
 export const addCuesSymbol = Symbol("track.addcues");
 
@@ -17,7 +17,7 @@ export default class Track {
 
 	public constructor(
 		lang: string,
-		mimeType: RawTrack["mimeType"],
+		mimeType: SessionTrack["mimeType"],
 		adapter: BaseAdapter,
 		onSafeFailure?: (error: Error) => void,
 	) {

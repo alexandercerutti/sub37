@@ -1,9 +1,8 @@
-import type { RawTrack } from "./model";
 import type { CueNode } from "./CueNode.js";
+import type { Track, TrackRecord } from "./Track/index.js";
 import { BaseAdapter, BaseAdapterConstructor } from "./BaseAdapter/index.js";
 import { SessionTrack, DistributionSession } from "./DistributionSession.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
-import type { Track } from "./Track";
 import {
 	AdaptersMissingError,
 	NoAdaptersFoundError,
@@ -100,7 +99,7 @@ export class Server {
 	 * @returns {void}
 	 */
 
-	public createSession(rawTracks: RawTrack[]): void {
+	public createSession(rawTracks: TrackRecord[]): void {
 		try {
 			this.destroy();
 		} catch {}
