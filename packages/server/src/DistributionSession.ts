@@ -67,11 +67,13 @@ export class DistributionSession {
 	 * Allows adding a chunks to be processed by an adapter
 	 * and get inserted into track's timeline.
 	 *
-	 * @param tracks
+	 * @param sessionTrack
 	 */
 
-	private addChunkToTrack({ lang, content, mimeType, adapter }: SessionTrack) {
+	private addChunkToTrack(sessionTrack: SessionTrack) {
+		const { lang, content, mimeType, adapter, active = false } = sessionTrack;
 		const track = new Track(lang, mimeType, adapter, this.onSafeFailure);
+		track.active = active;
 
 		this.tracks.push(track);
 		track.addChunk(content);

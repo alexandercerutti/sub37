@@ -163,6 +163,8 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 				{
 					lang: "any",
 					content: vttTrack,
+					mimeType: "text/vtt",
+					active: true,
 				},
 			],
 			contentMimeType,

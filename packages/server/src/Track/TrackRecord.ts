@@ -7,4 +7,5 @@ export interface TrackRecord {
 	lang: string;
 	content: unknown;
 	mimeType: `${string}/${string}`;
+	active?: boolean;
 }
