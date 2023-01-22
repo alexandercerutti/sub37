@@ -18,10 +18,6 @@ export class DistributionSession {
 		for (const sessionTrack of tracks) {
 			this.addChunkToTrack(sessionTrack);
 		}
-
-		if (Object.keys(this.tracks).length) {
-			this.activeTrack = Object.keys(this.tracks)[0];
-		}
 	}
 
 	public getAll(): CueNode[] {
