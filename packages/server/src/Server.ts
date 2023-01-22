@@ -95,16 +95,16 @@ export class Server {
 	 * 			happens in the selected adapter and that gets catched
 	 * 			and forwarded).
 	 *
-	 * @param rawTracks
+	 * @param records
 	 * @returns {void}
 	 */
 
-	public createSession(rawTracks: TrackRecord[]): void {
+	public createSession(records: TrackRecord[]): void {
 		try {
 			this.destroy();
 		} catch {}
 
-		const sessionTracks: SessionTrack[] = rawTracks.map((track) => {
+		const sessionTracks: SessionTrack[] = records.map((track) => {
 			const Adapter = this[adaptersSymbol].find(
 				(adapter) => adapter.supportedType === track.mimeType,
 			);
