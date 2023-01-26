@@ -173,6 +173,16 @@ export class Server {
 				throw err;
 			}
 
+			/**
+			 * It feels so useless to keep the interval active
+			 * if there's no track active... don't you agree?
+			 */
+
+			if (!this[sessionSymbol].activeTracks.length) {
+				this.suspend(true);
+				return;
+			}
+
 			const nextCues = this[sessionSymbol].getActiveCues(currentTime || getCurrentPosition());
 			const nextCache = new Set([...nextCues]);
 
