@@ -18,12 +18,14 @@ const adaptersSymbol /**/ = Symbol("sub37.s.adapters");
 const sessionSymbol /****/ = Symbol("sub37.s.session");
 const listenersSymbol /**/ = Symbol("sub37.s.listeners");
 
-export enum Events {
-	CUE_START = "cuestart",
-	CUE_STOP = "cuestop",
-	CUES_FETCH = "cuesfetch",
-	CUE_ERROR = "cueerror",
-}
+export const Events = {
+	CUE_START: "cuestart",
+	CUE_STOP: "cuestop",
+	CUES_FETCH: "cuesfetch",
+	CUE_ERROR: "cueerror",
+} as const;
+
+export type Events = typeof Events[keyof typeof Events];
 
 interface EventsPayloadMap {
 	[Events.CUE_START]: CueNode[];
