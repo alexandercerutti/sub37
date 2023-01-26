@@ -358,11 +358,11 @@ export class Server {
 	 * to `lang` will result in all track deactivation and server suspension,
 	 * with a `cuestop` being emitted.
 	 *
-	 * If the provided language identifier doesn't match any of the provided
-	 * tracks, this will result in a noop.
-	 *
 	 * If many tracks with the same language are available, the
 	 * first one in order of adding will be chosen.
+	 *
+	 * If the provided language identifier doesn't match any of the provided
+	 * tracks or the track found is already active, this will result in a noop.
 	 *
 	 * @throws if session has not been created
 	 *
@@ -373,16 +373,29 @@ export class Server {
 	public switchTextTrackByLang(lang: string | undefined | null): void {
 		assertSessionInitialized(this[sessionSymbol]);
 
+		const activeTracks = this[sessionSymbol].activeTracks;
+
 		if (!lang) {
 			this.suspend(true);
+
+			for (const activeTrack of activeTracks) {
+				activeTrack.active = false;
+			}
+
 			return;
 		}
 
-		if (this[sessionSymbol].activeTrack === lang) {
+		const track = this.tracks.find((track) => track.lang === lang);
+
+		if (!track || track.active) {
 			return;
 		}
 
-		this[sessionSymbol].activeTrack = lang;
+		for (const activeTrack of activeTracks) {
+			activeTrack.active = false;
+		}
+
+		track.active = true;
 	}
 }
 
