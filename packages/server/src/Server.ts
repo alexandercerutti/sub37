@@ -213,15 +213,15 @@ export class Server {
 	 * @throws if the server is not started;
 	 * @throws if the server is running;
 	 *
-	 * @param currentTime expressed in milliseconds
+	 * @param currentTimeMs expressed in milliseconds
 	 * @returns {void}
 	 */
 
-	public updateTime(currentTime: number): void {
+	public updateTime(currentTimeMs: number): void {
 		assertIntervalStarted(this[intervalSymbol]);
 		assertIntervalNotRunning(this[intervalSymbol]);
 
-		this[intervalSymbol].runTick(currentTime);
+		this[intervalSymbol].runTick(currentTimeMs);
 	}
 
 	/**
