@@ -351,10 +351,18 @@ export class Server {
 	}
 
 	/**
-	 * Given a language as parameter, it attempts to switch to
-	 * that language, if available among the valid ones. Passing
-	 * a falsy value to `lang` will result in server suspension
-	 * with a `cuestop` event emission.
+	 * Given an available language identifier as parameter, it attempts to
+	 * switch to that language.
+	 *
+	 * The currently active langs will be deactivated. Passing a falsy value
+	 * to `lang` will result in all track deactivation and server suspension,
+	 * with a `cuestop` being emitted.
+	 *
+	 * If the provided language identifier doesn't match any of the provided
+	 * tracks, this will result in a noop.
+	 *
+	 * If many tracks with the same language are available, the
+	 * first one in order of adding will be chosen.
 	 *
 	 * @throws if session has not been created
 	 *
@@ -362,7 +370,7 @@ export class Server {
 	 * @returns {void}
 	 */
 
-	public selectTextTrack(lang: string | undefined | null): void {
+	public switchTextTrackByLang(lang: string | undefined | null): void {
 		assertSessionInitialized(this[sessionSymbol]);
 
 		if (!lang) {
