@@ -32,7 +32,7 @@ interface EventsPayloadMap {
 	[Events.CUE_ERROR]: Error;
 }
 
-interface HSListener<EventName extends Events = Events> {
+interface EventDescriptor<EventName extends Events = Events> {
 	event: EventName;
 	handler(data: EventsPayloadMap[EventName]): void;
 }
@@ -56,7 +56,7 @@ export class Server {
 	private [intervalSymbol]: SuspendableTimer | undefined = undefined;
 	private [adaptersSymbol]: BaseAdapterConstructor[];
 	private [sessionSymbol]: DistributionSession | undefined = undefined;
-	private [listenersSymbol]: HSListener[] = [];
+	private [listenersSymbol]: EventDescriptor[] = [];
 
 	constructor(...adapters: BaseAdapterConstructor[]) {
 		if (!adapters.length) {
@@ -414,7 +414,7 @@ function isCueCacheEqual(last: Set<CueNode>, next: Set<CueNode>): boolean {
 }
 
 function emitEvent<EventName extends Events>(
-	pool: HSListener<EventName>[],
+	pool: EventDescriptor<EventName>[],
 	eventName: EventName,
 	data: EventsPayloadMap[EventName],
 ): void {
