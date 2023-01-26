@@ -40,17 +40,6 @@ export class DistributionSession {
 		return this.tracks.filter((track) => track.active);
 	}
 
-	public set activeTrack(lang: string) {
-		const track = this.tracks.find((track) => track.lang === lang);
-
-		if (!track) {
-			console.warn("Missing language. Active track wasn't set.");
-			return;
-		}
-
-		track.active = true;
-	}
-
 	public getActiveCues(time: number): CueNode[] {
 		if (!this.activeTracks.length) {
 			throw new ActiveTrackMissingError();
