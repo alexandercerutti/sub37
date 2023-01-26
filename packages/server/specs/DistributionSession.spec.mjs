@@ -66,27 +66,31 @@ class MockedAdapterWithParseResultError {
 const originalParseMethod = MockedAdapter.prototype.parse;
 
 describe("DistributionSession", () => {
-	/** @type {import("../lib/model").RawTrack[]} */
+	/** @type {import("../lib/Track").TrackRecord[]} */
 	const mockedTracks = [
 		{
 			lang: "ita",
 			content: "WEBVTT",
+			mimeType: "text/vtt",
 		},
 		{
 			lang: "eng",
 			content: "WEBVTT",
+			mimeType: "text/vtt",
 		},
 	];
 
-	/** @type {import("../lib/model").RawTrack[]} */
+	/** @type {import("../lib/Track").TrackRecord[]} */
 	const mockedEmptyTracks = [
 		{
 			lang: "ita",
 			content: "",
+			mimeType: "text/vtt",
 		},
 		{
 			lang: "eng",
 			content: "",
+			mimeType: "text/vtt",
 		},
 	];
 
@@ -119,9 +123,10 @@ describe("DistributionSession", () => {
 					{
 						content: "This content format is not actually important. adapter is mocked",
 						lang: "eng",
+						mimeType: "text/vtt",
+						adapter: new MockedAdapter(),
 					},
 				],
-				new MockedAdapter(),
 				() => {},
 			);
 		}).toThrow(UnexpectedParsingOutputFormatError);
@@ -153,9 +158,10 @@ describe("DistributionSession", () => {
 					{
 						content: "This content format is not actually important. adapter is mocked",
 						lang: "eng",
+						mimeType: "text/vtt",
+						adapter: new MockedAdapter(),
 					},
 				],
-				new MockedAdapter(),
 				() => {},
 			);
 		}).toThrowError(UncaughtParsingExceptionError);
@@ -163,7 +169,7 @@ describe("DistributionSession", () => {
 		MockedAdapter.prototype.parse = originalParseMethod;
 	});
 
-	it("should create a timeline for each passed track that has content and didn't throw", () => {
+	it("should create a track for each provided session track that has content and didn't throw", () => {
 		// *************** //
 		// *** MOCKING *** //
 		// *************** //
@@ -186,45 +192,70 @@ describe("DistributionSession", () => {
 		// *** MOCKING END *** //
 		// ******************* //
 
-		const session = new DistributionSession(mockedTracks, new MockedAdapter(), () => {});
+		/**
+		 * @type {import("../lib/DistributionSession").SessionTrack[]}
+		 */
+		const trackRecords = mockedTracks.map((record) => ({
+			...record,
+			adapter: new MockedAdapter(),
+		}));
 
-		/** @type {Array<[string, IntervalBinaryTree]>} */
-		const timelines = Object.entries(
-			// @ts-ignore
-			session.timelines,
-		);
+		const session = new DistributionSession(trackRecords, () => {});
 
-		const keys = timelines.map(([key]) => key);
-		const values = timelines.map(([, value]) => value);
-
-		expect(keys).toEqual(["ita", "eng"]);
-		expect(values[0]).toBeInstanceOf(IntervalBinaryTree);
-		expect(values[1]).toBeInstanceOf(IntervalBinaryTree);
+		expect(session.availableTracks.length).toBe(trackRecords.length);
 	});
 
 	it("should ignore tracks that have no output", () => {
-		const session = new DistributionSession(mockedEmptyTracks, new MockedAdapter(), () => {});
+		/**
+		 * @type {import("../lib/DistributionSession").SessionTrack[]}
+		 */
+		const trackRecords = mockedEmptyTracks.map((record) => ({
+			...record,
+			adapter: new MockedAdapter(),
+		}));
 
-		/** @type {Array<[string, IntervalBinaryTree]>} */
-		const timelines = Object.entries(
-			// @ts-ignore
-			session.timelines,
-		);
-
-		expect(timelines.length).toBe(0);
+		const session = new DistributionSession(trackRecords, () => {});
+		expect(session.availableTracks.length).toBe(0);
 	});
 
-	it("should warn if a non existing track is set", () => {
-		const session = new DistributionSession(mockedEmptyTracks, new MockedAdapter(), () => {});
+	it("should honor session tracks active attribute", () => {
+		// *************** //
+		// *** MOCKING *** //
+		// *************** //
 
-		const warn = jest.spyOn(console, "warn");
-		expect(session.activeTrack).toBe(null);
+		MockedAdapter.prototype.parse = function () {
+			return BaseAdapter.ParseResult(
+				[
+					new CueNode({
+						id: "any",
+						startTime: 0,
+						endTime: 2000,
+						content: "Whatever is your content, it will be displayed here",
+					}),
+				],
+				[],
+			);
+		};
 
-		session.activeTrack = "ita";
-		expect(warn).toBeCalledTimes(1);
-		expect(session.activeTrack).toBe(null);
+		// ******************* //
+		// *** MOCKING END *** //
+		// ******************* //
 
-		warn.mockReset();
+		/**
+		 * @type {import("../lib/DistributionSession").SessionTrack[]}
+		 */
+		const trackRecords = mockedEmptyTracks.map((record) => ({
+			...record,
+			adapter: new MockedAdapter(),
+		}));
+
+		trackRecords[0].active = true;
+		trackRecords[1].active = true;
+
+		const session = new DistributionSession(trackRecords, () => {});
+
+		expect(session.availableTracks.length).toBe(trackRecords.length);
+		expect(session.activeTracks.length).toBe(2);
 	});
 
 	it("should call safeFailure callback when adapter goes bad", () => {
@@ -243,11 +274,15 @@ describe("DistributionSession", () => {
 		const spy = jest.spyOn(mockObject, "onSafeFailureCb");
 		const mockedError = new Error("mocked adapter error");
 
-		new DistributionSession(
-			mockedEmptyTracks,
-			new MockedAdapterWithParseResultError(),
-			mockObject.onSafeFailureCb,
-		);
+		/**
+		 * @type {import("../lib/DistributionSession").SessionTrack[]}
+		 */
+		const trackRecords = mockedEmptyTracks.map((record) => ({
+			...record,
+			adapter: new MockedAdapterWithParseResultError(),
+		}));
+
+		new DistributionSession(trackRecords, mockObject.onSafeFailureCb);
 
 		expect(spy).toHaveBeenCalledTimes(2); /** One error per track */
 		expect(spy).toHaveBeenCalledWith(mockedError);
