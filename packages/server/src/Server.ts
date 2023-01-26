@@ -343,7 +343,9 @@ export class Server {
 	 * Allows retrieving the available tracks.
 	 *
 	 * @throws if session has not been created
-	 * @returns {Track[]}
+	 * @returns {Track[]} Live reference to actual tracks.
+	 * 										Changing the returned array will
+	 * 										influence the available tracks
 	 */
 
 	public get tracks(): Track[] {

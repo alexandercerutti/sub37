@@ -33,7 +33,7 @@ export class DistributionSession {
 	}
 
 	public get availableTracks(): Track[] {
-		return [...this.tracks];
+		return this.tracks;
 	}
 
 	public get activeTracks(): Track[] {
