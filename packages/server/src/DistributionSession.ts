@@ -60,7 +60,10 @@ export class DistributionSession {
 		const track = new Track(lang, mimeType, adapter, this.onSafeFailure);
 		track.active = active;
 
-		this.tracks.push(track);
 		track.addChunk(content);
+
+		if (track.cues.length) {
+			this.tracks.push(track);
+		}
 	}
 }
