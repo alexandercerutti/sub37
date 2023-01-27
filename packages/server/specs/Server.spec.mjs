@@ -122,15 +122,13 @@ describe("Server", () => {
 		it("should throw on missing supported adapters", () => {
 			expect(() => {
 				const server = new Server(MockedAdapter);
-				server.createSession(
-					[
-						{
-							content: "any",
-							lang: "ita",
-						},
-					],
-					"application/x-subrip",
-				);
+				server.createSession([
+					{
+						content: "any",
+						lang: "ita",
+						mimeType: "application/x-subrip",
+					},
+				]);
 			}).toThrow();
 		});
 	});
@@ -187,15 +185,13 @@ describe("Server", () => {
 		beforeEach(() => {
 			server = new Server(MockedAdapter);
 
-			server.createSession(
-				[
-					{
-						content: "any",
-						lang: "ita",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: "any",
+					lang: "ita",
+					mimeType: "text/vtt",
+				},
+			]);
 		});
 
 		afterAll(() => {
@@ -280,15 +276,14 @@ describe("Server", () => {
 
 			const server = new Server(MockedAdapter);
 
-			server.createSession(
-				[
-					{
-						content: "any",
-						lang: "ita",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: "any",
+					lang: "ita",
+					mimeType: "text/vtt",
+					active: true,
+				},
+			]);
 
 			let currentCues = 0;
 			const expectedCues = 4;
@@ -310,7 +305,7 @@ describe("Server", () => {
 			server.start(mockGetCurrentPositionFactory());
 		}, 10000);
 
-		it("[timed] should allow switching language", (done) => {
+		it("[timed] should allow switching between languages", (done) => {
 			// ********************* //
 			// *** MOCKING START *** //
 			// ********************* //
@@ -330,69 +325,70 @@ describe("Server", () => {
 
 			const server = new Server(MockedAdapter);
 
-			server.createSession(
-				[
-					{
-						content: [
-							new CueNode({
-								content: "This is a sample cue",
-								startTime: 0,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue second",
-								startTime: 0.4,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue third",
-								startTime: 1,
-								endTime: 2.5,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue fourth",
-								startTime: 2.5,
-								endTime: 4,
-								id: "any",
-							}),
-						],
-						lang: "eng",
-					},
-					{
-						content: [
-							new CueNode({
-								content: "Questo è un cue di prova",
-								startTime: 0,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "Questo è un cue di prova secondo",
-								startTime: 0.4,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "Questo è un cue di prova terzo",
-								startTime: 1,
-								endTime: 2.5,
-								id: "any",
-							}),
-							new CueNode({
-								content: "Questo è un cue di prova quarto",
-								startTime: 2.5,
-								endTime: 4,
-								id: "any",
-							}),
-						],
-						lang: "ita",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: [
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					lang: "eng",
+					mimeType: "text/vtt",
+					active: true,
+				},
+				{
+					content: [
+						new CueNode({
+							content: "Questo è un cue di prova",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "Questo è un cue di prova secondo",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "Questo è un cue di prova terzo",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "Questo è un cue di prova quarto",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					lang: "ita",
+					mimeType: "text/vtt",
+					active: false,
+				},
+			]);
 
 			/** 4 cues total + 1 which whill be the middle one ITA repeated on language switch */
 			const expectedCues = 5;
@@ -403,7 +399,7 @@ describe("Server", () => {
 				cuesSequence.push([...nodes]);
 
 				if (cuesSequence.length === 2) {
-					server.selectTextTrack("ita");
+					server.switchTextTrackByLang("ita");
 				}
 			});
 
@@ -479,6 +475,11 @@ describe("Server", () => {
 						],
 					]);
 
+					const activeTracks = server.tracks.filter((track) => track.active);
+
+					expect(activeTracks.length).toBe(1);
+					expect(activeTracks[0].lang).toBe("ita");
+
 					done();
 					MockedAdapter.prototype.parse = originalAdapterParse;
 				}
@@ -487,7 +488,7 @@ describe("Server", () => {
 			server.start(mockGetCurrentPositionFactory());
 		}, 10000);
 
-		it("[timed] can be suspended and resumed", (done) => {
+		it("[timed] should be able to get suspended and resumed", (done) => {
 			// ********************* //
 			// *** MOCKING START *** //
 			// ********************* //
@@ -507,40 +508,39 @@ describe("Server", () => {
 
 			const server = new Server(MockedAdapter);
 
-			server.createSession(
-				[
-					{
-						content: [
-							new CueNode({
-								content: "This is a sample cue",
-								startTime: 0,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue second",
-								startTime: 0.4,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue third",
-								startTime: 1,
-								endTime: 2.5,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue fourth",
-								startTime: 2.5,
-								endTime: 4,
-								id: "any",
-							}),
-						],
-						lang: "eng",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: [
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					lang: "eng",
+					mimeType: "text/vtt",
+					active: true,
+				},
+			]);
 
 			let currentCues = 0;
 
@@ -561,8 +561,8 @@ describe("Server", () => {
 								MockedAdapter.prototype.parse = originalAdapterParse;
 								done();
 							}
-						}, 500);
-					}, 500);
+						}, 0);
+					}, 0);
 				}
 			});
 
@@ -589,40 +589,39 @@ describe("Server", () => {
 
 			const server = new Server(MockedAdapter);
 
-			server.createSession(
-				[
-					{
-						content: [
-							new CueNode({
-								content: "This is a sample cue",
-								startTime: 0,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue second",
-								startTime: 0.4,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue third",
-								startTime: 1,
-								endTime: 2.5,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue fourth",
-								startTime: 2.5,
-								endTime: 4,
-								id: "any",
-							}),
-						],
-						lang: "eng",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: [
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					lang: "eng",
+					mimeType: "text/vtt",
+					active: true,
+				},
+			]);
 
 			let currentCues = 0;
 
@@ -630,7 +629,7 @@ describe("Server", () => {
 				currentCues++;
 
 				if (currentCues === 2) {
-					server.selectTextTrack(null);
+					server.switchTextTrackByLang(null);
 				}
 			});
 
@@ -666,40 +665,38 @@ describe("Server", () => {
 			expect(() => server.suspend()).toThrow();
 			expect(() => server.resume()).toThrow();
 
-			server.createSession(
-				[
-					{
-						content: [
-							new CueNode({
-								content: "This is a sample cue",
-								startTime: 0,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue second",
-								startTime: 0.4,
-								endTime: 1,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue third",
-								startTime: 1,
-								endTime: 2.5,
-								id: "any",
-							}),
-							new CueNode({
-								content: "This is a sample cue fourth",
-								startTime: 2.5,
-								endTime: 4,
-								id: "any",
-							}),
-						],
-						lang: "eng",
-					},
-				],
-				"text/vtt",
-			);
+			server.createSession([
+				{
+					content: [
+						new CueNode({
+							content: "This is a sample cue",
+							startTime: 0,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue second",
+							startTime: 0.4,
+							endTime: 1,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue third",
+							startTime: 1,
+							endTime: 2.5,
+							id: "any",
+						}),
+						new CueNode({
+							content: "This is a sample cue fourth",
+							startTime: 2.5,
+							endTime: 4,
+							id: "any",
+						}),
+					],
+					lang: "eng",
+					mimeType: "text/vtt",
+				},
+			]);
 
 			let currentCues = 0;
 
@@ -707,7 +704,7 @@ describe("Server", () => {
 				currentCues++;
 
 				if (currentCues === 2) {
-					server.selectTextTrack(null);
+					server.switchTextTrackByLang(null);
 					expect(() => server.suspend()).toThrow();
 				}
 			});
