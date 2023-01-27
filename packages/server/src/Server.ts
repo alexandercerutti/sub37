@@ -181,7 +181,15 @@ export class Server {
 			 */
 
 			if (!this[sessionSymbol].activeTracks.length) {
-				this.suspend(true);
+				/**
+				 * Preventing previous suspensions and
+				 * time updates to make this crash
+				 */
+
+				if (this.isRunning) {
+					this.suspend(true);
+				}
+
 				return;
 			}
 
