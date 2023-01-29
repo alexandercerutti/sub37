@@ -94,7 +94,7 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 	]);
 
 	setTimeout(() => {
-		server.addTextChunk(vttChunk, "it");
+		server.tracks[0].addChunk(vttChunk);
 	}, 3000);
 
 	scheduledTextArea.value = vttTrack;
