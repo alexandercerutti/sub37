@@ -1,5 +1,6 @@
-import { IntervalBinaryTree, Entities } from "@sub37/server";
 import type { CueNode, Region } from "@sub37/server";
+import { IntervalBinaryTree, Entities } from "@sub37/server";
+import { CSSVAR_TEXT_COLOR } from "./constants";
 
 const rootElementSymbol = Symbol("to.root.element");
 
@@ -352,7 +353,16 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 
 			if (entity.styles) {
 				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					node.style.cssText += `${key}:${value};`;
+					switch (key) {
+						case "color": {
+							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
+							break;
+						}
+
+						default: {
+							node.style.cssText += `${key}:${value};`;
+						}
+					}
 				}
 			}
 

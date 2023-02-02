@@ -1,4 +1,5 @@
 import type { CueNode } from "@sub37/server";
+import { CSSVAR_TEXT_COLOR } from "./constants.js";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Renderer extends HTMLElement {
@@ -56,6 +57,7 @@ div.region {
 	position: absolute;
 	overflow-y: hidden;
 	min-height: 1.5em;
+	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
 }
 
 div.region > div {
@@ -69,7 +71,7 @@ div.region > div > p {
 }
 
 div.region > div > p > span {
-	color: #FFF;
+	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
 	background-color: rgba(0,0,0,0.7);
 	padding: 0px 15px;
 	line-height: 1.5em;
