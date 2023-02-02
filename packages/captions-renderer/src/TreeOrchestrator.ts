@@ -355,6 +355,7 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
 					switch (key) {
 						case "color": {
+							/** Otherwise user cannot override the default style and track style */
 							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
 							break;
 						}
