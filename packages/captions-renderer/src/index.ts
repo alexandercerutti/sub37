@@ -1,5 +1,5 @@
 import type { CueNode } from "@sub37/server";
-import { CSSVAR_TEXT_COLOR } from "./constants.js";
+import { CSSVAR_REGION_BG_COLOR, CSSVAR_TEXT_BG_COLOR, CSSVAR_TEXT_COLOR } from "./constants.js";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Renderer extends HTMLElement {
@@ -61,7 +61,7 @@ div.region {
 }
 
 div.region > div {
-	background-color: rgba(0,0,0,0.4);
+	background-color: var(${CSSVAR_REGION_BG_COLOR}, rgba(0,0,0,0.4));
 	scroll-behavior: smooth;
 }
 
@@ -72,7 +72,7 @@ div.region > div > p {
 
 div.region > div > p > span {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
-	background-color: rgba(0,0,0,0.7);
+	background-color: var(${CSSVAR_TEXT_BG_COLOR}, rgba(0,0,0,0.7));
 	padding: 0px 15px;
 	line-height: 1.5em;
 	word-wrap: break-word;
