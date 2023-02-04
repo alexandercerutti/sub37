@@ -94,6 +94,8 @@ div.region > div > p > span {
 		if (!cueData?.length) {
 			this.container.classList.remove("active");
 			this.container.classList.add("hidden");
+			this.activeRegions = {};
+
 			return;
 		}
 
