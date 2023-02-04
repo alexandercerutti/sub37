@@ -1,6 +1,7 @@
 import type { CueNode } from "@sub37/server";
 import {
 	CSSVAR_BOTTOM_SPACING,
+	CSSVAR_BOTTOM_TRANSITION,
 	CSSVAR_REGION_BG_COLOR,
 	CSSVAR_TEXT_BG_COLOR,
 	CSSVAR_TEXT_COLOR,
@@ -51,6 +52,7 @@ main#caption-window {
 	 * to pull up the rendering area and not push it down
 	 */
 	height: calc(100% + var(${CSSVAR_BOTTOM_SPACING}, 0px));
+	transition: height var(${CSSVAR_BOTTOM_TRANSITION}, 0s linear);
 	overflow: hidden;
 }
 
