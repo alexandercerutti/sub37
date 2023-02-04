@@ -1,5 +1,10 @@
 import type { CueNode } from "@sub37/server";
-import { CSSVAR_REGION_BG_COLOR, CSSVAR_TEXT_BG_COLOR, CSSVAR_TEXT_COLOR } from "./constants.js";
+import {
+	CSSVAR_BOTTOM_SPACING,
+	CSSVAR_REGION_BG_COLOR,
+	CSSVAR_TEXT_BG_COLOR,
+	CSSVAR_TEXT_COLOR,
+} from "./constants.js";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
 export class Renderer extends HTMLElement {
@@ -41,7 +46,11 @@ export class Renderer extends HTMLElement {
 main#caption-window {
 	position: relative;
 	width: 100%;
-	height: 100%;
+	/**
+	 * Positive calculations because people might want
+	 * to pull up the rendering area and not push it down
+	 */
+	height: calc(100% + var(${CSSVAR_BOTTOM_SPACING}, 0px));
 	overflow: hidden;
 }
 
