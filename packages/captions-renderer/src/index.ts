@@ -8,7 +8,9 @@ import {
 } from "./constants.js";
 import TreeOrchestrator from "./TreeOrchestrator.js";
 
-export class Renderer extends HTMLElement {
+export * from "./constants.js";
+
+class Renderer extends HTMLElement {
 	private container = Object.assign(document.createElement("main"), {
 		id: "caption-window",
 		className: "hidden",
