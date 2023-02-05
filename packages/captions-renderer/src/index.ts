@@ -36,14 +36,13 @@ class Renderer extends HTMLElement {
 		style.id = "host-styles";
 		style.textContent = `
 :host {
-	left: 0;
-	right: 0;
-	bottom: 0;
-	top: 0;
-	position: absolute;
-	display: flex;
-	align-items: end;
-	justify-content: center;
+	/**
+	 * This component is meant to be set inside a container
+	 * along with video tag sibling
+	 */
+
+	width: 100%;
+	height: 100%;
 }
 
 main#caption-window {
