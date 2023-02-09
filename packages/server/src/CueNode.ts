@@ -1,6 +1,7 @@
 import type * as Entities from "./Entities";
-import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree.js";
+import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree";
 import type { Region } from "./Region";
+import type { RenderingModifiers } from "./RenderingModifiers";
 
 const entitiesSymbol = Symbol("sub37.entities");
 const regionSymbol = Symbol("sub37.region");
@@ -10,9 +11,7 @@ interface CueProps {
 	startTime: number;
 	endTime: number;
 	content: string;
-
-	/** @TODO attributes are generic cue attributes, but we miss a shared format yet */
-	attributes?: any;
+	renderingModifiers?: RenderingModifiers;
 	entities?: Entities.GenericEntity[];
 	region?: Region;
 }
@@ -41,7 +40,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	public endTime: number;
 	public id: string;
 	public content: string;
-	public attributes?: any;
+	public renderingModifiers?: RenderingModifiers;
 
 	public [regionSymbol]?: Region;
 	public [entitiesSymbol]: Entities.GenericEntity[] = [];
@@ -51,7 +50,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		this.startTime = data.startTime;
 		this.endTime = data.endTime;
 		this.content = data.content;
-		this.attributes = data.attributes;
+		this.renderingModifiers = data.renderingModifiers;
 		this.region = data.region;
 
 		if (data.entities?.length) {
