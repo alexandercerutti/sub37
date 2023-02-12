@@ -143,11 +143,11 @@ export default class Adapter extends BaseAdapter {
 							startTime: parsedCue.startTime,
 							endTime: parsedCue.endTime,
 							content: parsedCue.text,
-							attributes: parsedCue.attributes,
+							renderingModifiers: parsedCue.renderingModifiers,
 						});
 
-						if (parsedCue.attributes.region) {
-							cue.region = regions[parsedCue.attributes.region];
+						if (parsedCue.renderingModifiers.regionIdentifier) {
+							cue.region = regions[parsedCue.renderingModifiers.regionIdentifier];
 						}
 
 						if (!latestRootCue) {

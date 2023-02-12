@@ -1,9 +1,10 @@
-import type { Entities } from "@sub37/server";
+import type { Entities, RenderingModifiers } from "@sub37/server";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
 import * as Tags from "./Tags/index.js";
 import * as Timestamps from "./Timestamps.utils.js";
+import { WebVTTRenderingModifiers } from "./RenderingModifiers.js";
 
 /** This structure is compliant with the resulting one from Regex groups property */
 export interface CueRawData {
@@ -21,7 +22,7 @@ export interface CueParsedData {
 	regionName?: string;
 	tags: Entities.Tag[];
 	text: string;
-	attributes: Attributes;
+	renderingModifiers: RenderingModifiers;
 }
 
 export function parseCue(data: CueRawData): CueParsedData[] {
@@ -35,7 +36,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 		Timestamps.parseMs(starttime),
 		Timestamps.parseMs(endtime),
 		data.cueid,
-		parseAttributes(data.attributes),
+		WebVTTRenderingModifiers.fromString(data.attributes),
 	);
 
 	const openTagsQueue = new Tags.NodeQueue();
@@ -102,7 +103,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					Timestamps.parseMs(token.content),
 					currentCue.endTime,
 					currentCue.id,
-					currentCue.attributes,
+					currentCue.renderingModifiers,
 				);
 
 				break;
@@ -141,7 +142,7 @@ function createCue(
 	startTime: number,
 	endTime: number,
 	id?: string,
-	attributes?: Attributes,
+	renderingModifiers?: RenderingModifiers,
 ): CueParsedData {
 	return {
 		startTime,
@@ -149,29 +150,6 @@ function createCue(
 		text: "",
 		tags: [],
 		id,
-		attributes,
+		renderingModifiers,
 	};
-}
-
-interface Attributes {
-	position?: string;
-	positionAlign?: "line-left" | "center" | "line-right" | "auto";
-	line?: string;
-	align?: string;
-	size?: string;
-	region?: string;
-	snapToLines?: string;
-	vertical?: "" | "rl" | "lr";
-	lineAlign?: "start" | "center" | "end";
-}
-
-function parseAttributes(attributesLine: string): Attributes {
-	if (!attributesLine?.length) {
-		return {};
-	}
-
-	return attributesLine.split(" ").reduce((acc, curr) => {
-		const [key, value] = curr.split(":");
-		return (key && value && { ...acc, [key]: value }) || acc;
-	}, {});
 }
