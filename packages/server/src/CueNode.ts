@@ -103,5 +103,5 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 }
 
 function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	return e1.offset <= e2.offset || e1.length <= e2.length ? -1 : 1;
+	return e1.offset <= e2.offset ? -1 : 1;
 }
