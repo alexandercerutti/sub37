@@ -1,4 +1,4 @@
-import type { CueNode, Region } from "@sub37/server";
+import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
 import { IntervalBinaryTree, Entities } from "@sub37/server";
 import { CSSVAR_TEXT_COLOR } from "./constants";
 
@@ -29,7 +29,12 @@ export default class TreeOrchestrator {
 
 	private settings: OrchestratorSettings;
 
-	public constructor(regionSettings: Region, parent: HTMLElement, settings?: OrchestratorSettings) {
+	public constructor(
+		regionSettings: Region,
+		parent: HTMLElement,
+		renderingModifiers?: RenderingModifiers,
+		settings?: OrchestratorSettings,
+	) {
 		const root = Object.assign(document.createElement("div"), {
 			className: "region",
 		});
@@ -55,6 +60,20 @@ export default class TreeOrchestrator {
 		};
 
 		Object.assign(root.style, rootStyles);
+
+		if (renderingModifiers) {
+			const modifiersElement = document.createElement("div");
+
+			const styles: Partial<CSSStyleDeclaration> = {
+				position: "relative",
+				width: `${renderingModifiers.width}%`,
+				left: `${renderingModifiers.leftOffset}%`,
+				textAlign: renderingModifiers.textAlignment,
+			};
+
+			Object.assign(modifiersElement.style, styles);
+			this[rootElementSymbol] = this[rootElementSymbol].appendChild(modifiersElement);
+		}
 	}
 
 	public remove(): void {
@@ -62,7 +81,13 @@ export default class TreeOrchestrator {
 	}
 
 	public get root(): HTMLElement {
-		return this[rootElementSymbol].parentElement;
+		let root: HTMLElement = this[rootElementSymbol];
+
+		while (!root.classList.contains("region")) {
+			root = root.parentElement;
+		}
+
+		return root;
 	}
 
 	public wipeTree(): void {

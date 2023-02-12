@@ -77,12 +77,12 @@ div.region > div {
 	scroll-behavior: smooth;
 }
 
-div.region > div > p {
+div.region div > p {
 	margin: 0;
 	box-sizing: border-box;
 }
 
-div.region > div > p > span {
+div.region div > p > span {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
 	background-color: var(${CSSVAR_TEXT_BG_COLOR}, rgba(0,0,0,0.7));
 	padding: 0px 15px;
@@ -145,7 +145,7 @@ div.region > div > p > span {
 			if (this.activeRegions[regionId]) {
 				tree = this.activeRegions[regionId];
 			} else {
-				tree = new TreeOrchestrator(cues[0].region, this.container);
+				tree = new TreeOrchestrator(cues[0].region, this.container, cues[0].renderingModifiers);
 			}
 
 			/**
@@ -198,11 +198,7 @@ function getRegionModifierId(r1: RenderingModifiers, r2: RenderingModifiers): nu
 		return r1.id;
 	}
 
-	if (r1.id === r2.id) {
-		return r1.id;
-	}
-
-	return r1.id + r2.id;
+	return r1.id;
 }
 
 customElements.define("captions-renderer", Renderer);
