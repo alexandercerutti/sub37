@@ -22,8 +22,8 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 			return (key && value && { ...acc, [key]: value }) || acc;
 		}, {});
 
-		let position: number | "auto";
-		let positionAlignment: WebVTTRenderingModifiers["positionAlignment"] | "auto";
+		let position: number | "auto" = "auto";
+		let positionAlignment: WebVTTRenderingModifiers["positionAlignment"] | "auto" = "auto";
 
 		for (const [key, value] of Object.entries(properties)) {
 			switch (key) {
@@ -149,9 +149,9 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 		return modifier;
 	}
 
-	private position?: number = 100;
-	private positionAlignment?: "line-left" | "center" | "line-right" = "line-left";
-	private align?: "start" | "left" | "center" | "right" | "end" = "start";
+	private position?: number = 50;
+	private positionAlignment?: "line-left" | "center" | "line-right" = "center";
+	private align?: "start" | "left" | "center" | "right" | "end" = "center";
 	private region?: string;
 
 	/**
