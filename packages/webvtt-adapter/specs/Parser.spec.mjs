@@ -1,6 +1,7 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
 import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
+import { WebVTTRenderingModifiers } from "../lib/Parser/RenderingModifiers.js";
 
 describe("Parser", () => {
 	describe("parseCue", () => {
@@ -552,6 +553,24 @@ color: papayawhip;
 			`;
 
 			expect(parseStyle(STYLE_WITH_INVALID_TAG)).toBeUndefined();
+		});
+	});
+
+	describe("RenderingModifiers", () => {
+		it("should return default values if no attributes string is provided", () => {
+			const modifier1 = WebVTTRenderingModifiers.fromString("");
+
+			expect(modifier1.leftOffset).toBe(0);
+			expect(modifier1.regionIdentifier).toBeUndefined();
+			expect(modifier1.textAlignment).toBe("center");
+			expect(modifier1.width).toBe(100);
+
+			const modifier2 = new WebVTTRenderingModifiers();
+
+			expect(modifier2.leftOffset).toBe(0);
+			expect(modifier2.regionIdentifier).toBeUndefined();
+			expect(modifier2.textAlignment).toBe("center");
+			expect(modifier2.width).toBe(100);
 		});
 	});
 });
