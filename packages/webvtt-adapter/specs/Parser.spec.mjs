@@ -45,9 +45,14 @@ WEBVTT
 							tagType: 1,
 						},
 					],
-					attributes: {
-						region: "fred",
-						align: "left",
+					/**
+					 * @type {import("@sub37/server").RenderingModifiers}
+					 */
+					renderingModifiers: {
+						leftOffset: 0,
+						textAlignment: "left",
+						width: 100,
+						regionIdentifier: "fred",
 					},
 				},
 			]);
@@ -75,76 +80,140 @@ WEBVTT
 
 			expect(parsingResult.length).toBe(8);
 
-			expect(parsingResult[0]).toEqual({
+			expect(parsingResult[0]).toMatchObject({
 				id: "text-1",
 				startTime: 0,
 				endTime: 27000,
 				text: "Welcome Liquicity Airlines\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[1]).toEqual({
+			expect(parsingResult[1]).toMatchObject({
 				id: "text-1",
 				startTime: 6000,
 				endTime: 27000,
 				text: " Our destination: the galaxy of dreams\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[2]).toEqual({
+			expect(parsingResult[2]).toMatchObject({
 				id: "text-1",
 				startTime: 9000,
 				endTime: 27000,
 				text: " (Our destination: the galaxy of dreams)\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[3]).toEqual({
+			expect(parsingResult[3]).toMatchObject({
 				id: "text-1",
 				startTime: 12000,
 				endTime: 27000,
 				text: " Estimated Time of Arrival: unknown\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[4]).toEqual({
+			expect(parsingResult[4]).toMatchObject({
 				id: "text-1",
 				startTime: 18000,
 				endTime: 27000,
 				text: " Please fasten your seatbelt\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[5]).toEqual({
+			expect(parsingResult[5]).toMatchObject({
 				id: "text-1",
 				startTime: 21000,
 				endTime: 27000,
 				text: " And get ready to take off\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[6]).toEqual({
+			expect(parsingResult[6]).toMatchObject({
 				id: "text-1",
 				startTime: 24000,
 				endTime: 27000,
 				text: " (Please fasten your seatbelt)\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 
-			expect(parsingResult[7]).toEqual({
+			expect(parsingResult[7]).toMatchObject({
 				id: "text-1",
 				startTime: 27000,
 				endTime: 27000,
 				text: " (And get ready to take off)\n",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 		});
 
@@ -162,13 +231,21 @@ WEBVTT
 
 			expect(parsingResult.length).toBe(1);
 
-			expect(parsingResult[0]).toEqual({
+			expect(parsingResult[0]).toMatchObject({
 				id: "text-1",
 				startTime: 0,
 				endTime: 16000,
 				text: "Welcome to the galaxy of dreams",
 				tags: [],
-				attributes: {},
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					leftOffset: 0,
+					textAlignment: "center",
+					width: 100,
+					regionIdentifier: undefined,
+				},
 			});
 		});
 

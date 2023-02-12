@@ -143,49 +143,59 @@ WEBVTT
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(2);
 
-			expect(parsingResult.data[0]).toEqual(
-				new CueNode({
-					startTime: 5000,
-					endTime: 25000,
-					content: "Would you like to get < coffee?",
-					id: "cue-9-108",
-					attributes: {
-						align: "left",
-						region: "fred",
-					},
-					entities: [
-						new Entities.Tag({
-							offset: 0,
-							length: 31,
-							tagType: 1,
-							attributes: new Map([["voice", "Fred>"]]),
-							classes: [],
-						}),
-					],
-				}),
-			);
+			expect(parsingResult.data[0]).toMatchObject({
+				startTime: 5000,
+				endTime: 25000,
+				content: "Would you like to get < coffee?",
+				id: "cue-9-108",
 
-			expect(parsingResult.data[1]).toEqual(
-				new CueNode({
-					startTime: 0,
-					endTime: 20000,
-					content: "Hi, my name is Fred",
-					id: "cue-110-207",
-					attributes: {
-						region: "fred",
-						align: "left",
-					},
-					entities: [
-						new Entities.Tag({
-							offset: 0,
-							length: 19,
-							tagType: 2,
-							attributes: new Map([["lang", "en-US"]]),
-							classes: ["mimmo"],
-						}),
-					],
-				}),
-			);
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: "fred",
+					textAlignment: "left",
+					width: 100,
+					leftOffset: 0,
+				},
+
+				entities: [
+					new Entities.Tag({
+						offset: 0,
+						length: 31,
+						tagType: 1,
+						attributes: new Map([["voice", "Fred>"]]),
+						classes: [],
+					}),
+				],
+			});
+
+			expect(parsingResult.data[1]).toMatchObject({
+				startTime: 0,
+				endTime: 20000,
+				content: "Hi, my name is Fred",
+				id: "cue-110-207",
+
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: "fred",
+					textAlignment: "left",
+					width: 100,
+					leftOffset: 0,
+				},
+
+				entities: [
+					new Entities.Tag({
+						offset: 0,
+						length: 19,
+						tagType: 2,
+						attributes: new Map([["lang", "en-US"]]),
+						classes: ["mimmo"],
+					}),
+				],
+			});
 		});
 
 		it("should return an array containing four cues when a timestamps are found", () => {
@@ -204,64 +214,55 @@ WEBVTT
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(4);
 
-			expect(parsingResult.data[0]).toEqual(
-				new CueNode({
-					startTime: 16000,
-					endTime: 24000,
-					content: " This\n",
-					id: "cue-9-180",
-					attributes: {},
-					entities: [
-						new Entities.Tag({
-							offset: 1,
-							length: 4,
-							tagType: 16,
-							attributes: new Map(),
-							classes: ["mimmo"],
-						}),
-					],
-				}),
-			);
-
-			expect(parsingResult.data[1]).toMatchObject(
-				Object.create(
-					new CueNode({
-						startTime: 16000,
-						endTime: 24000,
-						content: " This\n",
-						id: "cue-9-180",
-						attributes: {},
-						entities: [
-							new Entities.Tag({
-								offset: 1,
-								length: 4,
-								tagType: 16,
-								attributes: new Map(),
-								classes: [],
-							}),
-						],
+			expect(parsingResult.data[0]).toMatchObject({
+				startTime: 16000,
+				endTime: 24000,
+				content: " This\n",
+				id: "cue-9-180",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						offset: 1,
+						length: 4,
+						tagType: 16,
+						attributes: new Map(),
+						classes: ["mimmo"],
 					}),
-					{
-						startTime: {
-							value: 18000,
-						},
-						content: {
-							value: " can\n",
-						},
-						entities: {
-							value: [
-								new Entities.Tag({
-									offset: 1,
-									length: 3,
-									tagType: 16,
-									attributes: new Map(),
-									classes: [],
-								}),
-							],
-						},
-					},
-				),
-			);
+				],
+			});
+
+			expect(parsingResult.data[1]).toMatchObject({
+				startTime: 18000,
+				endTime: 24000,
+				content: " can\n",
+				id: "cue-9-180",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						offset: 1,
+						length: 3,
+						tagType: 16,
+						attributes: new Map(),
+						classes: [],
+					}),
+				],
+			});
 		});
 
 		it("should return a cue with three entities when ruby autocloses a ruby-text <rt>", () => {
@@ -276,38 +277,47 @@ WEBVTT
 			expect(parsingResult).toBeInstanceOf(ParseResult);
 			expect(parsingResult.data.length).toEqual(1);
 
-			expect(parsingResult.data[0]).toEqual(
-				new CueNode({
-					startTime: 5000,
-					endTime: 10000,
-					content: "漢 kan 字 ji\n",
-					id: "cue-9-79",
-					attributes: {},
-					entities: [
-						new Entities.Tag({
-							tagType: 8,
-							offset: 2,
-							length: 3,
-							attributes: new Map(),
-							classes: [],
-						}),
-						new Entities.Tag({
-							tagType: 8,
-							offset: 8,
-							length: 2,
-							attributes: new Map(),
-							classes: [],
-						}),
-						new Entities.Tag({
-							tagType: 4,
-							offset: 0,
-							length: 10,
-							attributes: new Map(),
-							classes: [],
-						}),
-					],
-				}),
-			);
+			expect(parsingResult.data[0]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: "漢 kan 字 ji\n",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						tagType: Entities.TagType.RUBY,
+						offset: 0,
+						length: 10,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+					new Entities.Tag({
+						tagType: Entities.TagType.RT,
+						offset: 2,
+						length: 3,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+					new Entities.Tag({
+						tagType: Entities.TagType.RT,
+						offset: 8,
+						length: 2,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+				],
+			});
 		});
 
 		it("should return a cue with a region associated", () => {
@@ -337,8 +347,14 @@ Alberto, come to look at Marcello!
 				endTime: 10000,
 				entities: [],
 				id: "cue-97-226",
-				attributes: {
-					region: "fred",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					regionIdentifier: "fred",
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
 				},
 				region: {
 					id: "fred",
@@ -370,31 +386,35 @@ Alberto, come to look at Marcello!
 						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
 						"Alberto, come to look at Marcello!\n";
 
-					expect(parsingResult.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									styles: {
-										"background-color": "purple",
-									},
-									attributes: new Map(),
-									tagType: Entities.TagType.SPAN,
-									offset: 0,
-									length:
-										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-										"Alberto, come to look at Marcello!\n".length,
-									classes: [],
-								}),
-							],
-							id: "cue-53-187",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								styles: {
+									"background-color": "purple",
+								},
+								attributes: new Map(),
+								tagType: Entities.TagType.SPAN,
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+								classes: [],
+							}),
+						],
+						id: "cue-53-187",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 
 				it("should add only style that matches the id", () => {
@@ -423,31 +443,35 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID);
 
-					expect(parsingResult1.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									styles: {
-										"background-color": "purple",
-									},
-									tagType: Entities.TagType.SPAN,
-									attributes: new Map(),
-									offset: 0,
-									length:
-										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-										"Alberto, come to look at Marcello!\n".length,
-									classes: [],
-								}),
-							],
-							id: "test",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult1.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								styles: {
+									"background-color": "purple",
+								},
+								tagType: Entities.TagType.SPAN,
+								attributes: new Map(),
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+								classes: [],
+							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 
 					const CUE_WITH_STYLE_WITH_ESCAPED_ID = `
 WEBVTT
@@ -470,31 +494,35 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
 
-					expect(parsingResult2.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									tagType: Entities.TagType.SPAN,
-									offset: 0,
-									length:
-										"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-										"Alberto, come to look at Marcello!\n".length,
-									attributes: new Map(),
-									styles: {
-										"background-color": "red",
-									},
-									classes: [],
-								}),
-							],
-							id: "123",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult2.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								tagType: Entities.TagType.SPAN,
+								offset: 0,
+								length:
+									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
+									"Alberto, come to look at Marcello!\n".length,
+								attributes: new Map(),
+								styles: {
+									"background-color": "red",
+								},
+								classes: [],
+							}),
+						],
+						id: "123",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 
 				it("should add only style that matches the tag", () => {
@@ -522,29 +550,33 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									tagType: 32,
-									styles: {
-										"background-color": "purple",
-									},
-									offset: 0,
-									length: 19,
-									attributes: new Map(),
-									classes: [],
-								}),
-							],
-							id: "cue-103-244",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult1.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								tagType: 32,
+								styles: {
+									"background-color": "purple",
+								},
+								offset: 0,
+								length: 19,
+								attributes: new Map(),
+								classes: [],
+							}),
+						],
+						id: "cue-103-244",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 
 				it("should apply all styles and tags", () => {
@@ -573,39 +605,43 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
-					expect(parsingResult1.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									tagType: Entities.TagType.SPAN,
-									offset: 0,
-									length: content.length,
-									attributes: new Map(),
-									styles: {
-										"background-color": "red",
-									},
-									classes: [],
-								}),
-								new Entities.Tag({
-									tagType: 32,
-									offset: 0,
-									length: 19,
-									attributes: new Map(),
-									styles: {
-										"background-color": "purple",
-									},
-									classes: [],
-								}),
-							],
-							id: "test",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult1.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								tagType: Entities.TagType.BOLD,
+								offset: 0,
+								length: 19,
+								attributes: new Map(),
+								styles: {
+									"background-color": "purple",
+								},
+								classes: [],
+							}),
+							new Entities.Tag({
+								tagType: Entities.TagType.SPAN,
+								offset: 0,
+								length: content.length,
+								attributes: new Map(),
+								styles: {
+									"background-color": "red",
+								},
+								classes: [],
+							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 
 				it("should apply all styles for tags with the same attributes", () => {
@@ -634,29 +670,33 @@ Alberto, come to look at Marcello!
 
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
 
-					expect(parsingResult1.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									tagType: 1,
-									offset: 0,
-									length: 87,
-									attributes: new Map(),
-									styles: {
-										"background-color": "purple",
-									},
-									classes: [],
-								}),
-							],
-							id: "test",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult1.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								tagType: 1,
+								offset: 0,
+								length: 87,
+								attributes: new Map(),
+								styles: {
+									"background-color": "purple",
+								},
+								classes: [],
+							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 
 					const CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES = `
 WEBVTT
@@ -684,29 +724,33 @@ Alberto, come to look at Marcello!
 
 					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
 
-					expect(parsingResult2.data[0]).toEqual(
-						new CueNode({
-							content,
-							startTime: 5000,
-							endTime: 10000,
-							entities: [
-								new Entities.Tag({
-									tagType: 1,
-									offset: 0,
-									length: 87,
-									attributes: new Map([["voice", "Fred"]]),
-									styles: {
-										"background-color": "pink",
-									},
-									classes: [],
-								}),
-							],
-							id: "test",
-							attributes: {
-								region: "fred",
-							},
-						}),
-					);
+					expect(parsingResult2.data[0]).toMatchObject({
+						content,
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							new Entities.Tag({
+								tagType: 1,
+								offset: 0,
+								length: 87,
+								attributes: new Map([["voice", "Fred"]]),
+								styles: {
+									"background-color": "pink",
+								},
+								classes: [],
+							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 			});
 		});
