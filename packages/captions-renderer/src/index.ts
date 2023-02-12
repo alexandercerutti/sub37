@@ -1,4 +1,4 @@
-import type { CueNode } from "@sub37/server";
+import type { CueNode, RenderingModifiers } from "@sub37/server";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,
@@ -122,8 +122,15 @@ div.region > div > p > span {
 		const cueGroupsByRegion: { [key: string]: CueNode[] } = {};
 		const nextActiveRegions: Renderer["activeRegions"] = {};
 
-		for (const cue of cueData) {
-			const region = cue.region?.id || "default";
+		for (let i = 0; i < cueData.length; i++) {
+			const cue = cueData[i];
+			const prevCue = cueData[i - 1];
+
+			const modifierId =
+				getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers) || i;
+
+			const regionIdentifier = cue.region?.id || "default";
+			const region = `${regionIdentifier}-${modifierId}`;
 
 			if (!cueGroupsByRegion[region]) {
 				cueGroupsByRegion[region] = [];
@@ -166,6 +173,36 @@ div.region > div > p > span {
 	private appendTree(tree: TreeOrchestrator): void {
 		this.container.appendChild(tree.root);
 	}
+}
+
+/**
+ * A region is created by looking at the region object itself
+ * and by looking at the RenderingModifier's id
+ *
+ * @param r1
+ * @param r2
+ * @param cueIndex
+ * @returns
+ */
+
+function getRegionModifierId(r1: RenderingModifiers, r2: RenderingModifiers): number {
+	if (!r1 && !r2) {
+		return undefined;
+	}
+
+	if (!r1 && r2) {
+		return r2.id;
+	}
+
+	if (r1 && !r2) {
+		return r1.id;
+	}
+
+	if (r1.id === r2.id) {
+		return r1.id;
+	}
+
+	return r1.id + r2.id;
 }
 
 customElements.define("captions-renderer", Renderer);
