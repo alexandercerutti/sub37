@@ -1,13 +1,13 @@
 import type { RenderingModifiers } from "@sub37/server";
 
-const GROWING_LEFT = "rl";
-type GROWING_LEFT = typeof GROWING_LEFT;
+// const GROWING_LEFT = "rl";
+// type GROWING_LEFT = typeof GROWING_LEFT;
 
-const GROWING_RIGHT = "lr";
-type GROWING_RIGHT = typeof GROWING_RIGHT;
+// const GROWING_RIGHT = "lr";
+// type GROWING_RIGHT = typeof GROWING_RIGHT;
 
-const HORIZONTAL = "";
-type HORIZONTAL = typeof HORIZONTAL;
+// const HORIZONTAL = "";
+// type HORIZONTAL = typeof HORIZONTAL;
 
 export class WebVTTRenderingModifiers implements RenderingModifiers {
 	public static fromString(source: string | undefined): WebVTTRenderingModifiers {
@@ -74,13 +74,13 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 					break;
 				}
 
-				case "vertical": {
-					if (isVerticalStandard(value)) {
-						modifier.vertical = value;
-					}
+				// case "vertical": {
+				// 	if (isVerticalStandard(value)) {
+				// 		modifier.vertical = value;
+				// 	}
 
-					break;
-				}
+				// 	break;
+				// }
 			}
 		}
 
@@ -158,7 +158,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 	 * @TODO support vertical in renderer
 	 * along with a new property "writing mode"
 	 */
-	private vertical?: HORIZONTAL | GROWING_LEFT | GROWING_RIGHT = HORIZONTAL;
+	// private vertical?: HORIZONTAL | GROWING_LEFT | GROWING_RIGHT = HORIZONTAL;
 
 	private size: number = 100;
 
@@ -342,8 +342,8 @@ function isTextAlignmentStandard(
 	return ["start", "left", "center", "right", "end"].includes(alignment);
 }
 
-function isVerticalStandard(
-	vertical: string,
-): vertical is HORIZONTAL | GROWING_LEFT | GROWING_RIGHT {
-	return [HORIZONTAL, GROWING_LEFT, GROWING_RIGHT].includes(vertical);
-}
+// function isVerticalStandard(
+// 	vertical: string,
+// ): vertical is HORIZONTAL | GROWING_LEFT | GROWING_RIGHT {
+// 	return [HORIZONTAL, GROWING_LEFT, GROWING_RIGHT].includes(vertical);
+// }
