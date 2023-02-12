@@ -9,6 +9,14 @@ import type { RenderingModifiers } from "@sub37/server";
 // const HORIZONTAL = "";
 // type HORIZONTAL = typeof HORIZONTAL;
 
+const alignmentNumberIdentifiers = {
+	start: 1,
+	left: 2,
+	center: 3,
+	right: 4,
+	end: 5,
+};
+
 export class WebVTTRenderingModifiers implements RenderingModifiers {
 	public static fromString(source: string | undefined): WebVTTRenderingModifiers {
 		const modifier = new WebVTTRenderingModifiers();
@@ -161,6 +169,10 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 	// private vertical?: HORIZONTAL | GROWING_LEFT | GROWING_RIGHT = HORIZONTAL;
 
 	private size: number = 100;
+
+	public get id(): number {
+		return Math.abs(this.width + this.leftOffset - alignmentNumberIdentifiers[this.align]);
+	}
 
 	public get width(): number {
 		/**

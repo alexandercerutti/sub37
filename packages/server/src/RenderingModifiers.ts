@@ -6,6 +6,13 @@
  */
 
 export interface RenderingModifiers {
+	/**
+	 * A unique id that uses the required props
+	 * to allow us comparing two RenderingModifiers
+	 * with some common properties, e.g. regionIdentifier
+	 */
+	id: number;
+
 	width: number;
 
 	leftOffset: number;
