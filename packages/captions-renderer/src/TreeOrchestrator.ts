@@ -18,6 +18,7 @@ interface OrchestratorSettings {
  */
 
 const LINES_TRANSITION_TIME_MS = 250;
+const ROOT_CLASS_NAME = "region";
 
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
@@ -36,7 +37,7 @@ export default class TreeOrchestrator {
 		settings?: OrchestratorSettings,
 	) {
 		const root = Object.assign(document.createElement("div"), {
-			className: "region",
+			className: ROOT_CLASS_NAME,
 		});
 
 		this[rootElementSymbol] = root.appendChild(document.createElement("div"));
@@ -83,7 +84,7 @@ export default class TreeOrchestrator {
 	public get root(): HTMLElement {
 		let root: HTMLElement = this[rootElementSymbol];
 
-		while (!root.classList.contains("region")) {
+		while (!root.classList.contains(ROOT_CLASS_NAME)) {
 			root = root.parentElement;
 		}
 
