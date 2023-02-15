@@ -43,9 +43,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 						positionAlignment = posAlignment;
 					}
 
-					if (pos === "auto") {
-						position === pos;
-					} else {
+					if (pos !== "auto") {
 						const integerPosition = (pos.endsWith("%") && parseInt(pos)) || NaN;
 
 						if (!Number.isNaN(integerPosition)) {
