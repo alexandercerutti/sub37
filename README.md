@@ -1,6 +1,18 @@
-# Sub37
-
-Pluggable captions engine
+<div align="center">
+	<br>
+	<br>
+	<picture>
+		<source media="(prefers-color-scheme: dark)"
+			srcset="https://github.com/alexandercerutti/sub37/raw/master/assets/logo-dark.svg?sanitize=true"
+		>
+		<img
+			alt="sub37 logo for light mode"
+			src="https://github.com/alexandercerutti/sub37/raw/master/assets/logo-light.svg?sanitize=true"
+		>
+	</picture>
+	<br>
+	<br>
+</div>
 
 ## Introduction
 
