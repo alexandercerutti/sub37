@@ -16,19 +16,19 @@
 
 ## Introduction
 
-sub37 is set of _dependency-free_ libraries that aims to provide a consistent and customizable media contents captions experience across browsers by leaving, at the same time, the freedom to developers to choose which caption format to support (like WebVTT, TTML, ...) and how to style them.
+sub37 is set of _dependency-free_ libraries that aims to provide a consistent and customizable media contents captions experience across browsers by leaving developers, at the same time, the freedom to choose which caption format to support (like WebVTT, TTML, ...) and how to style them.
 
 ## Architecture overview
 
 sub37 architecture is made of three components:
 
 - A Renderer (`@sub37/captions-renderer`), a WebComponent that handles all the aspects of captions rendering (styles, colors, positioning, etc.);
-- A Server (`@sub37/server`), a library that handles timed serving of cues and centralizes all the shared aspects (formats, communciation);
+- A Server (`@sub37/server`), a library that handles timed serving of cues and centralizes all the shared aspects (formats, communication);
 - An Adapter (e.g. `@sub37/webvtt-adapter`), a library that knows how to parse a specific captions format and knows how to convert it to the core format provided by the server;
 
 Of the three components, both Renderer and Adapter are replaceable: they only need to provide the correct support to the interface that server expects to use to communicate with them (see the wiki).
 
-At this early stage, sub37 provides only the webvtt-adapter to be used. Further formats will be implemented and evaluated over the time.
+> At this early stage, sub37 provides only the webvtt-adapter to be used. Further formats will be implemented and evaluated over the time.
 
 ## Installation
 
@@ -69,11 +69,23 @@ import { WebVTTAdapter } from "@sub37/webvtt-adatpter";
 
 const videoElement = document.getElementsByTagName("video")[0];
 const rendererElement = document.getElementsByTagName("captions-renderer")[0];
+
+/**
+ * Create the server instance.
+ * One for your whole runtime is fine.
+ * Renderers will be maintained across sessions.
+ */
 const captionServer = new Server([WebVTTAdapter]);
 
 captionServer.addEventListener(Events.CUE_START, presenter.setCue);
 captionServer.addEventListener(Events.CUE_STOP, presenter.setCue);
+captionServer.addEventListener(Events.CUE_ERROR, (/** @type {Error} */ error) => {
+	console.error(error);
+});
 
+/**
+ * Create the session. A new one for each video content.
+ */
 captionServer.createSession([
 	{
 		lang: "ita",
@@ -88,6 +100,35 @@ captionServer.start(() => {
 });
 
 videoElement.play();
+
+videoElement.addEventListener("seeking", () => {
+	/**
+	 * Seeking on native controls, might fire this event
+	 * a lot of times. We want to keep our subtitles updated
+	 * based on position if we are in pause. Otherwise
+	 * the server will automatically update them.
+	 */
+
+	if (videoElement.paused && captionServer.isRunning) {
+		captionServer.updateTime(videoElement.currentTime);
+	}
+});
+
+videoElement.addEventListener("pause", () => {
+	/**
+	 * It might be useless to keep having an interval
+	 * running if our content is paused. We can safely
+	 * update the captions when seeking.
+	 */
+
+	captionServer.suspend();
+});
+
+videoElement.addEventListener("playing", () => {
+	if (!captionServer.isRunning) {
+		captionServer.resume();
+	}
+});
 ```
 
 ## Other
