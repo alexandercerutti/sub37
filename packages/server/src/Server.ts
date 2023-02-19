@@ -155,7 +155,7 @@ export class Server {
 		options?: { karaoke?: boolean },
 	): void {
 		assertSessionInitialized(this[sessionSymbol]);
-		assertIntervalNotRunning(this[intervalSymbol]);
+		assertSessionPaused(this[intervalSymbol]);
 
 		if (!frequencyMs || typeof frequencyMs !== "number" || frequencyMs < 1) {
 			throw new OutOfRangeFrequencyError(frequencyMs);
@@ -233,7 +233,7 @@ export class Server {
 
 	public updateTime(currentTimeMs: number): void {
 		assertSessionStarted(this[intervalSymbol]);
-		assertIntervalNotRunning(this[intervalSymbol]);
+		assertSessionPaused(this[intervalSymbol]);
 
 		this[intervalSymbol].runTick(currentTimeMs);
 	}
@@ -265,7 +265,7 @@ export class Server {
 
 	public resume(): void {
 		assertSessionStarted(this[intervalSymbol]);
-		assertIntervalNotRunning(this[intervalSymbol]);
+		assertSessionPaused(this[intervalSymbol]);
 
 		this[intervalSymbol].start();
 	}
@@ -457,7 +457,7 @@ function assertSessionStarted(
 	}
 }
 
-function assertIntervalNotRunning(
+function assertSessionPaused(
 	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer & { isRunning: false } {
 	if (interval?.isRunning) {
