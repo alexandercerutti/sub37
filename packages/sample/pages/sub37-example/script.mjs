@@ -1,15 +1,15 @@
 import "@sub37/captions-renderer";
 import { Server } from "@sub37/server";
 import { WebVTTAdapter } from "@sub37/webvtt-adapter";
-import longTextTrackVTTPath from "./longtexttrack.vtt";
-import longTextTrackVTTPathChunk from "./longtexttrack-chunk1.vtt";
-import "./customElements/scheduled-textarea";
-import "./customElements/fake-video";
+import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
+import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
+import "../../src/components/customElements/scheduled-textarea";
+import "../../src/components/customElements/fake-video";
 
 /**
- * @typedef {import("./customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
- * @typedef {import("./customElements/scheduled-textarea").ScheduledTextArea} ScheduledTextArea
- * @typedef {import("../../captions-renderer/lib").Renderer} CaptionsRenderer
+ * @typedef {import("../../src/components/customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
+ * @typedef {import("../../src/components/customElements/scheduled-textarea").ScheduledTextArea} ScheduledTextArea
+ * @typedef {import("@sub37/captions-renderer").Renderer} CaptionsRenderer
  */
 
 /**
@@ -140,10 +140,6 @@ videoTag.addEventListener("pause", () => {
 });
 
 scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
-	if (server.isRunning) {
-		server.destroy();
-	}
-
 	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
 
 	const timeStart = performance.now();

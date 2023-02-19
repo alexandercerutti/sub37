@@ -1,4 +1,4 @@
-import "./src/customElements/scheduled-textarea";
+import "../../src/components/customElements/scheduled-textarea";
 
 /**
  * @type {string} text
@@ -43,7 +43,7 @@ scheduledTextArea.addEventListener("commit", ({ detail: text }) => {
 	const videoElement = Object.assign(document.createElement("video"), {
 		controls: true,
 		muted: true,
-		src: "./big_buck_bunny_1080p_60fps.mp4",
+		src: currentVideo.src,
 		autoplay: true,
 	});
 

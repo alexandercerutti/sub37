@@ -4,33 +4,15 @@
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Test page</title>
-		<link href="./src/style.css" rel="stylesheet" />
+		<title>Sample index</title>
 	</head>
 	<body>
 		<main>
-				<scheduled-textarea placeholder="WEBVTT..."></scheduled-textarea>
-				<div id="video-container">
-					<fake-video controls></fake-video>
-					<captions-renderer id="presenter"></captions-renderer>
-				</div>
-			</div>
-			<!-- form id and input names are hardcoded inside the code -->
-			<form id="content-type">
-				<h4>Content type:</h4>
-				<div>
-					<input type="radio" id="webvtt" name="caption-type" value="text/vtt" checked />
-					<label for="webvtt">WebVTT (text/vtt)</label>
-				</div>
-				<div>
-					<!-- <input type="radio" id="ttml" name="caption-type" value="text/xml+ttml" />
-					<label for="ttml">TTML (text/xml+ttml)</label> -->
-				</div>
-			</form>
-			<div>
-				<button id="load-default-track">Load Default WebVTT Track</button>
-			</div>
+			<h2>Sample pages:</h2>
+			<ul>
+				<li><a href="./pages/sub37-example/index.html">Sub37 Example</a></li>
+				<li><a href="./pages/native-video/index.html">Webvtt browser native</a></li>
+			</ul>
 		</main>
-		<script type="module" src="./src/script.mjs"></script>
 	</body>
 </html>
