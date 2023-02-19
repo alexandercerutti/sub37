@@ -136,7 +136,9 @@ videoTag.addEventListener("playing", () => {
 });
 
 videoTag.addEventListener("pause", () => {
-	server.suspend();
+	if (server.isRunning) {
+		server.suspend();
+	}
 });
 
 scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
