@@ -232,7 +232,7 @@ export class Server {
 	 */
 
 	public updateTime(currentTimeMs: number): void {
-		assertIntervalStarted(this[intervalSymbol]);
+		assertSessionStarted(this[intervalSymbol]);
 		assertIntervalNotRunning(this[intervalSymbol]);
 
 		this[intervalSymbol].runTick(currentTimeMs);
@@ -246,7 +246,7 @@ export class Server {
 	 */
 
 	public suspend(emitStop: boolean = false): void {
-		assertIntervalStarted(this[intervalSymbol]);
+		assertSessionStarted(this[intervalSymbol]);
 		assertIntervalRunning(this[intervalSymbol]);
 
 		this[intervalSymbol].stop();
@@ -264,7 +264,7 @@ export class Server {
 	 */
 
 	public resume(): void {
-		assertIntervalStarted(this[intervalSymbol]);
+		assertSessionStarted(this[intervalSymbol]);
 		assertIntervalNotRunning(this[intervalSymbol]);
 
 		this[intervalSymbol].start();
@@ -280,7 +280,7 @@ export class Server {
 
 	public get isRunning(): boolean {
 		try {
-			assertIntervalStarted(this[intervalSymbol]);
+			assertSessionStarted(this[intervalSymbol]);
 		} catch (err) {
 			return false;
 		}
@@ -449,7 +449,7 @@ function assertSessionInitialized(
 	}
 }
 
-function assertIntervalStarted(
+function assertSessionStarted(
 	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer {
 	if (!interval) {
