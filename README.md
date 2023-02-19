@@ -77,8 +77,8 @@ const rendererElement = document.getElementsByTagName("captions-renderer")[0];
  */
 const captionServer = new Server([WebVTTAdapter]);
 
-captionServer.addEventListener(Events.CUE_START, presenter.setCue);
-captionServer.addEventListener(Events.CUE_STOP, presenter.setCue);
+captionServer.addEventListener(Events.CUE_START, rendererElement.setCue);
+captionServer.addEventListener(Events.CUE_STOP, rendererElement.setCue);
 captionServer.addEventListener(Events.CUE_ERROR, (/** @type {Error} */ error) => {
 	console.error(error);
 });
@@ -90,9 +90,9 @@ captionServer.createSession([
 	{
 		lang: "ita",
 		content: "WEBVTT ...",
-		mimeType: `text/vtt`;
-		active: true;
-	}
+		mimeType: `text/vtt`,
+		active: true,
+	},
 ]);
 
 captionServer.start(() => {
@@ -109,7 +109,7 @@ videoElement.addEventListener("seeking", () => {
 	 * the server will automatically update them.
 	 */
 
-	if (videoElement.paused && captionServer.isRunning) {
+	if (videoElement.paused && !captionServer.isRunning) {
 		captionServer.updateTime(videoElement.currentTime);
 	}
 });
