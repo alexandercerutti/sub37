@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import type { FakeHTMLVideoElement } from "../../sample/src/components/customElements/fake-video";
 
+const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
+
 test("Renderer should render two regions if the tracks owns two regions", async ({ page }) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
@@ -28,7 +30,7 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(".");
+	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	const fakeVideoLocator = page.locator("fake-video");
 
@@ -76,7 +78,7 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(".");
+	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	const fakeVideoLocator = page.locator("fake-video");
 
@@ -140,7 +142,7 @@ STYLE
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(".");
+	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	const fakeVideoLocator = page.locator("fake-video");
 
