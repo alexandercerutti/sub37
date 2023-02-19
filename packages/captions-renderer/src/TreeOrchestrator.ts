@@ -4,8 +4,19 @@ import { CSSVAR_TEXT_COLOR } from "./constants";
 
 const rootElementSymbol = Symbol("to.root.element");
 
-interface OrchestratorSettings {
+export interface OrchestratorSettings {
+	/**
+	 * The maximum amount of lines on which the cue should be rendered on.
+	 * Gets overridden by track's region lines property (if available).
+	 * Defaults to `2`.
+	 */
 	lines: number;
+
+	/**
+	 * Allows enabling a Youtube-like mode, for which the first line
+	 * is shifted down when nothing else if available.
+	 * Defaults to `false`.
+	 */
 	shiftDownFirstLine?: boolean;
 }
 
@@ -31,10 +42,10 @@ export default class TreeOrchestrator {
 	private settings: OrchestratorSettings;
 
 	public constructor(
-		regionSettings: Region,
 		parent: HTMLElement,
-		renderingModifiers?: RenderingModifiers,
-		settings?: OrchestratorSettings,
+		trackRegionSettings?: Region,
+		trackRenderingModifiers?: RenderingModifiers,
+		settings?: Partial<OrchestratorSettings>,
 	) {
 		const root = Object.assign(document.createElement("div"), {
 			className: ROOT_CLASS_NAME,
@@ -45,16 +56,17 @@ export default class TreeOrchestrator {
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
 			...settings,
-			lines: regionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
+			lines:
+				trackRegionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
 
-		const [originX, originY] = regionSettings?.getOrigin(
+		const [originX, originY] = trackRegionSettings?.getOrigin(
 			parent.offsetWidth,
 			parent.offsetHeight,
 		) ?? [0, 70];
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
-			width: `${regionSettings?.width ?? 100}%`,
+			width: `${trackRegionSettings?.width ?? 100}%`,
 			height: `${this.settings.lines * 1.5}em`,
 			left: `${originX}%`,
 			top: `${originY}%`,
@@ -62,14 +74,14 @@ export default class TreeOrchestrator {
 
 		Object.assign(root.style, rootStyles);
 
-		if (renderingModifiers) {
+		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
 
 			const styles: Partial<CSSStyleDeclaration> = {
 				position: "relative",
-				width: `${renderingModifiers.width}%`,
-				left: `${renderingModifiers.leftOffset}%`,
-				textAlign: renderingModifiers.textAlignment,
+				width: `${trackRenderingModifiers.width}%`,
+				left: `${trackRenderingModifiers.leftOffset}%`,
+				textAlign: trackRenderingModifiers.textAlignment,
 			};
 
 			Object.assign(modifiersElement.style, styles);

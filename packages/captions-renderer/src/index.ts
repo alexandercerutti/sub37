@@ -6,15 +6,24 @@ import {
 	CSSVAR_TEXT_BG_COLOR,
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
-import TreeOrchestrator from "./TreeOrchestrator.js";
+import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
 
 export * from "./constants.js";
+export type { OrchestratorSettings };
 
 class Renderer extends HTMLElement {
 	private container = Object.assign(document.createElement("main"), {
 		id: "caption-window",
 		className: "hidden",
 	});
+
+	/**
+	 * Properties to be applied to all regions.
+	 * Some properties might get overridden by regions
+	 * or rendering modifiers.
+	 */
+
+	private regionsProperties: Partial<OrchestratorSettings> = {};
 
 	/**
 	 * Active regions are needed to have a state in case
@@ -100,6 +109,27 @@ div.region div > p > span {
 		shadowRoot.appendChild(this.container);
 	}
 
+	/**
+	 * Allows setting some properties that regions should use when rendered.
+	 * Not every property might get used: tt stands to each own property to
+	 * handle the priority over some defaults (e.g. track regions' properties
+	 * might have an higher priority).
+	 *
+	 * @param props
+	 */
+
+	public setRegionProperties(props: Partial<OrchestratorSettings>): void {
+		this.regionsProperties = props;
+	}
+
+	/**
+	 * Sets the cues to be rendered. Pass and empty array or nothing to
+	 * removed all the cues and regions.
+	 *
+	 * @param cueData
+	 * @returns
+	 */
+
 	public setCue(cueData?: CueNode[]): void {
 		this.wipeContainer();
 
@@ -145,7 +175,12 @@ div.region div > p > span {
 			if (this.activeRegions[regionId]) {
 				tree = this.activeRegions[regionId];
 			} else {
-				tree = new TreeOrchestrator(cues[0].region, this.container, cues[0].renderingModifiers);
+				tree = new TreeOrchestrator(
+					this.container,
+					cues[0].region,
+					cues[0].renderingModifiers,
+					this.regionsProperties,
+				);
 			}
 
 			/**
