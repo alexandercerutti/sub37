@@ -84,7 +84,7 @@ export class Controls extends HTMLElement {
 		});
 
 		const playbackButton = Object.assign(document.createElement("img"), {
-			src: "./pause-icon.svg",
+			src: "../../../pause-icon.svg",
 			id: "playback-btn",
 			style: {
 				cursor: "click",
@@ -126,7 +126,7 @@ export class Controls extends HTMLElement {
 			"playback-btn",
 		) as HTMLImageElement,
 	) {
-		playbackButton.src = "./pause-icon.svg";
+		playbackButton.src = "../../../pause-icon.svg";
 		playbackButton.dataset["playback"] = "playing";
 	}
 
@@ -135,7 +135,7 @@ export class Controls extends HTMLElement {
 			"playback-btn",
 		) as HTMLImageElement,
 	) {
-		playbackButton.src = "./play-icon.svg";
+		playbackButton.src = "../../../play-icon.svg";
 		playbackButton.dataset["playback"] = "paused";
 	}
 

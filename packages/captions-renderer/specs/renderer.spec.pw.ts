@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import type { FakeHTMLVideoElement } from "../../sample/src/customElements/fake-video";
+import type { FakeHTMLVideoElement } from "../../sample/src/components/customElements/fake-video";
 
 test("Renderer should render two regions if the tracks owns two regions", async ({ page }) => {
 	const TEST_WEBVTT_TRACK = `
