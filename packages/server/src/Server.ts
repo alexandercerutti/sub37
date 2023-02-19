@@ -11,6 +11,10 @@ import {
 	ParsingError,
 	AdapterNotExtendingPrototypeError,
 	AdapterNotOverridingToStringError,
+	SessionNotStartedError,
+	SessionNotInitializedError,
+	ServerAlreadyRunningError,
+	ServerNotRunningError,
 } from "./Errors/index.js";
 
 const intervalSymbol /***/ = Symbol("sub37.s.interval");
@@ -441,7 +445,7 @@ function assertSessionInitialized(
 	session: DistributionSession | undefined,
 ): asserts session is DistributionSession {
 	if (!session) {
-		throw new Error("No session started. Engine won't serve any subtitles.");
+		throw new SessionNotInitializedError();
 	}
 }
 
@@ -449,7 +453,7 @@ function assertIntervalStarted(
 	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer {
 	if (!interval) {
-		throw new Error("Server has not been started at all. Cannot perform operation.");
+		throw new SessionNotStartedError();
 	}
 }
 
@@ -457,7 +461,7 @@ function assertIntervalNotRunning(
 	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer & { isRunning: false } {
 	if (interval?.isRunning) {
-		throw new Error("Server is already running. Cannot perform operation.");
+		throw new ServerAlreadyRunningError();
 	}
 }
 
@@ -465,6 +469,6 @@ function assertIntervalRunning(
 	interval: SuspendableTimer | undefined,
 ): asserts interval is SuspendableTimer & { isRunning: true } {
 	if (!interval?.isRunning) {
-		throw new Error("Server has been started but is not running. Cannot perform operation.");
+		throw new ServerNotRunningError();
 	}
 }
