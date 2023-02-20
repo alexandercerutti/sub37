@@ -99,7 +99,32 @@ videoElement.currentTime = 12; /** seconds **/
 
 ## Attaching a renderer
 
-// TODO
+In order to distribute the subtitles, the server must be attached to the `captions-renderer`.
+
+This can be done through `.addEventListener`. A listener can be removed through `.removeEventListener`.
+
+These two methods accept the event name and the callback to be invoked, just like an [EventTarget](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget).
+
+The events available are exposed from the package.
+
+Two events are required to be listened to so that everything works fine: `Events.CUE_START` and `Events_CUE_STOP`.
+
+When `CUE_START` is fired, a new set of cues to be shown will be sent to the renderer.
+When `CUE_STOP` is fired, no cues will be shown and the renderer will remove them all.
+
+A third optional event can be listened to: `CUE_ERROR`. This is an event that gets fired when some non-critical errors get fired, like a malformed cue. You can do whatever you want to do with it. The callback will contain the error.
+
+```typescript
+import { Events } from "@sub37/server";
+
+const renderer = document.getElementsByTagName("captions-renderer")[0];
+
+server.addEventListener(Events.CUE_START, renderer.setCue);
+server.addEventListener(Events.CUE_STOP, renderer.setCue);
+server.addEventListener(Events.CUE_ERROR, (/** @type {Error} */ error) => {
+	console.log(error);
+});
+```
 
 ## Error handling
 
