@@ -2,7 +2,7 @@
 
 This is the core package, where magic happens.
 
-Its role it to make common interfaces for adapters and renderers available and keep the tracks for cues distribution session (when a content starts).
+Its role is to make common interfaces for adapters and renderers available and keep the tracks for cues distribution session (when a content starts).
 
 ## What you need to know
 
@@ -54,7 +54,7 @@ server.createSession([
 
 By default **no track is considered active** if not determined with the `active` parameter. Not specifying an active track and starting the server, might cause an `ActiveTrackMissingError` when attempting to start the server.
 
-Once created the session, you can `start` it. In order to be synchronized with your video element, when starting the session, `server` requires you to specify a callback that will get invoked at every check (a "tick"; every tick happens once an amount of time, specified by the second parameter, passes). That callback is expected to return the current position.
+Once created the session, you can `start` it. In order to be synchronized with your video element, when starting the session, `server` requires you to specify a callback that will get invoked at every check (a "tick"; every tick happens once an amount of time - specified by the second parameter - passes). That callback is expected to return the current position.
 
 Tick's default time is `250ms`.
 
@@ -68,11 +68,11 @@ Attempting to start a server before creating a `session`, will cause a `SessionN
 
 ## Changing server states
 
-Server can be paused buy using the `.suspend()` method and resumed by using the method `.resume()`.
+Server can be paused by using the `.suspend()` method and resumed by using the `.resume()` method.
 
 When server is suspended, the callback passed to `start` will stop being invoked. Therefore, if a seek happens, subtitles won't be updated.
 
-To prevent this issue, there's a method that can be called only when the server is suspended: `.updateTime`. It accepts an amount of time in milliseconds as a parameter.
+To prevent this issue, there's a method that can be called only when the server is suspended: `.updateTime()`. It accepts an amount of time in milliseconds as a parameter.
 
 Using it, the server will perform an update of cues and send them to the renderer.
 
