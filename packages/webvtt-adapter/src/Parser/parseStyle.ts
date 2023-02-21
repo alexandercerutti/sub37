@@ -31,6 +31,47 @@ export type Style = SelectorTarget & {
 	styleString: string;
 };
 
+/**
+ * @see https://www.w3.org/TR/webvtt1/#the-cue-pseudo-element
+ */
+
+const WEBVTT_CSS_SUPPORTED_PROPERTIES = [
+	"color",
+	"opacity",
+	"visibility",
+	"text-shadow",
+	"white-space",
+	"text-combine-upright",
+	"ruby-position",
+
+	"text-decoration",
+	"text-decoration-color",
+	"text-decoration-line",
+	"text-decoration-style",
+	"text-decoration-thickness",
+
+	"background",
+	"background-color",
+	"background-image",
+
+	"outline",
+	"outline-color",
+	"outline-style",
+	"outline-width",
+
+	"font-family",
+	"font-size",
+	"font-stretch",
+	"font-style",
+	"font-variant",
+	"font-weight",
+	/**
+	 * Line-height have been excluded because it might cause issues with
+	 * the renderer as it has its own line-height property
+	 */
+	// "line-height",
+];
+
 export function parseStyle(rawStyleData: string): Style | undefined {
 	const styleBlockComponents = rawStyleData.match(CSS_RULESET_REGEX);
 
@@ -46,6 +87,12 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 		return undefined;
 	}
 
+	const styleString = filterUnsupportedStandardProperties(normalizedCssData);
+
+	if (!styleString.length) {
+		return undefined;
+	}
+
 	const parsedSelector = getParsedSelector(selector, classesChain);
 
 	if (!parsedSelector) {
@@ -54,7 +101,7 @@ export function parseStyle(rawStyleData: string): Style | undefined {
 
 	return {
 		...parsedSelector,
-		styleString: normalizedCssData,
+		styleString,
 	};
 }
 
@@ -118,6 +165,40 @@ function normalizeCssString(cssData: string = "") {
 		.replace(/\/\*.+\*\//, "") /** CSS inline Comments */
 		.replace(/\s+/g, "\x20") /** Multiple whitespaces */
 		.trim();
+}
+
+/**
+ * Recomposes the style string by filtering out the unsupported
+ * WebVTT properties
+ *
+ * @param styleString
+ * @returns
+ */
+
+function filterUnsupportedStandardProperties(styleString: string) {
+	let finalStyleString = "";
+	let startCursor = 0;
+	let endCursor = 0;
+
+	while (endCursor <= styleString.length) {
+		if (styleString[endCursor] === ";" || endCursor === styleString.length) {
+			const parsed = styleString.slice(startCursor, endCursor + 1).split(/\s*:\s*/);
+			const property = parsed[0].trim();
+			const value = parsed[1].trim();
+
+			if (property.length && value.length && WEBVTT_CSS_SUPPORTED_PROPERTIES.includes(property)) {
+				finalStyleString += `${property}:${value}`;
+			}
+
+			/** Clearning up an restarting */
+			startCursor = endCursor + 1;
+			endCursor++;
+		}
+
+		endCursor++;
+	}
+
+	return finalStyleString;
 }
 
 /**

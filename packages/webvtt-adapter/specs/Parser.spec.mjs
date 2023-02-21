@@ -387,7 +387,7 @@ scroll:up
 			expect(parseStyle(STYLE_GLOBAL_WITH_COMMENT_TOP)).toEqual({
 				type: 0,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 
 			const STYLE_GLOBAL_WITH_COMMENT_MIDDLE = `
@@ -401,7 +401,7 @@ scroll:up
 			expect(parseStyle(STYLE_GLOBAL_WITH_COMMENT_MIDDLE)).toEqual({
 				type: 0,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 
 			const STYLE_GLOBAL_WITH_END_COMMENT = `
@@ -415,7 +415,7 @@ color: papayawhip;
 			expect(parseStyle(STYLE_GLOBAL_WITH_END_COMMENT)).toEqual({
 				type: 0,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 		});
 
@@ -430,7 +430,7 @@ color: papayawhip;
 			expect(parseStyle(STYLE_GLOBAL)).toEqual({
 				type: 0,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 		});
 
@@ -446,7 +446,7 @@ color: papayawhip;
 				type: 1,
 				selector: "test",
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 
 			/**
@@ -469,7 +469,7 @@ color: papayawhip;
 				type: 1,
 				selector: "123",
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 		});
 
@@ -485,7 +485,7 @@ color: papayawhip;
 				type: 1,
 				selector: "crédit de transcription",
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 			});
 		});
 
@@ -501,7 +501,7 @@ color: papayawhip;
 				type: 2,
 				tagName: 32,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map(),
 				classes: [],
 			});
@@ -519,7 +519,7 @@ color: papayawhip;
 				type: 2,
 				tagName: 1,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([["voice", "Esme"]]),
 				classes: [],
 			});
@@ -535,7 +535,7 @@ color: papayawhip;
 				type: 2,
 				tagName: 1,
 				styleString:
-					"background-image: linear-gradient(to bottom, dimgray, lightgray); color: papayawhip;",
+					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([
 					["voice", "Esme"],
 					["lang", "it"],
@@ -553,6 +553,33 @@ color: papayawhip;
 			`;
 
 			expect(parseStyle(STYLE_WITH_INVALID_TAG)).toBeUndefined();
+		});
+
+		it("should filter out unsupported css properties", () => {
+			const STYLE_STRING_WITH_SOME_INVALID_PROPS = `
+::cue {
+	background-color: blue;
+	font-decoration: chihuahua (?);
+	color: papayawhip;
+}
+`;
+
+			expect(parseStyle(STYLE_STRING_WITH_SOME_INVALID_PROPS)).toEqual({
+				type: 0,
+				styleString: "background-color:blue;color:papayawhip;",
+			});
+
+			debugger;
+		});
+
+		it("should return undefined if no supported properties is found", () => {
+			const STYLE_STRING_WITH_INVALID_PROPS = `
+::cue {
+	font-decoration: chihuahua (?);
+}
+`;
+
+			expect(parseStyle(STYLE_STRING_WITH_INVALID_PROPS)).toBeUndefined();
 		});
 	});
 
