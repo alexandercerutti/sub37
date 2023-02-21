@@ -2,7 +2,7 @@
 
 This is the core package, where magic happens.
 
-Its role is to make common interfaces for adapters and renderers available and keep the tracks for cues distribution session (when a content starts).
+It is a client side library with the role of making common interfaces for adapters and renderers available and keeping the tracks for cues distribution session (when a content starts).
 
 ## What you need to know
 

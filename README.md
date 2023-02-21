@@ -16,7 +16,7 @@
 
 ## Introduction
 
-sub37 is set of _dependency-free_ libraries that aims to provide a consistent and customizable media contents captions experience across browsers by leaving developers, at the same time, the freedom to choose which caption format to support (like WebVTT, TTML, ...) and how to style them.
+sub37 is set of client-side _dependency-free_ libraries that aims to provide a consistent and customizable media contents captions experience across browsers by leaving developers, at the same time, the freedom to choose which caption format to support (like WebVTT, TTML, ...) and how to style them.
 
 ## Architecture overview
 
