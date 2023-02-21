@@ -33,17 +33,17 @@ export default class Track implements Omit<TrackRecord, "content"> {
 		return this.timeline.getCurrentNodes(time);
 	}
 
-	public [addCuesSymbol](...cues: CueNode[]) {
+	public [addCuesSymbol](...cues: CueNode[]): void {
 		for (const cue of cues) {
 			this.timeline.addNode(cue);
 		}
 	}
 
-	public addChunk(content: unknown) {
+	public addChunk(content: unknown): void {
 		appendChunkToTrack(this, content, this.onSafeFailure);
 	}
 
-	public get cues() {
+	public get cues(): CueNode[] {
 		return this.timeline.getAll();
 	}
 
