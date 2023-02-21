@@ -122,6 +122,64 @@ server.addEventListener(Events.CUE_ERROR, (/** @type {Error} */ error) => {
 });
 ```
 
+## Tracks Management
+
+When a session gets created and raw tracks get provided, they get converted into `Tracks`.
+A Track has the following attributes:
+
+- Can be active or inactive;
+- Knows which is adapter has been used;
+- Can be augmented with more content;
+
+When a track is active, its cues will be actively served.
+
+It might be in your interest to always have an active track to show subtitles instead of captions.
+
+> ### Captions vs Subtitles
+>
+> Althought captions and subtitles might feel to be the same concept, the edge is really thin:
+>
+> - "subtitles" are for people that can hear but cannot understand a language. It is common for films to have a single active track dedicated to translations.
+>
+> - "captions" are for people that cannot hear audio and hence require the written words.
+>
+> Translation tracks are usually included inside caption tracks, but you can also have two or more different tracks to toggle.
+
+### Toggling a track
+
+To activate a track, you can retrieve it and activate it with its _getter_ as follows:
+
+```typescript
+const tracks = server.tracks;
+/** Language is specified inside the raw track */
+const italianTrack = tracks.find((track) => track.lang === "ita");
+italianTrack.active = true;
+```
+
+`@sub37/server` also owns a _getter_ as a shortcut just to retrieve all the tracks languages loaded:
+
+```typescript
+const langs = server.availableLanguages; // e.g. ["ita", "eng", "de"]
+```
+
+### Adding content to a track
+
+Raw content can be added to tracks whenever needed, to achieve a live-captioning effect.
+
+Please note that, as per v1.0.0, the only requirement is that each new raw chunk that you might want to add, should be available to be used as a standalone track.
+
+For example, for WebVTT tracks, the sheet is required to start with the uppercase characters sequence "WEBVTT". So, new chunks will require it too.
+
+```typescript
+const italianTrack = server.tracks.find((track) => track.lang === "ita");
+italianTrack.addChunk(`
+WEBVTT
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!
+`);
+```
+
 ## Error handling
 
 All `sub37` are studied to be as safe as possible and with parlant errors when they get thrown. All errors exposed, can be used through the `Errors` namespace imported as above.
