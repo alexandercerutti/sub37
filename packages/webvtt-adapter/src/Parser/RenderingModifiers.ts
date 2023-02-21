@@ -9,13 +9,13 @@ import type { RenderingModifiers } from "@sub37/server";
 // const HORIZONTAL = "";
 // type HORIZONTAL = typeof HORIZONTAL;
 
-const alignmentNumberIdentifiers = {
+const ALIGNMENT_NUMBER_IDENTIFIERS = {
 	start: 1,
 	left: 2,
 	center: 3,
 	right: 4,
 	end: 5,
-};
+} as const;
 
 export class WebVTTRenderingModifiers implements RenderingModifiers {
 	public static fromString(source: string | undefined): WebVTTRenderingModifiers {
@@ -169,7 +169,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 	private size: number = 100;
 
 	public get id(): number {
-		return Math.abs(this.width + this.leftOffset - alignmentNumberIdentifiers[this.align]);
+		return Math.abs(this.width + this.leftOffset - ALIGNMENT_NUMBER_IDENTIFIERS[this.align]);
 	}
 
 	public get width(): number {

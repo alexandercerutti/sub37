@@ -50,6 +50,7 @@ WEBVTT
 					 * @type {import("@sub37/server").RenderingModifiers}
 					 */
 					renderingModifiers: {
+						id: 98,
 						leftOffset: 0,
 						textAlignment: "left",
 						width: 100,
@@ -91,6 +92,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -108,6 +110,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -125,6 +128,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -142,6 +146,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -159,6 +164,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -176,6 +182,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -193,6 +200,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -210,6 +218,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
@@ -242,6 +251,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					leftOffset: 0,
 					textAlignment: "center",
 					width: 100,
