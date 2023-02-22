@@ -65,7 +65,7 @@ As parsing is a synchronous activity, once it is completed, you'll be able to ca
 ```javascript
 import "@sub37/captions-renderer";
 import { Server, Events } from "@sub37/server";
-import { WebVTTAdapter } from "@sub37/webvtt-adatpter";
+import { WebVTTAdapter } from "@sub37/webvtt-adapter";
 
 const videoElement = document.getElementsByTagName("video")[0];
 const rendererElement = document.getElementsByTagName("captions-renderer")[0];
@@ -74,8 +74,16 @@ const rendererElement = document.getElementsByTagName("captions-renderer")[0];
  * Create the server instance.
  * One for your whole runtime is fine.
  * Renderers will be maintained across sessions.
+ * You'll need at least an Adapter per server...
  */
-const captionServer = new Server([WebVTTAdapter]);
+const captionServer = new Server(WebVTTAdapter);
+/**
+ * ... or you may pass multiple adapters to a single server instance,
+ *     as many as formats you plan to support, custom renderers included
+ */
+const captionServerWithCustomVTTAndCustomAdapters = new Server(WebVTTAdapter, MyCustomAdapter, ...);
+
+
 
 captionServer.addEventListener(Events.CUE_START, rendererElement.setCue);
 captionServer.addEventListener(Events.CUE_STOP, rendererElement.setCue);
