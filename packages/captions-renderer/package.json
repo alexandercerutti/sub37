@@ -10,7 +10,8 @@
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
 		"test": "npm run build && npm run test:e2e",
-		"test:e2e": "npx playwright test -c \"playwright.config.js\""
+		"test:e2e": "npx playwright test -c \"playwright.config.js\"",
+		"prepublishOnly": "npm run build"
 	},
 	"repository": {
 		"type": "git",

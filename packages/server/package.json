@@ -9,7 +9,8 @@
 	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
-		"test": "npm run build && npm --prefix ../.. run test"
+		"test": "npm run build && npm --prefix ../.. run test",
+		"prepublishOnly": "npm run build"
 	},
 	"repository": {
 		"type": "git",
