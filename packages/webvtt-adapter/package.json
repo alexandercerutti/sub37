@@ -1,11 +1,11 @@
 {
 	"name": "@sub37/webvtt-adapter",
-	"version": "0.1.0",
+	"version": "1.0.1",
 	"description": "A subtitles adapter for WebVTT subtitles",
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
-		"@sub37/server": "^0.1.0"
+		"@sub37/server": "^1.0.0"
 	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
