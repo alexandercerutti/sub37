@@ -25,5 +25,8 @@
 	"homepage": "https://github.com/alexandercerutti/sub37#readme",
 	"devDependencies": {
 		"@playwright/test": "^1.28.1"
-	}
+	},
+	"files": [
+		"lib/*"
+	]
 }
