@@ -81,7 +81,7 @@ const captionServer = new Server(WebVTTAdapter);
  * ... or you may pass multiple adapters to a single server instance,
  *     as many as formats you plan to support, custom renderers included
  */
-const captionServerWithCustomVTTAndCustomAdapters = new Server(WebVTTAdapter, MyCustomAdapter, ...);
+const captionServer = new Server(WebVTTAdapter, MyCustomAdapter, ...);
 
 
 
