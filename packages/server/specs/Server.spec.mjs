@@ -6,6 +6,7 @@ import {
 	AdapterNotOverridingToStringError,
 	AdapterNotExtendingPrototypeError,
 	AdapterNotOverridingSupportedTypesError,
+	SessionNotInitializedError,
 } from "../lib/Errors/index.js";
 import { CueNode } from "../lib/CueNode";
 
@@ -225,7 +226,7 @@ describe("Server", () => {
 			const server = new Server(MockedAdapter);
 
 			expect(() => server.start(mockGetCurrentPositionFactory())).toThrowError(
-				"No session started. Engine won't serve any subtitles.",
+				new SessionNotInitializedError(),
 			);
 		});
 
