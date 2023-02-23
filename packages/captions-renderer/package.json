@@ -27,6 +27,6 @@
 		"@playwright/test": "^1.28.1"
 	},
 	"files": [
-		"lib/*"
+		"lib/**/*.+(js|d.ts)!(*.map)"
 	]
 }

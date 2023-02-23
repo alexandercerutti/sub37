@@ -23,6 +23,6 @@
 	},
 	"homepage": "https://github.com/alexandercerutti/sub37#readme",
 	"files": [
-		"lib/*"
+		"lib/**/*.+(js|d.ts)!(*.map)"
 	]
 }
