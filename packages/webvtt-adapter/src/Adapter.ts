@@ -260,18 +260,18 @@ export default class Adapter extends BaseAdapter {
 	}
 }
 
-type CueBlockType = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
-type HeaderBlockType = [blockType: BlockType.HEADER, payload: undefined];
-type RegionBlockType = [blockType: BlockType.REGION, payload: Region];
-type StyleBlockType = [blockType: BlockType.STYLE, payload: Parser.Style];
-type IgnoredBlockType = [blockType: BlockType.IGNORED, payload: undefined];
+type CueBlockTuple = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
+type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: undefined];
+type RegionBlockTuple = [blockType: BlockType.REGION, payload: Region];
+type StyleBlockTuple = [blockType: BlockType.STYLE, payload: Parser.Style];
+type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
 
 type BlockTuple =
-	| CueBlockType
-	| HeaderBlockType
-	| RegionBlockType
-	| StyleBlockType
-	| IgnoredBlockType;
+	| CueBlockTuple
+	| HeaderBlockTuple
+	| RegionBlockTuple
+	| StyleBlockTuple
+	| IgnoredBlockTuple;
 
 function evaluateBlock(
 	content: string,
@@ -329,15 +329,15 @@ function evaluateBlock(
 	return [BlockType.CUE, cueParsingResult];
 }
 
-function isRegion(evalutation: BlockTuple): evalutation is RegionBlockType {
+function isRegion(evalutation: BlockTuple): evalutation is RegionBlockTuple {
 	return Boolean(evalutation[0] & BlockType.REGION);
 }
 
-function isStyle(evalutation: BlockTuple): evalutation is StyleBlockType {
+function isStyle(evalutation: BlockTuple): evalutation is StyleBlockTuple {
 	return Boolean(evalutation[0] & BlockType.STYLE);
 }
 
-function isCue(evaluation: BlockTuple): evaluation is CueBlockType {
+function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 	return Boolean(evaluation[0] & BlockType.CUE);
 }
 
