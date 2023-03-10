@@ -31,7 +31,7 @@ export const Events = {
 
 export type Events = typeof Events[keyof typeof Events];
 
-interface EventsPayloadMap {
+export interface EventsPayloadMap {
 	[Events.CUE_START]: CueNode[];
 	[Events.CUE_STOP]: void;
 	[Events.CUES_FETCH]: CueNode[];
