@@ -42,8 +42,8 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	public content: string;
 	public renderingModifiers?: RenderingModifiers;
 
-	public [regionSymbol]?: Region;
-	public [entitiesSymbol]: Entities.GenericEntity[] = [];
+	private [regionSymbol]?: Region;
+	private [entitiesSymbol]: Entities.GenericEntity[] = [];
 
 	constructor(data: CueProps) {
 		this.id = data.id;
