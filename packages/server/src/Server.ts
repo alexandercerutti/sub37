@@ -45,10 +45,10 @@ interface EventDescriptor<EventName extends Events = Events> {
 
 /**
  * Core of the whole captions system.
- * Instance it with a set of adapterss for the
+ * Instance it with a set of adapters for the
  * contents you might receive.
  *
- * Protocol-conforming Adapterss will be saved
+ * Protocol-conforming adapters will be saved
  * and will survive across different sessions.
  *
  * Refer to the documentation for more information
