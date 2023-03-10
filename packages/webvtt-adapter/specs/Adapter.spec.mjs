@@ -153,6 +153,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 98,
 					regionIdentifier: "fred",
 					textAlignment: "left",
 					width: 100,
@@ -180,6 +181,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 98,
 					regionIdentifier: "fred",
 					textAlignment: "left",
 					width: 100,
@@ -223,6 +225,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					regionIdentifier: undefined,
 					textAlignment: "center",
 					width: 100,
@@ -248,6 +251,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					regionIdentifier: undefined,
 					textAlignment: "center",
 					width: 100,
@@ -286,6 +290,7 @@ WEBVTT
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					regionIdentifier: undefined,
 					textAlignment: "center",
 					width: 100,
@@ -351,6 +356,7 @@ Alberto, come to look at Marcello!
 				 * @type {import("@sub37/server").RenderingModifiers}
 				 */
 				renderingModifiers: {
+					id: 97,
 					regionIdentifier: "fred",
 					textAlignment: "center",
 					width: 100,
@@ -409,6 +415,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -466,6 +473,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -517,6 +525,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -571,6 +580,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -636,6 +646,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -691,6 +702,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
@@ -745,6 +757,7 @@ Alberto, come to look at Marcello!
 						 * @type {import("@sub37/server").RenderingModifiers}
 						 */
 						renderingModifiers: {
+							id: 97,
 							regionIdentifier: "fred",
 							textAlignment: "center",
 							width: 100,
