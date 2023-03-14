@@ -125,7 +125,7 @@ export default class TreeOrchestrator {
 				entitiesTree.addNode(cueNode.entities[i]);
 			}
 
-			cues.push(...splitCueNodesByBreakpoints(cueNode, entitiesTree));
+			cues.push(...splitCueNodeByBreakpoints(cueNode, entitiesTree));
 		}
 
 		let latestCueId = "";
@@ -242,7 +242,7 @@ export default class TreeOrchestrator {
 	}
 }
 
-function splitCueNodesByBreakpoints(
+function splitCueNodeByBreakpoints(
 	cueNode: CueNode,
 	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
 ): CueNode[] {
