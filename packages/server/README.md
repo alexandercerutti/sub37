@@ -182,7 +182,7 @@ Hey mom, look at me, I'm having fun!
 
 ## Error handling
 
-All `sub37` are studied to be as safe as possible and with parlant errors when they get thrown. All errors exposed, can be used through the `Errors` namespace imported as above.
+All `sub37` functions are as safe as possible and, when things go wrong, throw explicative errors so that issues can be diagnosed easily. All the exposed errors can be used importing the `Errors` namespace as shown below.
 
 ```typescript
 try {
