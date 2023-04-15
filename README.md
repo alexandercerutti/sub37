@@ -22,9 +22,9 @@ sub37 is set of client-side _dependency-free_ libraries that aims to provide a c
 
 sub37 architecture is made of three components:
 
-- A Renderer (`@sub37/captions-renderer`), a WebComponent that handles all the aspects of captions rendering (styles, colors, positioning, etc.);
-- A Server (`@sub37/server`), a client library that handles timed serving of cues and centralizes all the shared aspects (formats, communication);
-- An Adapter (e.g. `@sub37/webvtt-adapter`), a library that knows how to parse a specific captions format and knows how to convert it to the core format provided by the server;
+- A [Renderer](packages/captions-renderer/) (`@sub37/captions-renderer`), a WebComponent that handles all the aspects of captions rendering (styles, colors, positioning, etc.);
+- A [Server](packages/server/) (`@sub37/server`), a client library that handles timed serving of cues and centralizes all the shared aspects (formats, communication);
+- An [Adapter](packages/webvtt-adapter/) (e.g. `@sub37/webvtt-adapter`), a library that knows how to parse a specific captions format and knows how to convert it to the core format provided by the server;
 
 Of the three components, both Renderer and Adapter are replaceable: they only need to provide the correct support to the interface that server expects to use to communicate with them (see the wiki).
 
