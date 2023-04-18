@@ -1,6 +1,6 @@
 # @sub37/webvtt-adapter
 
-As its name says, this renderer handles whatever concerns the parsing, the tokenization and hence the conversion of a WebVTT text track so that it can be used by `@sub37/*`.
+As its name says, this adapter handles whatever concerns the parsing, the tokenization and hence the conversion of a WebVTT text track so that it can be used by `@sub37/*`.
 
 It tries to adhere as much as possible to the standard, leaving out or manipulating some concepts regarding the rendering of cues (which must be accomplished along with `@sub37/captions-renderer`).
 
