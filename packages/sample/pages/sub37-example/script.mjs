@@ -85,7 +85,7 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 	// 00:00:04.000 --> 00:10:00.000 region:fred align:left
 	// Hello world, bibi
 
-	document.querySelector('input[name="caption-type"][id="webvtt"]').setAttribute("checked", true);
+	document.forms["content-type"].elements.webvtt.checked = true;
 	defaultTrackLoadBtn.disabled = true;
 
 	const [vttTrack, vttChunk] = await Promise.all([
