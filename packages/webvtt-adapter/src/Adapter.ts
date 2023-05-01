@@ -22,7 +22,7 @@ enum BlockType {
 	CUE /*******/ = 0b1000,
 }
 
-export default class Adapter extends BaseAdapter {
+export default class WebVTTAdapter extends BaseAdapter {
 	static override get supportedType() {
 		return "text/vtt";
 	}
