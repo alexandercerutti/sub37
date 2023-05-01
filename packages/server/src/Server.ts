@@ -28,7 +28,7 @@ export const Events = {
 	CUE_ERROR: "cueerror",
 } as const;
 
-export type Events = typeof Events[keyof typeof Events];
+export type Events = (typeof Events)[keyof typeof Events];
 
 export interface EventsPayloadMap {
 	[Events.CUE_START]: CueNode[];
