@@ -1,3 +1,7 @@
+/**
+ * @deprecated
+ */
+
 export class AdapterNotOverridingToStringError extends Error {
 	constructor() {
 		super();

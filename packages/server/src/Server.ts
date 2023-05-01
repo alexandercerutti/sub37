@@ -10,7 +10,6 @@ import {
 	OutOfRangeFrequencyError,
 	ParsingError,
 	AdapterNotExtendingPrototypeError,
-	AdapterNotOverridingToStringError,
 	SessionNotStartedError,
 	SessionNotInitializedError,
 	ServerAlreadyRunningError,
@@ -71,10 +70,6 @@ export class Server {
 
 		this[adaptersSymbol] = adapters.filter((Adapter) => {
 			try {
-				if (Adapter.toString() === "default") {
-					throw new AdapterNotOverridingToStringError();
-				}
-
 				if (Object.getPrototypeOf(Adapter) !== BaseAdapter) {
 					throw new AdapterNotExtendingPrototypeError(Adapter.toString());
 				}
