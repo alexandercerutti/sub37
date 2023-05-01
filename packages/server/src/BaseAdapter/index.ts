@@ -6,23 +6,11 @@ export interface BaseAdapterConstructor {
 
 	ParseResult(data: CueNode[], errors: BaseAdapter.ParseError[]): ParseResult;
 
-	/**
-	 * Used for printing Adapter human name
-	 */
-
-	toString(): string;
-
 	new (): BaseAdapter;
 }
 
 export interface BaseAdapter {
 	parse(rawContent: unknown): ParseResult;
-
-	/**
-	 * Used for printing Adapter human name
-	 */
-
-	toString(): string;
 }
 
 export declare namespace BaseAdapter {
@@ -58,27 +46,23 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 	}
 
 	/**
-	 * Returns a human name for the adapter. This property
-	 * **must** be overridden by any Adapter passed to the
-	 * server.
+	 * Returns the human name for the adapter.
 	 *
 	 * @returns
 	 */
 
 	public static toString(): string {
-		return "default";
+		return this.name ?? "Anonymous adapter";
 	}
 
 	/**
-	 * Returns a human name for the adapter. This property
-	 * **must** be overridden by any Adapter passed to the
-	 * server.
+	 * Returns a human name for the adapter.
 	 *
 	 * @returns
 	 */
 
 	public toString(): string {
-		return "default";
+		return this.constructor.name ?? "Anonymous adapter";
 	}
 
 	/**

@@ -27,14 +27,6 @@ export default class Adapter extends BaseAdapter {
 		return "text/vtt";
 	}
 
-	static override toString(): string {
-		return "WebVTT Adapter";
-	}
-
-	override toString(): string {
-		return "WebVTT Adapter";
-	}
-
 	override parse(rawContent: string): BaseAdapter.ParseResult {
 		if (!rawContent) {
 			return BaseAdapter.ParseResult(undefined, [

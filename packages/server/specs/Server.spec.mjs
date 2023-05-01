@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
 import { Server, Events } from "../lib/Server";
 import {
-	AdapterNotOverridingToStringError,
 	AdapterNotExtendingPrototypeError,
 	AdapterNotOverridingSupportedTypesError,
 	SessionNotInitializedError,
@@ -103,9 +102,8 @@ describe("Server", () => {
 
 		new Server(...adapters);
 
-		expect(error).toHaveBeenCalledTimes(3);
+		expect(error).toHaveBeenCalledTimes(2);
 
-		expect(error).toHaveBeenCalledWith(new AdapterNotOverridingToStringError());
 		expect(error).toHaveBeenCalledWith(new AdapterNotExtendingPrototypeError("NoExtendAdapter"));
 		expect(error).toHaveBeenCalledWith(
 			new AdapterNotOverridingSupportedTypesError("MockedAdapterNoSupportedType"),

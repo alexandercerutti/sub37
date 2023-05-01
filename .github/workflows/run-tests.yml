@@ -1,0 +1,30 @@
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+  pull_request:
+    types: [opened, edited]
+    branches:
+      - master
+
+  workflow_dispatch:
+
+jobs:
+  test-on-ubuntu:
+    name: Testing Workflow Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+      - run: |
+          npm ci
+          npm run build
+          npx playwright install --with-deps
+          npm run test
+          cd packages/captions-renderer
+          npm run test:e2e
