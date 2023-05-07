@@ -1,5 +1,5 @@
 /**
- * @TODO this error is replicated also inside TTML adapter
+ * @TODO this error is replicated also inside WEBVTT adapter
  * but moving this on Server requires a breaking change
  * because it would require adapters to have a specific version
  * of server.
