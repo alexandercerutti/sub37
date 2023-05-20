@@ -40,7 +40,11 @@ export class Tokenizer {
 	/** Next token index in the content */
 	private startPoint = 0;
 
-	constructor(private rawContent: string) {}
+	private rawContent: string;
+
+	constructor(rawContent: string) {
+		this.rawContent = rawContent;
+	}
 
 	static isWhitespace(character: string) {
 		return character == " " || character == "\x09" || character == "\x0C";
