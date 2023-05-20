@@ -42,15 +42,15 @@ export class Tokenizer {
 
 	private rawContent: string;
 
-	constructor(rawContent: string) {
+	public constructor(rawContent: string) {
 		this.rawContent = rawContent;
 	}
 
-	static isWhitespace(character: string) {
+	public static isWhitespace(character: string) {
 		return character == " " || character == "\x09" || character == "\x0C";
 	}
 
-	static isNewLine(character: string) {
+	public static isNewLine(character: string) {
 		return character == "\x0A";
 	}
 
@@ -64,7 +64,7 @@ export class Tokenizer {
 	 * @returns
 	 */
 
-	static parseHTMLEntity(
+	public static parseHTMLEntity(
 		source: string,
 		currentCursor: number,
 		additionalAllowedCharacters: string[] = [],
