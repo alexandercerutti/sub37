@@ -229,9 +229,25 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG: {
-					/**
-					 * @TODO collect characters
-					 */
+					if (char === ">") {
+						tagName = result;
+						result = "";
+
+						/**
+						 * @TODO return token;
+						 */
+
+						return;
+					}
+
+					if (Tokenizer.isWhitespace(char)) {
+						tagName = result;
+						result = "";
+
+						state = TokenizerState.START_TAG_ANNOTATION;
+					}
+
+					result += char;
 
 					break;
 				}
