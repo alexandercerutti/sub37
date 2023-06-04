@@ -133,7 +133,13 @@ export class Tokenizer {
 
 						if (isValidName(lookerNextCharacter) && isUppercaseCharacter) {
 							state = TokenizerState.START_VALIDATION_ENTITY;
+							break;
 						}
+					}
+
+					if (looker.peek("</")) {
+						state = TokenizerState.END_TAG;
+						break;
 					}
 
 					if (isValidName(this.rawContent[this.cursor + 1])) {
