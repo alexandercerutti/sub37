@@ -173,7 +173,8 @@ export class Tokenizer {
 					 * @TODO EMIT Processing Instruction token
 					 */
 
-					break;
+					this.cursor++;
+					return;
 				}
 
 				case TokenizerState.START_COMMENT: {
@@ -199,7 +200,8 @@ export class Tokenizer {
 					 * @TODO EMIT Comment token
 					 */
 
-					break;
+					this.cursor++;
+					return;
 				}
 
 				case TokenizerState.START_CDATA: {
@@ -225,11 +227,13 @@ export class Tokenizer {
 					 * @TODO EMIT CDATA token
 					 */
 
-					break;
+					this.cursor++;
+					return;
 				}
 
 				case TokenizerState.START_TAG: {
 					if (char === ">") {
+						this.cursor++;
 						tagName = result;
 						result = "";
 
