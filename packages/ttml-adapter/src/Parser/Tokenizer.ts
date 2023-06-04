@@ -251,6 +251,23 @@ export class Tokenizer {
 
 					break;
 				}
+
+				case TokenizerState.END_TAG: {
+					if (char === ">" || this.cursor === this.rawContent.length) {
+						this.cursor++;
+						tagName = result;
+
+						/**
+						 * @TODO return end tag
+						 */
+
+						return;
+					}
+
+					result += char;
+
+					break;
+				}
 			}
 
 			this.cursor++;
