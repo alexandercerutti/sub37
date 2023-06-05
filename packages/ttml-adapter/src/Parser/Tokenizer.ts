@@ -48,7 +48,6 @@ enum TokenizerState {
 	START_TAG_ANNOTATION /** After the name */,
 	ATTRIBUTE_START,
 	ATTRIBUTE_VALUE,
-	ATTRIBUTE_END,
 	END_TAG,
 
 	/**
@@ -93,10 +92,10 @@ export class Tokenizer {
 		let state: TokenizerState = TokenizerState.UNKNOWN_CONTENT;
 		let result = "";
 
-		let tagName;
-		let attributes;
-		let currentAttributeName;
-		let currentValueContent;
+		let tagName: string;
+		let attributes: { [key: string]: string } = {};
+		let currentAttributeName = "";
+		let currentAttributeValue = "";
 
 		while (this.cursor <= this.rawContent.length) {
 			const char = this.rawContent[this.cursor] as string;
@@ -280,6 +279,112 @@ export class Tokenizer {
 					}
 
 					result += char;
+
+					break;
+				}
+
+				case TokenizerState.START_TAG_ANNOTATION: {
+					if (looker.peek("/>")) {
+						this.cursor = looker.getLastResultIndex();
+
+						/**
+						 * @TODO return self-closing tag token;
+						 */
+
+						return;
+					}
+
+					if (isValidName(char)) {
+						state = TokenizerState.ATTRIBUTE_START;
+						result += char;
+						break;
+					}
+
+					break;
+				}
+
+				case TokenizerState.ATTRIBUTE_START: {
+					if (char === "=" || (Tokenizer.isWhitespace(char) && looker.peek("="))) {
+						state = TokenizerState.ATTRIBUTE_VALUE;
+						currentAttributeName = result;
+						result = "";
+						break;
+					}
+
+					if (Tokenizer.isWhitespace(char)) {
+						state = TokenizerState.START_TAG_ANNOTATION;
+
+						attributes[result] = undefined;
+						result = "";
+						break;
+					}
+
+					if (looker.peek("/>")) {
+						this.cursor = looker.getLastResultIndex();
+						attributes[result] = undefined;
+
+						/**
+						 * @TODO return self-closing tag token;
+						 */
+
+						return;
+					}
+
+					if (looker.peek(">")) {
+						this.cursor = looker.getLastResultIndex();
+						attributes[result] = undefined;
+
+						/**
+						 * @TODO return start tag token;
+						 */
+
+						return;
+					}
+
+					if (isValidName(char)) {
+						result += char;
+					}
+
+					break;
+				}
+
+				case TokenizerState.ATTRIBUTE_VALUE: {
+					if (Tokenizer.isWhitespace(char) && result.length > 0) {
+						state = TokenizerState.START_TAG_ANNOTATION;
+						attributes[currentAttributeName] = result;
+
+						result = "";
+						currentAttributeName = "";
+
+						break;
+					}
+
+					if (looker.peek("/>")) {
+						attributes[currentAttributeName] = result;
+						this.cursor = looker.getLastResultIndex();
+
+						/**
+						 * @TODO return self-closing tag token;
+						 */
+
+						return;
+					}
+
+					if (looker.peek(">")) {
+						attributes[currentAttributeName] = result;
+						this.cursor = looker.getLastResultIndex();
+
+						/**
+						 * @TODO return start tag token;
+						 */
+
+						return;
+					}
+
+					// Quotes get automatically excluded here
+					if (isValidName(char)) {
+						result += char;
+					}
 
 					break;
 				}
