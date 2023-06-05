@@ -232,6 +232,17 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG: {
+					if (looker.peek("/>")) {
+						this.cursor = looker.getLastResultIndex();
+						tagName = result;
+
+						/**
+						 * @TODO return token;
+						 */
+
+						return;
+					}
+
 					if (char === ">") {
 						this.cursor++;
 						tagName = result;
