@@ -259,6 +259,7 @@ export class Tokenizer {
 						result = "";
 
 						state = TokenizerState.START_TAG_ANNOTATION;
+						break;
 					}
 
 					result += char;
