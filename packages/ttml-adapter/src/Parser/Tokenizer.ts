@@ -11,25 +11,49 @@ const NAME_CHAR_REGEX = new RegExp(
 );
 const NAME_REGEX = new RegExp(`${NAME_START_CHAR_REGEX.source}(${NAME_CHAR_REGEX.source})*`);
 
-function createContentPeeker(content: string, startingIndex: number) {
-	let lastResult = -1;
+function createTextSlidingWindow(content: string, startingIndex: number) {
+	let cursor: number = startingIndex;
+	let lastPeekCursor = -1;
 
 	return {
+		get char() {
+			return content[cursor];
+		},
+		get nextChar() {
+			return content[cursor + 1];
+		},
+		get cursor() {
+			return cursor;
+		},
+		get content() {
+			return content;
+		},
 		peek(data: string): boolean {
-			let nextIndex: number = startingIndex;
+			lastPeekCursor = -1;
+			let nextIndex: number = 0;
 
 			do {
-				if (data[nextIndex] !== content[nextIndex]) {
-					lastResult = -1;
+				if (data[nextIndex] !== content[cursor + nextIndex]) {
+					lastPeekCursor = -1;
 					return false;
 				}
 			} while (++nextIndex < startingIndex + data.length);
 
-			lastResult = nextIndex;
+			lastPeekCursor = cursor + nextIndex;
 			return true;
 		},
-		getLastResultIndex() {
-			return lastResult;
+		advance() {
+			if (lastPeekCursor > -1) {
+				cursor = lastPeekCursor;
+				lastPeekCursor = -1;
+
+				return;
+			}
+
+			cursor++;
+		},
+		getPeekPosition() {
+			return lastPeekCursor;
 		},
 	};
 }
@@ -69,12 +93,11 @@ enum TokenizerState {
 }
 
 export class Tokenizer {
-	private cursor = 0;
 	private startPoint = 0;
-	private rawContent: string;
+	private sourceWindow: ReturnType<typeof createTextSlidingWindow>;
 
 	public constructor(rawContent: string) {
-		this.rawContent = rawContent;
+		this.sourceWindow = createTextSlidingWindow(rawContent, 0);
 	}
 
 	public static isWhitespace(character: string) {
@@ -82,12 +105,12 @@ export class Tokenizer {
 	}
 
 	public nextToken(): Token | null {
-		if (this.cursor >= this.rawContent.length) {
+		if (this.sourceWindow.cursor >= this.sourceWindow.content.length) {
 			return null;
 		}
 
 		/** Our token starts at this index of the raw content */
-		this.startPoint = this.cursor;
+		this.startPoint = this.sourceWindow.cursor;
 
 		let state: TokenizerState = TokenizerState.UNKNOWN_CONTENT;
 		let result = "";
@@ -96,10 +119,10 @@ export class Tokenizer {
 		let attributes: { [key: string]: string } = {};
 		let currentAttributeName = "";
 		let currentAttributeValue = "";
+		let insideString = false;
 
-		while (this.cursor <= this.rawContent.length) {
-			const char = this.rawContent[this.cursor] as string;
-			const looker = createContentPeeker(this.rawContent, this.cursor);
+		while (this.sourceWindow.cursor <= this.sourceWindow.content.length) {
+			const { char } = this.sourceWindow;
 
 			switch (state) {
 				case TokenizerState.UNKNOWN_CONTENT: {
@@ -107,41 +130,38 @@ export class Tokenizer {
 						break;
 					}
 
-					if (looker.peek("<?")) {
+					if (this.sourceWindow.peek("<?")) {
 						state = TokenizerState.START_PI;
-						this.cursor = looker.getLastResultIndex();
 						break;
 					}
 
-					if (looker.peek("<!--")) {
+					if (this.sourceWindow.peek("<!--")) {
 						state = TokenizerState.START_COMMENT;
-						this.cursor = looker.getLastResultIndex();
 						break;
 					}
 
-					if (looker.peek("<![CDATA[")) {
+					if (this.sourceWindow.peek("<![CDATA[")) {
 						state = TokenizerState.START_CDATA;
-						this.cursor = looker.getLastResultIndex();
 						break;
 					}
 
-					if (looker.peek("<!")) {
-						const lookerNextCharacter = this.rawContent[looker.getLastResultIndex() + 1];
-						const codePoint = lookerNextCharacter.charCodeAt(0);
+					if (this.sourceWindow.peek("<!")) {
+						const { nextChar } = this.sourceWindow;
+						const codePoint = nextChar.charCodeAt(0);
 						const isUppercaseCharacter = codePoint >= 65 && codePoint <= 90;
 
-						if (isValidName(lookerNextCharacter) && isUppercaseCharacter) {
+						if (isValidName(nextChar) && isUppercaseCharacter) {
 							state = TokenizerState.START_VALIDATION_ENTITY;
 							break;
 						}
 					}
 
-					if (looker.peek("</")) {
+					if (this.sourceWindow.peek("</")) {
 						state = TokenizerState.END_TAG;
 						break;
 					}
 
-					if (isValidName(this.rawContent[this.cursor + 1])) {
+					if (isValidName(this.sourceWindow.nextChar)) {
 						state = TokenizerState.START_TAG;
 					}
 
@@ -157,9 +177,8 @@ export class Tokenizer {
 					 * block.
 					 */
 
-					if (looker.peek("?>")) {
+					if (this.sourceWindow.peek("?>")) {
 						state = TokenizerState.END_PI;
-						this.cursor = looker.getLastResultIndex();
 					} else {
 						result += char;
 					}
@@ -172,7 +191,7 @@ export class Tokenizer {
 					 * @TODO EMIT Processing Instruction token
 					 */
 
-					this.cursor++;
+					this.sourceWindow.advance();
 					return;
 				}
 
@@ -184,9 +203,8 @@ export class Tokenizer {
 					 * reached the end of this block.
 					 */
 
-					if (looker.peek("-->")) {
+					if (this.sourceWindow.peek("-->")) {
 						state = TokenizerState.END_COMMENT;
-						this.cursor = looker.getLastResultIndex();
 					} else {
 						result += char;
 					}
@@ -199,7 +217,7 @@ export class Tokenizer {
 					 * @TODO EMIT Comment token
 					 */
 
-					this.cursor++;
+					this.sourceWindow.advance();
 					return;
 				}
 
@@ -211,9 +229,8 @@ export class Tokenizer {
 					 * reached the end of this block.
 					 */
 
-					if (looker.peek("]]>")) {
+					if (this.sourceWindow.peek("]]>")) {
 						state = TokenizerState.END_CDATA;
-						this.cursor = looker.getLastResultIndex();
 					} else {
 						result += char;
 					}
@@ -226,13 +243,12 @@ export class Tokenizer {
 					 * @TODO EMIT CDATA token
 					 */
 
-					this.cursor++;
+					this.sourceWindow.advance();
 					return;
 				}
 
 				case TokenizerState.START_TAG: {
-					if (looker.peek("/>")) {
-						this.cursor = looker.getLastResultIndex();
+					if (this.sourceWindow.peek("/>")) {
 						tagName = result;
 
 						/**
@@ -243,10 +259,9 @@ export class Tokenizer {
 					}
 
 					if (char === ">") {
-						this.cursor++;
 						tagName = result;
 						result = "";
-
+						this.sourceWindow.advance();
 						/**
 						 * @TODO return token;
 						 */
@@ -268,8 +283,8 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.END_TAG: {
-					if (char === ">" || this.cursor === this.rawContent.length) {
-						this.cursor++;
+					if (char === ">" || this.sourceWindow.cursor === this.sourceWindow.content.length) {
+						this.sourceWindow.advance();
 						tagName = result;
 
 						/**
@@ -285,8 +300,8 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG_ANNOTATION: {
-					if (looker.peek("/>")) {
-						this.cursor = looker.getLastResultIndex();
+					if (this.sourceWindow.peek("/>")) {
+						this.sourceWindow.advance();
 
 						/**
 						 * @TODO return self-closing tag token;
@@ -305,7 +320,7 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.ATTRIBUTE_START: {
-					if (char === "=" || (Tokenizer.isWhitespace(char) && looker.peek("="))) {
+					if (char === "=" || (Tokenizer.isWhitespace(char) && this.sourceWindow.peek("="))) {
 						state = TokenizerState.ATTRIBUTE_VALUE;
 						currentAttributeName = result;
 						result = "";
@@ -320,8 +335,8 @@ export class Tokenizer {
 						break;
 					}
 
-					if (looker.peek("/>")) {
-						this.cursor = looker.getLastResultIndex();
+					if (this.sourceWindow.peek("/>")) {
+						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
 						/**
@@ -331,8 +346,8 @@ export class Tokenizer {
 						return;
 					}
 
-					if (looker.peek(">")) {
-						this.cursor = looker.getLastResultIndex();
+					if (this.sourceWindow.peek(">")) {
+						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
 						/**
@@ -341,6 +356,10 @@ export class Tokenizer {
 
 						return;
 					}
+
+					/**
+					 * @TODO might want to check in the end if whole attribute name is actually valid
+					 */
 
 					if (isValidName(char)) {
 						result += char;
@@ -360,9 +379,9 @@ export class Tokenizer {
 						break;
 					}
 
-					if (looker.peek("/>")) {
+					if (this.sourceWindow.peek("/>")) {
 						attributes[currentAttributeName] = result;
-						this.cursor = looker.getLastResultIndex();
+						this.sourceWindow.advance();
 
 						/**
 						 * @TODO return self-closing tag token;
@@ -371,9 +390,9 @@ export class Tokenizer {
 						return;
 					}
 
-					if (looker.peek(">")) {
+					if (this.sourceWindow.peek(">")) {
 						attributes[currentAttributeName] = result;
-						this.cursor = looker.getLastResultIndex();
+						this.sourceWindow.advance();
 
 						/**
 						 * @TODO return start tag token;
@@ -391,7 +410,7 @@ export class Tokenizer {
 				}
 			}
 
-			this.cursor++;
+			this.sourceWindow.advance();
 		}
 
 		return null;
