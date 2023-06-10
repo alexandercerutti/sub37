@@ -27,18 +27,21 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 		get content() {
 			return content;
 		},
-		peek(
-			dataOrFunction: string | ((char: string, relativeIndex: number) => boolean),
-			characterIndex: number = 0,
-		): boolean {
-			let nextIndex: number = characterIndex;
+		peek(dataOrFunction: string | ((char: string, relativeIndex: number) => boolean)): boolean {
+			let nextIndex: number = 0;
 
 			if (typeof dataOrFunction === "string") {
 				do {
 					if (dataOrFunction[nextIndex] !== content[cursor + nextIndex]) {
 						return false;
 					}
-				} while (++nextIndex < startingIndex + dataOrFunction.length);
+
+					/**
+					 * Increasing nextIndex only if needed because we'll advance
+					 * ad the end of every cycle and when returning tokens.
+					 * Otherwise we would bring the cursor character step too many
+					 */
+				} while (nextIndex + 1 < dataOrFunction.length && ++nextIndex);
 			} else {
 				if (!dataOrFunction(content[cursor + nextIndex], nextIndex)) {
 					return false;
