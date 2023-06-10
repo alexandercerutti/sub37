@@ -28,9 +28,19 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 			return content;
 		},
 		peek(dataOrFunction: string | ((char: string, relativeIndex: number) => boolean)): boolean {
-			let nextIndex: number = 0;
+			/**
+			 * We might as we might not want include the current character
+			 * in the query. So, we have to check where we should start from.
+			 * By default, we always start from the next character, cause
+			 * functions do not have this choice.
+			 */
+			let nextIndex: number = 1;
 
 			if (typeof dataOrFunction === "string") {
+				if (this.char !== dataOrFunction[0]) {
+					nextIndex--;
+				}
+
 				do {
 					if (dataOrFunction[nextIndex] !== content[cursor + nextIndex]) {
 						return false;
@@ -43,10 +53,12 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 					 */
 				} while (nextIndex + 1 < dataOrFunction.length && ++nextIndex);
 			} else {
+				/**
+				 * With strings above, we can start from the current character and loop over the
+				 * next ones. With the callback, we **must** peek the next character
+				 */
 				if (!dataOrFunction(content[cursor + nextIndex], nextIndex)) {
 					return false;
-				} else {
-					nextIndex++;
 				}
 			}
 
