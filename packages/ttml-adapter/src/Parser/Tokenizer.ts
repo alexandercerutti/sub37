@@ -13,7 +13,6 @@ const NAME_REGEX = new RegExp(`${NAME_START_CHAR_REGEX.source}(${NAME_CHAR_REGEX
 
 function createTextSlidingWindow(content: string, startingIndex: number) {
 	let cursor: number = startingIndex;
-	let lastPeekCursor = -1;
 
 	return {
 		get char() {
@@ -28,32 +27,31 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 		get content() {
 			return content;
 		},
-		peek(data: string): boolean {
-			lastPeekCursor = -1;
-			let nextIndex: number = 0;
+		peek(
+			dataOrFunction: string | ((char: string, relativeIndex: number) => boolean),
+			characterIndex: number = 0,
+		): boolean {
+			let nextIndex: number = characterIndex;
 
-			do {
-				if (data[nextIndex] !== content[cursor + nextIndex]) {
-					lastPeekCursor = -1;
+			if (typeof dataOrFunction === "string") {
+				do {
+					if (dataOrFunction[nextIndex] !== content[cursor + nextIndex]) {
+						return false;
+					}
+				} while (++nextIndex < startingIndex + dataOrFunction.length);
+			} else {
+				if (!dataOrFunction(content[cursor + nextIndex], nextIndex)) {
 					return false;
+				} else {
+					nextIndex++;
 				}
-			} while (++nextIndex < startingIndex + data.length);
+			}
 
-			lastPeekCursor = cursor + nextIndex;
+			cursor += nextIndex;
 			return true;
 		},
 		advance() {
-			if (lastPeekCursor > -1) {
-				cursor = lastPeekCursor;
-				lastPeekCursor = -1;
-
-				return;
-			}
-
 			cursor++;
-		},
-		getPeekPosition() {
-			return lastPeekCursor;
 		},
 	};
 }
