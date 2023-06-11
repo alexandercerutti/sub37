@@ -34,15 +34,11 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 			 * By default, we always start from the next character, cause
 			 * functions do not have this choice.
 			 */
-			let nextIndex: number = 1;
+			let nextIndex: number = 0;
 
 			if (typeof dataOrFunction === "string") {
-				if (this.char !== dataOrFunction[0]) {
-					nextIndex--;
-				}
-
 				do {
-					if (dataOrFunction[nextIndex] !== content[cursor + nextIndex]) {
+					if (dataOrFunction[nextIndex] !== content[cursor + nextIndex + 1]) {
 						return false;
 					}
 
@@ -57,7 +53,7 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 				 * With strings above, we can start from the current character and loop over the
 				 * next ones. With the callback, we **must** peek the next character
 				 */
-				if (!dataOrFunction(content[cursor + nextIndex], nextIndex)) {
+				if (!dataOrFunction(content[cursor + nextIndex + 1], nextIndex + 1)) {
 					return false;
 				}
 			}
@@ -143,22 +139,22 @@ export class Tokenizer {
 						break;
 					}
 
-					if (this.sourceWindow.peek("<?")) {
+					if (this.sourceWindow.peek("?")) {
 						state = TokenizerState.START_PI;
 						break;
 					}
 
-					if (this.sourceWindow.peek("<!--")) {
+					if (this.sourceWindow.peek("!--")) {
 						state = TokenizerState.START_COMMENT;
 						break;
 					}
 
-					if (this.sourceWindow.peek("<![CDATA[")) {
+					if (this.sourceWindow.peek("![CDATA[")) {
 						state = TokenizerState.START_CDATA;
 						break;
 					}
 
-					if (this.sourceWindow.peek("<!")) {
+					if (this.sourceWindow.peek("!")) {
 						const { nextChar } = this.sourceWindow;
 						const codePoint = nextChar.charCodeAt(0);
 						const isUppercaseCharacter = codePoint >= 65 && codePoint <= 90;
@@ -169,7 +165,7 @@ export class Tokenizer {
 						}
 					}
 
-					if (this.sourceWindow.peek("</")) {
+					if (this.sourceWindow.peek("/")) {
 						state = TokenizerState.END_TAG;
 						break;
 					}
@@ -190,10 +186,10 @@ export class Tokenizer {
 					 * block.
 					 */
 
+					result += char;
+
 					if (this.sourceWindow.peek("?>")) {
 						state = TokenizerState.END_PI;
-					} else {
-						result += char;
 					}
 
 					break;
@@ -216,10 +212,10 @@ export class Tokenizer {
 					 * reached the end of this block.
 					 */
 
+					result += char;
+
 					if (this.sourceWindow.peek("-->")) {
 						state = TokenizerState.END_COMMENT;
-					} else {
-						result += char;
 					}
 
 					break;
@@ -242,10 +238,10 @@ export class Tokenizer {
 					 * reached the end of this block.
 					 */
 
+					result += char;
+
 					if (this.sourceWindow.peek("]]>")) {
 						state = TokenizerState.END_CDATA;
-					} else {
-						result += char;
 					}
 
 					break;
