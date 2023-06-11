@@ -113,6 +113,16 @@ export class Tokenizer {
 		return character == " " || character == "\x09" || character == "\x0C";
 	}
 
+	public static isQuotationMark(character: string) {
+		return (
+			character == "\u0022" ||
+			character === "\u201C" ||
+			character === "\u201D" ||
+			character === "\u201E" ||
+			character === "\u201F"
+		);
+	}
+
 	public nextToken(): Token | null {
 		if (this.sourceWindow.cursor >= this.sourceWindow.content.length) {
 			return null;
@@ -128,7 +138,6 @@ export class Tokenizer {
 		let attributes: { [key: string]: string } = {};
 		let currentAttributeName = "";
 		let currentAttributeValue = "";
-		let insideString = false;
 
 		while (this.sourceWindow.cursor <= this.sourceWindow.content.length) {
 			const { char } = this.sourceWindow;
@@ -378,16 +387,6 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.ATTRIBUTE_VALUE: {
-					if (Tokenizer.isWhitespace(char) && result.length > 0) {
-						state = TokenizerState.START_TAG_ANNOTATION;
-						attributes[currentAttributeName] = result;
-
-						result = "";
-						currentAttributeName = "";
-
-						break;
-					}
-
 					if (this.sourceWindow.peek("/>")) {
 						attributes[currentAttributeName] = result;
 						this.sourceWindow.advance();
@@ -410,9 +409,30 @@ export class Tokenizer {
 						return;
 					}
 
-					// Quotes get automatically excluded here
-					if (isValidName(char)) {
+					if (!Tokenizer.isQuotationMark(char)) {
 						result += char;
+						break;
+					}
+
+					if (!result.length) {
+						/**
+						 * Starting or ending quotes and respective spaces can be ignored
+						 * but saving the character to compare it later
+						 */
+						currentAttributeValue = char;
+						break;
+					}
+
+					if (
+						this.sourceWindow.char === currentAttributeValue &&
+						this.sourceWindow.peek(Tokenizer.isWhitespace)
+					) {
+						state = TokenizerState.START_TAG_ANNOTATION;
+						attributes[currentAttributeName] = result;
+
+						result = "";
+						currentAttributeValue = "";
+						currentAttributeName = "";
 					}
 
 					break;
