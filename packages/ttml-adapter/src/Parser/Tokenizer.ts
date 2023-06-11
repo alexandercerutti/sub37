@@ -42,12 +42,13 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 						return false;
 					}
 
+					nextIndex++;
 					/**
 					 * Increasing nextIndex only if needed because we'll advance
 					 * ad the end of every cycle and when returning tokens.
 					 * Otherwise we would bring the cursor character step too many
 					 */
-				} while (nextIndex + 1 < dataOrFunction.length && ++nextIndex);
+				} while (nextIndex < dataOrFunction.length);
 			} else {
 				/**
 				 * With strings above, we can start from the current character and loop over the
