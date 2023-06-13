@@ -206,12 +206,8 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.END_PI: {
-					/**
-					 * @TODO EMIT Processing Instruction token
-					 */
-
 					this.sourceWindow.advance();
-					return;
+					return Token.ProcessingIntruction(result);
 				}
 
 				case TokenizerState.START_COMMENT: {
@@ -232,12 +228,8 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.END_COMMENT: {
-					/**
-					 * @TODO EMIT Comment token
-					 */
-
 					this.sourceWindow.advance();
-					return;
+					return Token.Comment(result);
 				}
 
 				case TokenizerState.START_CDATA: {
@@ -258,34 +250,23 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.END_CDATA: {
-					/**
-					 * @TODO EMIT CDATA token
-					 */
-
 					this.sourceWindow.advance();
-					return;
+					return Token.CData(result);
 				}
 
 				case TokenizerState.START_TAG: {
 					if (this.sourceWindow.peek("/>")) {
 						tagName = result;
 
-						/**
-						 * @TODO return token;
-						 */
-
-						return;
+						return Token.Tag(tagName, attributes);
 					}
 
 					if (char === ">") {
 						tagName = result;
 						result = "";
 						this.sourceWindow.advance();
-						/**
-						 * @TODO return token;
-						 */
 
-						return;
+						return Token.StartTag(tagName, attributes);
 					}
 
 					if (Tokenizer.isWhitespace(char)) {
@@ -306,11 +287,7 @@ export class Tokenizer {
 						this.sourceWindow.advance();
 						tagName = result;
 
-						/**
-						 * @TODO return end tag
-						 */
-
-						return;
+						return Token.EndTag(tagName);
 					}
 
 					result += char;
@@ -322,11 +299,7 @@ export class Tokenizer {
 					if (this.sourceWindow.peek("/>")) {
 						this.sourceWindow.advance();
 
-						/**
-						 * @TODO return self-closing tag token;
-						 */
-
-						return;
+						return Token.Tag(tagName, attributes);
 					}
 
 					if (isValidName(char)) {
@@ -358,22 +331,14 @@ export class Tokenizer {
 						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
-						/**
-						 * @TODO return self-closing tag token;
-						 */
-
-						return;
+						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peek(">")) {
 						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
-						/**
-						 * @TODO return start tag token;
-						 */
-
-						return;
+						return Token.StartTag(tagName, attributes);
 					}
 
 					/**
@@ -392,22 +357,14 @@ export class Tokenizer {
 						attributes[currentAttributeName] = result;
 						this.sourceWindow.advance();
 
-						/**
-						 * @TODO return self-closing tag token;
-						 */
-
-						return;
+						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peek(">")) {
 						attributes[currentAttributeName] = result;
 						this.sourceWindow.advance();
 
-						/**
-						 * @TODO return start tag token;
-						 */
-
-						return;
+						return Token.StartTag(tagName, attributes);
 					}
 
 					if (!Tokenizer.isQuotationMark(char)) {
