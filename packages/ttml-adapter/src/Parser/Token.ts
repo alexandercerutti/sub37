@@ -4,19 +4,24 @@ export enum TokenType {
 	COMMENT,
 	START_TAG,
 	END_TAG,
+	STRING,
 	PROCESSING_INSTRUCTION,
 	VALIDATION_ENTITY,
 }
 
 export class Token {
 	public readonly type: TokenType;
-	public readonly tokenName: string;
+	public readonly content: string;
 	public readonly attributes: Record<string, string>;
 
 	private constructor(type: TokenType, name: string, attributes?: Record<string, string>) {
 		this.type = type;
-		this.tokenName = name;
+		this.content = name;
 		this.attributes = attributes ?? ({} as Record<string, string>);
+	}
+
+	public static String(content: string): Token {
+		return new Token(TokenType.STRING, content);
 	}
 
 	public static Tag(tagName: string, attributes: Record<string, string>): Token {

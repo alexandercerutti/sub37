@@ -82,6 +82,7 @@ enum TokenizerState {
 	START_TAG_ANNOTATION /** After the name */,
 	ATTRIBUTE_START,
 	ATTRIBUTE_VALUE,
+	DATA,
 	END_TAG,
 
 	/**
@@ -112,6 +113,10 @@ export class Tokenizer {
 
 	public static isWhitespace(character: string) {
 		return character == " " || character == "\x09" || character == "\x0C";
+	}
+
+	public static isNewLine(character: string) {
+		return character == "\x0A";
 	}
 
 	public static isQuotationMark(character: string) {
@@ -146,6 +151,13 @@ export class Tokenizer {
 			switch (state) {
 				case TokenizerState.UNKNOWN_CONTENT: {
 					if (char !== "<") {
+						if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
+							break;
+						}
+
+						result += char;
+						state = TokenizerState.DATA;
+
 						break;
 					}
 
@@ -291,6 +303,16 @@ export class Tokenizer {
 					}
 
 					result += char;
+
+					break;
+				}
+
+				case TokenizerState.DATA: {
+					result += char;
+
+					if (this.sourceWindow.peek("<")) {
+						return Token.String(result);
+					}
 
 					break;
 				}
