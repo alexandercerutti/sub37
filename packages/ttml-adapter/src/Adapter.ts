@@ -1,5 +1,5 @@
 import { BaseAdapter } from "@sub37/server";
-import { MissingContentError } from "./MissingContentError";
+import { MissingContentError } from "./MissingContentError.js";
 
 export default class TTMLAdapter extends BaseAdapter {
 	static override get supportedType() {

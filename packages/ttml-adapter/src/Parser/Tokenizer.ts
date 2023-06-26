@@ -1,4 +1,4 @@
-import { Token } from "./Token";
+import { Token } from "./Token.js";
 
 /**
  * @TODO This regex misses the range [\u10000-\uEFFFF], which should be a 32bit identifier
