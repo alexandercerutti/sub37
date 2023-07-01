@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "TTML Adapter for sub37 subtitles system",
 	"main": "lib/index.js",
+	"type": "module",
 	"peerDependencies": {
 		"@sub37/server": "^1.0.0"
 	},
