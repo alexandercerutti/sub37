@@ -184,6 +184,28 @@ export class Tokenizer {
 					break;
 				}
 
+				case TokenizerState.START_VALIDATION_ENTITY: {
+					/**
+					 * We don't really care right now to
+					 * do something with CDATA but
+					 * collecting data and checking if we
+					 * reached the end of this block.
+					 */
+
+					result += char;
+
+					if (this.sourceWindow.peek(">")) {
+						state = TokenizerState.END_VALIDATION_ENTITY;
+					}
+
+					break;
+				}
+
+				case TokenizerState.END_VALIDATION_ENTITY: {
+					this.sourceWindow.advance();
+					return Token.ValidationEntity(result);
+				}
+
 				case TokenizerState.START_PI: {
 					/**
 					 * We don't really care right now to
