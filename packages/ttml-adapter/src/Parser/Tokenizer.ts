@@ -97,16 +97,16 @@ export class Tokenizer {
 	}
 
 	public static isWhitespace(character: string) {
-		return character == " " || character == "\x09" || character == "\x0C";
+		return character === " " || character === "\x09" || character === "\x0C";
 	}
 
 	public static isNewLine(character: string) {
-		return character == "\x0A";
+		return character === "\x0A";
 	}
 
 	public static isQuotationMark(character: string) {
 		return (
-			character == "\u0022" ||
+			character === "\u0022" ||
 			character === "\u201C" ||
 			character === "\u201D" ||
 			character === "\u201E" ||
