@@ -46,7 +46,7 @@ export class Token {
 		return new Token(TokenType.COMMENT, "Comment Tag", undefined);
 	}
 
-	public static ProcessingIntruction(content: string): Token {
+	public static ProcessingInstruction(content: string): Token {
 		/** This data type is currently ignored. We don't need it (yet) */
 		return new Token(TokenType.PROCESSING_INSTRUCTION, "ProcessingInstruction", undefined);
 	}

@@ -226,7 +226,7 @@ export class Tokenizer {
 
 				case TokenizerState.END_PI: {
 					this.sourceWindow.advance();
-					return Token.ProcessingIntruction(result);
+					return Token.ProcessingInstruction(result);
 				}
 
 				case TokenizerState.START_COMMENT: {
