@@ -331,6 +331,14 @@ export class Tokenizer {
 						return Token.Tag(tagName, attributes);
 					}
 
+					// Might happen if, for some reason, the ">" is on a new
+					if (this.sourceWindow.peek(">")) {
+						this.sourceWindow.advance();
+						attributes[result] = undefined;
+
+						return Token.StartTag(tagName, attributes);
+					}
+
 					if (isValidName(char)) {
 						state = TokenizerState.ATTRIBUTE_START;
 						result += char;
