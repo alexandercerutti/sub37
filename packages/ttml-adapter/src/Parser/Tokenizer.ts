@@ -288,7 +288,7 @@ export class Tokenizer {
 						return Token.StartTag(tagName, attributes);
 					}
 
-					if (Tokenizer.isWhitespace(char)) {
+					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 						tagName = result;
 						result = "";
 
@@ -348,7 +348,7 @@ export class Tokenizer {
 						break;
 					}
 
-					if (Tokenizer.isWhitespace(char)) {
+					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 						state = TokenizerState.START_TAG_ANNOTATION;
 
 						attributes[result] = undefined;
@@ -412,7 +412,8 @@ export class Tokenizer {
 
 					if (
 						this.sourceWindow.char === currentAttributeValue &&
-						this.sourceWindow.peek(Tokenizer.isWhitespace)
+						(this.sourceWindow.peek(Tokenizer.isWhitespace) ||
+							this.sourceWindow.peek(Tokenizer.isNewLine))
 					) {
 						state = TokenizerState.START_TAG_ANNOTATION;
 						attributes[currentAttributeName] = result;
