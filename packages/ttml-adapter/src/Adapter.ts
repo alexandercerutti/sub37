@@ -1,8 +1,10 @@
-import { BaseAdapter } from "@sub37/server";
+import { BaseAdapter, Region } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
+import { TTMLStyle, parseStyle } from "./Parser/parseStyle.js";
+import { parseRegion } from "./Parser/parseRegion.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -30,6 +32,15 @@ export default class TTMLAdapter extends BaseAdapter {
 		let parsingState: BlockType = BlockType.HEADER;
 		const openTagsQueue = new Tags.NodeQueue();
 		const headTokensList: Array<Token | Array<Token>> = [];
+
+		/**
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
+		 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
+		 */
+
+		const trackStyles: TTMLStyle[] = [];
+		const trackRegions: Region[] = [];
+		const StyleIDREFSMap = new Map<string, TTMLStyle>([]);
 
 		const tokenizer = new Tokenizer(rawContent);
 
@@ -107,6 +118,30 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * @TODO cross-links all the styles
 						 */
 
+						for (let i = 0; i < headTokensList.length; i++) {
+							const token = headTokensList[i] as Token;
+
+							if (token.content === "region") {
+								const styleTokens = headTokensList[i++] as Token[];
+								let styles: TTMLStyle[] = [];
+
+								for (let styleToken of styleTokens) {
+									const style = getIDREFSChainedStyle(StyleIDREFSMap, parseStyle(styleToken));
+									styles.push(style);
+								}
+
+								trackRegions.push(parseRegion(token, styles));
+							}
+
+							if (token.content === "style") {
+								const style = getIDREFSChainedStyle(StyleIDREFSMap, parseStyle(token));
+								trackStyles.push(style);
+
+								const resolvedStyle = resolveIDREFSNameConflict(StyleIDREFSMap, style);
+								StyleIDREFSMap.set(resolvedStyle.id, resolvedStyle);
+							}
+						}
+
 						break;
 					}
 
@@ -172,4 +207,52 @@ function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.No
 
 function isTokenTreeConstrained(content: string): content is keyof typeof TokenRelationships {
 	return Object.prototype.hasOwnProperty.call(TokenRelationships, content);
+}
+
+function resolveIDREFSNameConflict(idrefsMap: Map<string, TTMLStyle>, style: TTMLStyle): TTMLStyle {
+	if (!idrefsMap.has(style.id)) {
+		return style;
+	}
+
+	let styleConflictOverrideIdentifier = parseInt(style.id.match(/--(\d{1,})/)?.[1]);
+
+	if (Number.isNaN(styleConflictOverrideIdentifier)) {
+		return style;
+	}
+
+	while (idrefsMap.has(`${style.id}--${styleConflictOverrideIdentifier}`)) {
+		styleConflictOverrideIdentifier++;
+	}
+
+	style.id = style.id.replace(
+		`--${styleConflictOverrideIdentifier}`,
+		`--${styleConflictOverrideIdentifier + 1}`,
+	);
+
+	return style;
+}
+
+/**
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
+ * @param idrefsMap
+ * @param style
+ * @returns
+ */
+
+function getIDREFSChainedStyle(idrefsMap: Map<string, TTMLStyle>, style: TTMLStyle): TTMLStyle {
+	const parentStyle = style.attributes["style"];
+
+	if (!idrefsMap.has(parentStyle)) {
+		return style;
+	}
+
+	const chainedStyleRef = idrefsMap.get(parentStyle);
+
+	return {
+		id: style.id,
+		attributes: {
+			...chainedStyleRef.attributes,
+			...style.attributes,
+		},
+	};
 }
