@@ -2,11 +2,11 @@ import { BaseAdapter } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 
 export default class TTMLAdapter extends BaseAdapter {
-	static override get supportedType() {
+	public static override get supportedType() {
 		return "application/ttml+xml";
 	}
 
-	override parse(rawContent: string): BaseAdapter.ParseResult {
+	public override parse(rawContent: string): BaseAdapter.ParseResult {
 		if (!rawContent) {
 			return BaseAdapter.ParseResult(undefined, [
 				{
