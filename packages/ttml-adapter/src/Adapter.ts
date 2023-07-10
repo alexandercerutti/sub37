@@ -111,13 +111,6 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.content === "head") {
-						/**
-						 * @TODO parse styles
-						 * @TODO parse regions
-						 * @TODO parse regions' styles
-						 * @TODO cross-links all the styles
-						 */
-
 						for (let i = 0; i < headTokensList.length; i++) {
 							const token = headTokensList[i] as Token;
 
