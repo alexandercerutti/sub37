@@ -1,6 +1,14 @@
 import { BaseAdapter, Region } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
-import { Token, TokenType } from "./Parser/Token.js";
+import {
+	Token,
+	TokenType,
+	isRegionEndTagToken,
+	isRegionStyleToken,
+	isRegionTagToken,
+	isStyleEndTagToken,
+	isStyleTagToken,
+} from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
 import { TTMLStyle, parseStyle } from "./Parser/parseStyle.js";
@@ -57,8 +65,23 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					if (openTagsQueue.length) {
-						openTagsQueue.push(new Tags.Node(undefined, token));
+					if (isRegionTagToken(token)) {
+						headTokensList.push(token, []);
+						break;
+					}
+
+					if (isStyleTagToken(token)) {
+						if (!headTokensList.length) {
+							headTokensList.push(token);
+							break;
+						}
+
+						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
+							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
+							break;
+						}
+
+						headTokensList.unshift(token);
 					}
 
 					break;
@@ -138,18 +161,18 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					if (token.content === "region") {
+					if (isRegionEndTagToken(token)) {
 						headTokensList.push(token, []);
 						break;
 					}
 
-					if (token.content === "style") {
+					if (isStyleEndTagToken(token)) {
 						if (!headTokensList.length) {
 							headTokensList.push(token);
 							break;
 						}
 
-						if (openTagsQueue.current.parent.token.content === "region") {
+						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
 							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
 							break;
 						}
