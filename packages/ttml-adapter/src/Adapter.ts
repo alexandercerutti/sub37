@@ -107,7 +107,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					if (isTokenParentRelationshipRespected(token, openTagsQueue)) {
+					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
 						parsingState ^= BlockType.IGNORED;
 					}
 
