@@ -141,47 +141,9 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
 
 		const referenceBegin = 0;
 
-		let frames /*****/ = parseInt(match[5]) || 0;
-		let subframes /**/ = parseInt(match[6]) || 0;
+		const framesInSeconds = getActualFramesInSeconds(match[5], match[6], timeDetails);
 
-		if (timeDetails["ttp:frameRate"] > 0 && !Number.isNaN(frames)) {
-			let framesAmountInSeconds = 0;
-
-			/**
-			 * If a <time-expression> is expressed in terms of a clock-time
-			 * and a frames term is specified, then the value of this term
-			 * must be constrained to the interval [0…F-1], where F is the
-			 * frame rate determined by the ttp:frameRate parameter as
-			 * defined by 7.2.5 ttp:frameRate
-			 */
-			frames = Math.max(0, Math.min(frames, timeDetails["ttp:frameRate"] - 1));
-
-			if (timeDetails["ttp:subFrameRate"] > 0 && !Number.isNaN(subframes)) {
-				subframes = Math.max(0, Math.min(subframes, timeDetails["ttp:subFrameRate"] - 1));
-				framesAmountInSeconds = subframes / timeDetails["ttp:subFrameRate"];
-			}
-
-			const effectiveFrameRate =
-				timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
-
-			/**
-			 * Getting how many seconds this is going to last
-			 *
-			 * @example
-			 *
-			 * ```
-			 * effectiveFrameRate = 60fps
-			 * frames = 24.3
-			 *
-			 * finalFramesMount = 24.3 / 60 = ~0.4s
-			 * ```
-			 */
-			framesAmountInSeconds = (frames + framesAmountInSeconds) / effectiveFrameRate;
-
-			finalTime += framesAmountInSeconds;
-		}
-
-		return referenceBegin + finalTime * 1000;
+		return (referenceBegin + finalTime + framesInSeconds) * 1000;
 	}
 
 	/**
@@ -189,6 +151,63 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
 	 */
 
 	return finalTime;
+}
+
+/**
+ * Given frames string (from matched regex) and the subframes
+ * converts the value in seconds
+ *
+ * @param framesString
+ * @param subFramesString
+ * @param timeDetails
+ * @returns
+ */
+
+function getActualFramesInSeconds(
+	framesString: string,
+	subFramesString: string | undefined,
+	timeDetails: TimeDetails,
+): number {
+	if (!timeDetails["ttp:frameRate"]) {
+		return 0;
+	}
+
+	/**
+	 * If a <time-expression> is expressed in terms of a clock-time
+	 * and a frames term is specified, then the value of this term
+	 * must be constrained to the interval [0…F-1], where F is the
+	 * frame rate determined by the ttp:frameRate parameter as
+	 * defined by 7.2.5 ttp:frameRate
+	 */
+	let frames = Math.max(0, Math.min(parseInt(framesString), timeDetails["ttp:frameRate"] - 1));
+
+	if (Number.isNaN(frames)) {
+		return 0;
+	}
+
+	let subframes = parseInt(subFramesString);
+
+	if (timeDetails["ttp:subFrameRate"] > 0 && !Number.isNaN(subframes)) {
+		subframes = Math.max(0, Math.min(subframes, timeDetails["ttp:subFrameRate"] - 1));
+		frames += subframes / timeDetails["ttp:subFrameRate"];
+	}
+
+	const effectiveFrameRate =
+		timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
+
+	/**
+	 * Getting how many seconds this is going to last
+	 *
+	 * @example
+	 *
+	 * ```
+	 * effectiveFrameRate = 60fps
+	 * frames = 24.3
+	 *
+	 * finalFramesMount = 24.3 / 60 = ~0.4s
+	 * ```
+	 */
+	return frames / effectiveFrameRate;
 }
 
 /**
