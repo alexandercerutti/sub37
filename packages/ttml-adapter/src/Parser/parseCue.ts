@@ -69,3 +69,141 @@ const CLOCK_TIME_REGEX = new RegExp(
 const TIME_EXPRESSION_REGEX = new RegExp(
 	`${CLOCK_TIME_REGEX.source}|${OFFSET_TIME_REGEX.source}|${WALLCLOCK_TIME_REGEX.source}`,
 );
+
+interface TimeDetails {
+	"ttp:timeBase": "media" | "smpte" | "clock";
+	"ttp:frameRate": number;
+	"ttp:subFrameRate": number;
+	"ttp:frameRateMultiplier": number;
+	"ttp:tickRate": number;
+}
+
+function parseTimeString(timeString: string, timeDetails: TimeDetails): number {
+	{
+		const match = timeString.match(CLOCK_TIME_REGEX);
+	}
+
+	{
+		const match = timeString.match(OFFSET_TIME_REGEX);
+	}
+
+	{
+		const match = timeString.match(WALLCLOCK_TIME_REGEX);
+	}
+}
+
+/**
+ * @param match
+ * @param timeDetails
+ * @returns amount of time in milliseconds
+ */
+
+function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: TimeDetails): number {
+	let finalTime = 0;
+	// const [, hours, minutes, seconds, fraction, frames, subframes] = match;
+
+	const matchedWithContraints = [
+		parseInt(match[1]),
+		Math.max(0, Math.min(parseInt(match[2]), 59)),
+		Math.max(0, Math.min(parseInt(match[3]), 59)),
+	];
+
+	for (let i = 0; i < 3; i++) {
+		const element = matchedWithContraints[i];
+		// index: x, arr.length: y => 60^(y-1-x) => ...
+		// index: 0, arr.length: 3 => 60^(3-1-0) => 60^2 => number * 3600
+		// index: 1, arr.length: 3 => 60^(3-1-1) => 60^1 => number * 60
+		// index: 2, arr.length: 3 => 60^(3-1-2) => 60^0 => number * 1
+		finalTime += element * 60 ** (3 - 1 - i);
+	}
+
+	if (timeDetails["ttp:timeBase"] === "clock") {
+		let fraction = parseInt(match[4]);
+
+		if (!Number.isNaN(fraction)) {
+			fraction = fraction / 10 ** getNumberOfDigits(fraction);
+			finalTime += fraction;
+		}
+
+		return finalTime * 1000;
+	}
+
+	/**
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-media-timing
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-frameRate
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-frameRateMultiplier
+	 */
+
+	if (timeDetails["ttp:timeBase"] === "media") {
+		/**
+		 * @TODO how to provide previous cue end time?
+		 */
+
+		const referenceBegin = 0;
+
+		let frames /*****/ = parseInt(match[5]) || 0;
+		let subframes /**/ = parseInt(match[6]) || 0;
+
+		if (timeDetails["ttp:frameRate"] > 0 && !Number.isNaN(frames)) {
+			let framesAmountInSeconds = 0;
+
+			/**
+			 * If a <time-expression> is expressed in terms of a clock-time
+			 * and a frames term is specified, then the value of this term
+			 * must be constrained to the interval [0…F-1], where F is the
+			 * frame rate determined by the ttp:frameRate parameter as
+			 * defined by 7.2.5 ttp:frameRate
+			 */
+			frames = Math.max(0, Math.min(frames, timeDetails["ttp:frameRate"] - 1));
+
+			if (timeDetails["ttp:subFrameRate"] > 0 && !Number.isNaN(subframes)) {
+				subframes = Math.max(0, Math.min(subframes, timeDetails["ttp:subFrameRate"] - 1));
+				framesAmountInSeconds = subframes / timeDetails["ttp:subFrameRate"];
+			}
+
+			const effectiveFrameRate =
+				timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
+
+			/**
+			 * Getting how many seconds this is going to last
+			 *
+			 * @example
+			 *
+			 * ```
+			 * effectiveFrameRate = 60fps
+			 * frames = 24.3
+			 *
+			 * finalFramesMount = 24.3 / 60 = ~0.4s
+			 * ```
+			 */
+			framesAmountInSeconds = (frames + framesAmountInSeconds) / effectiveFrameRate;
+
+			finalTime += framesAmountInSeconds;
+		}
+
+		return referenceBegin + finalTime * 1000;
+	}
+
+	/**
+	 * @TODO implement SMTPE (society of motion pictures and television engineers)
+	 */
+
+	return finalTime;
+}
+
+/**
+ * @see https://stackoverflow.com/a/14879700/2929433
+ * We don't aim to support under Safari 8, so using Math.log10()
+ * is fine.
+ *
+ * Anyway, let's take a moment to appreciate the beautifulness
+ * of this solutions... that I do not understand (except for
+ * the "| 0", which is needed for rounding)
+ *
+ * @param num
+ * @returns
+ */
+
+function getNumberOfDigits(num: number): number {
+	return (Math.log10(num) + 1) | 0;
+}
