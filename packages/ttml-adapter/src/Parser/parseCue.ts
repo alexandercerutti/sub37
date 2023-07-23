@@ -192,9 +192,6 @@ function getActualFramesInSeconds(
 		frames += subframes / timeDetails["ttp:subFrameRate"];
 	}
 
-	const effectiveFrameRate =
-		timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
-
 	/**
 	 * Getting how many seconds this is going to last
 	 *
@@ -207,7 +204,11 @@ function getActualFramesInSeconds(
 	 * finalFramesMount = 24.3 / 60 = ~0.4s
 	 * ```
 	 */
-	return frames / effectiveFrameRate;
+	return frames / getEffectiveFrameRate(timeDetails);
+}
+
+function getEffectiveFrameRate(timeDetails: TimeDetails): number {
+	return timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
 }
 
 /**
