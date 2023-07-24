@@ -179,18 +179,10 @@ function getActualFramesInSeconds(
 	 * frame rate determined by the ttp:frameRate parameter as
 	 * defined by 7.2.5 ttp:frameRate
 	 */
-	let frames = Math.max(0, Math.min(parseInt(framesString), timeDetails["ttp:frameRate"] - 1));
-
-	if (Number.isNaN(frames)) {
-		return 0;
-	}
-
-	let subframes = parseInt(subFramesString);
-
-	if (timeDetails["ttp:subFrameRate"] > 0 && !Number.isNaN(subframes)) {
-		subframes = Math.max(0, Math.min(subframes, timeDetails["ttp:subFrameRate"] - 1));
-		frames += subframes / timeDetails["ttp:subFrameRate"];
-	}
+	const frames =
+		getFrameComputedValue(framesString, timeDetails["ttp:frameRate"]) +
+		getFrameComputedValue(subFramesString, timeDetails["ttp:subFrameRate"]) /
+			timeDetails["ttp:subFrameRate"];
 
 	/**
 	 * Getting how many seconds this is going to last
@@ -209,6 +201,23 @@ function getActualFramesInSeconds(
 
 function getEffectiveFrameRate(timeDetails: TimeDetails): number {
 	return timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
+}
+
+/**
+ * Converts frame number and clamps it to be positive and lower than a rate.
+ * @param frameString
+ * @param rate
+ * @returns
+ */
+
+function getFrameComputedValue(frameString: string, rate: number): number {
+	const frame = parseInt(frameString);
+
+	if (rate > 0 && Number.isNaN(frame)) {
+		return 0;
+	}
+
+	return Math.max(0, Math.min(frame, rate - 1));
 }
 
 /**
