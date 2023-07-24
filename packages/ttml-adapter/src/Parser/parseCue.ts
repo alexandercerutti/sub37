@@ -76,6 +76,7 @@ interface TimeDetails {
 	"ttp:subFrameRate": number;
 	"ttp:frameRateMultiplier": number;
 	"ttp:tickRate": number;
+	"ttp:dropMode": "dropNTSC" | "dropPAL";
 }
 
 function parseTimeString(timeString: string, timeDetails: TimeDetails): number {
@@ -146,11 +147,147 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
 		return (referenceBegin + finalTime + framesInSeconds) * 1000;
 	}
 
-	/**
-	 * @TODO implement SMTPE (society of motion pictures and television engineers)
-	 */
+	if (timeDetails["ttp:timeBase"] === "smpte") {
+		/**
+		 * @TODO how to provide previous cue end time?
+		 */
+
+		const referenceBegin = 0;
+
+		/**
+		 * Subframes are accounted later
+		 */
+		const framesInSeconds =
+			getFrameComputedValue(match[5], timeDetails["ttp:frameRate"]) /
+			getEffectiveFrameRate(timeDetails);
+		const countedFrames = finalTime * timeDetails["ttp:frameRate"] + framesInSeconds;
+
+		const droppedFrames = getSMPTEDropFrames(timeDetails["ttp:dropMode"], [
+			matchedWithContraints[0],
+			matchedWithContraints[1],
+		]);
+
+		const subframes =
+			getFrameComputedValue(match[6], timeDetails["ttp:subFrameRate"]) /
+			timeDetails["ttp:subFrameRate"];
+
+		const frames = countedFrames - droppedFrames + subframes;
+
+		const SMTPETimeBase = frames / getEffectiveFrameRate(timeDetails);
+		return referenceBegin + SMTPETimeBase;
+	}
 
 	return finalTime;
+}
+
+/**
+ * Black-and-white broadcasts were originally streamed at 30fps (NTSC).
+ * With the introduction of the color in 1953, fps was reduced to 29.97fps,
+ * which translates to a lag between real world and video
+ *
+ * This translates in having `ttp:frameRate` to `30` or `29.97` fps or `nonDrop`.
+ *
+ *  - 01:00:00:00 minutes (h:m:s:frames) of real time becomes 00:59:56:12 of video
+ *  - One hour of content should contain about 108,000 frames (30fps * 60s * 60h)
+ *  - One hour of content, instead, contains about 107892 frames (29.97fps * 60s * 60h).
+ *  - 0.03fps are unaccounted. Discrepancy is 108 frames or 3.6 seconds (108f / 30fps)
+ *  - Which means 1 hour of content at 29.97fps are 01:00:03:18.09f. We exceeding of
+ *  	  3 seconds and 18.09f.
+ *
+ * Drop frames is a "frames stop-counter" that is used to tell at which point in
+ * chronological time (not frames) we are at the current point. Its purpose is to
+ * fix the issue by "dropping (skipping) a frame" every 0.03 frames, so
+ * (0.03 * 60s * 60h = 108 frames).
+ *
+ * However, this is done in a specific pattern: the first two frame numbers are dropped
+ * every 10 minutes without considering the 10th minute, 20th, 30th, 40th and 50th (so
+ * a range of 10 minutes, you'll see this constant later)
+ *
+ * Dropping will happen on 01-09, 11-19, 21-29, 31-39, 41-49, and 51-59. Summing all the
+ * available intervals, we obtain 54 minutes (you'll encounter it below) instead of 60.
+ *
+ * The same is valid for PAL, but it was running at 25fps.
+ * PAL drops 3 frames if the second of a time expression is 00 and the minute of the
+ * time expression **is even** but not 00, 20, or 40 (a range of 20, you'll see
+ * this constant later).
+ *
+ * 01:00->19:00 => 18 +
+ * 21:00->39:00 => 18 +
+ * 41:00->59:00 => 18 = 54 minutes for dropping moments
+ *
+ * By removing non-even moments (so divided by 2, you'll see this constant again
+ * later)
+ *
+ * 02,04,06,08,10,12,14,16,18,
+ * 22,24,26,28,30,32,34,36,38,
+ * 42,44,46,48,50,52,54,56,58
+ *
+ * Which brings us to 27 minutes for dropping (you'll see it later in the formula).
+ *
+ * Okay, yeah, this seems the perfect example for the analogy of "the importance of
+ * a horse ass" (seriously, go looking for it. This story about legacy systems that
+ * influence actual systems is amazing!)
+ *
+ * @param dropMode
+ * @param time
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#time-expression-semantics-smpte
+ * @returns
+ */
+
+function getSMPTEDropFrames(
+	dropMode: TimeDetails["ttp:dropMode"],
+	time: [hours: number, minutes: number],
+): number {
+	if (!dropMode) {
+		return 0;
+	}
+
+	/**
+	 * National Television Standards Committee (was 30fps).
+	 *
+	 * @example 00:01:00:03 should have a total of 2 frames dropped.
+	 * (0 * 54 + 1 - floor( 1 / 10 )) * 2 =
+	 * (         1 - floor(  0.1   )) * 2 =
+	 * (         1 -          0     ) * 2 = 2f
+	 *
+	 * @example 02:15:02:03 should have a total of 244 frames dropped
+	 * (2 * 54 + 15 - floor( 15 / 10 )) * 2 =
+	 * (  108  + 15 - floor(   1.5   )) * 2 =
+	 * (     123    -           1     ) * 2 =
+	 * (            122               ) * 2 = 244f
+	 */
+	if (dropMode === "dropNTSC") {
+		const [hours, minutes] = time;
+		return (hours * 54 + minutes - Math.floor(minutes / 10)) * 2;
+	}
+
+	/**
+	 * Phase Alternate Line (25 fps)
+	 *
+	 * @example 00:01:00:03 should have a total of 0 frames dropped.
+	 * (0 * 27 + floor( 1 / 2 ) - floor( 1 / 20 )) * 4 =
+	 * (         floor(  0.5  ) - floor(  0.05  )) * 4 =
+	 * (                 0      -         0      ) * 4 = 0f
+	 *
+	 * @example 00:20:00:03 should have a total of 30 frames dropped.
+	 * (0 * 27 + floor( 20 / 2 ) - floor( 20 / 20 )) * 4 =
+	 * (         floor(   10   ) - floor(    1    )) * 4 =
+	 * (                  10     -           1     ) * 4 = 0f
+	 *
+	 * @example 02:15:02:03 should have a total of 244 frames dropped
+	 * (2 * 27 + floor( 15 / 2 ) - floor( 15 / 20 )) * 4 =
+	 * (  54   + floor(   7.5  ) - floor(   0.75  )) * 4 =
+	 * (  54   +          7      -          0      ) * 4 =
+	 * (                     61                    ) * 4 = 244f
+	 */
+	if (dropMode === "dropPAL") {
+		const [hours, minutes] = time;
+
+		return (hours * 27 + Math.floor(minutes / 2) - Math.floor(minutes / 20)) * 4;
+	}
+
+	// nonDrop mode
+	return 0;
 }
 
 /**
