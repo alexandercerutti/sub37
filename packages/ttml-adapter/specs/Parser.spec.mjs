@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 describe("parseCue", () => {
-	describe("time conversion", () => {
+	describe("regex time conversion", () => {
 		// hours : minutes : seconds (. fraction | : frames ('.' sub-frames)? )?
 		describe("Clock Time", () => {
 			it.failing("Should not convert reject 'hh' and 'hh:mm'", () => {});
@@ -44,5 +44,27 @@ describe("parseCue", () => {
 				// wallclock(" YYYY-MM-DD ")
 			});
 		});
+	});
+
+	describe("ttp:timeBase == 'clock'", () => {
+		it.failing("should include only hours, minutes, seconds and fraction", () => {});
+	});
+
+	describe("ttp:timeBase == 'media'", () => {
+		it.failing("should output a time that includes the previous one, if provided", () => {});
+
+		it.failing(
+			"should include frames, if provided with them, ttp:frameRate and ttp:frameRateMultiplier",
+			() => {},
+		);
+
+		it.failing("should include subframes, if provided with them and ttp:subFrameRate", () => {});
+	});
+
+	describe("ttp:timeBase == 'smpte'", () => {
+		it.failing(
+			"should return a value based on frames, subframes, hours, minutes and seconds",
+			() => {},
+		);
 	});
 });
