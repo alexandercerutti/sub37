@@ -182,47 +182,93 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
 
 /**
  * Black-and-white broadcasts were originally streamed at 30fps (NTSC).
- * With the introduction of the color in 1953, fps was reduced to 29.97fps,
- * which translates to a lag between real world and video
+ * With the introduction of the color in 1953, fps was reduced to 29.97fps.
  *
- * This translates in having `ttp:frameRate` to `30` or `29.97` fps or `nonDrop`.
+ * This translates to have a lag of 0.03 frames between real world and video
+ * timecodes: 01:00:00:00 (h:m:s:frames) of real time becomes 00:59:56;12 of video
+ * (3.6 seconds). How do we flat the difference? We have to discard some frames
+ * from the counting (not from the video, of course).
  *
- *  - 01:00:00:00 minutes (h:m:s:frames) of real time becomes 00:59:56:12 of video
- *  - One hour of content should contain about 108,000 frames (30fps * 60s * 60h)
- *  - One hour of content, instead, contains about 107892 frames (29.97fps * 60s * 60h).
- *  - 0.03fps are unaccounted. Discrepancy is 108 frames or 3.6 seconds (108f / 30fps)
- *  - Which means 1 hour of content at 29.97fps are 01:00:03:18.09f. We exceeding of
- *  	  3 seconds and 18.09f.
+ * 1h = 60s * 60m = 3.600s.
+ * At 30,00 fps, one hour of content contains 108.000 frames per hour (30,00fps * 3600s)
+ * At 29,97 fps, one hour of content contains 107.892 frames per hour (29,97fps * 3600s).
  *
- * Drop frames is a "frames stop-counter" that is used to tell at which point in
- * chronological time (not frames) we are at the current point. Its purpose is to
- * fix the issue by "dropping (skipping) a frame" every 0.03 frames, so
- * (0.03 * 60s * 60h = 108 frames).
+ * There is, therefore, a discrepancy between 30 and 29.97 of:
  *
- * However, this is done in a specific pattern: the first two frame numbers are dropped
- * every 10 minutes without considering the 10th minute, 20th, 30th, 40th and 50th (so
- * a range of 10 minutes, you'll see this constant later)
+ * 108.000 - 107.892 = 108 frames
+ * 108 frames / 30fps = 3,6s (here we find it again!)
  *
- * Dropping will happen on 01-09, 11-19, 21-29, 31-39, 41-49, and 51-59. Summing all the
- * available intervals, we obtain 54 minutes (you'll encounter it below) instead of 60.
+ * 108.000 / 108 = 1.000 (discrepancy of 1/1000)
+ *
+ * ---
+ *
+ * 30fps is 0.1% faster than 29.97fps (30 / 29,97 ≈ 1.001)
+ *
+ * 1m = 60s.
+ * At 30,00 fps, one minute of content contains 1800,0 frames per minute (30,00fps * 60s).
+ * At 29,97 fps, one minute of content contains 1798,2 frames per minute (29,97fps * 60s).
+ *
+ * There is, therefore, a discrepancy between 30 and 29.97 of:
+ *
+ * 1800 - 1798,2 = 1.8 frames / minute
+ * 1.8 * 1000 = 1800 (here we find it again)
+ *
+ * ---
+ *
+ * We might add 1.8 frame each minute, but frames are not fractionable!
+ * We can, instead, add 18 frames every 10 minutes. So, listen up:
+ * 10 / 18 is not evenly distributable (integer). 10 minutes is made of
+ * 10 * 1 minute. What is the nearest number? 9, which is 18 * 2.
+ *
+ * So we can think to remove 2 frames every minute for 9 minutes and
+ * not apply this rule for the 10th.
+ *
+ * By doing this, we skip 6 minutes: 00, 10, 20, 30, 40, and 50 (up to total 59).
+ *
+ * Therefore we discard 2 frames per minutes per 54 minute. Therefore, each hour
+ * we discard 180 frames!! (60 - 6 minutes * 2 = 54 * 2 = 180). YAY!
+ *
+ * Then we have to add the right amount of frames for the minutes we have in
+ * our real timecode.
+ *
+ * We want to remove 2 frames each minute more (2 * 59 = 118 frames)
+ * However we get too much frames: we must have up to 108.
+ * There's a difference of 10 frames.
+ *
+ * So we can divide the minute by 10 and floor everything to avoid the decimal part.
+ * Minutes can be up to 59.
+ *
+ * floor (00 / 10) = 0
+ * floor (01 / 10) = 0
+ * floor (10 / 10) = 1
+ * floor (20 / 10) = 2
+ * floor (30 / 10) = 3
+ * floor (40 / 10) = 4
+ * floor (50 / 10) = 5
+ * floor (59 / 10) = 5
+ *
+ * So we can reach up to 5 minutes times 2 frames to be removed and add
+ * back these frames (2 per each minute skipped, as above).
+ *
+ * For NTSC we end up with the following formula and recap:
+ *
+ * - 180 frames per hour removed = 54 * 2 frames per hour removed;
+ * - 2 frames per minute removed = 1 * 2 frames per minute removed;
+ * - 2 frames recovered per up to 5 minutes.
+ *
+ * Becomes:
+ *
+ *   (hours * 54 * 2) + (minutes * 2) - (floor(minute / 10) * 2) =
+ * = (hours * 54 + minutes - floor (minute / 10)) * 2.
+ *
+ * @see https://studylib.net/doc/18881551/an-explanantion-of-drop-frame-vs.-non-drop
+ *
+ * // TODO REVIEW
  *
  * The same is valid for PAL, but it was running at 25fps.
  * PAL drops 3 frames if the second of a time expression is 00 and the minute of the
  * time expression **is even** but not 00, 20, or 40 (a range of 20, you'll see
  * this constant later).
- *
- * 01:00->19:00 => 18 +
- * 21:00->39:00 => 18 +
- * 41:00->59:00 => 18 = 54 minutes for dropping moments
- *
- * By removing non-even moments (so divided by 2, you'll see this constant again
- * later)
- *
- * 02,04,06,08,10,12,14,16,18,
- * 22,24,26,28,30,32,34,36,38,
- * 42,44,46,48,50,52,54,56,58
- *
- * Which brings us to 27 minutes for dropping (you'll see it later in the formula).
  *
  * Okay, yeah, this seems the perfect example for the analogy of "the importance of
  * a horse ass" (seriously, go looking for it. This story about legacy systems that
