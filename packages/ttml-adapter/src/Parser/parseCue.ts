@@ -189,6 +189,8 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
  * (3.6 seconds). How do we flat the difference? We have to discard some frames
  * from the counting (not from the video, of course).
  *
+ * First of all, 30fps is 0.1% faster than 29.97fps (30fps / 29.97fps ≈ 1,001).
+ *
  * 1h = 60s * 60m = 3.600s.
  * At 30,00 fps, one hour of content contains 108.000 frames per hour (30,00fps * 3600s)
  * At 29,97 fps, one hour of content contains 107.892 frames per hour (29,97fps * 3600s).
@@ -226,7 +228,7 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
  * By doing this, we skip 6 minutes: 00, 10, 20, 30, 40, and 50 (up to total 59).
  *
  * Therefore we discard 2 frames per minutes per 54 minute. Therefore, each hour
- * we discard 180 frames!! (60 - 6 minutes * 2 = 54 * 2 = 180). YAY!
+ * we discard 108 frames!! (60 - 6 minutes * 2 = 54 * 2 = 108). YAY!
  *
  * Then we have to add the right amount of frames for the minutes we have in
  * our real timecode.
@@ -252,7 +254,7 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
  *
  * For NTSC we end up with the following formula and recap:
  *
- * - 180 frames per hour removed = 54 * 2 frames per hour removed;
+ * - 108 frames per hour removed = 54 * 2 frames per hour removed;
  * - 2 frames per minute removed = 1 * 2 frames per minute removed;
  * - 2 frames recovered per up to 5 minutes.
  *
@@ -263,12 +265,46 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
  *
  * @see https://studylib.net/doc/18881551/an-explanantion-of-drop-frame-vs.-non-drop
  *
- * // TODO REVIEW
+ * ___
  *
- * The same is valid for PAL, but it was running at 25fps.
- * PAL drops 3 frames if the second of a time expression is 00 and the minute of the
- * time expression **is even** but not 00, 20, or 40 (a range of 20, you'll see
- * this constant later).
+ * The same should be valid for PAL. Normal PAL runs at 25fps so SMPTE
+ * doesn't expect any frame reduction. On the other side, M/PAL (Brazil only)
+ * is PAL that runs at 29.97fps instead of 30 fps. So we probably want to convert
+ * it to NTSC o something like that. I wasn't able to find any precise explanation,
+ * so everything might be dependand on the frequencies and something like that.
+ *
+ * Anyway, we still want to drop 108 frames per hour (h * 180).
+ * Then, PAL/M is said to drop 4 frames (00, 01, 02, and 03) if the second of a
+ * time expression is 00 and the minute of the time expression **is even** but
+ * not 00, 20 or 40.
+ *
+ * If the second must be 00, we have up to 59 minutes slots on which we could
+ * remove 4 frames. 59 * 4 = 236f/m. Too much. But, if we use only even ones:
+ * floor(59 / 2) = 29
+ * 29 * 4 = 116 f/m. Which is still bigger than 108, but only of 8 frames.
+ * So we must remove 8 of them from the dropped ones.
+ *
+ * So, if we get 4 frames from the two slots ((00*4) + (20*4) + (40*4)), we
+ * recover 8 frames. And we get exactly 108 frames.
+ *
+ * Something I am still missing is why it was chosen to remove 4 frames.
+ * For NTSC, it is a matter of having 18f/10min => 2*9/10min.
+ *
+ * Maybe, if we make the reversed reasoning: 1,8f/m * 10min * 2 = 36f/20min = 4 * 9 / 20 min
+ * which is 4 frames times 9 minutes ((20 min / 2) - 1 to have only even seconds).
+ *
+ * But still, why distributing 1,8f over 20 minutes? Is there a particular reason?
+ *
+ * Anyway, we get:
+ *  - hour * 108/4 = hour * 27 * 4
+ *  - floor(minutes / 2), for even numbers, multiplied by 4
+ *  - floor(minutes / 20), to get back the 2 slots of frames lost (00 * 4, 20 * 4 and 40 * 4)
+ *
+ * floor (00 / 20) = 0
+ * floor (20 / 20) = 1
+ * floor (25 / 20) = 1
+ * floor (40 / 20) = 2
+ * floor (59 / 20) = 2
  *
  * Okay, yeah, this seems the perfect example for the analogy of "the importance of
  * a horse ass" (seriously, go looking for it. This story about legacy systems that
@@ -288,43 +324,15 @@ function getSMPTEDropFrames(
 		return 0;
 	}
 
-	/**
-	 * National Television Standards Committee (was 30fps).
-	 *
-	 * @example 00:01:00:03 should have a total of 2 frames dropped.
-	 * (0 * 54 + 1 - floor( 1 / 10 )) * 2 =
-	 * (         1 - floor(  0.1   )) * 2 =
-	 * (         1 -          0     ) * 2 = 2f
-	 *
-	 * @example 02:15:02:03 should have a total of 244 frames dropped
-	 * (2 * 54 + 15 - floor( 15 / 10 )) * 2 =
-	 * (  108  + 15 - floor(   1.5   )) * 2 =
-	 * (     123    -           1     ) * 2 =
-	 * (            122               ) * 2 = 244f
-	 */
 	if (dropMode === "dropNTSC") {
 		const [hours, minutes] = time;
 		return (hours * 54 + minutes - Math.floor(minutes / 10)) * 2;
 	}
 
 	/**
-	 * Phase Alternate Line (25 fps)
-	 *
-	 * @example 00:01:00:03 should have a total of 0 frames dropped.
-	 * (0 * 27 + floor( 1 / 2 ) - floor( 1 / 20 )) * 4 =
-	 * (         floor(  0.5  ) - floor(  0.05  )) * 4 =
-	 * (                 0      -         0      ) * 4 = 0f
-	 *
-	 * @example 00:20:00:03 should have a total of 30 frames dropped.
-	 * (0 * 27 + floor( 20 / 2 ) - floor( 20 / 20 )) * 4 =
-	 * (         floor(   10   ) - floor(    1    )) * 4 =
-	 * (                  10     -           1     ) * 4 = 0f
-	 *
-	 * @example 02:15:02:03 should have a total of 244 frames dropped
-	 * (2 * 27 + floor( 15 / 2 ) - floor( 15 / 20 )) * 4 =
-	 * (  54   + floor(   7.5  ) - floor(   0.75  )) * 4 =
-	 * (  54   +          7      -          0      ) * 4 =
-	 * (                     61                    ) * 4 = 244f
+	 * Phase Alternate Line
+	 * Valid only for M/PAL or PAL-M, which is used
+	 * only in Brasil
 	 */
 	if (dropMode === "dropPAL") {
 		const [hours, minutes] = time;
