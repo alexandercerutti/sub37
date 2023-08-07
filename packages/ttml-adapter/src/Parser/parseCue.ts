@@ -404,7 +404,7 @@ function getEffectiveFrameRate(timeDetails: TimeDetails): number {
 function getFrameComputedValue(frameString: string, rate: number): number {
 	const frame = parseInt(frameString);
 
-	if (rate > 0 && Number.isNaN(frame)) {
+	if (rate <= 0 || Number.isNaN(frame)) {
 		return 0;
 	}
 
