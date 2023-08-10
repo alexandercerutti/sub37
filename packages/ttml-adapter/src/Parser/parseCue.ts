@@ -119,11 +119,11 @@ function convertClockTimeToMilliseconds(match: RegExpMatchArray, timeDetails: Ti
 	}
 
 	if (timeDetails["ttp:timeBase"] === "clock") {
-		let fraction = parseInt(match[4]);
+		const fraction = parseInt(match[4]);
 
 		if (!Number.isNaN(fraction)) {
-			fraction = fraction / 10 ** getNumberOfDigits(fraction);
-			finalTime += fraction;
+			const fractionInSeconds = fraction / 10 ** getNumberOfDigits(fraction);
+			finalTime += fractionInSeconds;
 		}
 
 		return finalTime * 1000;
