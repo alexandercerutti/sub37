@@ -2,6 +2,16 @@ import * as ClockTime from "./ClockTime.js";
 import * as Media from "./Media.js";
 import * as SMPTE from "./SMPTE.js";
 
+/**
+ * Selects the TimeBase provider.
+ * Development note: typescript will prompt
+ * error if any of the providers won't honor
+ * the protocol.
+ *
+ * @param timeBase
+ * @returns
+ */
+
 export function getTimeBaseProvider(timeBase: "smpte" | "media" | "clock"): TimeBaseProtocol {
 	switch (timeBase) {
 		case "clock": {
