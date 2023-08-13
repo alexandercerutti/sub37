@@ -6,6 +6,7 @@
 
 import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
+import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
 import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
 
 export function getMillisecondsByClockTime(
@@ -45,6 +46,6 @@ export function getMillisecondsByWallClockTime(): number {
 	return 0;
 }
 
-export function getMillisecondsByOffsetTime(): number {
+export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
 	return 0;
 }

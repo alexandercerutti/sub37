@@ -1,4 +1,5 @@
 import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
+import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	const [hours, minutes, seconds, fraction] = match;
@@ -31,7 +32,7 @@ export function getMillisecondsByWallClockTime(): number {
 	return 0;
 }
 
-export function getMillisecondsByOffsetTime(): number {
+export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
 	return 0;
 }
 
