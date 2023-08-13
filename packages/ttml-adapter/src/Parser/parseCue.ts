@@ -1,45 +1,14 @@
-/** months | days | hours2 | minutes | seconds */
-const AT_LEAST_ONE_DIGIT_TIME_REGEX = /\d{1,}/;
-const AT_LEAST_TWO_DIGITS_REGEX = /\d{2,}/;
-const EXACT_TWODIGITS_REGEX = /\d{2}/;
-
-/**
- * Regexes are ordered in almost-identical-reverted order of
- * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-value-time-expression
- */
-
-/**
- * hours | minutes | seconds | milliseconds | frames | ticks
- */
-const TIME_METRIC_UNIT_REGEX = /h|m|s|ms|f|t/;
-
-const TIME_COUNT_REGEX = AT_LEAST_ONE_DIGIT_TIME_REGEX;
-
-// double escaping to support literal dot "." instead of 'any character'
-const FRACTION_REGEX = new RegExp(`\\.(${AT_LEAST_ONE_DIGIT_TIME_REGEX.source})`);
-const SUBFRAMES_REGEX = AT_LEAST_ONE_DIGIT_TIME_REGEX;
-const FRAMES_REGEX = AT_LEAST_TWO_DIGITS_REGEX;
-
-const MONTHS_REGEX = EXACT_TWODIGITS_REGEX;
-const DAYS_REGEX = EXACT_TWODIGITS_REGEX;
-const HOURS2_REGEX = EXACT_TWODIGITS_REGEX;
-const MINUTES_REGEX = EXACT_TWODIGITS_REGEX;
-const SECONDS_REGEX = EXACT_TWODIGITS_REGEX;
-
-const HOURS_REGEX = AT_LEAST_TWO_DIGITS_REGEX; /** Includes both "hours2" and "hours3plus" */
-
-/**
- * Includes both
- *
- * hours2 ":" minutes
- * hours2 ":" minutes ":" seconds fraction?
- * */
-const HHMMSS_TIME = new RegExp(
-	`(${HOURS2_REGEX.source}):(${MINUTES_REGEX.source})(?::(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source})?)?`,
-);
-
-/** years "-" months "-" days */
-const DATE_REGEX = new RegExp(`(\\d{4})-(${MONTHS_REGEX.source})-(${DAYS_REGEX.source})`);
+import { DATE_REGEX, HHMMSS_TIME } from "./TimeExpressions/TimeExpressions";
+import {
+	FRACTION_REGEX,
+	FRAMES_REGEX,
+	HOURS_REGEX,
+	MINUTES_REGEX,
+	SECONDS_REGEX,
+	SUBFRAMES_REGEX,
+	TIME_COUNT_REGEX,
+	TIME_METRIC_UNIT_REGEX,
+} from "./TimeExpressions/TimeUnits";
 
 /**
  * Wallclock regexes are ordered by specificity
