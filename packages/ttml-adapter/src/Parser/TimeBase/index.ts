@@ -12,7 +12,9 @@ import * as SMPTE from "./SMPTE.js";
  * @returns
  */
 
-export function getTimeBaseProvider(timeBase: "smpte" | "media" | "clock"): TimeBaseProtocol {
+export function getTimeBaseProvider(
+	timeBase: "smpte" | "media" | "clock",
+): TimeBaseProviderProtocol {
 	switch (timeBase) {
 		case "clock": {
 			return Clock;
@@ -61,7 +63,7 @@ export interface TimeDetails {
  * specific `ttp:timeBase`.
  */
 
-export interface TimeBaseProtocol {
+interface TimeBaseProviderProtocol {
 	getMillisecondsByClockTime(match: ClockTimeMatch, timeDetails: TimeDetails): number;
 	getMillisecondsByWallClockTime(): number;
 	getMillisecondsByOffsetTime(): number;
