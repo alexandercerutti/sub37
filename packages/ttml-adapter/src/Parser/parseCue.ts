@@ -28,29 +28,68 @@ const SECONDS_REGEX = EXACT_TWODIGITS_REGEX;
 
 const HOURS_REGEX = AT_LEAST_TWO_DIGITS_REGEX; /** Includes both "hours2" and "hours3plus" */
 
-/** hours2 ":" minutes */
-const HHMM_TIME = new RegExp(`(${HOURS2_REGEX.source}):(${MINUTES_REGEX.source})`);
-
-/** hours2 ":" minutes ":" seconds fraction? */
+/**
+ * Includes both
+ *
+ * hours2 ":" minutes
+ * hours2 ":" minutes ":" seconds fraction?
+ * */
 const HHMMSS_TIME = new RegExp(
-	`${HHMM_TIME.source}:(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source})?`,
+	`(${HOURS2_REGEX.source}):(${MINUTES_REGEX.source})(?::(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source})?)?`,
 );
-
-/** ( hhmm-time | hhmmss-time ) -> HHMMSS is more specific, so it must be put before */
-const WALL_TIME_REGEX = new RegExp(`${HHMMSS_TIME.source}|${HHMM_TIME.source}`);
 
 /** years "-" months "-" days */
-const DATE_REGEX = new RegExp(`(\d{4})-(${MONTHS_REGEX.source})-(${DAYS_REGEX.source})`);
-
-/** date "T" wall-time */
-const DATE_TIME_REGEX = new RegExp(`${DATE_REGEX.source}T(?:${WALL_TIME_REGEX.source})`);
+const DATE_REGEX = new RegExp(`(\\d{4})-(${MONTHS_REGEX.source})-(${DAYS_REGEX.source})`);
 
 /**
- * "wallclock(" <lwsp>? ( date-time | wall-time | date ) <lwsp>? ")"
+ * Wallclock regexes are ordered by specificity
+ * as DATETIME includes WALLTIME and DATE.
+ *
+ * "wallclock(" <lwsp>? ( date-time | wall-time | date ) \<lwsp>? ")"
  */
-const WALLCLOCK_TIME_REGEX = new RegExp(
-	`wallclock\(\"\s*(?:(?:${DATE_TIME_REGEX.source})|(?:${WALL_TIME_REGEX.source})|(?:${DATE_REGEX.source}))\s*\"\)`,
+
+/**
+ * @definition
+ * wallclock(" \<lwsp>? (             date-time            ) \<lwsp>? ")
+ * wallclock(" \<lwsp>? ( YYYY-MM-DD T ( HH:MM:SS | HH:MM )) \<lwsp>? ")
+ *
+ * @testcases
+ * wallclock(" 2023-08-13T01:49")
+ * wallclock(" 2023-08-13T01:49:13")
+ * wallclock(" 2023-08-13T01:49:13.000")
+ * wallclock(" 2023-08-13T01:49:13 ")
+ */
+
+const WALLCLOCK_DATETIME_REGEX = new RegExp(
+	`wallclock\\("\\s*${DATE_REGEX.source}T(?:${HHMMSS_TIME.source})\\s*"\\)`,
 );
+
+/**
+ * @definition
+ * wallclock(" \<lwsp>? (       wall-time      ) \<lwsp>? ")
+ * wallclock(" \<lwsp>? ( HH:MM | HH:MM:SS.FR? ) \<lwsp>? ")
+ *
+ * @testcases
+ * wallclock("22:10")
+ * wallclock(" 22:10:15")
+ * wallclock("22:10:15 ")
+ * wallclock(" 22:10:15.000")
+ */
+const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME.source}\\s*"\\)`);
+
+/**
+ * @definition
+ * wallclock(" \<lwsp>? (    date    ) \<lwsp>? ")
+ * wallclock(" \<lwsp>? ( YYYY-MM-DD ) \<lwsp>? ")
+ *
+ * @testcases
+ * wallclock("2023-08-13")
+ * wallclock(" 2023-08-13")
+ * wallclock("2023-08-13 ")
+ * wallclock(" 2023-08-13 ")
+ */
+
+const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
 
 /**
  * time-count fraction? metric
