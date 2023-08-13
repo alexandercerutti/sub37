@@ -9,8 +9,18 @@ const OFFSET_TIME_REGEX = new RegExp(
 
 export type OffsetTimeMatch = [unit: number, fraction: number, metric: string];
 
-export function toOffsetTimeMatch(match: RegExpMatchArray): OffsetTimeMatch {
+function toOffsetTimeMatch(match: RegExpMatchArray): OffsetTimeMatch {
 	const [, unit, fraction, metric] = match;
 
 	return [parseInt(unit), parseInt(fraction), metric];
+}
+
+export function matchOffsetTimeExpression(content: string): OffsetTimeMatch | null {
+	let match: RegExpMatchArray | null = null;
+
+	if (!(match = content.match(OFFSET_TIME_REGEX))) {
+		return null;
+	}
+
+	return toOffsetTimeMatch(match);
 }

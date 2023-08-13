@@ -23,7 +23,7 @@ export type ClockTimeMatch = [
 	subframes: number,
 ];
 
-export function toClockTimeMatch(match: RegExpMatchArray): ClockTimeMatch {
+function toClockTimeMatch(match: RegExpMatchArray): ClockTimeMatch {
 	const [, hours, minutes, seconds, fraction, frames, subframes] = match;
 
 	return [
@@ -34,4 +34,14 @@ export function toClockTimeMatch(match: RegExpMatchArray): ClockTimeMatch {
 		parseInt(frames),
 		parseInt(subframes),
 	];
+}
+
+export function matchClockTimeExpression(content: string): ClockTimeMatch | null {
+	let match: RegExpMatchArray | null = null;
+
+	if (!(match = content.match(CLOCK_TIME_REGEX))) {
+		return null;
+	}
+
+	return toClockTimeMatch(match);
 }
