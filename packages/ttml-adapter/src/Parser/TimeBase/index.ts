@@ -59,5 +59,5 @@ export interface TimeDetails {
 interface TimeBaseProviderProtocol {
 	getMillisecondsByClockTime(match: ClockTimeMatch, timeDetails: TimeDetails): number;
 	getMillisecondsByWallClockTime(): number;
-	getMillisecondsByOffsetTime(match: OffsetTimeMatch): number;
+	getMillisecondsByOffsetTime(match: OffsetTimeMatch, timeDetails: TimeDetails): number;
 }

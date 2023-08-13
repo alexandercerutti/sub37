@@ -65,7 +65,9 @@ export function getMillisecondsByWallClockTime(): number {
 }
 
 export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
-	return 0;
+	throw new Error(
+		"OffsetTime is not supported when using SMPTE 'ttp:timeBase' as deprecated in TTML standard.",
+	);
 }
 
 /**
