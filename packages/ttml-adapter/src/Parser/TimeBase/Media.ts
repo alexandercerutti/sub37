@@ -4,7 +4,8 @@
  * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-frameRateMultiplier
  */
 
-import type { ClockTimeMatch, TimeDetails } from ".";
+import type { TimeDetails } from ".";
+import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
 
 export function getMillisecondsByClockTime(

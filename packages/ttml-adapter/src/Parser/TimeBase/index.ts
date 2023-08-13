@@ -1,3 +1,4 @@
+import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import * as Clock from "./Clock.js";
 import * as Media from "./Media.js";
 import * as SMPTE from "./SMPTE.js";
@@ -37,15 +38,6 @@ export function getTimeBaseProvider(
 		}
 	}
 }
-
-export type ClockTimeMatch = [
-	hours: number,
-	minutes: number,
-	seconds: number,
-	fraction: number,
-	frames: number,
-	subframes: number,
-];
 
 export interface TimeDetails {
 	"ttp:timeBase": "media" | "smpte" | "clock";

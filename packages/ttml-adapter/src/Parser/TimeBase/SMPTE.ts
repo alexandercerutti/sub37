@@ -4,7 +4,8 @@
  * @see https://en.wikipedia.org/wiki/SMPTE_timecode
  */
 
-import type { ClockTimeMatch, TimeDetails } from ".";
+import type { TimeDetails } from ".";
+import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import { getEffectiveFrameRate, getFrameComputedValue } from "../TimeExpressions/frames.js";
 
 export function getMillisecondsByClockTime(

@@ -1,4 +1,4 @@
-import type { ClockTimeMatch } from ".";
+import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	const [hours, minutes, seconds, fraction] = match;
