@@ -1,14 +1,5 @@
 import { DATE_REGEX, HHMMSS_TIME } from "./TimeExpressions/TimeExpressions";
-import {
-	FRACTION_REGEX,
-	FRAMES_REGEX,
-	HOURS_REGEX,
-	MINUTES_REGEX,
-	SECONDS_REGEX,
-	SUBFRAMES_REGEX,
-	TIME_COUNT_REGEX,
-	TIME_METRIC_UNIT_REGEX,
-} from "./TimeExpressions/TimeUnits";
+import { TIME_METRIC_UNIT_REGEX } from "./TimeExpressions/TimeUnits";
 
 /**
  * Wallclock regexes are ordered by specificity
@@ -59,20 +50,6 @@ const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME.sour
  */
 
 const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
-
-/**
- * time-count fraction? metric
- */
-const OFFSET_TIME_REGEX = new RegExp(
-	`(${TIME_COUNT_REGEX.source}(?:${FRACTION_REGEX.source})?)(${TIME_METRIC_UNIT_REGEX.source})`,
-);
-
-/**
- * hours ":" minutes ":" seconds ( fraction | ":" frames ( "." sub-frames )? )?
- */
-const CLOCK_TIME_REGEX = new RegExp(
-	`(${HOURS_REGEX.source}):(${MINUTES_REGEX.source}):(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source}|:(${FRAMES_REGEX.source})(?:\\.(${SUBFRAMES_REGEX.source}))?)?`,
-);
 
 interface TimeDetails {
 	"ttp:timeBase": "media" | "smpte" | "clock";
