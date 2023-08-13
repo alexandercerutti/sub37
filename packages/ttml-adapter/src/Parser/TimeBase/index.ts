@@ -36,6 +36,24 @@ export function getTimeBaseProvider(timeBase: "smpte" | "media" | "clock"): Time
 	}
 }
 
+export type ClockTimeMatch = [
+	hours: number,
+	minutes: number,
+	seconds: number,
+	fraction: number,
+	frames: number,
+	subframes: number,
+];
+
+export interface TimeDetails {
+	"ttp:timeBase": "media" | "smpte" | "clock";
+	"ttp:frameRate": number;
+	"ttp:subFrameRate": number;
+	"ttp:frameRateMultiplier": number;
+	"ttp:tickRate": number;
+	"ttp:dropMode"?: "dropNTSC" | "dropPAL";
+}
+
 /**
  * All interfaces here are required, as
  * they should throw an error when used
@@ -44,7 +62,7 @@ export function getTimeBaseProvider(timeBase: "smpte" | "media" | "clock"): Time
  */
 
 export interface TimeBaseProtocol {
-	getMillisecondsByClockTime(): number;
+	getMillisecondsByClockTime(match: ClockTimeMatch, timeDetails: TimeDetails): number;
 	getMillisecondsByWallClockTime(): number;
 	getMillisecondsByOffsetTime(): number;
 }
