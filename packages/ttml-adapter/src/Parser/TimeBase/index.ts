@@ -1,4 +1,4 @@
-import * as ClockTime from "./ClockTime.js";
+import * as Clock from "./Clock.js";
 import * as Media from "./Media.js";
 import * as SMPTE from "./SMPTE.js";
 
@@ -15,7 +15,7 @@ import * as SMPTE from "./SMPTE.js";
 export function getTimeBaseProvider(timeBase: "smpte" | "media" | "clock"): TimeBaseProtocol {
 	switch (timeBase) {
 		case "clock": {
-			return ClockTime;
+			return Clock;
 		}
 
 		case "media": {
