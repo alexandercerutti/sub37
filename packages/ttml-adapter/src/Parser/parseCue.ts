@@ -74,10 +74,6 @@ const CLOCK_TIME_REGEX = new RegExp(
 	`(${HOURS_REGEX.source}):(${MINUTES_REGEX.source}):(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source}|:(${FRAMES_REGEX.source})(?:\\.(${SUBFRAMES_REGEX.source}))?)?`,
 );
 
-const TIME_EXPRESSION_REGEX = new RegExp(
-	`${CLOCK_TIME_REGEX.source}|${OFFSET_TIME_REGEX.source}|${WALLCLOCK_TIME_REGEX.source}`,
-);
-
 interface TimeDetails {
 	"ttp:timeBase": "media" | "smpte" | "clock";
 	"ttp:frameRate": number;
