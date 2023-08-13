@@ -8,28 +8,14 @@ import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
 import { getEffectiveFrameRate, getFrameComputedValue } from "../TimeExpressions/frames.js";
+import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
 ): number {
 	const [hours, minutes, seconds, , frames, subframes] = match;
-	let finalTime = 0;
-
-	const matchedWithContraints = [
-		hours,
-		Math.max(0, Math.min(minutes, 59)),
-		Math.max(0, Math.min(seconds, 59)),
-	];
-
-	for (let i = 0; i < 3; i++) {
-		const element = matchedWithContraints[i];
-		// index: x, arr.length: y => 60^(y-1-x) => ...
-		// index: 0, arr.length: 3 => 60^(3-1-0) => 60^2 => number * 3600
-		// index: 1, arr.length: 3 => 60^(3-1-1) => 60^1 => number * 60
-		// index: 2, arr.length: 3 => 60^(3-1-2) => 60^0 => number * 1
-		finalTime += element * 60 ** (3 - 1 - i);
-	}
+	let finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
 
 	/**
 	 * @TODO how to provide previous cue end time?
@@ -46,8 +32,8 @@ export function getMillisecondsByClockTime(
 	const countedFrames = finalTime * timeDetails["ttp:frameRate"] + framesInSeconds;
 
 	const droppedFrames = getDropFrames(timeDetails["ttp:dropMode"], [
-		matchedWithContraints[0],
-		matchedWithContraints[1],
+		hours,
+		Math.max(0, Math.min(minutes, 59)),
 	]);
 
 	const totalSubframes =
