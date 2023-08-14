@@ -47,7 +47,7 @@ export function getMillisecondsByClockTime(
 }
 
 export function getMillisecondsByWallClockTime(): number {
-	return 0;
+	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
 }
 
 export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {

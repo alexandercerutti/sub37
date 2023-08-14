@@ -1,5 +1,6 @@
 import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
+import type { WallClockMatch } from "../TimeExpressions/wallclockTime";
 import * as Clock from "./Clock.js";
 import * as Media from "./Media.js";
 import * as SMPTE from "./SMPTE.js";
@@ -58,6 +59,6 @@ export interface TimeDetails {
 
 interface TimeBaseProviderProtocol {
 	getMillisecondsByClockTime(match: ClockTimeMatch, timeDetails: TimeDetails): number;
-	getMillisecondsByWallClockTime(): number;
+	getMillisecondsByWallClockTime(match: WallClockMatch): number;
 	getMillisecondsByOffsetTime(match: OffsetTimeMatch, timeDetails: TimeDetails): number;
 }

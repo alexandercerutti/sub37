@@ -29,7 +29,7 @@ export function getMillisecondsByClockTime(
 }
 
 export function getMillisecondsByWallClockTime(): number {
-	return 0;
+	throw new Error("WallClockTime is not supported when using Media as 'ttp:timeBase'.");
 }
 
 /**

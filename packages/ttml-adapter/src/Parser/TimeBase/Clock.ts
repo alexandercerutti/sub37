@@ -1,6 +1,7 @@
 import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
+import type { WallClockMatch } from "../TimeExpressions/wallclockTime";
 import { getHHMMSSUnitsToSeconds, getNumberOfDigits } from "../TimeExpressions/math.js";
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
@@ -15,8 +16,18 @@ export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	return finalTime * 1000;
 }
 
-export function getMillisecondsByWallClockTime(): number {
-	return 0;
+/**
+ * There is no documentation about WallClockTime but we do expect it
+ * to be relative to UTC and Unix Epoch (1970-01-01), but in milliseconds.
+ *
+ * Therefore, when setting the source for time in @sub37/server, it should be
+ * a `Date.now()`.
+ *
+ * @param match
+ */
+
+export function getMillisecondsByWallClockTime(match: WallClockMatch): number {
+	return match.getTime();
 }
 
 /**
