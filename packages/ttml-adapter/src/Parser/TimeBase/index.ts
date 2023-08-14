@@ -51,10 +51,10 @@ export interface TimeDetails {
 }
 
 /**
- * All interfaces here are required, as
- * they should throw an error when used
- * if a format is not supported with a
- * specific `ttp:timeBase`.
+ * All interfaces here are set to be required,
+ * as, when used with a `ttp:timeBase` that
+ * does not support them, they should throw
+ * a meaningful error.
  */
 
 interface TimeBaseProviderProtocol {
