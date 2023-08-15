@@ -31,10 +31,11 @@ export function getMillisecondsByClockTime(
 		getEffectiveFrameRate(timeDetails);
 	const countedFrames = finalTime * timeDetails["ttp:frameRate"] + framesInSeconds;
 
-	const droppedFrames = getDropFrames(timeDetails["ttp:dropMode"], [
+	const droppedFrames = getDropFrames(
+		timeDetails["ttp:dropMode"],
 		hours,
 		Math.max(0, Math.min(minutes, 59)),
-	]);
+	);
 
 	const totalSubframes =
 		getFrameComputedValue(subframes, timeDetails["ttp:subFrameRate"]) /
@@ -194,14 +195,14 @@ export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
 
 function getDropFrames(
 	dropMode: TimeDetails["ttp:dropMode"],
-	time: [hours: number, minutes: number],
+	hours: number,
+	minutes: number,
 ): number {
 	if (!dropMode) {
 		return 0;
 	}
 
 	if (dropMode === "dropNTSC") {
-		const [hours, minutes] = time;
 		return (hours * 54 + minutes - Math.floor(minutes / 10)) * 2;
 	}
 
@@ -211,8 +212,6 @@ function getDropFrames(
 	 * only in Brasil
 	 */
 	if (dropMode === "dropPAL") {
-		const [hours, minutes] = time;
-
 		return (hours * 27 + Math.floor(minutes / 2) - Math.floor(minutes / 20)) * 4;
 	}
 
