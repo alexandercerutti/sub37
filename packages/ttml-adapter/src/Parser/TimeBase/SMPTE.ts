@@ -5,8 +5,8 @@
  */
 
 import type { TimeDetails } from ".";
-import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
-import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
+import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
 import { getEffectiveFrameRate, getFrameComputedValue } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 

@@ -1,6 +1,6 @@
-import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
-import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
-import type { WallClockMatch } from "../TimeExpressions/wallclockTime";
+import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
 import * as Clock from "./Clock.js";
 import * as Media from "./Media.js";
 import * as SMPTE from "./SMPTE.js";

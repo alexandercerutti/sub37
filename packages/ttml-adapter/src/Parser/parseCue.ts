@@ -1,7 +1,7 @@
 import { getTimeBaseProvider } from "./TimeBase/index.js";
-import { matchClockTimeExpression } from "./TimeExpressions/clockTime.js";
-import { matchOffsetTimeExpression } from "./TimeExpressions/offsetTime.js";
-import { matchWallClockTimeExpression } from "./TimeExpressions/wallclockTime.js";
+import { matchClockTimeExpression } from "./TimeExpressions/matchers/clockTime.js";
+import { matchOffsetTimeExpression } from "./TimeExpressions/matchers/offsetTime.js";
+import { matchWallClockTimeExpression } from "./TimeExpressions/matchers/wallclockTime.js";
 
 interface TimeDetails {
 	"ttp:timeBase": "media" | "smpte" | "clock";

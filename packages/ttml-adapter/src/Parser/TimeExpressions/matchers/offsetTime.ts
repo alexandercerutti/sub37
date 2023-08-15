@@ -1,4 +1,4 @@
-import { FRACTION_REGEX, TIME_COUNT_REGEX, TIME_METRIC_UNIT_REGEX } from "./TimeUnits.js";
+import { FRACTION_REGEX, TIME_COUNT_REGEX, TIME_METRIC_UNIT_REGEX } from "../TimeUnits.js";
 
 /**
  * time-count fraction? metric

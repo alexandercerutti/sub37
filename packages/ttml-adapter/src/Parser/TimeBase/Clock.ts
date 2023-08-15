@@ -1,7 +1,7 @@
 import type { TimeDetails } from ".";
-import type { ClockTimeMatch } from "../TimeExpressions/clockTime";
-import type { OffsetTimeMatch } from "../TimeExpressions/offsetTime";
-import type { WallClockMatch } from "../TimeExpressions/wallclockTime";
+import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
 import { getHHMMSSUnitsToSeconds, getNumberOfDigits } from "../TimeExpressions/math.js";
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {

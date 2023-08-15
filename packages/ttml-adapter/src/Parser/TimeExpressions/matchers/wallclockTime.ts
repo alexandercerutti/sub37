@@ -1,4 +1,4 @@
-import { DATE_REGEX, HHMMSS_TIME } from "./TimeExpressions";
+import { DATE_REGEX, HHMMSS_TIME } from "../TimeExpressions.js";
 
 /**
  * Wallclock regexes are ordered by specificity

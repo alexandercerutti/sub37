@@ -5,7 +5,7 @@ import {
 	MINUTES_REGEX,
 	SECONDS_REGEX,
 	SUBFRAMES_REGEX,
-} from "./TimeUnits.js";
+} from "../TimeUnits.js";
 
 /**
  * hours ":" minutes ":" seconds ( fraction | ":" frames ( "." sub-frames )? )?
