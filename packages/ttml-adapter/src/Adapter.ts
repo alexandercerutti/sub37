@@ -207,12 +207,12 @@ function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.No
 		return true;
 	}
 
-	let treeToken: Tags.Node = openTagsQueue.current.parent;
+	const treeNode: Tags.Node = openTagsQueue.current.parent;
 
 	for (const direction of TokenRelationships[content]) {
 		if (
-			treeToken.token.content === direction &&
-			isTokenParentRelationshipRespected(treeToken.token, openTagsQueue)
+			treeNode.token.content === direction &&
+			isTokenParentRelationshipRespected(treeNode.token, openTagsQueue)
 		) {
 			return true;
 		}
