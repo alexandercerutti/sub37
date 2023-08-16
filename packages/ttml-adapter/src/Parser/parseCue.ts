@@ -1,18 +1,10 @@
+import type { TimeDetails } from "./TimeBase";
 import { getTimeBaseProvider } from "./TimeBase/index.js";
 import { matchClockTimeExpression } from "./TimeExpressions/matchers/clockTime.js";
 import { matchOffsetTimeExpression } from "./TimeExpressions/matchers/offsetTime.js";
 import { matchWallClockTimeExpression } from "./TimeExpressions/matchers/wallclockTime.js";
 
-interface TimeDetails {
-	"ttp:timeBase": "media" | "smpte" | "clock";
-	"ttp:frameRate": number;
-	"ttp:subFrameRate": number;
-	"ttp:frameRateMultiplier": number;
-	"ttp:tickRate": number;
-	"ttp:dropMode": "dropNTSC" | "dropPAL";
-}
-
-function parseTimeString(timeString: string, timeDetails: TimeDetails): number {
+export function parseTimeString(timeString: string, timeDetails: TimeDetails): number {
 	const timeProvider = getTimeBaseProvider(timeDetails["ttp:timeBase"]);
 
 	{
