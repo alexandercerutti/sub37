@@ -96,19 +96,19 @@ export default class TTMLAdapter extends BaseAdapter {
 						throw new Error("Malformed TTML track: starting tag must be a <tt> element");
 					}
 
-					switch (token.content) {
-						case "head": {
-							parsingState = BlockType.HEAD;
-							break;
-						}
-						case "body": {
-							parsingState = BlockType.BODY;
-							break;
-						}
-					}
-
 					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
 						parsingState ^= BlockType.IGNORED;
+					} else {
+						switch (token.content) {
+							case "head": {
+								parsingState = BlockType.HEAD;
+								break;
+							}
+							case "body": {
+								parsingState = BlockType.BODY;
+								break;
+							}
+						}
 					}
 
 					openTagsQueue.push(new Tags.Node(undefined, token));
