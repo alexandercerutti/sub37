@@ -211,6 +211,7 @@ const TokenRelationships = {
 	styling: ["head"],
 	head: ["tt"],
 	body: ["tt"],
+	div: ["body"],
 } as const;
 
 function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.NodeQueue): boolean {
