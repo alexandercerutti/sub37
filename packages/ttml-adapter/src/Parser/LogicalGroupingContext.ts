@@ -34,7 +34,7 @@ export class LogicalGroupingContext {
 	}
 
 	public addStyles(...style: TTMLStyle[]): void {
-		this[stylesSymbol].push(...style);
+		this[stylesSymbol].push(...style.filter(Boolean));
 	}
 
 	public set begin(timeExpression: string) {
