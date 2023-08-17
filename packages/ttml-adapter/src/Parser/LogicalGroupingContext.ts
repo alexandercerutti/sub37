@@ -8,6 +8,7 @@ import type { TTMLStyle } from "./parseStyle";
 
 interface StylesIterableIterator extends IterableIterator<TTMLStyle> {
 	length: number;
+	find(predicate: (style: TTMLStyle) => boolean): TTMLStyle | undefined;
 }
 
 const parentSymbol = Symbol("parent");
@@ -95,6 +96,15 @@ export class LogicalGroupingContext {
 				};
 			},
 			length: groupStyles.length + (parentIterator?.length ?? 0),
+			find(predicate: (style: TTMLStyle) => boolean): TTMLStyle | undefined {
+				for (const style of this) {
+					if (predicate(style)) {
+						return style;
+					}
+				}
+
+				return undefined;
+			},
 		};
 	}
 }
