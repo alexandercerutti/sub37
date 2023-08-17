@@ -114,6 +114,31 @@ export default class TTMLAdapter extends BaseAdapter {
 								groupContext = new LogicalGroupingContext(groupContext);
 								break;
 							}
+							case "p": {
+								groupContext = new LogicalGroupingContext(groupContext);
+
+								if (token.attributes["style"] && StyleIDREFSMap.has(token.attributes["style"])) {
+									/**
+									 * Adding styles. These might be already there in the chain of styles,
+									 * so, later, we'll have to check them in order to not apply them twice
+									 * or more.
+									 */
+									groupContext.addStyles(StyleIDREFSMap.get(token.attributes["style"]));
+								}
+
+								/**
+								 * @TODO parse them as milliseconds and set them as numbers.
+								 * We need to have saved the "timedetails" somewhere.
+								 *
+								 * Then we'll be able to make duration to autofill the begin and the end
+								 */
+
+								groupContext.begin = token.attributes["begin"];
+								groupContext.end = token.attributes["end"];
+								groupContext.duration = token.attributes["dur"];
+
+								break;
+							}
 						}
 					}
 
@@ -186,9 +211,11 @@ export default class TTMLAdapter extends BaseAdapter {
 						headTokensList.unshift(token);
 					}
 
-					if (token.content === "div") {
+					if (token.content === "div" || token.content === "p") {
 						/**
 						 * Exiting current context. We don't need their things anymore.
+						 * Things on "p" should get executed before this, otherwise we
+						 * are going to use the wrong context.
 						 */
 						groupContext = groupContext.parent;
 					}
