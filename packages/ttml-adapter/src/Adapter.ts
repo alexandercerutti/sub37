@@ -13,6 +13,7 @@ import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
 import { TTMLStyle, parseStyle } from "./Parser/parseStyle.js";
 import { parseRegion } from "./Parser/parseRegion.js";
+import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -46,9 +47,10 @@ export default class TTMLAdapter extends BaseAdapter {
 		 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
 		 */
 
-		const trackStyles: TTMLStyle[] = [];
 		const trackRegions: Region[] = [];
 		const StyleIDREFSMap = new Map<string, TTMLStyle>([]);
+
+		let groupContext = new LogicalGroupingContext();
 
 		const tokenizer = new Tokenizer(rawContent);
 
@@ -108,6 +110,10 @@ export default class TTMLAdapter extends BaseAdapter {
 								parsingState = BlockType.BODY;
 								break;
 							}
+							case "div": {
+								groupContext = new LogicalGroupingContext(groupContext);
+								break;
+							}
 						}
 					}
 
@@ -151,7 +157,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 							if (token.content === "style") {
 								const style = getIDREFSChainedStyle(StyleIDREFSMap, parseStyle(token));
-								trackStyles.push(style);
+								groupContext.addStyles(style);
 
 								const resolvedStyle = resolveIDREFSNameConflict(StyleIDREFSMap, style);
 								StyleIDREFSMap.set(resolvedStyle.id, resolvedStyle);
