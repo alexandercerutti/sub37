@@ -186,6 +186,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						headTokensList.unshift(token);
 					}
 
+					if (token.content === "div") {
+						/**
+						 * Exiting current context. We don't need their things anymore.
+						 */
+						groupContext = groupContext.parent;
+					}
+
 					break;
 				}
 			}
