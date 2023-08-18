@@ -21,9 +21,9 @@ export class LogicalGroupingContext {
 	private [parentSymbol]: LogicalGroupingContext | undefined;
 	private [stylesSymbol]: TTMLStyle[] = [];
 
-	private [beginTimeSymbol]: string;
-	private [endTimeSymbol]: string;
-	private [durTimeSymbol]: string;
+	private [beginTimeSymbol]: number | undefined;
+	private [endTimeSymbol]: number | undefined;
+	private [durTimeSymbol]: number | undefined;
 
 	constructor(parent?: LogicalGroupingContext) {
 		this[parentSymbol] = parent;
@@ -37,27 +37,27 @@ export class LogicalGroupingContext {
 		this[stylesSymbol].push(...style.filter(Boolean));
 	}
 
-	public set begin(timeExpression: string) {
+	public set begin(timeExpression: number) {
 		this[beginTimeSymbol] = timeExpression;
 	}
 
-	public get begin(): string {
+	public get begin(): number | undefined {
 		return this[beginTimeSymbol] || this.parent?.begin;
 	}
 
-	public set end(timeExpression: string) {
+	public set end(timeExpression: number) {
 		this[endTimeSymbol] = timeExpression;
 	}
 
-	public get end(): string {
+	public get end(): number | undefined {
 		return this[endTimeSymbol] || this.parent?.end;
 	}
 
-	public set duration(timeExpression: string) {
+	public set duration(timeExpression: number) {
 		this[durTimeSymbol] = timeExpression;
 	}
 
-	public get duration(): string {
+	public get duration(): number | undefined {
 		return this[durTimeSymbol] || this.parent?.duration;
 	}
 

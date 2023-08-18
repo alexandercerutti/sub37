@@ -17,6 +17,7 @@ import { parseStyle } from "./Parser/parseStyle.js";
 import { parseRegion } from "./Parser/parseRegion.js";
 import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
 import { assignParsedRootSupportedAttributes } from "./Parser/TTRootAttributes.js";
+import { parseTimeString } from "./Parser/parseCue.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -144,15 +145,12 @@ export default class TTMLAdapter extends BaseAdapter {
 								}
 
 								/**
-								 * @TODO parse them as milliseconds and set them as numbers.
-								 * We need to have saved the "timedetails" somewhere.
-								 *
-								 * Then we'll be able to make duration to autofill the begin and the end
+								 * @TODO make duration to autofill the begin and the end
 								 */
 
-								groupContext.begin = token.attributes["begin"];
-								groupContext.end = token.attributes["end"];
-								groupContext.duration = token.attributes["dur"];
+								groupContext.begin = parseTimeString(token.attributes["begin"], documentSettings);
+								groupContext.end = parseTimeString(token.attributes["end"], documentSettings);
+								groupContext.duration = parseTimeString(token.attributes["dur"], documentSettings);
 
 								break;
 							}
