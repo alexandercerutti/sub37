@@ -1,3 +1,5 @@
+import type { TTMLStyle } from "./Parser/parseStyle.js";
+import type { TimeDetails } from "./Parser/TimeBase/index.js";
 import { BaseAdapter, Region } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import {
@@ -11,9 +13,10 @@ import {
 } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
-import { TTMLStyle, parseStyle } from "./Parser/parseStyle.js";
+import { parseStyle } from "./Parser/parseStyle.js";
 import { parseRegion } from "./Parser/parseRegion.js";
 import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
+import { assignParsedRootSupportedAttributes } from "./Parser/TTRootAttributes.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -46,6 +49,15 @@ export default class TTMLAdapter extends BaseAdapter {
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
 		 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
 		 */
+
+		const documentSettings: TimeDetails = {
+			"ttp:frameRate": undefined,
+			"ttp:frameRateMultiplier": undefined,
+			"ttp:subFrameRate": undefined,
+			"ttp:tickRate": undefined,
+			"ttp:timeBase": undefined,
+			"ttp:dropMode": undefined,
+		};
 
 		const trackRegions: Region[] = [];
 		const StyleIDREFSMap = new Map<string, TTMLStyle>([]);
@@ -94,8 +106,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					if (!openTagsQueue.length && token.content !== "tt") {
-						throw new Error("Malformed TTML track: starting tag must be a <tt> element");
+					if (!openTagsQueue.length) {
+						if (token.content !== "tt") {
+							throw new Error("Malformed TTML track: starting tag must be a <tt> element");
+						} else {
+							assignParsedRootSupportedAttributes(token.attributes, documentSettings);
+							continue;
+						}
 					}
 
 					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
