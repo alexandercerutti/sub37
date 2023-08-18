@@ -128,11 +128,8 @@ export default class TTMLAdapter extends BaseAdapter {
 								parsingState = BlockType.BODY;
 								break;
 							}
+							case "p":
 							case "div": {
-								groupContext = new LogicalGroupingContext(groupContext);
-								break;
-							}
-							case "p": {
 								groupContext = new LogicalGroupingContext(groupContext);
 
 								if (token.attributes["style"] && StyleIDREFSMap.has(token.attributes["style"])) {
