@@ -16,6 +16,7 @@ const stylesSymbol = Symbol("styles");
 const beginTimeSymbol = Symbol("begin");
 const endTimeSymbol = Symbol("end");
 const durTimeSymbol = Symbol("dur");
+const timeContainerSymbol = Symbol("timecontainer");
 
 export class LogicalGroupingContext {
 	private [parentSymbol]: LogicalGroupingContext | undefined;
@@ -38,6 +39,7 @@ export class LogicalGroupingContext {
 	 */
 
 	private [durTimeSymbol]: number = 0;
+	private [timeContainerSymbol]: "par" | "seq" = "par";
 
 	constructor(parent?: LogicalGroupingContext) {
 		this[parentSymbol] = parent;
@@ -77,6 +79,14 @@ export class LogicalGroupingContext {
 
 	public get duration(): number | undefined {
 		return this[durTimeSymbol] || this.parent?.duration;
+	}
+
+	public set timeContainer(value: "par" | "seq") {
+		if (value !== "par" && value !== "seq") {
+			return;
+		}
+
+		this[timeContainerSymbol] = value;
 	}
 
 	public get styles(): StylesIterableIterator {
