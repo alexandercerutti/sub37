@@ -22,8 +22,22 @@ export class LogicalGroupingContext {
 	private [stylesSymbol]: TTMLStyle[] = [];
 
 	private [beginTimeSymbol]: number | undefined;
+
+	/**
+	 * Also called "active end"
+	 */
+
 	private [endTimeSymbol]: number | undefined;
-	private [durTimeSymbol]: number | undefined;
+
+	/**
+	 * SMIL Standard, from which TTML inherits some
+	 * attributes behavior, defines that default for "dur"
+	 * is 0 (or, as they call it, "indefinite").
+	 *
+	 * @see https://www.w3.org/TR/2008/REC-SMIL3-20081201/smil-timing.html#Timing-Ex:0DurDiscreteMedia
+	 */
+
+	private [durTimeSymbol]: number = 0;
 
 	constructor(parent?: LogicalGroupingContext) {
 		this[parentSymbol] = parent;
@@ -54,6 +68,10 @@ export class LogicalGroupingContext {
 	}
 
 	public set duration(timeExpression: number) {
+		if (typeof timeExpression === "undefined") {
+			return;
+		}
+
 		this[durTimeSymbol] = timeExpression;
 	}
 
