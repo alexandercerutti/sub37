@@ -129,7 +129,8 @@ export default class TTMLAdapter extends BaseAdapter {
 								break;
 							}
 							case "p":
-							case "div": {
+							case "div":
+							case "span": {
 								groupContext = new LogicalGroupingContext(groupContext);
 
 								if (token.attributes["style"] && StyleIDREFSMap.has(token.attributes["style"])) {
