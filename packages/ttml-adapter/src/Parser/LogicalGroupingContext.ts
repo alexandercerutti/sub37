@@ -57,19 +57,11 @@ export class LogicalGroupingContext {
 		this[beginTimeSymbol] = timeExpression;
 	}
 
-	public get begin(): number | undefined {
-		return this[beginTimeSymbol] || this.parent?.begin;
-	}
-
 	public set end(timeExpression: number) {
 		this[endTimeSymbol] = timeExpression;
 	}
 
-	public get end(): number | undefined {
-		return this[endTimeSymbol] || this.parent?.end;
-	}
-
-	public set duration(timeExpression: number) {
+	public set dur(timeExpression: number) {
 		if (typeof timeExpression === "undefined") {
 			return;
 		}
@@ -77,8 +69,39 @@ export class LogicalGroupingContext {
 		this[durTimeSymbol] = timeExpression;
 	}
 
-	public get duration(): number | undefined {
-		return this[durTimeSymbol] || this.parent?.duration;
+	/**
+	 * The begin of a cue can be inherited from parents.
+	 * It's default is 0 for both timeContainers kind, 'par'
+	 * and 'seq'.
+	 *
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-attribute-begin
+	 */
+
+	public get beginTime(): number {
+		return this[beginTimeSymbol] || this.parent?.beginTime || 0;
+	}
+
+	/**
+	 * The end of a cue should not be inherited implicitly
+	 * as a check with "dur" is needed to be performed first.
+	 *
+	 * TTML states that for an element with both duration
+	 * and end, the minimum between `end - begin` and `dur`
+	 * should be used.
+	 *
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-attribute-dur
+	 */
+
+	public get endTime(): number {
+		if (typeof this[endTimeSymbol] === "undefined") {
+			return this[durTimeSymbol] || 0;
+		}
+
+		if (typeof this[durTimeSymbol] !== "undefined") {
+			return Math.min(this[durTimeSymbol], this[endTimeSymbol] - this.beginTime);
+		}
+
+		return this[endTimeSymbol];
 	}
 
 	public set timeContainer(value: "par" | "seq") {
