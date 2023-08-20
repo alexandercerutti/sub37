@@ -142,13 +142,39 @@ export default class TTMLAdapter extends BaseAdapter {
 									groupContext.addStyles(StyleIDREFSMap.get(token.attributes["style"]));
 								}
 
-								/**
-								 * @TODO make duration to autofill the begin and the end
-								 */
+								try {
+									if (token.attributes["begin"]) {
+										groupContext.begin = parseTimeString(
+											token.attributes["begin"],
+											documentSettings,
+										);
+									}
+								} catch (err) {
+									/**
+									 * @TODO should we report this failure?
+									 */
+								}
 
-								groupContext.begin = parseTimeString(token.attributes["begin"], documentSettings);
-								groupContext.end = parseTimeString(token.attributes["end"], documentSettings);
-								groupContext.dur = parseTimeString(token.attributes["dur"], documentSettings);
+								try {
+									if (token.attributes["end"]) {
+										groupContext.end = parseTimeString(token.attributes["end"], documentSettings);
+									}
+								} catch (err) {
+									/**
+									 * @TODO should we report this failure?
+									 */
+								}
+
+								try {
+									if (token.attributes["dur"]) {
+										groupContext.dur = parseTimeString(token.attributes["dur"], documentSettings);
+									}
+								} catch (err) {
+									/**
+									 * @TODO should we report this failure?
+									 */
+								}
+
 								groupContext.timeContainer = token.attributes["timeContainer"];
 
 								break;
