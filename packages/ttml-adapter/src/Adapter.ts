@@ -149,6 +149,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								groupContext.begin = parseTimeString(token.attributes["begin"], documentSettings);
 								groupContext.end = parseTimeString(token.attributes["end"], documentSettings);
 								groupContext.dur = parseTimeString(token.attributes["dur"], documentSettings);
+								groupContext.timeContainer = token.attributes["timeContainer"];
 
 								break;
 							}

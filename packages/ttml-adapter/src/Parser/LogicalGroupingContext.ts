@@ -104,12 +104,16 @@ export class LogicalGroupingContext {
 		return this[endTimeSymbol];
 	}
 
-	public set timeContainer(value: "par" | "seq") {
+	public set timeContainer(value: string) {
 		if (value !== "par" && value !== "seq") {
 			return;
 		}
 
 		this[timeContainerSymbol] = value;
+	}
+
+	public get timeContainer(): "par" | "seq" {
+		return this[timeContainerSymbol];
 	}
 
 	public get styles(): StylesIterableIterator {
