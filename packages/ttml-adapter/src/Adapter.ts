@@ -15,9 +15,14 @@ import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
 import { parseStyle } from "./Parser/parseStyle.js";
 import { parseRegion } from "./Parser/parseRegion.js";
-import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
+import {
+	LogicalGroupingContext,
+	addContextBeginPoint,
+	addContextDuration,
+	addContextEndPoint,
+	setTimeContainerType,
+} from "./Parser/LogicalGroupingContext.js";
 import { assignParsedRootSupportedAttributes } from "./Parser/TTRootAttributes.js";
-import { parseTimeString } from "./Parser/parseCue.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -142,40 +147,10 @@ export default class TTMLAdapter extends BaseAdapter {
 									groupContext.addStyles(StyleIDREFSMap.get(token.attributes["style"]));
 								}
 
-								try {
-									if (token.attributes["begin"]) {
-										groupContext.begin = parseTimeString(
-											token.attributes["begin"],
-											documentSettings,
-										);
-									}
-								} catch (err) {
-									/**
-									 * @TODO should we report this failure?
-									 */
-								}
-
-								try {
-									if (token.attributes["end"]) {
-										groupContext.end = parseTimeString(token.attributes["end"], documentSettings);
-									}
-								} catch (err) {
-									/**
-									 * @TODO should we report this failure?
-									 */
-								}
-
-								try {
-									if (token.attributes["dur"]) {
-										groupContext.dur = parseTimeString(token.attributes["dur"], documentSettings);
-									}
-								} catch (err) {
-									/**
-									 * @TODO should we report this failure?
-									 */
-								}
-
-								groupContext.timeContainer = token.attributes["timeContainer"];
+								addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
+								addContextEndPoint(groupContext, token.attributes["end"], documentSettings);
+								addContextDuration(groupContext, token.attributes["dur"], documentSettings);
+								setTimeContainerType(groupContext, token.attributes["timeContainer"]);
 
 								break;
 							}

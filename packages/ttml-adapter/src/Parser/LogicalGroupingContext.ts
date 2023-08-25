@@ -1,3 +1,5 @@
+import { parseTimeString } from "./parseCue.js";
+import type { TimeDetails } from "./TimeBase";
 import type { TTMLStyle } from "./parseStyle";
 
 /**
@@ -18,17 +20,12 @@ const endTimeSymbol = Symbol("end");
 const durTimeSymbol = Symbol("dur");
 const timeContainerSymbol = Symbol("timecontainer");
 
-export class LogicalGroupingContext {
-	private [parentSymbol]: LogicalGroupingContext | undefined;
-	private [stylesSymbol]: TTMLStyle[] = [];
-
-	private [beginTimeSymbol]: number | undefined;
-
+interface TimeContextualStorage {
+	[beginTimeSymbol]: number;
 	/**
 	 * Also called "active end"
 	 */
-
-	private [endTimeSymbol]: number | undefined;
+	[endTimeSymbol]: number;
 
 	/**
 	 * SMIL Standard, from which TTML inherits some
@@ -38,8 +35,18 @@ export class LogicalGroupingContext {
 	 * @see https://www.w3.org/TR/2008/REC-SMIL3-20081201/smil-timing.html#Timing-Ex:0DurDiscreteMedia
 	 */
 
-	private [durTimeSymbol]: number = 0;
-	private [timeContainerSymbol]: "par" | "seq" = "par";
+	[durTimeSymbol]: number;
+
+	[timeContainerSymbol]: "par" | "seq";
+
+	[key: symbol]: unknown;
+}
+
+export class LogicalGroupingContext {
+	private [parentSymbol]: LogicalGroupingContext | undefined;
+	private [stylesSymbol]: TTMLStyle[] = [];
+
+	public timeContext: TimeContextualStorage | undefined = undefined;
 
 	constructor(parent?: LogicalGroupingContext) {
 		this[parentSymbol] = parent;
@@ -53,22 +60,6 @@ export class LogicalGroupingContext {
 		this[stylesSymbol].push(...style.filter(Boolean));
 	}
 
-	public set begin(timeExpression: number) {
-		this[beginTimeSymbol] = timeExpression;
-	}
-
-	public set end(timeExpression: number) {
-		this[endTimeSymbol] = timeExpression;
-	}
-
-	public set dur(timeExpression: number) {
-		if (typeof timeExpression === "undefined") {
-			return;
-		}
-
-		this[durTimeSymbol] = timeExpression;
-	}
-
 	/**
 	 * The begin of a cue can be inherited from parents.
 	 * It's default is 0 for both timeContainers kind, 'par'
@@ -77,8 +68,8 @@ export class LogicalGroupingContext {
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-attribute-begin
 	 */
 
-	public get beginTime(): number {
-		return this[beginTimeSymbol] || this.parent?.beginTime || 0;
+	public get contextStartTime(): number {
+		return this.timeContext?.[beginTimeSymbol] || this.parent?.contextStartTime || 0;
 	}
 
 	/**
@@ -92,28 +83,29 @@ export class LogicalGroupingContext {
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-attribute-dur
 	 */
 
-	public get endTime(): number {
-		if (typeof this[endTimeSymbol] === "undefined") {
-			return this[durTimeSymbol] || 0;
+	public get contextEndTime(): number {
+		if (!this.timeContext) {
+			return this.parent?.contextEndTime || 0;
 		}
 
-		if (typeof this[durTimeSymbol] !== "undefined") {
-			return Math.min(this[durTimeSymbol], this[endTimeSymbol] - this.beginTime);
+		const { [endTimeSymbol]: end, [durTimeSymbol]: dur } = this.timeContext;
+
+		if (typeof end === "undefined") {
+			return dur || 0;
 		}
 
-		return this[endTimeSymbol];
-	}
+		if (typeof dur !== "undefined") {
+			const startTime = this.contextStartTime;
+			const computedDuration = Math.min(dur, end - startTime);
 
-	public set timeContainer(value: string) {
-		if (value !== "par" && value !== "seq") {
-			return;
+			return startTime + computedDuration;
 		}
 
-		this[timeContainerSymbol] = value;
+		return end;
 	}
 
 	public get timeContainer(): "par" | "seq" {
-		return this[timeContainerSymbol];
+		return this.timeContext?.[timeContainerSymbol] || this.parent?.timeContainer || "par";
 	}
 
 	public get styles(): StylesIterableIterator {
@@ -162,4 +154,64 @@ export class LogicalGroupingContext {
 			},
 		};
 	}
+}
+
+function createTimeContextualStorage(context: LogicalGroupingContext): TimeContextualStorage {
+	if (!context.timeContext) {
+		context.timeContext = {
+			[beginTimeSymbol]: undefined,
+			[endTimeSymbol]: undefined,
+			[durTimeSymbol]: undefined,
+			[timeContainerSymbol]: "par",
+		};
+	}
+
+	return context.timeContext;
+}
+
+function addTimeContextData(
+	context: LogicalGroupingContext,
+	key: symbol,
+	value: string,
+	timeDetails: TimeDetails,
+): void {
+	if (!value || typeof value !== "string") {
+		return;
+	}
+
+	const timeContext = createTimeContextualStorage(context);
+	timeContext[key] = parseTimeString(value, timeDetails);
+}
+
+export function addContextBeginPoint(
+	context: LogicalGroupingContext,
+	beginRawValue: string,
+	timeDetails: TimeDetails,
+): void {
+	addTimeContextData(context, beginTimeSymbol, beginRawValue, timeDetails);
+}
+
+export function addContextEndPoint(
+	context: LogicalGroupingContext,
+	endRawValue: string,
+	timeDetails: TimeDetails,
+): void {
+	addTimeContextData(context, endTimeSymbol, endRawValue, timeDetails);
+}
+
+export function addContextDuration(
+	context: LogicalGroupingContext,
+	durationRawValue: string,
+	timeDetails: TimeDetails,
+): void {
+	addTimeContextData(context, durTimeSymbol, durationRawValue, timeDetails);
+}
+
+export function setTimeContainerType(context: LogicalGroupingContext, value: string) {
+	if (value !== "par" && value !== "seq") {
+		return;
+	}
+
+	const timeContext = createTimeContextualStorage(context);
+	timeContext[timeContainerSymbol] = value;
 }
