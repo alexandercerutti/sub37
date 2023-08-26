@@ -8,12 +8,11 @@ import {
 	isRegionEndTagToken,
 	isRegionStyleToken,
 	isRegionTagToken,
-	isStyleEndTagToken,
 	isStyleTagToken,
 } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
-import { parseStyle } from "./Parser/parseStyle.js";
+import { parseStyleFactory } from "./Parser/parseStyle.js";
 import { parseRegion } from "./Parser/parseRegion.js";
 import {
 	LogicalGroupingContext,
@@ -50,6 +49,8 @@ export default class TTMLAdapter extends BaseAdapter {
 		let parsingState: BlockType = BlockType.HEADER;
 		const openTagsQueue = new Tags.NodeQueue();
 		const headTokensList: Array<Token | Array<Token>> = [];
+		const parseStyle = parseStyleFactory();
+		const globalStyles: TTMLStyle[] = [];
 
 		/**
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
@@ -66,7 +67,6 @@ export default class TTMLAdapter extends BaseAdapter {
 		};
 
 		const trackRegions: Region[] = [];
-		const StyleIDREFSMap = new Map<string, TTMLStyle>([]);
 
 		let groupContext = new LogicalGroupingContext();
 
@@ -91,17 +91,12 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (isStyleTagToken(token)) {
-						if (!headTokensList.length) {
-							headTokensList.push(token);
-							break;
-						}
-
 						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
 							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
 							break;
 						}
 
-						headTokensList.unshift(token);
+						globalStyles.push(parseStyle(token));
 					}
 
 					break;
@@ -133,18 +128,28 @@ export default class TTMLAdapter extends BaseAdapter {
 								parsingState = BlockType.BODY;
 								break;
 							}
+							case "style": {
+								globalStyles.push(parseStyle(token));
+								break;
+							}
 							case "p":
 							case "div":
 							case "span": {
 								groupContext = new LogicalGroupingContext(groupContext);
 
-								if (token.attributes["style"] && StyleIDREFSMap.has(token.attributes["style"])) {
-									/**
-									 * Adding styles. These might be already there in the chain of styles,
-									 * so, later, we'll have to check them in order to not apply them twice
-									 * or more.
-									 */
-									groupContext.addStyles(StyleIDREFSMap.get(token.attributes["style"]));
+								if (token.attributes["style"]) {
+									const style = globalStyles.find(
+										(style) => style.id === token.attributes["style"],
+									);
+
+									if (style) {
+										/**
+										 * Adding styles. These might be already there in the chain of styles,
+										 * so, later, we'll have to check them in order to not apply them twice
+										 * or more.
+										 */
+										groupContext.addStyles(style);
+									}
 								}
 
 								addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
@@ -188,19 +193,10 @@ export default class TTMLAdapter extends BaseAdapter {
 								let styles: TTMLStyle[] = [];
 
 								for (let styleToken of styleTokens) {
-									const style = getIDREFSChainedStyle(StyleIDREFSMap, parseStyle(styleToken));
-									styles.push(style);
+									// styles.push(parseStyle(styleToken));
 								}
 
 								trackRegions.push(parseRegion(token, styles));
-							}
-
-							if (token.content === "style") {
-								const style = getIDREFSChainedStyle(StyleIDREFSMap, parseStyle(token));
-								groupContext.addStyles(style);
-
-								const resolvedStyle = resolveIDREFSNameConflict(StyleIDREFSMap, style);
-								StyleIDREFSMap.set(resolvedStyle.id, resolvedStyle);
 							}
 						}
 
@@ -212,11 +208,10 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					if (isStyleEndTagToken(token)) {
-						if (!headTokensList.length) {
-							headTokensList.push(token);
-							break;
-						}
+					if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
+						(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
+						break;
+					}
 
 						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
 							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
@@ -281,52 +276,4 @@ function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.No
 
 function isTokenTreeConstrained(content: string): content is keyof typeof TokenRelationships {
 	return Object.prototype.hasOwnProperty.call(TokenRelationships, content);
-}
-
-function resolveIDREFSNameConflict(idrefsMap: Map<string, TTMLStyle>, style: TTMLStyle): TTMLStyle {
-	if (!idrefsMap.has(style.id)) {
-		return style;
-	}
-
-	let styleConflictOverrideIdentifier = parseInt(style.id.match(/--(\d{1,})/)?.[1]);
-
-	if (Number.isNaN(styleConflictOverrideIdentifier)) {
-		return style;
-	}
-
-	while (idrefsMap.has(`${style.id}--${styleConflictOverrideIdentifier}`)) {
-		styleConflictOverrideIdentifier++;
-	}
-
-	style.id = style.id.replace(
-		`--${styleConflictOverrideIdentifier}`,
-		`--${styleConflictOverrideIdentifier + 1}`,
-	);
-
-	return style;
-}
-
-/**
- * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
- * @param idrefsMap
- * @param style
- * @returns
- */
-
-function getIDREFSChainedStyle(idrefsMap: Map<string, TTMLStyle>, style: TTMLStyle): TTMLStyle {
-	const parentStyle = style.attributes["style"];
-
-	if (!idrefsMap.has(parentStyle)) {
-		return style;
-	}
-
-	const chainedStyleRef = idrefsMap.get(parentStyle);
-
-	return {
-		id: style.id,
-		attributes: {
-			...chainedStyleRef.attributes,
-			...style.attributes,
-		},
-	};
 }
