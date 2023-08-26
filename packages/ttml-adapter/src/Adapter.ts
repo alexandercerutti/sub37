@@ -48,7 +48,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		let parsingState: BlockType = BlockType.HEADER;
 		const openTagsQueue = new Tags.NodeQueue();
-		const headTokensList: Array<Token | Array<Token>> = [];
 		const parseStyle = parseStyleFactory();
 		const globalStyles: TTMLStyle[] = [];
 
@@ -66,7 +65,8 @@ export default class TTMLAdapter extends BaseAdapter {
 			"ttp:dropMode": undefined,
 		};
 
-		const trackRegions: Region[] = [];
+		const regionsMap: Map<string, Region> = new Map();
+		const regionStylesProcessingQueue: Token[] = [];
 
 		let groupContext = new LogicalGroupingContext();
 
@@ -86,13 +86,27 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (isRegionTagToken(token)) {
-						headTokensList.push(token, []);
+						const region = parseRegion(token, []);
+
+						if (regionsMap.has(region.id)) {
+							/**
+							 * @TODO should we resolve the conflict here
+							 * or just ignore the region? Does the spec
+							 * say something about?
+							 *
+							 * If resolving conflict, we should also
+							 * resolve it when a region end tag happens.
+							 */
+							break;
+						}
+
+						regionsMap.set(region.id, region);
 						break;
 					}
 
 					if (isStyleTagToken(token)) {
 						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
-							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
+							regionStylesProcessingQueue.push(token);
 							break;
 						}
 
@@ -184,42 +198,46 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					if (token.content === "head") {
-						for (let i = 0; i < headTokensList.length; i++) {
-							const token = headTokensList[i] as Token;
+					if (isRegionEndTagToken(token)) {
+						let regionOpeningNode = openTagsQueue.pop();
 
-							if (token.content === "region") {
-								const styleTokens = headTokensList[i++] as Token[];
-								let styles: TTMLStyle[] = [];
-
-								for (let styleToken of styleTokens) {
-									// styles.push(parseStyle(styleToken));
-								}
-
-								trackRegions.push(parseRegion(token, styles));
-							}
+						while (regionOpeningNode.token.content !== token.content) {
+							regionOpeningNode = openTagsQueue.pop();
 						}
 
-						break;
-					}
-
-					if (isRegionEndTagToken(token)) {
-						headTokensList.push(token, []);
-						break;
-					}
-
-					if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
-						(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
-						break;
-					}
-
-						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
-							(headTokensList[headTokensList.length - 1] as Array<Token>).push(token);
+						if (regionsMap.has(regionOpeningNode.token.attributes["xml:id"])) {
+							/**
+							 * @TODO should we resolve the conflict here
+							 * or just ignore the region? Does the spec
+							 * say something about?
+							 *
+							 * If resolving conflict, we should also
+							 * resolve it when a region self-closing tag happens.
+							 */
 							break;
 						}
 
-						headTokensList.unshift(token);
+						const localStyleParser = parseStyleFactory();
+						const styles: TTMLStyle[] = [];
+
+						for (let styleToken of regionStylesProcessingQueue) {
+							const style = localStyleParser(styleToken);
+
+							if (!style) {
+								continue;
+							}
+
+							styles.push(style);
+						}
+
+						regionStylesProcessingQueue.length = 0;
+
+						const region = parseRegion(regionOpeningNode.token, styles);
+						regionsMap.set(region.id, region);
+
+						break;
 					}
+
 
 					if (token.content === "div" || token.content === "p") {
 						/**
