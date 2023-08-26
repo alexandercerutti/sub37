@@ -6,6 +6,10 @@ export interface TTMLStyle {
 }
 
 export function parseStyleFactory(): (token: Token) => TTMLStyle | undefined {
+	/**
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
+	 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
+	 */
 	const stylesIDREFSMap = new Map<string, TTMLStyle>([]);
 
 	return function parseStyle(token: Token): TTMLStyle | undefined {

@@ -51,11 +51,6 @@ export default class TTMLAdapter extends BaseAdapter {
 		const parseStyle = parseStyleFactory();
 		const globalStyles: TTMLStyle[] = [];
 
-		/**
-		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
-		 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
-		 */
-
 		const documentSettings: TimeDetails = {
 			"ttp:frameRate": undefined,
 			"ttp:frameRateMultiplier": undefined,
