@@ -125,53 +125,56 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
+					/**
+					 * Even if token does not respect it parent relatioship,
+					 * we still add it to the queue to mark its end
+					 */
+					openTagsQueue.push(new Tags.Node(undefined, token));
+
 					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
 						parsingState ^= BlockType.IGNORED;
-					} else {
-						switch (token.content) {
-							case "head": {
-								parsingState = BlockType.HEAD;
-								break;
-							}
-							case "body": {
-								parsingState = BlockType.BODY;
-								break;
-							}
-							case "style": {
-								globalStyles.push(parseStyle(token));
-								break;
-							}
-							case "p":
-							case "div":
-							case "span": {
-								groupContext = new LogicalGroupingContext(groupContext);
-
-								if (token.attributes["style"]) {
-									const style = globalStyles.find(
-										(style) => style.id === token.attributes["style"],
-									);
-
-									if (style) {
-										/**
-										 * Adding styles. These might be already there in the chain of styles,
-										 * so, later, we'll have to check them in order to not apply them twice
-										 * or more.
-										 */
-										groupContext.addStyles(style);
-									}
-								}
-
-								addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
-								addContextEndPoint(groupContext, token.attributes["end"], documentSettings);
-								addContextDuration(groupContext, token.attributes["dur"], documentSettings);
-								setTimeContainerType(groupContext, token.attributes["timeContainer"]);
-
-								break;
-							}
-						}
+						break;
 					}
 
-					openTagsQueue.push(new Tags.Node(undefined, token));
+					switch (token.content) {
+						case "head": {
+							parsingState = BlockType.HEAD;
+							break;
+						}
+						case "body": {
+							parsingState = BlockType.BODY;
+							break;
+						}
+						case "style": {
+							globalStyles.push(parseStyle(token));
+							break;
+						}
+						case "p":
+						case "div":
+						case "span": {
+							groupContext = new LogicalGroupingContext(groupContext);
+
+							if (token.attributes["style"]) {
+								const style = globalStyles.find((style) => style.id === token.attributes["style"]);
+
+								if (style) {
+									/**
+									 * Adding styles. These might be already there in the chain of styles,
+									 * so, later, we'll have to check them in order to not apply them twice
+									 * or more.
+									 */
+									groupContext.addStyles(style);
+								}
+							}
+
+							addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
+							addContextEndPoint(groupContext, token.attributes["end"], documentSettings);
+							addContextDuration(groupContext, token.attributes["dur"], documentSettings);
+							setTimeContainerType(groupContext, token.attributes["timeContainer"]);
+
+							break;
+						}
+					}
 
 					break;
 				}
