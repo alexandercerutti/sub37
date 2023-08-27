@@ -275,11 +275,12 @@ function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.No
 
 	const treeNode: Tags.Node = openTagsQueue.current.parent;
 
+	/**
+	 * If we already reached the point of checking if a tag
+	 * is in a parent, then we don't need to check the others
+	 */
 	for (const direction of TokenRelationships[content]) {
-		if (
-			treeNode.token.content === direction &&
-			isTokenParentRelationshipRespected(treeNode.token, openTagsQueue)
-		) {
+		if (treeNode.token.content === direction) {
 			return true;
 		}
 	}
