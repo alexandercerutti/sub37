@@ -143,6 +143,14 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 						case "body": {
 							parsingState = BlockType.BODY;
+
+							if (token.attributes["region"]) {
+								/**
+								 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
+								 */
+								groupContext.regionIdentifier = token.attributes["region"];
+							}
+
 							break;
 						}
 						case "style": {
@@ -153,6 +161,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						case "div":
 						case "span": {
 							groupContext = new LogicalGroupingContext(groupContext);
+
+							if (token.attributes["region"]) {
+								/**
+								 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
+								 */
+								groupContext.regionIdentifier = token.attributes["region"];
+							}
 
 							if (token.attributes["style"]) {
 								const style = globalStyles.find((style) => style.id === token.attributes["style"]);

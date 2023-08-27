@@ -48,12 +48,18 @@ export class LogicalGroupingContext {
 
 	public timeContext: TimeContextualStorage | undefined = undefined;
 
+	public regionIdentifier: string | undefined = undefined;
+
 	constructor(parent?: LogicalGroupingContext) {
 		this[parentSymbol] = parent;
 	}
 
 	public get parent(): LogicalGroupingContext {
 		return this[parentSymbol];
+	}
+
+	public get regionsIdentifiers(): string[] {
+		return [this.regionIdentifier, ...(this.parent?.regionsIdentifiers ?? [])];
 	}
 
 	public addStyles(...style: TTMLStyle[]): void {
