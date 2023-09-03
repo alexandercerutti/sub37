@@ -140,6 +140,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						groupContext = new LogicalGroupingContext(groupContext);
 					}
 
+					if (isTokenAllowedToHaveRegion(token) && token.attributes["region"]) {
+						/**
+						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
+						 */
+						groupContext.regionIdentifiers.push(token.attributes["region"]);
+					}
+
 					switch (token.content) {
 						case "head": {
 							parsingState = BlockType.HEAD;
@@ -147,13 +154,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 						case "body": {
 							parsingState = BlockType.BODY;
-
-							if (token.attributes["region"]) {
-								/**
-								 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
-								 */
-								groupContext.regionIdentifier = token.attributes["region"];
-							}
 
 							break;
 						}
@@ -164,13 +164,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						case "p":
 						case "div":
 						case "span": {
-							if (token.attributes["region"]) {
-								/**
-								 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
-								 */
-								groupContext.regionIdentifier = token.attributes["region"];
-							}
-
 							if (token.attributes["style"]) {
 								const style = globalStyles.find((style) => style.id === token.attributes["style"]);
 
@@ -324,4 +317,20 @@ function isTokenParentRelationshipRespected(token: Token, openTagsQueue: Tags.No
 
 function isTokenTreeConstrained(content: string): content is keyof typeof TokenRelationships {
 	return Object.prototype.hasOwnProperty.call(TokenRelationships, content);
+}
+
+const REGION_ALLOWED_ELEMENTS = ["body", "div", "p", "span", "image"] as const;
+type REGION_ALLOWED_ELEMENTS = typeof REGION_ALLOWED_ELEMENTS;
+
+/**
+ * @param token
+ * @returns
+ *
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
+ */
+
+function isTokenAllowedToHaveRegion(
+	token: Token,
+): token is Token & { content: REGION_ALLOWED_ELEMENTS[number] } {
+	return REGION_ALLOWED_ELEMENTS.includes(token.content as REGION_ALLOWED_ELEMENTS[number]);
 }
