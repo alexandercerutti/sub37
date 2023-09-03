@@ -136,6 +136,10 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
+					if (tokenSupportsLogicalGroupingSwitch(token)) {
+						groupContext = new LogicalGroupingContext(groupContext);
+					}
+
 					switch (token.content) {
 						case "head": {
 							parsingState = BlockType.HEAD;
@@ -160,8 +164,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						case "p":
 						case "div":
 						case "span": {
-							groupContext = new LogicalGroupingContext(groupContext);
-
 							if (token.attributes["region"]) {
 								/**
 								 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
@@ -251,8 +253,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-
-					if (token.content === "div" || token.content === "p") {
+					if (tokenSupportsLogicalGroupingSwitch(token)) {
 						/**
 						 * Exiting current context. We don't need their things anymore.
 						 * Things on "p" should get executed before this, otherwise we
@@ -270,6 +271,21 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		return BaseAdapter.ParseResult([], []);
 	}
+}
+
+/**
+ * "body" and "region" are also supported but we treat them
+ * in a different way. "body" is treated to be as global as
+ * <tt> element (they share the same context).
+ */
+
+const LOGICAL_GROUP_TOKENS = ["div", "p", "span"] as const;
+type LOGICAL_GROUP_TOKENS = typeof LOGICAL_GROUP_TOKENS;
+
+function tokenSupportsLogicalGroupingSwitch(
+	token: Token,
+): token is Token & { content: (typeof LOGICAL_GROUP_TOKENS)[number] } {
+	return LOGICAL_GROUP_TOKENS.includes(token.content as LOGICAL_GROUP_TOKENS[number]);
 }
 
 const TokenRelationships = {
