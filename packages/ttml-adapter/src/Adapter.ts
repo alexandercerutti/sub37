@@ -222,6 +222,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * If resolving conflict, we should also
 							 * resolve it when a region self-closing tag happens.
 							 */
+							regionStylesProcessingQueue.length = 0;
 							break;
 						}
 
