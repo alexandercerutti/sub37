@@ -278,7 +278,7 @@ type LOGICAL_GROUP_TOKENS = typeof LOGICAL_GROUP_TOKENS;
 
 function tokenSupportsLogicalGroupingSwitch(
 	token: Token,
-): token is Token & { content: (typeof LOGICAL_GROUP_TOKENS)[number] } {
+): token is Token & { content: LOGICAL_GROUP_TOKENS[number] } {
 	return LOGICAL_GROUP_TOKENS.includes(token.content as LOGICAL_GROUP_TOKENS[number]);
 }
 
