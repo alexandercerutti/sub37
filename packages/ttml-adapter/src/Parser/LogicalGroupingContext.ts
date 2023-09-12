@@ -110,8 +110,46 @@ export class LogicalGroupingContext {
 		return end;
 	}
 
+	/**
+	 * timecontainer is only inheritable but does not apply to the current element.
+	 * So we look only at the parent when we get the context for the current element.
+	 *
+	 * As a case, we might look at this example:
+	 *
+	 * @example
+	 * ```xml
+	 *	<!-- par (default) -->	<body>
+	 *	<!-- par (default) -->	  <div>
+	 *	<!-- par (default) -->	    <p timeContainer="seq">
+	 *	<!-- seq (inherit) -->	      Hello
+	 *	<!-- seq (inherit) -->	      <span>
+	 *	<!-- par (default) -->	        Guten
+	 *	<!-- par (default) -->	        <span>
+	 *	<!-- par (default) -->	          Tag
+	 *	<!--               -->	        </span>
+	 *	<!--               -->	      </span>
+	 *	<!-- seq (inherit) -->	      Allo
+	 *	<!--               -->	    </p>
+	 *	<!--               -->	  </div>
+	 *	<!--               -->	</body>
+	 * ```
+	 *
+	 * In this example, explict `Anonymous Span`s that wraps "Guten" and "Tag" (latter
+	 * is itself wrapped into another explicit `Anonymous Span`), do not inherit the
+	 * property from the parent outside.
+	 *
+	 * Therefore, if we create a context for spans, each element will have to look
+	 * only for their parent's timeContainer.
+	 *
+	 * This is also valid for span themselves.
+	 *
+	 * If "par" means "parallel" and "seq" means "sequential", seq elements
+	 * have, by default, a duration or 0. "par" elements instead own
+	 * an indefinite duration, so they will always be shown.
+	 */
+
 	public get timeContainer(): "par" | "seq" {
-		return this.timeContext?.[timeContainerSymbol] || this.parent?.timeContainer || "par";
+		return this.parent?.timeContainer || "par";
 	}
 
 	public get styles(): StylesIterableIterator {
