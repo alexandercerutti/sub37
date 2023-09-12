@@ -94,10 +94,14 @@ export class LogicalGroupingContext {
 			return this.parent?.contextEndTime || 0;
 		}
 
-		const { [endTimeSymbol]: end, [durTimeSymbol]: dur } = this.timeContext;
+		const {
+			[endTimeSymbol]: end,
+			[durTimeSymbol]: dur,
+			[timeContainerSymbol]: timeContainer,
+		} = this.timeContext;
 
 		if (typeof end === "undefined") {
-			return dur || 0;
+			return dur || timeContainer === "par" ? Infinity : 0;
 		}
 
 		if (typeof dur !== "undefined") {
