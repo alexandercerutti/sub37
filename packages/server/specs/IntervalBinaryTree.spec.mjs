@@ -333,6 +333,70 @@ describe("IntervalBinaryTree", () => {
 			}),
 		]);
 	});
+
+	it("should always return a node that has Infinity as high, once it entered", () => {
+		/** Root */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 0,
+					endTime: 1000,
+				}),
+			),
+		);
+
+		/** Adding on left */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 500,
+					endTime: Infinity,
+				}),
+			),
+		);
+
+		/** Adding on right */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 1000,
+					endTime: 3000,
+				}),
+			),
+		);
+
+		/** Adding on left's left */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 2500,
+					endTime: 5000,
+				}),
+			),
+		);
+
+		const query1 = tree.getCurrentNodes(0);
+		const query2 = tree.getCurrentNodes(500);
+		const query3 = tree.getCurrentNodes(1000);
+		const query4 = tree.getCurrentNodes(2500);
+		const query5 = tree.getCurrentNodes(5000);
+		const query6 = tree.getCurrentNodes(6000);
+
+		expect(query1?.length).toBe(1);
+		expect(query2?.length).toBe(2);
+		expect(query3?.length).toBe(3);
+		expect(query4?.length).toBe(3);
+		expect(query5?.length).toBe(2);
+		expect(query6?.length).toBe(1);
+	});
 });
 
 /**
