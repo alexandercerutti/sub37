@@ -47,7 +47,7 @@ export interface TimeDetails {
 	"ttp:subFrameRate": number;
 	"ttp:frameRateMultiplier": number;
 	"ttp:tickRate": number;
-	"ttp:dropMode"?: "dropNTSC" | "dropPAL";
+	"ttp:dropMode"?: "dropNTSC" | "dropPAL" | "nonDrop";
 }
 
 /**
