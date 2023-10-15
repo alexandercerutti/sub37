@@ -51,19 +51,26 @@ const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME.sour
 const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
 export type WallClockMatch = Date;
 
-export function toWallClockWallTimeMatch(match: RegExpMatchArray): WallClockMatch {
-	const [, hours, minutes, seconds, fraction] = match;
+export function toWallClockWallTimeMatch(
+	match: [hours: string, minutes: string, seconds: string, fraction?: string],
+): WallClockMatch {
+	const [hours, minutes, seconds = "0", fraction = "0"] = match;
 
-	const paddedHours = hours.padStart(2, "0");
-	const paddedMinutes = minutes.padStart(2, "0");
-	const paddedSeconds = (seconds || "0").padStart(2, "0");
-	const timeString = `${paddedHours}:${paddedMinutes}:${paddedSeconds}.${fraction || 0}`;
-
-	return new Date(`1970-01-01T${timeString}`);
+	return new Date(
+		1970,
+		0,
+		1,
+		parseInt(hours),
+		parseInt(minutes),
+		parseInt(seconds || "0"),
+		parseInt(fraction || "0"),
+	);
 }
 
-export function toWallClockDateMatch(match: RegExpMatchArray): WallClockMatch {
-	const [, year, month, day] = match;
+export function toWallClockDateMatch(
+	match: [year: string, month: string, day: string],
+): WallClockMatch {
+	const [year, month, day] = match;
 
 	const paddedMonth = month.padStart(2, "0");
 	const paddedDay = day.padStart(2, "0");
@@ -96,11 +103,11 @@ export function matchWallClockTimeExpression(content: string): WallClockMatch | 
 	}
 
 	if ((match = content.match(WALLCLOCK_WALLTIME_REGEX))) {
-		return toWallClockWallTimeMatch(match);
+		return toWallClockWallTimeMatch([match[1], match[2], match[3], match[4]]);
 	}
 
 	if ((match = content.match(WALLCLOCK_DATE_REGEX))) {
-		return toWallClockDateMatch(match);
+		return toWallClockDateMatch([match[1], match[2], match[3]]);
 	}
 
 	return null;
