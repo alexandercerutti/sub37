@@ -27,24 +27,29 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 		get content() {
 			return content;
 		},
-		peek(dataOrFunction: string | ((char: string, relativeIndex: number) => boolean)): boolean {
+		peekEvaluate(evaluation: string): boolean {
 			let nextIndex: number = 0;
 
-			if (typeof dataOrFunction === "string") {
-				if (content.substring(cursor + 1, cursor + dataOrFunction.length + 1) !== dataOrFunction) {
-					return false;
-				}
-
-				nextIndex += dataOrFunction.length;
-			} else {
-				if (!dataOrFunction(content[cursor + 1], cursor + nextIndex + 1)) {
-					return false;
-				}
-
-				nextIndex++;
+			if (content.substring(cursor + 1, cursor + evaluation.length + 1) !== evaluation) {
+				return false;
 			}
 
+			/**
+			 * When we have one character, we want to skip it and go
+			 * to straight on the next one.
+			 */
+			nextIndex += evaluation.length;
 			cursor += nextIndex;
+			return true;
+		},
+		peek(dataOrFunction: (char: string, relativeIndex: number) => boolean): boolean {
+			let nextIndex: number = 0;
+
+			if (!dataOrFunction(content[cursor + 1], cursor + nextIndex + 1)) {
+				return false;
+			}
+
+			cursor += ++nextIndex;
 			return true;
 		},
 		advance() {
@@ -146,22 +151,22 @@ export class Tokenizer {
 						break;
 					}
 
-					if (this.sourceWindow.peek("?")) {
+					if (this.sourceWindow.peekEvaluate("?")) {
 						state = TokenizerState.START_PI;
 						break;
 					}
 
-					if (this.sourceWindow.peek("!--")) {
+					if (this.sourceWindow.peekEvaluate("!--")) {
 						state = TokenizerState.START_COMMENT;
 						break;
 					}
 
-					if (this.sourceWindow.peek("![CDATA[")) {
+					if (this.sourceWindow.peekEvaluate("![CDATA[")) {
 						state = TokenizerState.START_CDATA;
 						break;
 					}
 
-					if (this.sourceWindow.peek("!")) {
+					if (this.sourceWindow.peekEvaluate("!")) {
 						const { nextChar } = this.sourceWindow;
 						const codePoint = nextChar.charCodeAt(0);
 						const isUppercaseCharacter = codePoint >= 65 && codePoint <= 90;
@@ -172,7 +177,7 @@ export class Tokenizer {
 						}
 					}
 
-					if (this.sourceWindow.peek("/")) {
+					if (this.sourceWindow.peekEvaluate("/")) {
 						state = TokenizerState.END_TAG;
 						break;
 					}
@@ -194,7 +199,7 @@ export class Tokenizer {
 
 					result += char;
 
-					if (this.sourceWindow.peek(">")) {
+					if (this.sourceWindow.peekEvaluate(">")) {
 						state = TokenizerState.END_VALIDATION_ENTITY;
 					}
 
@@ -217,7 +222,7 @@ export class Tokenizer {
 
 					result += char;
 
-					if (this.sourceWindow.peek("?>")) {
+					if (this.sourceWindow.peekEvaluate("?>")) {
 						state = TokenizerState.END_PI;
 					}
 
@@ -239,7 +244,7 @@ export class Tokenizer {
 
 					result += char;
 
-					if (this.sourceWindow.peek("-->")) {
+					if (this.sourceWindow.peekEvaluate("-->")) {
 						state = TokenizerState.END_COMMENT;
 					}
 
@@ -261,7 +266,7 @@ export class Tokenizer {
 
 					result += char;
 
-					if (this.sourceWindow.peek("]]>")) {
+					if (this.sourceWindow.peekEvaluate("]]>")) {
 						state = TokenizerState.END_CDATA;
 					}
 
@@ -274,7 +279,7 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG: {
-					if (this.sourceWindow.peek("/>")) {
+					if (this.sourceWindow.peekEvaluate("/>")) {
 						tagName = result;
 
 						return Token.Tag(tagName, attributes);
@@ -317,7 +322,7 @@ export class Tokenizer {
 				case TokenizerState.DATA: {
 					result += char;
 
-					if (this.sourceWindow.peek("<")) {
+					if (this.sourceWindow.peekEvaluate("<")) {
 						return Token.String(result);
 					}
 
@@ -325,14 +330,14 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.START_TAG_ANNOTATION: {
-					if (this.sourceWindow.peek("/>")) {
+					if (this.sourceWindow.peekEvaluate("/>")) {
 						this.sourceWindow.advance();
 
 						return Token.Tag(tagName, attributes);
 					}
 
 					// Might happen if, for some reason, the ">" is on a new
-					if (this.sourceWindow.peek(">")) {
+					if (this.sourceWindow.peekEvaluate(">")) {
 						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
@@ -349,7 +354,10 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.ATTRIBUTE_START: {
-					if (char === "=" || (Tokenizer.isWhitespace(char) && this.sourceWindow.peek("="))) {
+					if (
+						char === "=" ||
+						(Tokenizer.isWhitespace(char) && this.sourceWindow.peekEvaluate("="))
+					) {
 						state = TokenizerState.ATTRIBUTE_VALUE;
 						currentAttributeName = result;
 						result = "";
@@ -364,14 +372,14 @@ export class Tokenizer {
 						break;
 					}
 
-					if (this.sourceWindow.peek("/>")) {
+					if (this.sourceWindow.peekEvaluate("/>")) {
 						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
 						return Token.Tag(tagName, attributes);
 					}
 
-					if (this.sourceWindow.peek(">")) {
+					if (this.sourceWindow.peekEvaluate(">")) {
 						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
@@ -390,14 +398,14 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.ATTRIBUTE_VALUE: {
-					if (this.sourceWindow.peek("/>")) {
+					if (this.sourceWindow.peekEvaluate("/>")) {
 						attributes[currentAttributeName] = result;
 						this.sourceWindow.advance();
 
 						return Token.Tag(tagName, attributes);
 					}
 
-					if (this.sourceWindow.peek(">")) {
+					if (this.sourceWindow.peekEvaluate(">")) {
 						attributes[currentAttributeName] = result;
 						this.sourceWindow.advance();
 
