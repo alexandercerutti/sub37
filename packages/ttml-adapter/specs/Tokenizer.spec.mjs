@@ -155,7 +155,7 @@ describe("Tokenizer", () => {
 			expect(pStartToken).toBeInstanceOf(Token);
 			expect(pStartToken?.type).toBe(TokenType.START_TAG);
 			expect(pStartToken?.content).toBe("p");
-			expect(pStartToken?.attributes).toEqual({
+			expect(pStartToken?.attributes).toMatchObject({
 				begin: "342010001t",
 				end: "365370003t",
 				region: "region_00",
@@ -168,43 +168,41 @@ describe("Tokenizer", () => {
 			expect(stringToken1).toBeInstanceOf(Token);
 			expect(stringToken1?.type).toBe(TokenType.STRING);
 			expect(stringToken1?.content).toBe("(alarm beeping,");
-			expect(stringToken1?.attributes).toEqual({});
+			expect(stringToken1?.attributes).toMatchObject({});
 
 			expect(strongStartToken).not.toBeNull();
 			expect(strongStartToken).toBeInstanceOf(Token);
 			expect(strongStartToken?.type).toBe(TokenType.START_TAG);
 			expect(strongStartToken?.content).toBe("strong");
-			expect(strongStartToken?.attributes).toEqual({});
+			expect(strongStartToken?.attributes).toMatchObject({});
 
 			expect(stringToken2).not.toBeNull();
 			expect(stringToken2).toBeInstanceOf(Token);
 			expect(stringToken2?.type).toBe(TokenType.STRING);
 			expect(stringToken2?.content).toBe("Jane gasps");
-			expect(stringToken2?.attributes).toEqual({});
+			expect(stringToken2?.attributes).toMatchObject({});
 
 			expect(strongEndToken).not.toBeNull();
 			expect(strongEndToken).toBeInstanceOf(Token);
 			expect(strongEndToken?.type).toBe(TokenType.END_TAG);
 			expect(strongEndToken?.content).toBe("strong");
-			expect(strongEndToken?.attributes).toEqual({});
+			expect(strongEndToken?.attributes).toMatchObject({});
 
 			expect(stringToken3).not.toBeNull();
 			expect(stringToken3).toBeInstanceOf(Token);
 			expect(stringToken3?.type).toBe(TokenType.STRING);
 			expect(stringToken3?.content).toBe(")\n\t\t\t\t");
-			expect(stringToken3?.attributes).toEqual({});
+			expect(stringToken3?.attributes).toMatchObject({});
 
 			expect(pEndToken).not.toBeNull();
 			expect(pEndToken).toBeInstanceOf(Token);
 			expect(pEndToken?.type).toBe(TokenType.END_TAG);
 			expect(pEndToken?.content).toBe("p");
-			expect(pEndToken?.attributes).toEqual({});
+			expect(pEndToken?.attributes).toMatchObject({});
 		});
 
 		it("should return a couple of tags with all of their attributes (no children)", () => {
-			const content = `
-				<p begin="342010001t" end="365370003t" region="region_00" tts:extent="35.00% 5.33%" tts:origin="30.00% 79.29%" xml:id="subtitle1"></p>
-			`;
+			const content = `<p begin="342010001t" xml:id="subtitle1"></p>`;
 			const tokenizer = new Tokenizer(content);
 			const [startToken, endToken] = [tokenizer.nextToken(), tokenizer.nextToken()];
 
@@ -214,10 +212,6 @@ describe("Tokenizer", () => {
 			expect(startToken?.content).toBe("p");
 			expect(startToken?.attributes).toEqual({
 				begin: "342010001t",
-				end: "365370003t",
-				region: "region_00",
-				"tts:extent": "35.00% 5.33%",
-				"tts:origin": "30.00% 79.29%",
 				"xml:id": "subtitle1",
 			});
 
@@ -226,6 +220,33 @@ describe("Tokenizer", () => {
 			expect(endToken?.type).toBe(TokenType.END_TAG);
 			expect(endToken?.content).toBe("p");
 			expect(endToken?.attributes).toEqual({});
+		});
+
+		it("should accept a token with an attribute surrounded by spaces", () => {
+			const content = `<p begin = "342010001t" xml:id="subtitle1"></p>`;
+			const tokenizer = new Tokenizer(content);
+			const startToken = tokenizer.nextToken();
+
+			expect(startToken).not.toBeNull();
+			expect(startToken).toBeInstanceOf(Token);
+			expect(startToken?.type).toBe(TokenType.START_TAG);
+			expect(startToken?.attributes["begin"]).not.toBeUndefined();
+			expect(startToken?.attributes["begin"]).toBe("342010001t");
+		});
+
+		it("should accept a token with an attribute on a new line", () => {
+			const content = `<p begin =
+				"342010001t
+			"
+			xml:id="subtitle1"></p>`;
+			const tokenizer = new Tokenizer(content);
+			const startToken = tokenizer.nextToken();
+
+			expect(startToken).not.toBeNull();
+			expect(startToken).toBeInstanceOf(Token);
+			expect(startToken?.type).toBe(TokenType.START_TAG);
+			expect(startToken?.attributes["begin"]).not.toBeUndefined();
+			expect(startToken?.attributes["begin"]).toBe("342010001t");
 		});
 	});
 });

@@ -38,7 +38,7 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 			 * When we have one character, we want to skip it and go
 			 * to straight on the next one.
 			 */
-			nextIndex += evaluation.length;
+			nextIndex += evaluation.length + 1;
 			cursor += nextIndex;
 			return true;
 		},
@@ -142,12 +142,14 @@ export class Tokenizer {
 				case TokenizerState.UNKNOWN_CONTENT: {
 					if (char !== "<") {
 						if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
+							this.sourceWindow.advance();
 							break;
 						}
 
 						result += char;
 						state = TokenizerState.DATA;
 
+						this.sourceWindow.advance();
 						break;
 					}
 
@@ -183,6 +185,7 @@ export class Tokenizer {
 					}
 
 					if (isValidName(this.sourceWindow.nextChar)) {
+						this.sourceWindow.advance();
 						state = TokenizerState.START_TAG;
 					}
 
@@ -203,6 +206,7 @@ export class Tokenizer {
 						state = TokenizerState.END_VALIDATION_ENTITY;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 
@@ -226,6 +230,7 @@ export class Tokenizer {
 						state = TokenizerState.END_PI;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 
@@ -247,6 +252,8 @@ export class Tokenizer {
 					if (this.sourceWindow.peekEvaluate("-->")) {
 						state = TokenizerState.END_COMMENT;
 					}
+
+					this.sourceWindow.advance();
 
 					break;
 				}
@@ -270,6 +277,7 @@ export class Tokenizer {
 						state = TokenizerState.END_CDATA;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 
@@ -285,10 +293,9 @@ export class Tokenizer {
 						return Token.Tag(tagName, attributes);
 					}
 
-					if (char === ">") {
-						tagName = result;
+					if (this.sourceWindow.peekEvaluate(">")) {
+						tagName = result + char;
 						result = "";
-						this.sourceWindow.advance();
 
 						return Token.StartTag(tagName, attributes);
 					}
@@ -296,50 +303,54 @@ export class Tokenizer {
 					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 						tagName = result;
 						result = "";
-
 						state = TokenizerState.START_TAG_ANNOTATION;
+
+						this.sourceWindow.advance();
 						break;
 					}
 
 					result += char;
 
+					this.sourceWindow.advance();
 					break;
 				}
 
 				case TokenizerState.END_TAG: {
-					if (char === ">" || this.sourceWindow.cursor === this.sourceWindow.content.length) {
-						this.sourceWindow.advance();
-						tagName = result;
+					if (
+						this.sourceWindow.peekEvaluate(">") ||
+						this.sourceWindow.cursor === this.sourceWindow.content.length
+					) {
+						tagName = result + char;
 
 						return Token.EndTag(tagName);
 					}
 
 					result += char;
 
+					this.sourceWindow.advance();
 					break;
 				}
 
 				case TokenizerState.DATA: {
-					result += char;
-
-					if (this.sourceWindow.peekEvaluate("<")) {
+					if (char === "<") {
 						return Token.String(result);
 					}
 
+					result += char;
+
+					this.sourceWindow.advance();
 					break;
 				}
 
 				case TokenizerState.START_TAG_ANNOTATION: {
 					if (this.sourceWindow.peekEvaluate("/>")) {
-						this.sourceWindow.advance();
-
 						return Token.Tag(tagName, attributes);
 					}
 
-					// Might happen if, for some reason, the ">" is on a new
 					if (this.sourceWindow.peekEvaluate(">")) {
-						this.sourceWindow.advance();
-						attributes[result] = undefined;
+						if (result.length) {
+							attributes[result] = undefined;
+						}
 
 						return Token.StartTag(tagName, attributes);
 					}
@@ -347,40 +358,43 @@ export class Tokenizer {
 					if (isValidName(char)) {
 						state = TokenizerState.ATTRIBUTE_START;
 						result += char;
-						break;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 
 				case TokenizerState.ATTRIBUTE_START: {
-					if (
-						char === "=" ||
-						(Tokenizer.isWhitespace(char) && this.sourceWindow.peekEvaluate("="))
-					) {
+					if (this.sourceWindow.peekEvaluate("=")) {
 						state = TokenizerState.ATTRIBUTE_VALUE;
+
+						if (!Tokenizer.isWhitespace(char) && !Tokenizer.isNewLine(char)) {
+							result += char;
+						}
+
 						currentAttributeName = result;
 						result = "";
+
 						break;
 					}
 
 					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
+						this.sourceWindow.advance();
 						state = TokenizerState.START_TAG_ANNOTATION;
 
 						attributes[result] = undefined;
 						result = "";
+
 						break;
 					}
 
 					if (this.sourceWindow.peekEvaluate("/>")) {
-						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
 						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peekEvaluate(">")) {
-						this.sourceWindow.advance();
 						attributes[result] = undefined;
 
 						return Token.StartTag(tagName, attributes);
@@ -394,26 +408,29 @@ export class Tokenizer {
 						result += char;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 
 				case TokenizerState.ATTRIBUTE_VALUE: {
 					if (this.sourceWindow.peekEvaluate("/>")) {
 						attributes[currentAttributeName] = result;
-						this.sourceWindow.advance();
 
 						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peekEvaluate(">")) {
 						attributes[currentAttributeName] = result;
-						this.sourceWindow.advance();
 
 						return Token.StartTag(tagName, attributes);
 					}
 
 					if (!Tokenizer.isQuotationMark(char)) {
-						result += char;
+						if (!Tokenizer.isWhitespace(char) && !Tokenizer.isNewLine(char)) {
+							result += char;
+						}
+
+						this.sourceWindow.advance();
 						break;
 					}
 
@@ -423,6 +440,8 @@ export class Tokenizer {
 						 * but saving the character to compare it later
 						 */
 						currentAttributeValue = char;
+
+						this.sourceWindow.advance();
 						break;
 					}
 
@@ -437,13 +456,14 @@ export class Tokenizer {
 						result = "";
 						currentAttributeValue = "";
 						currentAttributeName = "";
+
+						break;
 					}
 
+					this.sourceWindow.advance();
 					break;
 				}
 			}
-
-			this.sourceWindow.advance();
 		}
 
 		return null;
