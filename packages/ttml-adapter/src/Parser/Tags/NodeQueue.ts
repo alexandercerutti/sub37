@@ -1,12 +1,12 @@
-import type Node from "./Node";
+import type { Node, NodeWithParent } from "./Node";
 
 /**
  * LIFO queue, where root is always the first element,
  * so we can easily pop out and not drill.
  */
 
-export default class NodeQueue {
-	private root: Node = null;
+export class NodeQueue<ContentType extends object> {
+	private root: NodeWithParent<ContentType> = null;
 
 	public get current() {
 		return this.root;
@@ -17,7 +17,7 @@ export default class NodeQueue {
 			return 0;
 		}
 
-		let thisNode: Node = this.root;
+		let thisNode: NodeWithParent<ContentType> = this.root;
 		let length = 1;
 
 		while (thisNode.parent !== null) {
@@ -28,17 +28,17 @@ export default class NodeQueue {
 		return length;
 	}
 
-	public push(node: Node): void {
-		if (!this.root) {
-			this.root = node;
-			return;
-		}
+	public push(node: Node<ContentType>): void {
+		const queueNode = Object.create(node, {
+			parent: {
+				value: this.root,
+			},
+		} satisfies PropertyDescriptorMap);
 
-		node.parent = this.root;
-		this.root = node;
+		this.root = queueNode;
 	}
 
-	public pop(): Node | undefined {
+	public pop(): Node<ContentType> | undefined {
 		if (!this.root) {
 			return undefined;
 		}

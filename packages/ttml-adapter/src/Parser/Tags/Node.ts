@@ -1,11 +1,7 @@
-import type { Token } from "../Token";
+import type { WithParent } from "./WithParent";
 
-export default class Node {
-	public parent: Node = null;
-
-	constructor(
-		/** Zero-based position of cue content */
-		public index: number,
-		public token: Token,
-	) {}
+export interface Node<ContentType extends object> {
+	content: ContentType;
 }
+
+export type NodeWithParent<ContentType extends object> = WithParent<Node<ContentType>>;
