@@ -234,8 +234,8 @@ describe("Tokenizer", () => {
 			expect(startToken?.attributes["begin"]).toBe("342010001t");
 		});
 
-		it("should accept a token with an attribute on a new line", () => {
-			const content = `<p begin =
+		it("should accept a token with an attribute on a new line and should get rid of useless spaces and whitelines", () => {
+			const content = `<p begin   =   
 				"342010001t
 			"
 			xml:id="subtitle1"></p>`;
