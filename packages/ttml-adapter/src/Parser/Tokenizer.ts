@@ -309,14 +309,13 @@ export class Tokenizer {
 
 				case TokenizerState.START_TAG: {
 					if (this.sourceWindow.peekEvaluate("/>")) {
-						tagName = result;
+						tagName = result + char;
 
 						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peekEvaluate(">")) {
 						tagName = result + char;
-						result = "";
 
 						return Token.StartTag(tagName, attributes);
 					}
@@ -446,42 +445,33 @@ export class Tokenizer {
 						return Token.StartTag(tagName, attributes);
 					}
 
-					if (!Tokenizer.isQuotationMark(char)) {
-						const isStringBeginning = !result.length;
+					if (
+						Tokenizer.isQuotationMark(char) ||
+						this.sourceWindow.peek(Tokenizer.isQuotationMark)
+					) {
+						if (!result.length) {
+							currentAttributeValue = this.sourceWindow.char;
 
-						if (!isStringBeginning || !Tokenizer.isWhitespace(char)) {
-							result += Tokenizer.isNewLine(char) ? "\x20" : char;
+							this.sourceWindow.advance();
+							break;
 						}
 
-						this.sourceWindow.advance();
-						break;
-					}
-
-					if (!result.length) {
 						/**
-						 * Starting or ending quotes and respective spaces can be ignored
-						 * but saving the character to compare it later
+						 * If this happens, the char got updated through peek
 						 */
-						currentAttributeValue = char;
+						if (this.sourceWindow.char === currentAttributeValue) {
+							state = TokenizerState.START_TAG_ANNOTATION;
+							attributes[currentAttributeName] = result + char;
 
-						this.sourceWindow.advance();
-						break;
+							result = "";
+							currentAttributeValue = "";
+							currentAttributeName = "";
+
+							break;
+						}
 					}
 
-					if (
-						this.sourceWindow.char === currentAttributeValue &&
-						(this.sourceWindow.peek(Tokenizer.isWhitespace) ||
-							this.sourceWindow.peek(Tokenizer.isNewLine))
-					) {
-						state = TokenizerState.START_TAG_ANNOTATION;
-						attributes[currentAttributeName] = result;
-
-						result = "";
-						currentAttributeValue = "";
-						currentAttributeName = "";
-
-						break;
-					}
+					result += Tokenizer.isNewLine(char) ? "\x20" : char;
 
 					this.sourceWindow.advance();
 					break;
