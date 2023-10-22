@@ -28,9 +28,19 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 			return content;
 		},
 		peekEvaluate(evaluation: string): boolean {
+			const amountOfWhitespacesNextCurrentChar = Math.max(
+				0,
+				getAmountOfWhitespacesNext(content, cursor),
+			);
+
 			let nextIndex: number = 0;
 
-			if (content.substring(cursor + 1, cursor + evaluation.length + 1) !== evaluation) {
+			if (
+				content.substring(
+					cursor + amountOfWhitespacesNextCurrentChar + 1,
+					cursor + evaluation.length + amountOfWhitespacesNextCurrentChar + 1,
+				) !== evaluation
+			) {
 				return false;
 			}
 
@@ -38,18 +48,29 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 			 * When we have one character, we want to skip it and go
 			 * to straight on the next one.
 			 */
-			nextIndex += evaluation.length + 1;
+			nextIndex += evaluation.length + amountOfWhitespacesNextCurrentChar + 1;
 			cursor += nextIndex;
+
 			return true;
 		},
 		peek(dataOrFunction: (char: string, relativeIndex: number) => boolean): boolean {
+			const amountOfWhitespacesNextCurrentChar = Math.max(
+				0,
+				getAmountOfWhitespacesNext(content, cursor),
+			);
 			let nextIndex: number = 0;
 
-			if (!dataOrFunction(content[cursor + 1], cursor + nextIndex + 1)) {
+			if (
+				!dataOrFunction(
+					content[cursor + amountOfWhitespacesNextCurrentChar + 1],
+					cursor + amountOfWhitespacesNextCurrentChar + nextIndex + 1,
+				)
+			) {
 				return false;
 			}
 
-			cursor += ++nextIndex;
+			cursor += nextIndex + amountOfWhitespacesNextCurrentChar + 1;
+
 			return true;
 		},
 		advance() {
@@ -482,4 +503,16 @@ function isValidNameChar(content: string): boolean {
 
 function isValidName(content: string): boolean {
 	return NAME_REGEX.test(content);
+}
+
+function getAmountOfWhitespacesNext(content: string, cursor: number): number {
+	let updatedCursor = cursor + 1;
+
+	while (
+		(Tokenizer.isWhitespace(content[updatedCursor]) ||
+			Tokenizer.isNewLine(content[updatedCursor])) &&
+		updatedCursor++
+	) {}
+
+	return updatedCursor - cursor - 1;
 }
