@@ -102,7 +102,7 @@ export class Tokenizer {
 	}
 
 	public static isWhitespace(character: string) {
-		return character === " " || character === "\x09" || character === "\x0C";
+		return character === "\x20" || character === "\x09" || character === "\x0C";
 	}
 
 	public static isNewLine(character: string) {
@@ -414,20 +414,22 @@ export class Tokenizer {
 
 				case TokenizerState.ATTRIBUTE_VALUE: {
 					if (this.sourceWindow.peekEvaluate("/>")) {
-						attributes[currentAttributeName] = result;
+						attributes[currentAttributeName] = result.trimEnd();
 
 						return Token.Tag(tagName, attributes);
 					}
 
 					if (this.sourceWindow.peekEvaluate(">")) {
-						attributes[currentAttributeName] = result;
+						attributes[currentAttributeName] = result.trimEnd();
 
 						return Token.StartTag(tagName, attributes);
 					}
 
 					if (!Tokenizer.isQuotationMark(char)) {
-						if (!Tokenizer.isWhitespace(char) && !Tokenizer.isNewLine(char)) {
-							result += char;
+						const isStringBeginning = !result.length;
+
+						if (!isStringBeginning || !Tokenizer.isWhitespace(char)) {
+							result += Tokenizer.isNewLine(char) ? "\x20" : char;
 						}
 
 						this.sourceWindow.advance();
