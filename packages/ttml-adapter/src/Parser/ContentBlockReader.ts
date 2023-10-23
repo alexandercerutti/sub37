@@ -69,7 +69,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
-				if (!openTagsTree) {
+				if (shouldTokenCreateNodeTree(token) && !openTagsTree) {
 					openTagsTree = new NodeTree(openTagsList);
 				}
 
