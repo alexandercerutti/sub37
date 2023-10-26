@@ -21,10 +21,8 @@ interface Memory<ContentType extends object> {
 
 export class NodeTree<NodeContentType extends object> {
 	private queue: NodeQueue<NodeContentType>;
-	private memory: Memory<NodeContentType> = {
-		currentNode: null,
-		storage: null,
-	};
+	private root: TreeNodeWithParent<NodeContentType>;
+	private current: TreeNodeWithParent<NodeContentType>;
 
 	public constructor(queue: NodeQueue<NodeContentType>) {
 		if (!queue) {
@@ -40,7 +38,7 @@ export class NodeTree<NodeContentType extends object> {
 	): TreeNodeWithParent<ContentType> {
 		return Object.create(current, {
 			parent: {
-				value: parent,
+				value: parent || null,
 			},
 			children: {
 				value: [],
@@ -50,30 +48,30 @@ export class NodeTree<NodeContentType extends object> {
 	}
 
 	public track(value: Node<NodeContentType>): TreeNodeWithParent<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithParentRelationship(value, this.memory.currentNode);
+		const treeNode = NodeTree.createNodeWithParentRelationship(value, this.current);
 
-		if (!this.memory.storage) {
-			this.memory.storage = treeNode;
-			this.memory.currentNode = treeNode;
+		if (!this.root) {
+			this.root = treeNode;
+			this.current = treeNode;
 
 			return treeNode;
 		}
 
-		this.memory.currentNode.children.push(treeNode);
+		this.current.children.push(treeNode);
 		return treeNode;
 	}
 
 	public push(value: Node<NodeContentType>): void {
 		this.queue.push(value);
 		const treeNode = this.track(value);
-		this.memory.currentNode = treeNode;
+		this.current = treeNode;
 	}
 
 	public pop(): TreeNodeWithParent<NodeContentType> {
-		const out = this.memory.currentNode;
+		const out = this.current;
 
-		if (this.memory.currentNode) {
-			this.memory.currentNode = this.memory.currentNode.parent;
+		if (this.current) {
+			this.current = this.current.parent;
 		}
 
 		this.queue.pop();
@@ -81,11 +79,11 @@ export class NodeTree<NodeContentType extends object> {
 	}
 
 	public get currentNode(): TreeNodeWithParent<NodeContentType> {
-		return this.memory.currentNode;
+		return this.current;
 	}
 
 	public get tree(): Memory<NodeContentType>["storage"] {
-		return this.memory.storage;
+		return this.root;
 	}
 
 	public get parentNode(): TreeNodeWithParent<NodeContentType> | null {
