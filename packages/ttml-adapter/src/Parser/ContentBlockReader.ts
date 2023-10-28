@@ -2,8 +2,7 @@ import { Token } from "./Token";
 import { TokenType } from "./Token.js";
 import type { Node } from "./Tags/Node";
 import { NodeQueue } from "./Tags/NodeQueue.js";
-import type { TreeNode } from "./Tags/NodeTree";
-import { NodeTree } from "./Tags/NodeTree.js";
+import { NodeTree, type NodeWithRelationship } from "./Tags/NodeTree.js";
 import { Tokenizer } from "./Tokenizer.js";
 
 export enum BlockType {
@@ -17,17 +16,17 @@ export enum BlockType {
 	GROUP /******/ = 0b10000000,
 }
 
-type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: TreeNode<Token>];
+type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: NodeWithRelationship<Token>];
 
-type CueBlockTuple = [blockType: BlockType.CUE, payload: TreeNode<Token>];
+type CueBlockTuple = [blockType: BlockType.CUE, payload: NodeWithRelationship<Token>];
 
-type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: TreeNode<Token>];
+type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: NodeWithRelationship<Token>];
 
-type RegionBlockTuple = [blockType: BlockType.REGION, payload: TreeNode<Token>];
+type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelationship<Token>];
 
-type StyleBlockTuple = [blockType: BlockType.STYLE, payload: TreeNode<Token>];
+type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
 
-type GroupBlockTuple = [blockType: BlockType.GROUP, payload: TreeNode<Token>];
+type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
 
 type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
 
@@ -113,7 +112,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					case "tt": {
 						yield [
 							BlockType.DOCUMENT,
-							NodeTree.createNodeWithParentRelationship(nodeRepresentation, null),
+							NodeTree.createNodeWithRelationship(nodeRepresentation, null),
 						];
 
 						continue;
@@ -123,7 +122,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 						if (Object.entries(token.attributes).length) {
 							yield [
 								BlockType.GROUP,
-								NodeTree.createNodeWithParentRelationship(nodeRepresentation, null),
+								NodeTree.createNodeWithRelationship(nodeRepresentation, null),
 							];
 						}
 
@@ -136,7 +135,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 						if (Object.entries(token.attributes).length) {
 							yield [
 								BlockType.GROUP,
-								NodeTree.createNodeWithParentRelationship(nodeRepresentation, null),
+								NodeTree.createNodeWithRelationship(nodeRepresentation, null),
 							];
 						}
 

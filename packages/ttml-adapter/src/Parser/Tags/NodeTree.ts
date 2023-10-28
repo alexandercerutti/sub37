@@ -1,31 +1,25 @@
-/**
- * A tree that, taken a queue, proxies that
- * and saves the nodes in a different structure.
- */
-
-import type { Node } from "./Node";
-import type { WithParent } from "./WithParent";
-
-export interface TreeNode<ContentType extends object = object> {
-	content: Node<ContentType>["content"];
-	children: Array<TreeNode<ContentType>>;
+interface GenericNode<ContentType extends object> {
+	content: ContentType;
 }
 
-export type TreeNodeWithParent<ContentType extends object> = WithParent<TreeNode<ContentType>>;
+export interface NodeWithRelationship<ContentType extends object> extends GenericNode<ContentType> {
+	children: Array<NodeWithRelationship<ContentType>>;
+	parent: NodeWithRelationship<ContentType>;
+}
 
 interface Memory<ContentType extends object> {
-	currentNode: TreeNodeWithParent<ContentType> | null;
-	storage: TreeNodeWithParent<ContentType> | null;
+	currentNode: NodeWithRelationship<ContentType> | null;
+	storage: NodeWithRelationship<ContentType> | null;
 }
 
 export class NodeTree<NodeContentType extends object> {
-	private root: TreeNodeWithParent<NodeContentType>;
-	private current: TreeNodeWithParent<NodeContentType>;
+	private root: NodeWithRelationship<NodeContentType>;
+	private current: NodeWithRelationship<NodeContentType>;
 
-	public static createNodeWithParentRelationship<ContentType extends object>(
-		current: Node<ContentType>,
-		parent: TreeNode<ContentType>,
-	): TreeNodeWithParent<ContentType> {
+	public static createNodeWithRelationship<ContentType extends object>(
+		current: GenericNode<ContentType>,
+		parent: NodeWithRelationship<ContentType>,
+	): NodeWithRelationship<ContentType> {
 		return Object.create(current, {
 			parent: {
 				value: parent || null,
@@ -37,8 +31,8 @@ export class NodeTree<NodeContentType extends object> {
 		} satisfies PropertyDescriptorMap);
 	}
 
-	public track(value: Node<NodeContentType>): TreeNodeWithParent<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithParentRelationship(value, this.current);
+	public track(value: GenericNode<NodeContentType>): NodeWithRelationship<NodeContentType> {
+		const treeNode = NodeTree.createNodeWithRelationship(value, this.current);
 
 		if (!this.root) {
 			this.root = treeNode;
@@ -51,7 +45,7 @@ export class NodeTree<NodeContentType extends object> {
 		return treeNode;
 	}
 
-	public push(value: Node<NodeContentType>): void {
+	public push(value: GenericNode<NodeContentType>): void {
 		const treeNode = this.track(value);
 		this.current = treeNode;
 	}
@@ -61,7 +55,7 @@ export class NodeTree<NodeContentType extends object> {
 	 * @returns
 	 */
 
-	public pop(): TreeNodeWithParent<NodeContentType> {
+	public pop(): NodeWithRelationship<NodeContentType> {
 		const out = this.current;
 
 		this.ascend();
@@ -81,7 +75,7 @@ export class NodeTree<NodeContentType extends object> {
 		this.current = this.current.parent;
 	}
 
-	public get currentNode(): TreeNodeWithParent<NodeContentType> {
+	public get currentNode(): NodeWithRelationship<NodeContentType> {
 		return this.current;
 	}
 
@@ -89,7 +83,7 @@ export class NodeTree<NodeContentType extends object> {
 		return this.root;
 	}
 
-	public get parentNode(): TreeNodeWithParent<NodeContentType> | null {
+	public get parentNode(): NodeWithRelationship<NodeContentType> | null {
 		return this.currentNode?.parent;
 	}
 }
