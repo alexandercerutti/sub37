@@ -1,10 +1,7 @@
-interface GenericNode<ContentType extends object> {
-	content: ContentType;
-}
-
-export interface NodeWithRelationship<ContentType extends object> extends GenericNode<ContentType> {
+export interface NodeWithRelationship<ContentType extends object> {
 	children: Array<NodeWithRelationship<ContentType>>;
 	parent: NodeWithRelationship<ContentType>;
+	content: ContentType;
 }
 
 interface Memory<ContentType extends object> {
@@ -16,21 +13,14 @@ export class NodeTree<NodeContentType extends object> {
 	private root: NodeWithRelationship<NodeContentType>;
 	private current: NodeWithRelationship<NodeContentType>;
 
-	public static createGenericNode<ContentType extends object>(
+	public static createNodeWithRelationshipShell<ContentType extends object>(
 		content: ContentType,
-	): GenericNode<ContentType> {
+		parent: NodeWithRelationship<ContentType> | null,
+	): NodeWithRelationship<ContentType> {
 		return Object.create(null, {
 			content: {
 				value: content,
 			},
-		});
-	}
-
-	public static createNodeWithRelationship<ContentType extends object>(
-		current: GenericNode<ContentType>,
-		parent: NodeWithRelationship<ContentType>,
-	): NodeWithRelationship<ContentType> {
-		return Object.create(current, {
 			parent: {
 				value: parent || null,
 			},
@@ -42,10 +32,7 @@ export class NodeTree<NodeContentType extends object> {
 	}
 
 	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithRelationship(
-			NodeTree.createGenericNode(value),
-			this.current,
-		);
+		const treeNode = NodeTree.createNodeWithRelationshipShell(value, this.current);
 
 		if (!this.root) {
 			this.root = treeNode;

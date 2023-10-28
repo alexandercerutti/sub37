@@ -73,9 +73,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 				}
 
 				if (openTagsTree) {
-					openTagsTree.track({
-						content: token,
-					});
+					openTagsTree.track(token);
 				}
 
 				break;
@@ -110,20 +108,14 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				switch (token.content) {
 					case "tt": {
-						yield [
-							BlockType.DOCUMENT,
-							NodeTree.createNodeWithRelationship(nodeRepresentation, null),
-						];
+						yield [BlockType.DOCUMENT, NodeTree.createNodeWithRelationshipShell(token, null)];
 
 						continue;
 					}
 
 					case "div": {
 						if (Object.entries(token.attributes).length) {
-							yield [
-								BlockType.GROUP,
-								NodeTree.createNodeWithRelationship(nodeRepresentation, null),
-							];
+							yield [BlockType.GROUP, NodeTree.createNodeWithRelationshipShell(token, null)];
 						}
 
 						continue;
@@ -133,10 +125,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 						currentBlockType = BlockType.BODY;
 
 						if (Object.entries(token.attributes).length) {
-							yield [
-								BlockType.GROUP,
-								NodeTree.createNodeWithRelationship(nodeRepresentation, null),
-							];
+							yield [BlockType.GROUP, NodeTree.createNodeWithRelationshipShell(token, null)];
 						}
 
 						continue;
@@ -149,7 +138,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 				}
 
 				if (openTagsTree) {
-					openTagsTree.push(nodeRepresentation);
+					openTagsTree.push(token);
 				} else {
 					openTagsList.push(nodeRepresentation);
 				}
