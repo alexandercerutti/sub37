@@ -70,7 +70,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 				}
 
 				if (shouldTokenCreateNodeTree(token) && !openTagsTree) {
-					openTagsTree = new NodeTree(openTagsList);
+					openTagsTree = new NodeTree();
 				}
 
 				if (openTagsTree) {
@@ -92,7 +92,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 				};
 
 				if (shouldTokenCreateNodeTree(token) && !openTagsTree) {
-					openTagsTree = new NodeTree(openTagsList);
+					openTagsTree = new NodeTree();
 				}
 
 				if (!isTokenParentRelationshipRespected(token, openTagsList)) {

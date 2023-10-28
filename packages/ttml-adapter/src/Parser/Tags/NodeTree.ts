@@ -4,7 +4,6 @@
  */
 
 import type { Node } from "./Node";
-import type { NodeQueue } from "./NodeQueue";
 import type { WithParent } from "./WithParent";
 
 export interface TreeNode<ContentType extends object = object> {
@@ -20,17 +19,8 @@ interface Memory<ContentType extends object> {
 }
 
 export class NodeTree<NodeContentType extends object> {
-	private queue: NodeQueue<NodeContentType>;
 	private root: TreeNodeWithParent<NodeContentType>;
 	private current: TreeNodeWithParent<NodeContentType>;
-
-	public constructor(queue: NodeQueue<NodeContentType>) {
-		if (!queue) {
-			throw new Error("Cannot build NodeTree: reference queue parameter is missing.");
-		}
-
-		this.queue = queue;
-	}
 
 	public static createNodeWithParentRelationship<ContentType extends object>(
 		current: Node<ContentType>,
@@ -62,7 +52,6 @@ export class NodeTree<NodeContentType extends object> {
 	}
 
 	public push(value: Node<NodeContentType>): void {
-		this.queue.push(value);
 		const treeNode = this.track(value);
 		this.current = treeNode;
 	}
@@ -74,7 +63,6 @@ export class NodeTree<NodeContentType extends object> {
 			this.current = this.current.parent;
 		}
 
-		this.queue.pop();
 		return out;
 	}
 
