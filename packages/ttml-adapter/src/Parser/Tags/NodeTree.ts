@@ -56,14 +56,29 @@ export class NodeTree<NodeContentType extends object> {
 		this.current = treeNode;
 	}
 
+	/**
+	 * Removes the current node and returns it
+	 * @returns
+	 */
+
 	public pop(): TreeNodeWithParent<NodeContentType> {
 		const out = this.current;
 
-		if (this.current) {
-			this.current = this.current.parent;
+		this.ascend();
+		return out;
+	}
+
+	/**
+	 * Changes the pointer to the current node without
+	 * removing the last child
+	 */
+
+	public ascend(): void {
+		if (!this.current) {
+			return;
 		}
 
-		return out;
+		this.current = this.current.parent;
 	}
 
 	public get currentNode(): TreeNodeWithParent<NodeContentType> {
