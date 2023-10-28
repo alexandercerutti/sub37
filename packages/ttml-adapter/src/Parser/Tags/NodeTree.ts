@@ -16,6 +16,16 @@ export class NodeTree<NodeContentType extends object> {
 	private root: NodeWithRelationship<NodeContentType>;
 	private current: NodeWithRelationship<NodeContentType>;
 
+	public static createGenericNode<ContentType extends object>(
+		content: ContentType,
+	): GenericNode<ContentType> {
+		return Object.create(null, {
+			content: {
+				value: content,
+			},
+		});
+	}
+
 	public static createNodeWithRelationship<ContentType extends object>(
 		current: GenericNode<ContentType>,
 		parent: NodeWithRelationship<ContentType>,
@@ -31,8 +41,11 @@ export class NodeTree<NodeContentType extends object> {
 		} satisfies PropertyDescriptorMap);
 	}
 
-	public track(value: GenericNode<NodeContentType>): NodeWithRelationship<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithRelationship(value, this.current);
+	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
+		const treeNode = NodeTree.createNodeWithRelationship(
+			NodeTree.createGenericNode(value),
+			this.current,
+		);
 
 		if (!this.root) {
 			this.root = treeNode;
@@ -45,7 +58,7 @@ export class NodeTree<NodeContentType extends object> {
 		return treeNode;
 	}
 
-	public push(value: GenericNode<NodeContentType>): void {
+	public push(value: NodeContentType): void {
 		const treeNode = this.track(value);
 		this.current = treeNode;
 	}
