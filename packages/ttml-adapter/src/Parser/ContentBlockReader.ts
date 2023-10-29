@@ -1,19 +1,20 @@
 import { Token } from "./Token";
 import { TokenType } from "./Token.js";
 import type { Node } from "./Tags/Node";
-import { NodeQueue } from "./Tags/NodeQueue.js";
 import { NodeTree, type NodeWithRelationship } from "./Tags/NodeTree.js";
 import { Tokenizer } from "./Tokenizer.js";
+import { TrackingTree } from "./Tags/TrackingTree.js";
 
 export enum BlockType {
-	IGNORED /****/ = 0b00000001,
-	DOCUMENT /***/ = 0b00000010,
-	HEADER /*****/ = 0b00000100,
-	BODY /*******/ = 0b00001000,
-	REGION /*****/ = 0b00010000,
-	STYLE /******/ = 0b00100000,
-	CUE /********/ = 0b01000000,
-	GROUP /******/ = 0b10000000,
+	IGNORED /*******/ = 0b000000001,
+	DOCUMENT /******/ = 0b000000010,
+	HEADER /********/ = 0b000000100,
+	BODY /**********/ = 0b000001000,
+	REGION /********/ = 0b000010000,
+	STYLE /*********/ = 0b000100000,
+	CUE /***********/ = 0b001000000,
+	GROUP /*********/ = 0b010000000,
+	SELFCLOSING /***/ = 0b100000000,
 }
 
 type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: NodeWithRelationship<Token>];
@@ -26,6 +27,11 @@ type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelations
 
 type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
 
+type SelfClosingBlockTuple = [
+	BlockTuple: BlockType.SELFCLOSING,
+	payload: NodeWithRelationship<Token>,
+];
+
 type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
 
 type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
@@ -37,7 +43,8 @@ type BlockTuple =
 	| RegionBlockTuple
 	| StyleBlockTuple
 	| GroupBlockTuple
-	| IgnoredBlockTuple;
+	| IgnoredBlockTuple
+	| SelfClosingBlockTuple;
 
 const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["tt", BlockType.DOCUMENT],
@@ -51,8 +58,7 @@ const BlockTupleMap = new Map<string, BlockTuple[0]>([
 ]);
 
 export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple, null, BlockTuple> {
-	const openTagsList = new NodeQueue<Token>();
-	let openTagsTree: NodeTree<Token> | null = null;
+	const trackingTree = new TrackingTree<Token>();
 
 	let currentBlockType: BlockType = BlockType.DOCUMENT;
 	let token: Token;
@@ -64,17 +70,30 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (!isTokenParentRelationshipRespected(token, openTagsList)) {
+				if (!isTokenParentRelationshipRespected(token, trackingTree)) {
 					break;
 				}
 
-				if (shouldTokenCreateNodeTree(token) && !openTagsTree) {
-					openTagsTree = new NodeTree();
+				if (
+					shouldTokenBeTracked(token) &&
+					trackingTree.currentNode &&
+					!TrackingTree.isTracked(trackingTree.currentNode.content)
+				) {
+					yield [
+						BlockType.SELFCLOSING,
+						NodeTree.createNodeWithRelationshipShell(token, trackingTree.currentNode),
+					];
+					continue;
 				}
 
-				if (openTagsTree) {
-					openTagsTree.track(token);
+				if (shouldTokenBeTracked(token)) {
+					trackingTree.addTrackedNode(token);
+				} else {
+					trackingTree.addUntrackedNode(token);
 				}
+
+				// As this the parent is tracked, we should only ascend the list.
+				trackingTree.pop();
 
 				break;
 			}
@@ -84,15 +103,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				const nodeRepresentation: Node<Token> = {
-					content: token,
-				};
-
-				if (shouldTokenCreateNodeTree(token) && !openTagsTree) {
-					openTagsTree = new NodeTree();
-				}
-
-				if (!isTokenParentRelationshipRespected(token, openTagsList)) {
+				if (!isTokenParentRelationshipRespected(token, trackingTree)) {
 					/**
 					 * Even if token does not respect it parent relatioship,
 					 * we still add it to the queue to mark its end later.
@@ -102,14 +113,21 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					 */
 
 					currentBlockType ^= BlockType.IGNORED;
-					openTagsList.push(nodeRepresentation);
+
+					trackingTree.addUntrackedNode(token);
+
 					continue;
+				}
+
+				if (shouldTokenBeTracked(token)) {
+					trackingTree.addTrackedNode(token);
+				} else {
+					trackingTree.addUntrackedNode(token);
 				}
 
 				switch (token.content) {
 					case "tt": {
 						yield [BlockType.DOCUMENT, NodeTree.createNodeWithRelationshipShell(token, null)];
-
 						continue;
 					}
 
@@ -137,21 +155,15 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					}
 				}
 
-				if (openTagsTree) {
-					openTagsTree.push(token);
-				} else {
-					openTagsList.push(nodeRepresentation);
-				}
-
 				break;
 			}
 
 			case TokenType.END_TAG: {
-				if (!openTagsList.length) {
-					continue;
-				}
+				// if (!tr.length) {
+				// 	continue;
+				// }
 
-				if (openTagsList.current.content.content !== token.content) {
+				if (trackingTree.currentNode.content.content !== token.content) {
 					continue;
 				}
 
@@ -162,25 +174,22 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
-				if (shouldTokenCreateNodeTree(token) && !openTagsTree?.parentNode) {
+				if (
+					shouldTokenBeTracked(token) &&
+					!TrackingTree.isTracked(trackingTree.currentNode.parent.content)
+				) {
 					const blockType: BlockTuple[0] = BlockTupleMap.get(
-						openTagsTree.currentNode.content.content,
+						trackingTree.currentNode.content.content,
 					);
 
 					if (blockType !== BlockType.IGNORED) {
-						yield [blockType, openTagsTree.pop()];
+						yield [blockType, trackingTree.pop()];
 					}
 
-					openTagsTree = null;
 					break;
 				}
 
-				if (openTagsTree) {
-					openTagsTree.pop();
-				} else {
-					openTagsList.pop();
-				}
-
+				trackingTree.pop();
 				break;
 			}
 		}
@@ -205,21 +214,18 @@ const TokenRelationships = {
 	p: ["div", "body"],
 } as const;
 
-function isTokenParentRelationshipRespected(
-	token: Token,
-	openTagsQueue: NodeQueue<Token>,
-): boolean {
+function isTokenParentRelationshipRespected(token: Token, tagsTree: TrackingTree<Token>): boolean {
 	const { content } = token;
 
 	if (!isTokenTreeConstrained(content)) {
 		return true;
 	}
 
-	if (!openTagsQueue.current) {
+	if (!tagsTree.currentNode) {
 		return true;
 	}
 
-	const treeNode: Node<Token> = openTagsQueue.current;
+	const treeNode: Node<Token> = tagsTree.currentNode;
 
 	/**
 	 * If we already reached the point of checking if a tag
@@ -237,6 +243,6 @@ function isTokenParentRelationshipRespected(
 const NODE_TREE_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
 type NODE_TREE_ALLOWED_ELEMENTS = typeof NODE_TREE_ALLOWED_ELEMENTS;
 
-function shouldTokenCreateNodeTree(token: Token): boolean {
+function shouldTokenBeTracked(token: Token): boolean {
 	return NODE_TREE_ALLOWED_ELEMENTS.includes(token.content as NODE_TREE_ALLOWED_ELEMENTS[number]);
 }

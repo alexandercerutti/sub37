@@ -157,7 +157,11 @@ describe("ContentBlockReader", () => {
 		expect(generator.next().value).toMatchObject([
 			BlockType.CUE,
 			{
-				parent: null,
+				parent: {
+					content: {
+						content: "div",
+					},
+				},
 				...expectedParagraphObjectContent,
 				children: [
 					expectedRootChildrenNode,
@@ -171,7 +175,11 @@ describe("ContentBlockReader", () => {
 		expect(generator.next().value).toMatchObject([
 			BlockType.CUE,
 			{
-				parent: null,
+				parent: {
+					content: {
+						content: "div",
+					},
+				},
 				...expectedParagraphObjectContent,
 				children: [
 					expectedRootChildrenNode,
@@ -224,7 +232,11 @@ describe("ContentBlockReader", () => {
 		expect(generator.next().value).toMatchObject([
 			BlockType.STYLE,
 			{
-				parent: null,
+				parent: {
+					content: {
+						content: "head",
+					},
+				},
 				content: {
 					content: "styling",
 				},
@@ -277,7 +289,11 @@ describe("ContentBlockReader", () => {
 		expect(generator.next().value).toMatchObject([
 			BlockType.REGION,
 			{
-				parent: null,
+				parent: {
+					content: {
+						content: "head",
+					},
+				},
 				content: {
 					content: "layout",
 					attributes: {},
@@ -345,7 +361,11 @@ describe("ContentBlockReader", () => {
 		expect(generator.next().value).toMatchObject([
 			BlockType.STYLE,
 			{
-				parent: null,
+				parent: {
+					content: {
+						content: "head",
+					},
+				},
 				content: {
 					content: "styling",
 					attributes: {},
