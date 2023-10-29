@@ -34,6 +34,10 @@ export class TrackingTree<ContentType extends object> {
 	public pop(): NodeWithRelationship<TrackableNode<ContentType>> | null {
 		const { parentNode } = this.tree;
 
+		if (!parentNode) {
+			return this.tree.pop();
+		}
+
 		if (TrackingTree.isTracked(parentNode?.content)) {
 			this.tree.ascend();
 			return null;
