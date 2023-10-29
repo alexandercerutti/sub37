@@ -6,15 +6,14 @@ import { Tokenizer } from "./Tokenizer.js";
 import { TrackingTree } from "./Tags/TrackingTree.js";
 
 export enum BlockType {
-	IGNORED /*******/ = 0b000000001,
-	DOCUMENT /******/ = 0b000000010,
-	HEADER /********/ = 0b000000100,
-	BODY /**********/ = 0b000001000,
-	REGION /********/ = 0b000010000,
-	STYLE /*********/ = 0b000100000,
-	CUE /***********/ = 0b001000000,
-	GROUP /*********/ = 0b010000000,
-	SELFCLOSING /***/ = 0b100000000,
+	DOCUMENT /******/ = 0b00000001,
+	HEADER /********/ = 0b00000010,
+	BODY /**********/ = 0b00000100,
+	REGION /********/ = 0b00001000,
+	STYLE /*********/ = 0b00010000,
+	CUE /***********/ = 0b00100000,
+	GROUP /*********/ = 0b01000000,
+	SELFCLOSING /***/ = 0b10000000,
 }
 
 type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: NodeWithRelationship<Token>];
@@ -34,8 +33,6 @@ type SelfClosingBlockTuple = [
 
 type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
 
-type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
-
 type BlockTuple =
 	| DocumentBlockTuple
 	| CueBlockTuple
@@ -43,7 +40,6 @@ type BlockTuple =
 	| RegionBlockTuple
 	| StyleBlockTuple
 	| GroupBlockTuple
-	| IgnoredBlockTuple
 	| SelfClosingBlockTuple;
 
 const BlockTupleMap = new Map<string, BlockTuple[0]>([
@@ -57,16 +53,21 @@ const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["span", BlockType.CUE],
 ]);
 
+const ignoredBlockSymbol = Symbol("ignoredBlock");
+
+interface IgnoredNode {
+	[ignoredBlockSymbol]: true;
+}
+
 export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple, null, BlockTuple> {
 	const trackingTree = new TrackingTree<Token>();
 
-	let currentBlockType: BlockType = BlockType.DOCUMENT;
 	let token: Token;
 
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.TAG: {
-				if (currentBlockType & BlockType.IGNORED) {
+				if (trackingTree.currentNode && isTokenIgnored(trackingTree.currentNode.content)) {
 					continue;
 				}
 
@@ -99,7 +100,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 			}
 
 			case TokenType.START_TAG: {
-				if (currentBlockType & BlockType.IGNORED) {
+				if (trackingTree.currentNode && isTokenIgnored(trackingTree.currentNode.content)) {
 					continue;
 				}
 
@@ -112,9 +113,13 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					 * because we are going to ignore it.
 					 */
 
-					currentBlockType ^= BlockType.IGNORED;
-
-					trackingTree.addUntrackedNode(token);
+					trackingTree.addUntrackedNode(
+						Object.create(token, {
+							[ignoredBlockSymbol]: {
+								value: true,
+							},
+						}),
+					);
 
 					continue;
 				}
@@ -140,18 +145,11 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					}
 
 					case "body": {
-						currentBlockType = BlockType.BODY;
-
 						if (Object.entries(token.attributes).length) {
 							yield [BlockType.GROUP, NodeTree.createNodeWithRelationshipShell(token, null)];
 						}
 
 						continue;
-					}
-
-					case "head": {
-						currentBlockType = BlockType.HEADER;
-						break;
 					}
 				}
 
@@ -159,18 +157,16 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 			}
 
 			case TokenType.END_TAG: {
-				// if (!tr.length) {
-				// 	continue;
-				// }
+				if (!trackingTree.currentNode) {
+					continue;
+				}
 
 				if (trackingTree.currentNode.content.content !== token.content) {
 					continue;
 				}
 
-				if (currentBlockType & BlockType.IGNORED) {
-					currentBlockType ^= BlockType.IGNORED;
-					openTagsList.pop();
-
+				if (isTokenIgnored(trackingTree.currentNode.content)) {
+					trackingTree.pop();
 					break;
 				}
 
@@ -182,10 +178,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 						trackingTree.currentNode.content.content,
 					);
 
-					if (blockType !== BlockType.IGNORED) {
-						yield [blockType, trackingTree.pop()];
-					}
-
+					yield [blockType, trackingTree.pop()];
 					break;
 				}
 
@@ -245,4 +238,8 @@ type NODE_TREE_ALLOWED_ELEMENTS = typeof NODE_TREE_ALLOWED_ELEMENTS;
 
 function shouldTokenBeTracked(token: Token): boolean {
 	return NODE_TREE_ALLOWED_ELEMENTS.includes(token.content as NODE_TREE_ALLOWED_ELEMENTS[number]);
+}
+
+function isTokenIgnored(node: Token | IgnoredNode): node is IgnoredNode {
+	return Boolean((node as IgnoredNode)[ignoredBlockSymbol]);
 }
