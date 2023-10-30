@@ -1,46 +1,28 @@
-/**
- * A tree that, taken a queue, proxies that
- * and saves the nodes in a different structure.
- */
-
-import type { Node } from "./Node";
-import type { NodeQueue } from "./NodeQueue";
-import type { WithParent } from "./WithParent";
-
-export interface TreeNode<ContentType extends object = object> {
-	content: Node<ContentType>["content"];
-	children: Array<TreeNode<ContentType>>;
+export interface NodeWithRelationship<ContentType extends object> {
+	children: Array<NodeWithRelationship<ContentType>>;
+	parent: NodeWithRelationship<ContentType>;
+	content: ContentType;
 }
 
-export type TreeNodeWithParent<ContentType extends object> = WithParent<TreeNode<ContentType>>;
-
 interface Memory<ContentType extends object> {
-	currentNode: TreeNodeWithParent<ContentType> | null;
-	storage: TreeNodeWithParent<ContentType> | null;
+	currentNode: NodeWithRelationship<ContentType> | null;
+	storage: NodeWithRelationship<ContentType> | null;
 }
 
 export class NodeTree<NodeContentType extends object> {
-	private queue: NodeQueue<NodeContentType>;
-	private memory: Memory<NodeContentType> = {
-		currentNode: null,
-		storage: null,
-	};
+	private root: NodeWithRelationship<NodeContentType>;
+	private current: NodeWithRelationship<NodeContentType>;
 
-	public constructor(queue: NodeQueue<NodeContentType>) {
-		if (!queue) {
-			throw new Error("Cannot build NodeTree: reference queue parameter is missing.");
-		}
-
-		this.queue = queue;
-	}
-
-	public static createNodeWithParentRelationship<ContentType extends object>(
-		current: Node<ContentType>,
-		parent: TreeNode<ContentType>,
-	): TreeNodeWithParent<ContentType> {
-		return Object.create(current, {
+	public static createNodeWithRelationshipShell<ContentType extends object>(
+		content: ContentType,
+		parent: NodeWithRelationship<ContentType> | null,
+	): NodeWithRelationship<ContentType> {
+		return Object.create(null, {
+			content: {
+				value: content,
+			},
 			parent: {
-				value: parent,
+				value: parent || null,
 			},
 			children: {
 				value: [],
@@ -49,46 +31,59 @@ export class NodeTree<NodeContentType extends object> {
 		} satisfies PropertyDescriptorMap);
 	}
 
-	public track(value: Node<NodeContentType>): TreeNodeWithParent<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithParentRelationship(value, this.memory.currentNode);
+	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
+		const treeNode = NodeTree.createNodeWithRelationshipShell(value, this.current);
 
-		if (!this.memory.storage) {
-			this.memory.storage = treeNode;
-			this.memory.currentNode = treeNode;
+		if (!this.root) {
+			this.root = treeNode;
+			this.current = treeNode;
 
 			return treeNode;
 		}
 
-		this.memory.currentNode.children.push(treeNode);
+		this.current.children.push(treeNode);
 		return treeNode;
 	}
 
-	public push(value: Node<NodeContentType>): void {
-		this.queue.push(value);
+	public push(value: NodeContentType): void {
 		const treeNode = this.track(value);
-		this.memory.currentNode = treeNode;
+		this.current = treeNode;
 	}
 
-	public pop(): TreeNodeWithParent<NodeContentType> {
-		const out = this.memory.currentNode;
+	/**
+	 * Removes the current node and returns it
+	 * @returns
+	 */
 
-		if (this.memory.currentNode) {
-			this.memory.currentNode = this.memory.currentNode.parent;
-		}
+	public pop(): NodeWithRelationship<NodeContentType> {
+		const out = this.current;
 
-		this.queue.pop();
+		this.ascend();
 		return out;
 	}
 
-	public get currentNode(): TreeNodeWithParent<NodeContentType> {
-		return this.memory.currentNode;
+	/**
+	 * Changes the pointer to the current node without
+	 * removing the last child
+	 */
+
+	public ascend(): void {
+		if (!this.current) {
+			return;
+		}
+
+		this.current = this.current.parent;
+	}
+
+	public get currentNode(): NodeWithRelationship<NodeContentType> {
+		return this.current;
 	}
 
 	public get tree(): Memory<NodeContentType>["storage"] {
-		return this.memory.storage;
+		return this.root;
 	}
 
-	public get parentNode(): TreeNodeWithParent<NodeContentType> | null {
+	public get parentNode(): NodeWithRelationship<NodeContentType> | null {
 		return this.currentNode?.parent;
 	}
 }

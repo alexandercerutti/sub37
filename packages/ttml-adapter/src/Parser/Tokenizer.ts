@@ -101,8 +101,7 @@ enum TokenizerState {
 	 * for subtitles purposes
 	 */
 
-	START_PI /** <? */,
-	END_PI /** ?> */,
+	PROCESSING_INSTRUCTION /** <? ?>*/,
 
 	START_CDATA /** <!CDATA[ */,
 	END_CDATA /** ]]> */,
@@ -175,7 +174,7 @@ export class Tokenizer {
 					}
 
 					if (this.sourceWindow.peekEvaluate("?")) {
-						state = TokenizerState.START_PI;
+						state = TokenizerState.PROCESSING_INSTRUCTION;
 						break;
 					}
 
@@ -236,7 +235,7 @@ export class Tokenizer {
 					return Token.ValidationEntity(result);
 				}
 
-				case TokenizerState.START_PI: {
+				case TokenizerState.PROCESSING_INSTRUCTION: {
 					/**
 					 * We don't really care right now to
 					 * do something with PROCESSING INSTRUCTIONS
@@ -248,16 +247,11 @@ export class Tokenizer {
 					result += char;
 
 					if (this.sourceWindow.peekEvaluate("?>")) {
-						state = TokenizerState.END_PI;
+						return Token.ProcessingInstruction(result);
 					}
 
 					this.sourceWindow.advance();
 					break;
-				}
-
-				case TokenizerState.END_PI: {
-					this.sourceWindow.advance();
-					return Token.ProcessingInstruction(result);
 				}
 
 				case TokenizerState.START_COMMENT: {
