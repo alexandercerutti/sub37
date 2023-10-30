@@ -6,21 +6,18 @@ import { Tokenizer } from "./Tokenizer.js";
 import { TrackingTree } from "./Tags/TrackingTree.js";
 
 export enum BlockType {
-	DOCUMENT /******/ = 0b00000001,
-	HEADER /********/ = 0b00000010,
-	BODY /**********/ = 0b00000100,
-	REGION /********/ = 0b00001000,
-	STYLE /*********/ = 0b00010000,
-	CUE /***********/ = 0b00100000,
-	GROUP /*********/ = 0b01000000,
-	SELFCLOSING /***/ = 0b10000000,
+	DOCUMENT /******/ = 0b0000001,
+	HEADER /********/ = 0b0000010,
+	REGION /********/ = 0b0000100,
+	STYLE /*********/ = 0b0001000,
+	CUE /***********/ = 0b0010000,
+	GROUP /*********/ = 0b0100000,
+	SELFCLOSING /***/ = 0b1000000,
 }
 
 type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: NodeWithRelationship<Token>];
 
 type CueBlockTuple = [blockType: BlockType.CUE, payload: NodeWithRelationship<Token>];
-
-type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: NodeWithRelationship<Token>];
 
 type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelationship<Token>];
 
@@ -36,7 +33,6 @@ type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationshi
 type BlockTuple =
 	| DocumentBlockTuple
 	| CueBlockTuple
-	| HeaderBlockTuple
 	| RegionBlockTuple
 	| StyleBlockTuple
 	| GroupBlockTuple
@@ -44,7 +40,6 @@ type BlockTuple =
 
 const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["tt", BlockType.DOCUMENT],
-	["head", BlockType.HEADER],
 	["body", BlockType.GROUP],
 	["div", BlockType.GROUP],
 	["layout", BlockType.REGION],
