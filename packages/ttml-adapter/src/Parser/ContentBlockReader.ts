@@ -94,6 +94,18 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 				break;
 			}
 
+			case TokenType.STRING: {
+				if (!trackingTree.currentNode) {
+					continue;
+				}
+
+				trackingTree.addTrackedNode(token);
+
+				// As this the parent is tracked, we should only ascend the list.
+				trackingTree.pop();
+				break;
+			}
+
 			case TokenType.START_TAG: {
 				if (trackingTree.currentNode && isTokenIgnored(trackingTree.currentNode.content)) {
 					continue;

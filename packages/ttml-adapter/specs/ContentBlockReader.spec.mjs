@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { BlockType, getNextContentBlock } from "../lib/Parser/ContentBlockReader.js";
 import { Tokenizer } from "../lib/Parser/Tokenizer.js";
+import { TokenType } from "../lib/Parser/Token.js";
 
 describe("ContentBlockReader", () => {
 	it("should return a paragraph or a region", () => {
@@ -67,7 +68,13 @@ describe("ContentBlockReader", () => {
 
 		const expectedRootChildrenNode = {
 			...expectedSpanObjectContent,
-			children: [],
+			children: [
+				{
+					content: {
+						type: TokenType.STRING,
+					},
+				},
+			],
 			parent: expectedParagraphObjectContent,
 		};
 
@@ -451,36 +458,36 @@ describe("ContentBlockReader", () => {
 				</head>
 				<body style="bodyStyle">
 					<div xml:space="preserve">
-					<p begin="10010000t" end="49642508t" region="region_00" xml:id="subtitle0">♪♪</p>
-					<p begin="342010001t" end="365370003t" region="region_00" xml:id="subtitle1">(alarm beeping,</p>
-					<p begin="342010001t" end="365370003t" region="region_01" xml:id="subtitle2">Jane gasps)</p>
-					<p begin="430429999t" end="460459999t" region="region_00" xml:id="subtitle3">(Sarah)</p>
-					<p begin="430429999t" end="460459999t" region="region_01" xml:id="subtitle4">Okay, got your stuff.</p>
-					<p begin="460877500t" end="495917505t" region="region_00" xml:id="subtitle5">Clothes, toothbrush.</p>
-					<p begin="496335005t" end="509267508t" region="region_00" xml:id="subtitle6">You slept here?</p>
-					<p begin="509685008t" end="528870007t" region="region_00" xml:id="subtitle7">Yeah.</p>
-					<p begin="546802506t" end="563065001t" region="region_00" xml:id="subtitle8">Okay, look.</p>
-					<p begin="563482502t" end="579755008t" region="region_00" xml:id="subtitle9">I know I shouldn't</p>
-					<p begin="563482502t" end="579755008t" region="region_01" xml:id="subtitle10">have brought Dad</p>
-					<p begin="580172508t" end="595182503t" region="region_00" xml:id="subtitle11">into your home</p>
-					<p begin="580172508t" end="595182503t" region="region_01" xml:id="subtitle12">without asking.</p>
-					<p begin="595600003t" end="625212503t" region="region_00" xml:id="subtitle13">But I know if I asked,</p>
-					<p begin="595600003t" end="625212503t" region="region_01" xml:id="subtitle14">you would've said no.</p>
-					<p begin="625630003t" end="640640000t" region="region_00" xml:id="subtitle15">Which is why you</p>
-					<p begin="625630003t" end="640640000t" region="region_01" xml:id="subtitle16">shouldn't have done it.</p>
-					<p begin="641057500t" end="670262508t" region="region_00" xml:id="subtitle17">You could have at least,</p>
-					<p begin="641057500t" end="670262508t" region="region_01" xml:id="subtitle18">you know, shaken his hand</p>
-					<p begin="670670000t" end="683185001t" region="region_00" xml:id="subtitle19">or said hi.</p>
-					<p begin="683602502t" end="700292508t" region="region_00" xml:id="subtitle20">I won't talk</p>
-					<p begin="683602502t" end="700292508t" region="region_01" xml:id="subtitle21">about this here.</p>
-					<p begin="700700000t" end="717807506t" region="region_00" xml:id="subtitle22">Well, when do you wanna</p>
-					<p begin="700700000t" end="717807506t" region="region_01" xml:id="subtitle23">talk about it, Kurt?</p>
-					<p begin="718225006t" end="746585005t" region="region_00" xml:id="subtitle24">Taylor is alive,</p>
-					<p begin="718225006t" end="746585005t" region="region_01" xml:id="subtitle25">Dad is innocent.</p>
-					<p begin="747002506t" end="770770000t" region="region_00" xml:id="subtitle26">Her being back does</p>
-					<p begin="747002506t" end="770770000t" region="region_01" xml:id="subtitle27">not change the fact</p>
-					<p begin="771187500t" end="785372503t" region="region_00" xml:id="subtitle28">that someone</p>
-					<p begin="771187500t" end="785372503t" region="region_01" xml:id="subtitle29">kidnapped her.</p>
+						<p begin="10010000t" end="49642508t" region="region_00" xml:id="subtitle0">♪♪</p>
+						<p begin="342010001t" end="365370003t" region="region_00" xml:id="subtitle1">(alarm beeping,</p>
+						<p begin="342010001t" end="365370003t" region="region_01" xml:id="subtitle2">Jane gasps)</p>
+						<p begin="430429999t" end="460459999t" region="region_00" xml:id="subtitle3">(Sarah)</p>
+						<p begin="430429999t" end="460459999t" region="region_01" xml:id="subtitle4">Okay, got your stuff.</p>
+						<p begin="460877500t" end="495917505t" region="region_00" xml:id="subtitle5">Clothes, toothbrush.</p>
+						<p begin="496335005t" end="509267508t" region="region_00" xml:id="subtitle6">You slept here?</p>
+						<p begin="509685008t" end="528870007t" region="region_00" xml:id="subtitle7">Yeah.</p>
+						<p begin="546802506t" end="563065001t" region="region_00" xml:id="subtitle8">Okay, look.</p>
+						<p begin="563482502t" end="579755008t" region="region_00" xml:id="subtitle9">I know I shouldn't</p>
+						<p begin="563482502t" end="579755008t" region="region_01" xml:id="subtitle10">have brought Dad</p>
+						<p begin="580172508t" end="595182503t" region="region_00" xml:id="subtitle11">into your home</p>
+						<p begin="580172508t" end="595182503t" region="region_01" xml:id="subtitle12">without asking.</p>
+						<p begin="595600003t" end="625212503t" region="region_00" xml:id="subtitle13">But I know if I asked,</p>
+						<p begin="595600003t" end="625212503t" region="region_01" xml:id="subtitle14">you would've said no.</p>
+						<p begin="625630003t" end="640640000t" region="region_00" xml:id="subtitle15">Which is why you</p>
+						<p begin="625630003t" end="640640000t" region="region_01" xml:id="subtitle16">shouldn't have done it.</p>
+						<p begin="641057500t" end="670262508t" region="region_00" xml:id="subtitle17">You could have at least,</p>
+						<p begin="641057500t" end="670262508t" region="region_01" xml:id="subtitle18">you know, shaken his hand</p>
+						<p begin="670670000t" end="683185001t" region="region_00" xml:id="subtitle19">or said hi.</p>
+						<p begin="683602502t" end="700292508t" region="region_00" xml:id="subtitle20">I won't talk</p>
+						<p begin="683602502t" end="700292508t" region="region_01" xml:id="subtitle21">about this here.</p>
+						<p begin="700700000t" end="717807506t" region="region_00" xml:id="subtitle22">Well, when do you wanna</p>
+						<p begin="700700000t" end="717807506t" region="region_01" xml:id="subtitle23">talk about it, Kurt?</p>
+						<p begin="718225006t" end="746585005t" region="region_00" xml:id="subtitle24">Taylor is alive,</p>
+						<p begin="718225006t" end="746585005t" region="region_01" xml:id="subtitle25">Dad is innocent.</p>
+						<p begin="747002506t" end="770770000t" region="region_00" xml:id="subtitle26">Her being back does</p>
+						<p begin="747002506t" end="770770000t" region="region_01" xml:id="subtitle27">not change the fact</p>
+						<p begin="771187500t" end="785372503t" region="region_00" xml:id="subtitle28">that someone</p>
+						<p begin="771187500t" end="785372503t" region="region_01" xml:id="subtitle29">kidnapped her.</p>
 						<p begin="785790003t" end="803722502t" region="region_00" xml:id="subtitle30">So, then talk me</p>
 					</div>
 				</body>
@@ -678,7 +685,13 @@ describe("ContentBlockReader", () => {
 					content: {
 						content: "p",
 					},
-					children: [],
+					children: [
+						{
+							content: {
+								type: TokenType.STRING,
+							},
+						},
+					],
 				},
 			]);
 		}
