@@ -8,14 +8,23 @@ import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
 import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
-import { getHHMMSSUnitsToSeconds, getNumberOfDigits } from "../TimeExpressions/math.js";
+import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
 ): number {
-	const [hours, minutes, seconds, , frames, subframes] = match;
-	let finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
+	const [hours, minutes, seconds, frames, subframes] = match;
+
+	const finalTime = getHHMMSSUnitsToSeconds(
+		hours,
+		minutes,
+		/**
+		 * Removing the decimal part, as a track with
+		 * `ttp:timeBase=media` should not have fractional parts
+		 */
+		Math.trunc(seconds),
+	);
 
 	/**
 	 * @TODO how to provide previous cue end time?
@@ -72,9 +81,5 @@ export function getMillisecondsByOffsetTime(
 		return (finalTime / (timeDetails["ttp:tickRate"] || 1)) * 1000;
 	}
 
-	if (!Number.isNaN(fraction)) {
-		finalTime += fraction / 10 ** getNumberOfDigits(fraction);
-	}
-
-	return referenceBegin + finalTime * 1000;
+	return referenceBegin + (finalTime + fraction) * 1000;
 }

@@ -20,36 +20,25 @@ describe("parseCue", () => {
 			});
 
 			it("Should convert 'hh:mm:ss.fraction'", () => {
-				expect(matchClockTimeExpression("22:57:10.300")).toEqual([22, 57, 10, 300]);
+				expect(matchClockTimeExpression("22:57:10.300")).toEqual([22, 57, 10.3]);
+				expect(matchClockTimeExpression("22:57:10.033")).toEqual([22, 57, 10.033]);
 			});
 
 			it("Should convert 'hh:mm:ss:frames'", () => {
-				expect(matchClockTimeExpression("22:57:10:8762231")).toEqual([
-					22,
-					57,
-					10,
-					undefined,
-					8762231,
-				]);
+				expect(matchClockTimeExpression("22:57:10:8762231")).toEqual([22, 57, 10, 8762231]);
 			});
 
 			it("Should convert 'hh:mm:ss:frames.sub-frames'", () => {
-				expect(matchClockTimeExpression("22:57:10:8762231.20")).toEqual([
-					22,
-					57,
-					10,
-					undefined,
-					8762231,
-					20,
-				]);
+				expect(matchClockTimeExpression("22:57:10:8762231.20")).toEqual([22, 57, 10, 8762231, 20]);
 			});
 		});
 
 		describe("Offset time", () => {
 			it("Should convert 'time-count fraction? metric'", () => {
-				expect(matchOffsetTimeExpression("10f")).toEqual([10, undefined, "f"]);
-				expect(matchOffsetTimeExpression("10h")).toEqual([10, undefined, "h"]);
-				expect(matchOffsetTimeExpression("10.500f")).toEqual([10, 500, "f"]);
+				expect(matchOffsetTimeExpression("10f")).toEqual([10, 0, "f"]);
+				expect(matchOffsetTimeExpression("10h")).toEqual([10, 0, "h"]);
+				expect(matchOffsetTimeExpression("10.500f")).toEqual([10, 0.5, "f"]);
+				expect(matchOffsetTimeExpression("10.050f")).toEqual([10, 0.05, "f"]);
 			});
 		});
 

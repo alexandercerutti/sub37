@@ -14,8 +14,16 @@ export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
 ): number {
-	const [hours, minutes, seconds, , frames, subframes] = match;
-	let finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
+	const [hours, minutes, seconds, frames, subframes] = match;
+	const finalTime = getHHMMSSUnitsToSeconds(
+		hours,
+		minutes,
+		/**
+		 * Removing the decimal part, as a track with
+		 * `ttp:timeBase=smpte` should not have fractional parts
+		 */
+		Math.trunc(seconds),
+	);
 
 	/**
 	 * @TODO how to provide previous cue end time?

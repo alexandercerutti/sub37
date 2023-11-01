@@ -18,7 +18,6 @@ export type ClockTimeMatch = [
 	hours: number,
 	minutes: number,
 	seconds: number,
-	fraction?: number,
 	frames?: number,
 	subframes?: number,
 ];
@@ -29,8 +28,7 @@ function toClockTimeMatch(match: RegExpMatchArray): ClockTimeMatch {
 	return [
 		parseInt(hours) || 0,
 		parseInt(minutes) || 0,
-		parseInt(seconds) || 0,
-		parseInt(fraction) || undefined,
+		parseFloat(`${seconds || ""}.${fraction}`) || 0,
 		parseInt(frames) || undefined,
 		parseInt(subframes) || undefined,
 	];

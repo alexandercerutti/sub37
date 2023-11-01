@@ -5,7 +5,10 @@
  *
  * Anyway, let's take a moment to appreciate the beautifulness
  * of this solutions... that I do not understand (except for
- * the "| 0", which is needed for rounding)
+ * the "| 0", which is needed for rounding).
+ *
+ * Kept here for reference. Might be useful one day, while in
+ * development.
  *
  * @param num
  * @returns

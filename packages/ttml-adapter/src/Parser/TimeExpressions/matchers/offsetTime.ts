@@ -12,7 +12,7 @@ export type OffsetTimeMatch = [unit: number, fraction: number, metric: string];
 function toOffsetTimeMatch(match: RegExpMatchArray): OffsetTimeMatch {
 	const [, unit, fraction, metric] = match;
 
-	return [parseInt(unit), parseInt(fraction) || undefined, metric];
+	return [parseInt(unit), parseFloat(`0.${fraction}`) || 0, metric];
 }
 
 export function matchOffsetTimeExpression(content: string): OffsetTimeMatch | null {

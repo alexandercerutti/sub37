@@ -2,16 +2,15 @@ import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
 import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
-import { getHHMMSSUnitsToSeconds, getNumberOfDigits } from "../TimeExpressions/math.js";
+import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
-	const [hours, minutes, seconds, fraction] = match;
+	/**
+	 * `fraction` is already embedded in seconds. `Frames` and
+	 * `subframes` are not supported in `ttp:timeBase=clock`
+	 */
+	const [hours, minutes, seconds] = match;
 	let finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
-
-	if (!Number.isNaN(fraction)) {
-		const fractionInSeconds = fraction / 10 ** getNumberOfDigits(fraction);
-		finalTime += fractionInSeconds;
-	}
 
 	return finalTime * 1000;
 }
@@ -81,10 +80,6 @@ export function getMillisecondsByOffsetTime(
 		return (finalTime / (timeDetails["ttp:tickRate"] || 1)) * 1000;
 	}
 
-	if (!Number.isNaN(fraction)) {
-		finalTime += fraction / 10 ** getNumberOfDigits(fraction);
-	}
-
 	/**
 	 * ```text
 	 * The frames and sub-frames terms and the frames (f) metric
@@ -94,5 +89,5 @@ export function getMillisecondsByOffsetTime(
 	 * Here is assumed we are working in seconds as per the function explanation
 	 */
 
-	return finalTime * 1000;
+	return (finalTime + fraction) * 1000;
 }

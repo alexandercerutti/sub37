@@ -54,7 +54,7 @@ export type WallClockMatch = Date;
 export function toWallClockWallTimeMatch(
 	match: [hours: string, minutes: string, seconds: string, fraction?: string],
 ): WallClockMatch {
-	const [hours, minutes, seconds = "0", fraction = "0"] = match;
+	const [hours, minutes, seconds, fraction] = match;
 
 	return new Date(
 		1970,
