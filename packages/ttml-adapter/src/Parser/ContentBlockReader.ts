@@ -88,9 +88,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					trackingTree.addUntrackedNode(token);
 				}
 
-				// As this the parent is tracked, we should only ascend the list.
-				trackingTree.pop();
-
+				trackingTree.ascendCurrentNode();
 				break;
 			}
 
@@ -101,8 +99,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				trackingTree.addTrackedNode(token);
 
-				// As this the parent is tracked, we should only ascend the list.
-				trackingTree.pop();
+				trackingTree.ascendCurrentNode();
 				break;
 			}
 

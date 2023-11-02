@@ -31,6 +31,10 @@ export class TrackingTree<ContentType extends object> {
 		this.tree.push(untrackedNode);
 	}
 
+	public ascendCurrentNode(): void {
+		this.tree.ascend();
+	}
+
 	public pop(): NodeWithRelationship<TrackableNode<ContentType>> | null {
 		const { parentNode } = this.tree;
 
