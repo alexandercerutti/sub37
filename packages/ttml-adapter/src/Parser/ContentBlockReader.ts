@@ -15,22 +15,25 @@ export enum BlockType {
 	SELFCLOSING /***/ = 0b1000000,
 }
 
-type DocumentBlockTuple = [blockType: BlockType.DOCUMENT, payload: NodeWithRelationship<Token>];
+export type DocumentBlockTuple = [
+	blockType: BlockType.DOCUMENT,
+	payload: NodeWithRelationship<Token>,
+];
 
-type CueBlockTuple = [blockType: BlockType.CUE, payload: NodeWithRelationship<Token>];
+export type CueBlockTuple = [blockType: BlockType.CUE, payload: NodeWithRelationship<Token>];
 
-type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelationship<Token>];
+export type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelationship<Token>];
 
-type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
+export type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
 
-type SelfClosingBlockTuple = [
+export type SelfClosingBlockTuple = [
 	BlockTuple: BlockType.SELFCLOSING,
 	payload: NodeWithRelationship<Token>,
 ];
 
-type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
+export type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
 
-type BlockTuple =
+export type BlockTuple =
 	| DocumentBlockTuple
 	| CueBlockTuple
 	| RegionBlockTuple
@@ -47,6 +50,30 @@ const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["p", BlockType.CUE],
 	["span", BlockType.CUE],
 ]);
+
+export function isDocumentBlockTuple(block: BlockTuple): block is DocumentBlockTuple {
+	return block[0] === BlockType.DOCUMENT;
+}
+
+export function isCueBlockTuple(block: BlockTuple): block is CueBlockTuple {
+	return block[0] === BlockType.CUE;
+}
+
+export function isRegionBlockTuple(block: BlockTuple): block is RegionBlockTuple {
+	return block[0] === BlockType.REGION;
+}
+
+export function isStyleBlockTuple(block: BlockTuple): block is StyleBlockTuple {
+	return block[0] === BlockType.STYLE;
+}
+
+export function isGroupBlockTuple(block: BlockTuple): block is GroupBlockTuple {
+	return block[0] === BlockType.GROUP;
+}
+
+export function isSelfClosingBlockTuple(block: BlockTuple): block is SelfClosingBlockTuple {
+	return block[0] === BlockType.SELFCLOSING;
+}
 
 const ignoredBlockSymbol = Symbol("ignoredBlock");
 

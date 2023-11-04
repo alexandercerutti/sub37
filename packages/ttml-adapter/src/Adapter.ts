@@ -21,7 +21,23 @@ import {
 	addContextEndPoint,
 	setTimeContainerType,
 } from "./Parser/LogicalGroupingContext.js";
-import { assignParsedRootSupportedAttributes } from "./Parser/TTRootAttributes.js";
+import { parseDocumentSupportedAttributes } from "./Parser/TTRootAttributes.js";
+import {
+	type BlockTuple,
+	getNextContentBlock,
+	isDocumentBlockTuple,
+	isRegionBlockTuple,
+	isStyleBlockTuple,
+	isGroupBlockTuple,
+	isCueBlockTuple,
+	isSelfClosingBlockTuple,
+	DocumentBlockTuple,
+	RegionBlockTuple,
+	StyleBlockTuple,
+	GroupBlockTuple,
+	CueBlockTuple,
+	SelfClosingBlockTuple,
+} from "./Parser/ContentBlockReader.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -51,14 +67,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		const parseStyle = parseStyleFactory();
 		const globalStyles: TTMLStyle[] = [];
 
-		const documentSettings: TimeDetails = {
-			"ttp:frameRate": undefined,
-			"ttp:frameRateMultiplier": undefined,
-			"ttp:subFrameRate": undefined,
-			"ttp:tickRate": undefined,
-			"ttp:timeBase": undefined,
-			"ttp:dropMode": undefined,
-		};
+		let documentSettings: TimeDetails;
 
 		const regionsMap: Map<string, Region> = new Map();
 		const regionStylesProcessingQueue: Token[] = [];
@@ -66,202 +75,261 @@ export default class TTMLAdapter extends BaseAdapter {
 		let groupContext = new LogicalGroupingContext();
 
 		const tokenizer = new Tokenizer(rawContent);
+		const blockReader = getNextContentBlock(tokenizer);
 
-		let token: Token;
+		let block: IteratorResult<BlockTuple, BlockTuple>;
 
-		while ((token = tokenizer.nextToken())) {
-			switch (token.type) {
-				case TokenType.TAG: {
-					if (parsingState & BlockType.IGNORED) {
-						continue;
+		while ((block = blockReader.next())) {
+			const { value } = block;
+
+			switch (true) {
+				/**
+				 * @TODO upgrade to Typescript 5.3 after Nov 14
+				 * to have Control Flow Access to narrow value
+				 * when using switch (true).
+				 */
+				case isDocumentBlockTuple(value): {
+					if (documentSettings) {
+						/**
+						 * @TODO Change in a fatal error;
+						 */
+						throw new Error("Malformed TTML track: multiple <tt> were found.");
 					}
 
-					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
-						continue;
+					const block: DocumentBlockTuple[1] = value[1];
+
+					if (!block.content.attributes) {
+						/**
+						 * @TODO Change in a fatal error;
+						 */
+						throw new Error("Malformed TTML track: starting tag must be a <tt> element");
 					}
 
-					if (isRegionTagToken(token)) {
-						const region = parseRegion(token, []);
-
-						if (regionsMap.has(region.id)) {
-							/**
-							 * @TODO should we resolve the conflict here
-							 * or just ignore the region? Does the spec
-							 * say something about?
-							 *
-							 * If resolving conflict, we should also
-							 * resolve it when a region end tag happens.
-							 */
-							break;
-						}
-
-						regionsMap.set(region.id, region);
-						break;
-					}
-
-					if (isStyleTagToken(token)) {
-						if (isRegionStyleToken(token, openTagsQueue.current.parent.token)) {
-							regionStylesProcessingQueue.push(token);
-							break;
-						}
-
-						globalStyles.push(parseStyle(token));
-					}
-
+					documentSettings = parseDocumentSupportedAttributes(block.content.attributes);
 					break;
 				}
 
-				case TokenType.START_TAG: {
-					if (parsingState & BlockType.IGNORED) {
-						continue;
-					}
-
-					if (!openTagsQueue.length) {
-						if (token.content !== "tt") {
-							throw new Error("Malformed TTML track: starting tag must be a <tt> element");
-						} else {
-							assignParsedRootSupportedAttributes(token.attributes, documentSettings);
-							continue;
-						}
-					}
-
-					/**
-					 * Even if token does not respect it parent relatioship,
-					 * we still add it to the queue to mark its end
-					 */
-					openTagsQueue.push(new Tags.Node(undefined, token));
-
-					if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
-						parsingState ^= BlockType.IGNORED;
-						break;
-					}
-
-					if (tokenSupportsLogicalGroupingSwitch(token)) {
-						groupContext = new LogicalGroupingContext(groupContext);
-					}
-
-					if (isTokenAllowedToHaveRegion(token) && token.attributes["region"]) {
-						/**
-						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
-						 */
-						groupContext.regionIdentifiers.push(token.attributes["region"]);
-					}
-
-					switch (token.content) {
-						case "head": {
-							parsingState = BlockType.HEAD;
-							break;
-						}
-						case "body": {
-							parsingState = BlockType.BODY;
-
-							break;
-						}
-						case "style": {
-							globalStyles.push(parseStyle(token));
-							break;
-						}
-						case "p":
-						case "div":
-						case "span": {
-							if (token.attributes["style"]) {
-								const style = globalStyles.find((style) => style.id === token.attributes["style"]);
-
-								if (style) {
-									/**
-									 * Adding styles. These might be already there in the chain of styles,
-									 * so, later, we'll have to check them in order to not apply them twice
-									 * or more.
-									 */
-									groupContext.addStyles(style);
-								}
-							}
-
-							addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
-							addContextEndPoint(groupContext, token.attributes["end"], documentSettings);
-							addContextDuration(groupContext, token.attributes["dur"], documentSettings);
-							setTimeContainerType(groupContext, token.attributes["timeContainer"]);
-
-							break;
-						}
-					}
-
+				case isRegionBlockTuple(value): {
+					const block: RegionBlockTuple[1] = value[1];
 					break;
 				}
 
-				case TokenType.END_TAG: {
-					if (!openTagsQueue.length) {
-						break;
-					}
+				case isStyleBlockTuple(value): {
+					const block: StyleBlockTuple[1] = value[1];
+					break;
+				}
 
-					const { current: currentNode } = openTagsQueue;
+				case isGroupBlockTuple(value): {
+					const block: GroupBlockTuple[1] = value[1];
+					break;
+				}
 
-					if (currentNode.token.content !== token.content) {
-						break;
-					}
+				case isCueBlockTuple(value): {
+					const block: CueBlockTuple[1] = value[1];
+					break;
+				}
 
-					if (parsingState & BlockType.IGNORED) {
-						parsingState ^= BlockType.IGNORED;
-						openTagsQueue.pop();
-						continue;
-					}
-
-					if (isRegionEndTagToken(token)) {
-						let regionOpeningNode = openTagsQueue.pop();
-
-						while (regionOpeningNode.token.content !== token.content) {
-							regionOpeningNode = openTagsQueue.pop();
-						}
-
-						if (regionsMap.has(regionOpeningNode.token.attributes["xml:id"])) {
-							/**
-							 * @TODO should we resolve the conflict here
-							 * or just ignore the region? Does the spec
-							 * say something about?
-							 *
-							 * If resolving conflict, we should also
-							 * resolve it when a region self-closing tag happens.
-							 */
-							regionStylesProcessingQueue.length = 0;
-							break;
-						}
-
-						const localStyleParser = parseStyleFactory();
-						const styles: TTMLStyle[] = [];
-
-						for (let styleToken of regionStylesProcessingQueue) {
-							const style = localStyleParser(styleToken);
-
-							if (!style) {
-								continue;
-							}
-
-							styles.push(style);
-						}
-
-						regionStylesProcessingQueue.length = 0;
-
-						const region = parseRegion(regionOpeningNode.token, styles);
-						regionsMap.set(region.id, region);
-
-						break;
-					}
-
-					if (tokenSupportsLogicalGroupingSwitch(token)) {
-						/**
-						 * Exiting current context. We don't need their things anymore.
-						 * Things on "p" should get executed before this, otherwise we
-						 * are going to use the wrong context.
-						 */
-						groupContext = groupContext.parent;
-					}
-
+				case isSelfClosingBlockTuple(value): {
+					const block: SelfClosingBlockTuple[1] = value[1];
 					break;
 				}
 			}
-
-			token = null;
 		}
+
+		// while ((token = tokenizer.nextToken())) {
+		// 	switch (token.type) {
+		// 		case TokenType.TAG: {
+		// 			if (parsingState & BlockType.IGNORED) {
+		// 				continue;
+		// 			}
+
+		// 			if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
+		// 				continue;
+		// 			}
+
+		// 			if (isRegionTagToken(token)) {
+		// 				const region = parseRegion(token, []);
+
+		// 				if (regionsMap.has(region.id)) {
+		// 					/**
+		// 					 * @TODO should we resolve the conflict here
+		// 					 * or just ignore the region? Does the spec
+		// 					 * say something about?
+		// 					 *
+		// 					 * If resolving conflict, we should also
+		// 					 * resolve it when a region end tag happens.
+		// 					 */
+		// 					break;
+		// 				}
+
+		// 				regionsMap.set(region.id, region);
+		// 				break;
+		// 			}
+
+		// 			if (isStyleTagToken(token)) {
+		// 				if (isRegionStyleToken(token, parentNodeContent.token)) {
+		// 					regionStylesProcessingQueue.push(token);
+		// 					break;
+		// 				}
+
+		// 				globalStyles.push(parseStyle(token));
+		// 			}
+
+		// 			break;
+		// 		}
+
+		// 		case TokenType.START_TAG: {
+		// 			if (parsingState & BlockType.IGNORED) {
+		// 				continue;
+		// 			}
+
+		// 			if (!openTagsQueue.length) {
+		// 				if (token.content !== "tt") {
+		// 					throw new Error("Malformed TTML track: starting tag must be a <tt> element");
+		// 				} else {
+		// 					assignParsedRootSupportedAttributes(token.attributes, documentSettings);
+		// 					continue;
+		// 				}
+		// 			}
+
+		// 			/**
+		// 			 * Even if token does not respect it parent relatioship,
+		// 			 * we still add it to the queue to mark its end
+		// 			 */
+		// 			// openTagsQueue.push(new Tags.Node(undefined, token));
+		// 			openTagsQueue.push(createTokenNode(token, groupContext));
+
+		// 			if (!isTokenParentRelationshipRespected(token, openTagsQueue)) {
+		// 				parsingState ^= BlockType.IGNORED;
+		// 				break;
+		// 			}
+
+		// 			if (tokenSupportsLogicalGroupingSwitch(token)) {
+		// 				groupContext = new LogicalGroupingContext(groupContext);
+		// 			}
+
+		// 			if (isTokenAllowedToHaveRegion(token) && token.attributes["region"]) {
+		// 				/**
+		// 				 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-attribute-region
+		// 				 */
+		// 				groupContext.regionIdentifiers.push(token.attributes["region"]);
+		// 			}
+
+		// 			switch (token.content) {
+		// 				case "head": {
+		// 					parsingState = BlockType.HEAD;
+		// 					break;
+		// 				}
+		// 				case "body": {
+		// 					parsingState = BlockType.BODY;
+
+		// 					break;
+		// 				}
+		// 				case "style": {
+		// 					globalStyles.push(parseStyle(token));
+		// 					break;
+		// 				}
+		// 				case "p":
+		// 				case "div":
+		// 				case "span": {
+		// 					if (token.attributes["style"]) {
+		// 						const style = globalStyles.find((style) => style.id === token.attributes["style"]);
+
+		// 						if (style) {
+		// 							/**
+		// 							 * Adding styles. These might be already there in the chain of styles,
+		// 							 * so, later, we'll have to check them in order to not apply them twice
+		// 							 * or more.
+		// 							 */
+		// 							groupContext.addStyles(style);
+		// 						}
+		// 					}
+
+		// 					addContextBeginPoint(groupContext, token.attributes["begin"], documentSettings);
+		// 					addContextEndPoint(groupContext, token.attributes["end"], documentSettings);
+		// 					addContextDuration(groupContext, token.attributes["dur"], documentSettings);
+		// 					setTimeContainerType(groupContext, token.attributes["timeContainer"]);
+
+		// 					break;
+		// 				}
+		// 			}
+
+		// 			break;
+		// 		}
+
+		// 		case TokenType.END_TAG: {
+		// 			if (!openTagsQueue.length) {
+		// 				break;
+		// 			}
+
+		// 			const { current: currentNode } = openTagsQueue;
+
+		// 			if (currentNode.nodeContent.name !== token.content) {
+		// 				break;
+		// 			}
+
+		// 			if (parsingState & BlockType.IGNORED) {
+		// 				parsingState ^= BlockType.IGNORED;
+		// 				openTagsQueue.pop();
+		// 				continue;
+		// 			}
+
+		// 			if (isRegionEndTagToken(token)) {
+		// 				let regionOpeningNode = openTagsQueue.pop();
+
+		// 				while (regionOpeningNode.nodeContent.name !== token.content) {
+		// 					regionOpeningNode = openTagsQueue.pop();
+		// 				}
+
+		// 				if (regionsMap.has(regionOpeningNode.nodeContent.attributes["xml:id"])) {
+		// 					/**
+		// 					 * @TODO should we resolve the conflict here
+		// 					 * or just ignore the region? Does the spec
+		// 					 * say something about?
+		// 					 *
+		// 					 * If resolving conflict, we should also
+		// 					 * resolve it when a region self-closing tag happens.
+		// 					 */
+		// 					regionStylesProcessingQueue.length = 0;
+		// 					break;
+		// 				}
+
+		// 				const localStyleParser = parseStyleFactory();
+		// 				const styles: TTMLStyle[] = [];
+
+		// 				for (let styleToken of regionStylesProcessingQueue) {
+		// 					const style = localStyleParser(styleToken);
+
+		// 					if (!style) {
+		// 						continue;
+		// 					}
+
+		// 					styles.push(style);
+		// 				}
+
+		// 				regionStylesProcessingQueue.length = 0;
+
+		// 				const region = parseRegion(regionOpeningNode.nodeContent.token, styles);
+		// 				regionsMap.set(region.id, region);
+
+		// 				break;
+		// 			}
+
+		// 			if (tokenSupportsLogicalGroupingSwitch(token)) {
+		// 				/**
+		// 				 * Exiting current context. We don't need their things anymore.
+		// 				 * Things on "p" should get executed before this, otherwise we
+		// 				 * are going to use the wrong context.
+		// 				 */
+		// 				groupContext = groupContext.parent;
+		// 			}
+
+		// 			break;
+		// 		}
+		// 	}
+
+		// 	token = null;
+		// }
 
 		return BaseAdapter.ParseResult([], []);
 	}

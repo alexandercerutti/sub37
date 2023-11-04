@@ -1,14 +1,13 @@
 import type { TimeDetails } from "./TimeBase";
 
-export function assignParsedRootSupportedAttributes(
+export function parseDocumentSupportedAttributes(
 	attributes: Record<string, string>,
-	documentSettings: TimeDetails,
-): void {
+): Readonly<TimeDetails> {
 	const frameRate = getFrameRateResolvedValue(attributes["ttp:frameRate"]);
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	Object.assign(documentSettings, {
+	return Object.freeze({
 		"ttp:dropMode": getDropModeResolvedValue(attributes["ttp:dropMode"]),
 		"ttp:frameRate": frameRate || 30,
 		"ttp:subFrameRate": subFrameRate || 1,
