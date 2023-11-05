@@ -107,7 +107,7 @@ describe("ContentBlockReader", () => {
 		]);
 
 		expect(generator.next().value).toMatchObject([
-			BlockType.GROUP,
+			BlockType.CONTENT_ELEMENT,
 			{
 				content: {
 					content: "div",
@@ -653,7 +653,7 @@ describe("ContentBlockReader", () => {
 		]);
 
 		expect(blockParser.next().value).toMatchObject([
-			BlockType.GROUP,
+			BlockType.CONTENT_ELEMENT,
 			{
 				content: {
 					content: "body",
@@ -666,7 +666,7 @@ describe("ContentBlockReader", () => {
 		]);
 
 		expect(blockParser.next().value).toMatchObject([
-			BlockType.GROUP,
+			BlockType.CONTENT_ELEMENT,
 			{
 				content: {
 					...divToken,

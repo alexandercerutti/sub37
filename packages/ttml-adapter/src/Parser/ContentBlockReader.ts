@@ -6,13 +6,13 @@ import { Tokenizer } from "./Tokenizer.js";
 import { TrackingTree } from "./Tags/TrackingTree.js";
 
 export enum BlockType {
-	DOCUMENT /******/ = 0b0000001,
-	HEADER /********/ = 0b0000010,
-	REGION /********/ = 0b0000100,
-	STYLE /*********/ = 0b0001000,
-	CUE /***********/ = 0b0010000,
-	GROUP /*********/ = 0b0100000,
-	SELFCLOSING /***/ = 0b1000000,
+	DOCUMENT /**********/ = 0b0000001,
+	HEADER /************/ = 0b0000010,
+	REGION /************/ = 0b0000100,
+	STYLE /*************/ = 0b0001000,
+	CUE /***************/ = 0b0010000,
+	CONTENT_ELEMENT /***/ = 0b0100000,
+	SELFCLOSING /*******/ = 0b1000000,
 }
 
 export type DocumentBlockTuple = [
@@ -31,20 +31,23 @@ export type SelfClosingBlockTuple = [
 	payload: NodeWithRelationship<Token>,
 ];
 
-export type GroupBlockTuple = [blockType: BlockType.GROUP, payload: NodeWithRelationship<Token>];
+export type ContentElementBlockTuple = [
+	blockType: BlockType.CONTENT_ELEMENT,
+	payload: NodeWithRelationship<Token>,
+];
 
 export type BlockTuple =
 	| DocumentBlockTuple
 	| CueBlockTuple
 	| RegionBlockTuple
 	| StyleBlockTuple
-	| GroupBlockTuple
+	| ContentElementBlockTuple
 	| SelfClosingBlockTuple;
 
 const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["tt", BlockType.DOCUMENT],
-	["body", BlockType.GROUP],
-	["div", BlockType.GROUP],
+	["body", BlockType.CONTENT_ELEMENT],
+	["div", BlockType.CONTENT_ELEMENT],
 	["layout", BlockType.REGION],
 	["styling", BlockType.STYLE],
 	["p", BlockType.CUE],
@@ -67,8 +70,8 @@ export function isStyleBlockTuple(block: BlockTuple): block is StyleBlockTuple {
 	return block[0] === BlockType.STYLE;
 }
 
-export function isGroupBlockTuple(block: BlockTuple): block is GroupBlockTuple {
-	return block[0] === BlockType.GROUP;
+export function isContentElementBlockTuple(block: BlockTuple): block is ContentElementBlockTuple {
+	return block[0] === BlockType.CONTENT_ELEMENT;
 }
 
 export function isSelfClosingBlockTuple(block: BlockTuple): block is SelfClosingBlockTuple {
@@ -169,7 +172,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 					case "div": {
 						if (Object.entries(token.attributes).length) {
-							yield [BlockType.GROUP, NodeTree.createNodeWithRelationshipShell(token, null)];
+							yield [
+								BlockType.CONTENT_ELEMENT,
+								NodeTree.createNodeWithRelationshipShell(token, null),
+							];
 						}
 
 						continue;
@@ -177,7 +183,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 					case "body": {
 						if (Object.entries(token.attributes).length) {
-							yield [BlockType.GROUP, NodeTree.createNodeWithRelationshipShell(token, null)];
+							yield [
+								BlockType.CONTENT_ELEMENT,
+								NodeTree.createNodeWithRelationshipShell(token, null),
+							];
 						}
 
 						continue;

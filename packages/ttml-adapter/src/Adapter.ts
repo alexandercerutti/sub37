@@ -28,13 +28,13 @@ import {
 	isDocumentBlockTuple,
 	isRegionBlockTuple,
 	isStyleBlockTuple,
-	isGroupBlockTuple,
+	isContentElementBlockTuple,
 	isCueBlockTuple,
 	isSelfClosingBlockTuple,
 	DocumentBlockTuple,
 	RegionBlockTuple,
 	StyleBlockTuple,
-	GroupBlockTuple,
+	ContentElementBlockTuple,
 	CueBlockTuple,
 	SelfClosingBlockTuple,
 } from "./Parser/ContentBlockReader.js";
@@ -157,8 +157,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					break;
 				}
 
-				case isGroupBlockTuple(value): {
-					const block: GroupBlockTuple[1] = value[1];
+				case isContentElementBlockTuple(value): {
+					const block: ContentElementBlockTuple[1] = value[1];
 					break;
 				}
 
