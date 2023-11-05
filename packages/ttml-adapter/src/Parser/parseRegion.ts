@@ -1,13 +1,26 @@
 import type { Region } from "@sub37/server";
 import type { Token } from "./Token";
-import type { TTMLStyle } from "./parseStyle";
+import { parseStyleFactory, type TTMLStyle } from "./parseStyle";
 
 /**
  * @param rawRegionData
  */
 
-export function parseRegion(token: Token, nestedStyles: TTMLStyle[]): Region {
+export function parseRegion(token: Token, nestedStylesTokens: Token[] = []): Region {
+	const localStyleParser = parseStyleFactory();
 	const region = new TTMLRegion();
+	const nestedStyles: TTMLStyle[] = [];
+
+	for (const styleToken of nestedStylesTokens) {
+		const style = localStyleParser(styleToken);
+
+		if (!style) {
+			continue;
+		}
+
+		nestedStyles.push(style);
+	}
+
 	region.styles = nestedStyles;
 	region.id = token.attributes["xml:id"];
 

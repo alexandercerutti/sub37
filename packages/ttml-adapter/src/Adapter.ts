@@ -70,7 +70,6 @@ export default class TTMLAdapter extends BaseAdapter {
 		let documentSettings: TimeDetails;
 
 		const regionsMap: Map<string, Region> = new Map();
-		const regionStylesProcessingQueue: Token[] = [];
 
 		let groupContext = new LogicalGroupingContext();
 
@@ -111,6 +110,35 @@ export default class TTMLAdapter extends BaseAdapter {
 
 				case isRegionBlockTuple(value): {
 					const block: RegionBlockTuple[1] = value[1];
+
+					const { children } = block;
+
+					for (const { content: regionToken, children: regionChildren } of children) {
+						if (regionToken.content !== "region") {
+							continue;
+						}
+
+						const styleTokenChildren = regionChildren
+							.filter((children) => children.content.content === "style")
+							.map((children) => children.content);
+
+						const region = parseRegion(regionToken, styleTokenChildren);
+
+						if (regionsMap.has(region.id)) {
+							/**
+							 * @TODO should we resolve the conflict here
+							 * or just ignore the region? Does the spec
+							 * say something about?
+							 *
+							 * If resolving conflict, we should also
+							 * resolve it when a region end tag happens.
+							 */
+							continue;
+						}
+
+						regionsMap.set(region.id, region);
+					}
+
 					break;
 				}
 
