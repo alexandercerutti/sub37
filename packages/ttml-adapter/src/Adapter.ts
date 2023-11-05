@@ -116,6 +116,16 @@ export default class TTMLAdapter extends BaseAdapter {
 
 				case isStyleBlockTuple(value): {
 					const block: StyleBlockTuple[1] = value[1];
+					const { children } = block;
+
+					for (const { content: tagToken } of children) {
+						if (tagToken.content !== "style") {
+							continue;
+						}
+
+						globalStyles.push(parseStyle(tagToken));
+					}
+
 					break;
 				}
 
