@@ -1,9 +1,9 @@
 import { Token } from "./Token";
 import { TokenType } from "./Token.js";
-import type { Node } from "./Tags/Node";
 import { NodeTree, type NodeWithRelationship } from "./Tags/NodeTree.js";
 import { Tokenizer } from "./Tokenizer.js";
 import { TrackingTree } from "./Tags/TrackingTree.js";
+import { RelationshipTree } from "./Tags/RelationshipTree.js";
 
 export enum BlockType {
 	DOCUMENT /**********/ = 0b0000001,
@@ -86,6 +86,7 @@ interface IgnoredNode {
 
 export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple, null, BlockTuple> {
 	const trackingTree = new TrackingTree<Token>();
+	const relationshipTree = new RelationshipTree();
 
 	let token: Token;
 
@@ -96,7 +97,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (!isTokenParentRelationshipRespected(token, trackingTree)) {
+				if (
+					relationshipTree.currentNode.parent &&
+					!relationshipTree.currentNode.has(token.content)
+				) {
 					break;
 				}
 
@@ -138,7 +142,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (!isTokenParentRelationshipRespected(token, trackingTree)) {
+				if (
+					relationshipTree.currentNode.parent &&
+					!relationshipTree.currentNode.has(token.content)
+				) {
 					/**
 					 * Even if token does not respect it parent relatioship,
 					 * we still add it to the queue to mark its end later.
@@ -157,6 +164,8 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 					continue;
 				}
+
+				relationshipTree.setCurrent(relationshipTree.currentNode.get(token.content));
 
 				if (shouldTokenBeTracked(token)) {
 					trackingTree.addTrackedNode(token);
@@ -210,6 +219,8 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
+				relationshipTree.ascend();
+
 				if (
 					shouldTokenBeTracked(token) &&
 					!TrackingTree.isTracked(trackingTree.currentNode.parent.content)
@@ -229,48 +240,6 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 	}
 
 	return null;
-}
-
-function isTokenTreeConstrained(content: string): content is keyof typeof TokenRelationships {
-	return Object.prototype.hasOwnProperty.call(TokenRelationships, content);
-}
-
-const TokenRelationships = {
-	region: ["layout"],
-	style: ["styling", "region"],
-	layout: ["head"],
-	styling: ["head"],
-	head: ["tt"],
-	body: ["tt"],
-	div: ["body"],
-	span: ["span", "p"],
-	p: ["div", "body"],
-} as const;
-
-function isTokenParentRelationshipRespected(token: Token, tagsTree: TrackingTree<Token>): boolean {
-	const { content } = token;
-
-	if (!isTokenTreeConstrained(content)) {
-		return true;
-	}
-
-	if (!tagsTree.currentNode) {
-		return true;
-	}
-
-	const treeNode: Node<Token> = tagsTree.currentNode;
-
-	/**
-	 * If we already reached the point of checking if a tag
-	 * is in a parent, then we don't need to check the others
-	 */
-	for (const direction of TokenRelationships[content]) {
-		if (treeNode.content.content === direction) {
-			return true;
-		}
-	}
-
-	return false;
 }
 
 const NODE_TREE_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
