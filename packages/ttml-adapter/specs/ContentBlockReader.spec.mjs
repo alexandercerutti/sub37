@@ -701,4 +701,65 @@ describe("ContentBlockReader", () => {
 			value: null,
 		});
 	});
+
+	it("should emit a div containing an inline region", () => {
+		const document1 = `
+			<tt xml:lang="" xmlns="http://www.w3.org/ns/ttml">
+				<body>
+					<div begin="5s" dur="10s">
+						<region tts:extent="540px 100px" tts:origin="50px 339px"/>
+						<p>Some Content</p>
+					<div/>
+				<body/>
+			</tt>
+			`;
+
+		const tokenizer = new Tokenizer(document1);
+		const blockParser = getNextContentBlock(tokenizer);
+
+		// Skipping <tt>
+		blockParser.next();
+
+		expect(blockParser.next().value).toMatchObject([
+			BlockType.CONTENT_ELEMENT,
+			{
+				content: {
+					content: "div",
+					attributes: {
+						begin: "5s",
+						dur: "10s",
+					},
+				},
+				children: [
+					{
+						content: {
+							content: "region",
+							attributes: {
+								"tts:extent": "540px 100px",
+								"tts:origin": "50px 339px",
+							},
+						},
+					},
+				],
+			},
+		]);
+
+		expect(blockParser.next().value).toMatchObject([
+			BlockType.CUE,
+			{
+				content: {
+					content: "p",
+					attributes: {},
+				},
+				children: [
+					{
+						content: {
+							content: "Some Content",
+						},
+						children: [],
+					},
+				],
+			},
+		]);
+	});
 });
