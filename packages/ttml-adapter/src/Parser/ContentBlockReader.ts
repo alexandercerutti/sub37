@@ -2,7 +2,6 @@ import { Token } from "./Token";
 import { TokenType } from "./Token.js";
 import { NodeTree, type NodeWithRelationship } from "./Tags/NodeTree.js";
 import { Tokenizer } from "./Tokenizer.js";
-import { TrackingTree } from "./Tags/TrackingTree.js";
 import { RelationshipTree } from "./Tags/RelationshipTree.js";
 
 export enum BlockType {
@@ -13,6 +12,13 @@ export enum BlockType {
 	CUE /***************/ = 0b0010000,
 	CONTENT_ELEMENT /***/ = 0b0100000,
 	SELFCLOSING /*******/ = 0b1000000,
+}
+
+enum NodeAttributes {
+	NO_ATTRS /******/ = 0b000000,
+	IGNORED /*******/ = 0b000001,
+	TRACKED /*******/ = 0b000010,
+	PRE_EMITTED /***/ = 0b000100,
 }
 
 export type DocumentBlockTuple = [
@@ -78,14 +84,14 @@ export function isSelfClosingBlockTuple(block: BlockTuple): block is SelfClosing
 	return block[0] === BlockType.SELFCLOSING;
 }
 
-const ignoredBlockSymbol = Symbol("ignoredBlock");
+const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 
-interface IgnoredNode {
-	[ignoredBlockSymbol]: true;
+interface NodeWithAttributes {
+	[nodeAttributesSymbol]: NodeAttributes;
 }
 
 export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple, null, BlockTuple> {
-	const trackingTree = new TrackingTree<Token>();
+	const nodeTree = new NodeTree<Token & NodeWithAttributes>();
 	const relationshipTree = new RelationshipTree();
 
 	let token: Token;
@@ -93,7 +99,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.TAG: {
-				if (trackingTree.currentNode && isTokenIgnored(trackingTree.currentNode.content)) {
+				if (!nodeTree.currentNode || isNodeIgnored(nodeTree.currentNode.content)) {
 					continue;
 				}
 
@@ -104,41 +110,37 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
+				let trackedNode: NodeWithRelationship<Token & NodeWithAttributes>;
+
+				if (shouldTokenBeTracked(token)) {
+					trackedNode = nodeTree.track(createNodeWithAttributes(token, NodeAttributes.TRACKED));
+				} else {
+					trackedNode = nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+				}
+
 				if (
 					shouldTokenBeTracked(token) &&
-					trackingTree.currentNode &&
-					!TrackingTree.isTracked(trackingTree.currentNode.content)
+					nodeTree.currentNode &&
+					!isNodeTracked(nodeTree.currentNode.content)
 				) {
-					yield [
-						BlockType.SELFCLOSING,
-						NodeTree.createNodeWithRelationshipShell(token, trackingTree.currentNode),
-					];
+					yield [BlockType.SELFCLOSING, trackedNode];
 					continue;
 				}
 
-				if (shouldTokenBeTracked(token)) {
-					trackingTree.addTrackedNode(token);
-				} else {
-					trackingTree.addUntrackedNode(token);
-				}
-
-				trackingTree.ascendCurrentNode();
 				break;
 			}
 
 			case TokenType.STRING: {
-				if (!trackingTree.currentNode) {
+				if (!nodeTree.currentNode) {
 					continue;
 				}
 
-				trackingTree.addTrackedNode(token);
-
-				trackingTree.ascendCurrentNode();
+				nodeTree.track(createNodeWithAttributes(token, NodeAttributes.TRACKED));
 				break;
 			}
 
 			case TokenType.START_TAG: {
-				if (trackingTree.currentNode && isTokenIgnored(trackingTree.currentNode.content)) {
+				if (nodeTree.currentNode && isNodeIgnored(nodeTree.currentNode.content)) {
 					continue;
 				}
 
@@ -154,86 +156,65 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					 * because we are going to ignore it.
 					 */
 
-					trackingTree.addUntrackedNode(
-						Object.create(token, {
-							[ignoredBlockSymbol]: {
-								value: true,
-							},
-						}),
-					);
-
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 					continue;
+				}
+
+				if (isBlockClassElement(token) && !isNodePreEmitted(nodeTree.currentNode.content)) {
+					const { content: lastToken } = nodeTree.currentNode;
+					const { content: tagName, attributes } = lastToken;
+
+					if (tagName === "div" || tagName === "body") {
+						makeNodePreEmitted(nodeTree.currentNode.content);
+
+						if (Object.keys(attributes).length) {
+							yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
+						}
+					}
 				}
 
 				relationshipTree.setCurrent(relationshipTree.currentNode.get(token.content));
 
 				if (shouldTokenBeTracked(token)) {
-					trackingTree.addTrackedNode(token);
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.TRACKED));
 				} else {
-					trackingTree.addUntrackedNode(token);
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 				}
 
-				switch (token.content) {
-					case "tt": {
-						yield [BlockType.DOCUMENT, NodeTree.createNodeWithRelationshipShell(token, null)];
-						continue;
-					}
+				if (token.content === "tt") {
+					makeNodePreEmitted(nodeTree.currentNode.content);
 
-					case "div": {
-						if (Object.entries(token.attributes).length) {
-							yield [
-								BlockType.CONTENT_ELEMENT,
-								NodeTree.createNodeWithRelationshipShell(token, null),
-							];
-						}
-
-						continue;
-					}
-
-					case "body": {
-						if (Object.entries(token.attributes).length) {
-							yield [
-								BlockType.CONTENT_ELEMENT,
-								NodeTree.createNodeWithRelationshipShell(token, null),
-							];
-						}
-
-						continue;
-					}
+					yield [BlockType.DOCUMENT, nodeTree.currentNode];
+					continue;
 				}
 
 				break;
 			}
 
 			case TokenType.END_TAG: {
-				if (!trackingTree.currentNode) {
+				if (!nodeTree.currentNode) {
 					continue;
 				}
 
-				if (trackingTree.currentNode.content.content !== token.content) {
+				if (nodeTree.currentNode.content.content !== token.content) {
 					continue;
 				}
 
-				if (isTokenIgnored(trackingTree.currentNode.content)) {
-					trackingTree.pop();
+				if (isNodeIgnored(nodeTree.currentNode.content)) {
+					nodeTree.pop();
 					break;
 				}
 
 				relationshipTree.ascend();
 
-				if (
-					shouldTokenBeTracked(token) &&
-					!TrackingTree.isTracked(trackingTree.currentNode.parent.content)
-				) {
-					const blockType: BlockTuple[0] = BlockTupleMap.get(
-						trackingTree.currentNode.content.content,
-					);
+				if (shouldTokenBeTracked(token) && !isNodeTracked(nodeTree.currentNode.parent.content)) {
+					const blockType: BlockTuple[0] = BlockTupleMap.get(nodeTree.currentNode.content.content);
 
-					yield [blockType, trackingTree.pop()];
+					yield [blockType, nodeTree.pop()];
 					break;
 				}
 
-				trackingTree.pop();
+				nodeTree.pop();
 				break;
 			}
 		}
@@ -249,6 +230,36 @@ function shouldTokenBeTracked(token: Token): boolean {
 	return NODE_TREE_ALLOWED_ELEMENTS.includes(token.content as NODE_TREE_ALLOWED_ELEMENTS[number]);
 }
 
-function isTokenIgnored(node: Token | IgnoredNode): node is IgnoredNode {
-	return Boolean((node as IgnoredNode)[ignoredBlockSymbol]);
+function isNodeIgnored(
+	node: NodeWithAttributes,
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.IGNORED } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.IGNORED);
+}
+
+function isNodeTracked(
+	node: NodeWithAttributes,
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.TRACKED } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.TRACKED);
+}
+
+function isNodePreEmitted(
+	node: NodeWithAttributes,
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.PRE_EMITTED } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTED);
+}
+
+function createNodeWithAttributes<NodeType extends object>(
+	node: NodeType,
+	attributes: NodeAttributes,
+): NodeType & NodeWithAttributes {
+	return Object.create(node, {
+		[nodeAttributesSymbol]: {
+			value: attributes,
+			writable: true,
+		},
+	});
+}
+
+function makeNodePreEmitted(node: NodeWithAttributes) {
+	node[nodeAttributesSymbol] = node[nodeAttributesSymbol] | NodeAttributes.PRE_EMITTED;
 }
