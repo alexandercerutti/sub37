@@ -347,7 +347,7 @@ export class Tokenizer {
 
 				case TokenizerState.DATA: {
 					if (char === "<") {
-						return Token.String(result);
+						return Token.String(result.trim());
 					}
 
 					result += char;

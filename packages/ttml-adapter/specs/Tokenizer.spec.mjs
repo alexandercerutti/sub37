@@ -191,7 +191,7 @@ describe("Tokenizer", () => {
 			expect(stringToken3).not.toBeNull();
 			expect(stringToken3).toBeInstanceOf(Token);
 			expect(stringToken3?.type).toBe(TokenType.STRING);
-			expect(stringToken3?.content).toBe(")\n\t\t\t\t");
+			expect(stringToken3?.content).toBe(")");
 			expect(stringToken3?.attributes).toMatchObject({});
 
 			expect(pEndToken).not.toBeNull();
@@ -247,6 +247,36 @@ describe("Tokenizer", () => {
 			expect(startToken?.type).toBe(TokenType.START_TAG);
 			expect(startToken?.attributes["begin"]).not.toBeUndefined();
 			expect(startToken?.attributes["begin"]).toBe("342010001t");
+		});
+
+		it("should return a string without leading and trailing padding before a tag closing", () => {
+			const content = `
+				<tt xml:lang="" xmlns="http://www.w3.org/ns/ttml">
+					<body>
+						<div begin="5s" dur="10s">
+						<p>
+							<region tts:extent="540px 100px" tts:origin="50px 339px"/>
+								Some Content
+							</p>
+						<div/>
+					<body/>
+				</tt>
+			`;
+
+			const tokenizer = new Tokenizer(content);
+
+			let token;
+			let tokens = [];
+
+			while ((token = tokenizer.nextToken())) {
+				tokens.push(token);
+			}
+
+			const [tt, body, div, p, region, stringToken] = tokens;
+
+			expect(stringToken).toMatchObject({
+				content: "Some Content",
+			});
 		});
 	});
 });
