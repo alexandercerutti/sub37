@@ -231,6 +231,17 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 	return null;
 }
 
+/**
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#element-vocab-group-table
+ */
+
+const BLOCK_CLASS = ["div", "p"] as const;
+type BLOCK_CLASS = typeof BLOCK_CLASS;
+
+function isBlockClassElement(token: Token): boolean {
+	return BLOCK_CLASS.includes(token.content as BLOCK_CLASS[number]);
+}
+
 const GROUP_TRACKING_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
 type GROUP_TRACKING_ALLOWED_ELEMENTS = typeof GROUP_TRACKING_ALLOWED_ELEMENTS;
 
