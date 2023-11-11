@@ -200,7 +200,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (isNodeIgnored(nodeTree.currentNode.content)) {
+				if (
+					isNodeIgnored(nodeTree.currentNode.content) ||
+					isNodePreEmitted(nodeTree.currentNode.content)
+				) {
 					nodeTree.pop();
 					break;
 				}
