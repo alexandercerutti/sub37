@@ -15,10 +15,10 @@ export enum BlockType {
 }
 
 enum NodeAttributes {
-	NO_ATTRS /******/ = 0b000000,
-	IGNORED /*******/ = 0b000001,
-	TRACKED /*******/ = 0b000010,
-	PRE_EMITTED /***/ = 0b000100,
+	NO_ATTRS /*********/ = 0b000000,
+	IGNORED /*********/ = 0b000001,
+	GROUP_TRACKED /***/ = 0b000010,
+	PRE_EMITTED /*****/ = 0b000100,
 }
 
 export type DocumentBlockTuple = [
@@ -112,16 +112,18 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				let trackedNode: NodeWithRelationship<Token & NodeWithAttributes>;
 
-				if (shouldTokenBeTracked(token)) {
-					trackedNode = nodeTree.track(createNodeWithAttributes(token, NodeAttributes.TRACKED));
+				if (isTokenAllowedToGroupTrack(token)) {
+					trackedNode = nodeTree.track(
+						createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED),
+					);
 				} else {
 					trackedNode = nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 				}
 
 				if (
-					shouldTokenBeTracked(token) &&
+					isTokenAllowedToGroupTrack(token) &&
 					nodeTree.currentNode &&
-					!isNodeTracked(nodeTree.currentNode.content)
+					!isNodeGroupTracked(nodeTree.currentNode.content)
 				) {
 					yield [BlockType.SELFCLOSING, trackedNode];
 					continue;
@@ -135,7 +137,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				nodeTree.track(createNodeWithAttributes(token, NodeAttributes.TRACKED));
+				nodeTree.track(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
 				break;
 			}
 
@@ -175,8 +177,8 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				relationshipTree.setCurrent(relationshipTree.currentNode.get(token.content));
 
-				if (shouldTokenBeTracked(token)) {
-					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.TRACKED));
+				if (isTokenAllowedToGroupTrack(token)) {
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
 				} else {
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 				}
@@ -210,7 +212,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				relationshipTree.ascend();
 
-				if (shouldTokenBeTracked(token) && !isNodeTracked(nodeTree.currentNode.parent.content)) {
+				if (
+					isTokenAllowedToGroupTrack(token) &&
+					!isNodeGroupTracked(nodeTree.currentNode.parent.content)
+				) {
 					const blockType: BlockTuple[0] = BlockTupleMap.get(nodeTree.currentNode.content.content);
 
 					yield [blockType, nodeTree.pop()];
@@ -226,11 +231,13 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 	return null;
 }
 
-const NODE_TREE_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
-type NODE_TREE_ALLOWED_ELEMENTS = typeof NODE_TREE_ALLOWED_ELEMENTS;
+const GROUP_TRACKING_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
+type GROUP_TRACKING_ALLOWED_ELEMENTS = typeof GROUP_TRACKING_ALLOWED_ELEMENTS;
 
-function shouldTokenBeTracked(token: Token): boolean {
-	return NODE_TREE_ALLOWED_ELEMENTS.includes(token.content as NODE_TREE_ALLOWED_ELEMENTS[number]);
+function isTokenAllowedToGroupTrack(token: Token): boolean {
+	return GROUP_TRACKING_ALLOWED_ELEMENTS.includes(
+		token.content as GROUP_TRACKING_ALLOWED_ELEMENTS[number],
+	);
 }
 
 function isNodeIgnored(
@@ -239,10 +246,10 @@ function isNodeIgnored(
 	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.IGNORED);
 }
 
-function isNodeTracked(
+function isNodeGroupTracked(
 	node: NodeWithAttributes,
-): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.TRACKED } {
-	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.TRACKED);
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.GROUP_TRACKED } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.GROUP_TRACKED);
 }
 
 function isNodePreEmitted(
