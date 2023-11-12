@@ -10,7 +10,10 @@ interface Memory<ContentType extends object> {
 }
 
 export class NodeTree<NodeContentType extends object> {
-	private root: NodeWithRelationship<NodeContentType>;
+	private root: NodeWithRelationship<NodeContentType> = NodeTree.createNodeWithRelationshipShell(
+		null,
+		null,
+	);
 	private current: NodeWithRelationship<NodeContentType>;
 
 	public static createNodeWithRelationshipShell<ContentType extends object>(
@@ -34,8 +37,8 @@ export class NodeTree<NodeContentType extends object> {
 	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
 		const treeNode = NodeTree.createNodeWithRelationshipShell(value, this.current);
 
-		if (!this.root) {
-			this.root = treeNode;
+		if (!this.current) {
+			this.root.children.push(treeNode);
 			this.current = treeNode;
 
 			return treeNode;
