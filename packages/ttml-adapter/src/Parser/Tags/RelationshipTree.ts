@@ -52,7 +52,7 @@ export class RelationshipTree {
 
 		if (!directionElement) {
 			throw new Error(
-				`Internal navigation error: cannot navigate from <${this.currentElement}> to <${element}>: unreachable children`,
+				`Internal navigation error: cannot navigate from <${this.currentElement.element}> to <${element}>: unreachable children`,
 			);
 		}
 
