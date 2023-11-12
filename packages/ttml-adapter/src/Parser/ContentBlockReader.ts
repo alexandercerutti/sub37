@@ -150,10 +150,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (
-					relationshipTree.currentNode.parent &&
-					!relationshipTree.currentNode.has(token.content)
-				) {
+				if (!relationshipTree.currentNode.has(token.content)) {
 					/**
 					 * Even if token does not respect it parent relatioship,
 					 * we still add it to the queue to mark its end later.
