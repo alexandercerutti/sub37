@@ -105,14 +105,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					const block: DocumentBlockTuple[1] = value[1];
 
-					if (!block.content.attributes) {
-						/**
-						 * @TODO Change in a fatal error;
-						 */
-						throw new Error("Malformed TTML track: starting tag must be a <tt> element");
-					}
-
-					documentSettings = parseDocumentSupportedAttributes(block.content.attributes);
+					documentSettings = parseDocumentSupportedAttributes(block.content.attributes || {});
 					break;
 				}
 
