@@ -79,7 +79,15 @@ export default class TTMLAdapter extends BaseAdapter {
 		let block: IteratorResult<BlockTuple, BlockTuple>;
 
 		while ((block = blockReader.next())) {
+			if (block.done) {
+				break;
+			}
+
 			const { value } = block;
+
+			if (!documentSettings && !isDocumentBlockTuple(value)) {
+				continue;
+			}
 
 			switch (true) {
 				/**
