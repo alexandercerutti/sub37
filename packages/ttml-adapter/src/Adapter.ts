@@ -79,14 +79,14 @@ export default class TTMLAdapter extends BaseAdapter {
 		let block: IteratorResult<BlockTuple, BlockTuple>;
 
 		while ((block = blockReader.next())) {
-			if (block.done) {
+			const { done, value } = block;
+
+			if (done) {
+				if (!documentSettings) {
+					throw new Error(`Document failed to parse: <tt> element is apparently missing.`);
+				}
+
 				break;
-			}
-
-			const { value } = block;
-
-			if (!documentSettings && !isDocumentBlockTuple(value)) {
-				continue;
 			}
 
 			switch (true) {
