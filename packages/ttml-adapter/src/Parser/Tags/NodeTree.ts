@@ -83,7 +83,7 @@ export class NodeTree<NodeContentType extends object> {
 	}
 
 	public get tree(): Memory<NodeContentType>["storage"] {
-		return this.root;
+		return this.root.children[0];
 	}
 
 	public get parentNode(): NodeWithRelationship<NodeContentType> | null {

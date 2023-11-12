@@ -10,43 +10,39 @@ describe("NodeTree", () => {
 	/** @type {NodeTree} */
 	let nodeTree;
 
-	/** @type {NodeQueue} */
-	let nodeQueue;
-
 	beforeEach(() => {
-		nodeQueue = new NodeQueue();
-		nodeTree = new NodeTree(nodeQueue);
-	});
-
-	it("should throw error if built without node queue", () => {
-		/**
-		 * @type {NodeTree<Token>}
-		 */
-		let nodeTree;
-
-		expect(() => (nodeTree = new NodeTree())).toThrowError();
+		nodeTree = new NodeTree();
 	});
 
 	it("should keep NodeQueue in sync when an element is pushed", () => {
 		nodeTree.push({ content: 5 });
-		expect(nodeTree.tree.content).toBe(5);
-		expect(nodeQueue.current.content).toBe(5);
+
+		expect(nodeTree.pop()).toMatchObject({
+			content: {
+				content: 5,
+			},
+		});
 	});
 
-	it("should get out of sync with NodeQueue when an element is tracked", () => {
+	it("should keep the last pushed element as current when another one is tracked", () => {
 		/** This is useful to track self-closing tags */
 
 		nodeTree.push({ content: 5 });
 		nodeTree.track({ content: 6 });
 
-		expect(nodeQueue.current.content).toBe(5);
-	});
-
-	it("should not set an element as latestNode when tracking is performed", () => {
-		nodeTree.push({ content: 5 });
-		nodeTree.track({ content: 6 });
-
-		expect(nodeTree.currentNode).toMatchObject({ content: 5 });
+		expect(nodeTree.currentNode).toMatchObject({
+			content: {
+				content: 5,
+			},
+			children: [
+				{
+					content: {
+						content: 6,
+					},
+					children: [],
+				},
+			],
+		});
 	});
 
 	it("should upgrade the last used node on the memory when an element is popped out", () => {
@@ -55,16 +51,19 @@ describe("NodeTree", () => {
 
 		nodeTree.pop();
 
-		expect(nodeQueue.current).toMatchObject({ content: 5 });
-		expect(nodeTree.currentNode).toMatchObject({ content: 5 });
+		expect(nodeTree.currentNode).toMatchObject({ content: { content: 5 } });
 		expect(nodeTree.tree).toMatchObject({
-			content: 5,
+			content: {
+				content: 5,
+			},
 			children: [
 				{
-					content: 6,
+					content: {
+						content: 6,
+					},
+					children: [],
 				},
 			],
-			parent: null,
 		});
 	});
 });
