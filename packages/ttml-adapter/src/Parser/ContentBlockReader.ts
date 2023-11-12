@@ -179,19 +179,20 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					}
 				}
 
-				relationshipTree.setCurrent(relationshipTree.currentNode.get(token.content));
+				if (token.content === "tt") {
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
+					relationshipTree.setCurrent(token.content);
+
+					yield [BlockType.DOCUMENT, nodeTree.currentNode];
+					continue;
+				}
+
+				relationshipTree.setCurrent(token.content);
 
 				if (isTokenAllowedToGroupTrack(token)) {
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
 				} else {
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
-				}
-
-				if (token.content === "tt") {
-					makeNodePreEmitted(nodeTree.currentNode.content);
-
-					yield [BlockType.DOCUMENT, nodeTree.currentNode];
-					continue;
 				}
 
 				break;
