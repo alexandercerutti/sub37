@@ -137,6 +137,10 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
+				if (isNodeIgnored(nodeTree.currentNode.content)) {
+					break;
+				}
+
 				nodeTree.track(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
 				break;
 			}
