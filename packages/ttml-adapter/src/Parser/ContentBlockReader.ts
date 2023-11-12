@@ -7,7 +7,7 @@ import { RelationshipTree } from "./Tags/RelationshipTree.js";
 export enum BlockType {
 	DOCUMENT /**********/ = 0b0000001,
 	HEADER /************/ = 0b0000010,
-	REGION /************/ = 0b0000100,
+	LAYOUT /************/ = 0b0000100,
 	STYLE /*************/ = 0b0001000,
 	CUE /***************/ = 0b0010000,
 	CONTENT_ELEMENT /***/ = 0b0100000,
@@ -28,7 +28,7 @@ export type DocumentBlockTuple = [
 
 export type CueBlockTuple = [blockType: BlockType.CUE, payload: NodeWithRelationship<Token>];
 
-export type RegionBlockTuple = [blockType: BlockType.REGION, payload: NodeWithRelationship<Token>];
+export type LayoutBlockTuple = [blockType: BlockType.LAYOUT, payload: NodeWithRelationship<Token>];
 
 export type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
 
@@ -45,7 +45,7 @@ export type ContentElementBlockTuple = [
 export type BlockTuple =
 	| DocumentBlockTuple
 	| CueBlockTuple
-	| RegionBlockTuple
+	| LayoutBlockTuple
 	| StyleBlockTuple
 	| ContentElementBlockTuple
 	| SelfClosingBlockTuple;
@@ -54,7 +54,7 @@ const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["tt", BlockType.DOCUMENT],
 	["body", BlockType.CONTENT_ELEMENT],
 	["div", BlockType.CONTENT_ELEMENT],
-	["layout", BlockType.REGION],
+	["layout", BlockType.LAYOUT],
 	["styling", BlockType.STYLE],
 	["p", BlockType.CUE],
 	["span", BlockType.CUE],
@@ -68,8 +68,8 @@ export function isCueBlockTuple(block: BlockTuple): block is CueBlockTuple {
 	return block[0] === BlockType.CUE;
 }
 
-export function isRegionBlockTuple(block: BlockTuple): block is RegionBlockTuple {
-	return block[0] === BlockType.REGION;
+export function isLayoutBlockTuple(block: BlockTuple): block is LayoutBlockTuple {
+	return block[0] === BlockType.LAYOUT;
 }
 
 export function isStyleBlockTuple(block: BlockTuple): block is StyleBlockTuple {

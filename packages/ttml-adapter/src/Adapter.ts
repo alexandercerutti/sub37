@@ -26,13 +26,13 @@ import {
 	type BlockTuple,
 	getNextContentBlock,
 	isDocumentBlockTuple,
-	isRegionBlockTuple,
+	isLayoutBlockTuple,
 	isStyleBlockTuple,
 	isContentElementBlockTuple,
 	isCueBlockTuple,
 	isSelfClosingBlockTuple,
 	DocumentBlockTuple,
-	RegionBlockTuple,
+	LayoutBlockTuple,
 	StyleBlockTuple,
 	ContentElementBlockTuple,
 	CueBlockTuple,
@@ -116,8 +116,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					break;
 				}
 
-				case isRegionBlockTuple(value): {
-					const block: RegionBlockTuple[1] = value[1];
+				case isLayoutBlockTuple(value): {
+					const block: LayoutBlockTuple[1] = value[1];
 
 					const { children } = block;
 
