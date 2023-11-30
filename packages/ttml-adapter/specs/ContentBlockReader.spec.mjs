@@ -85,7 +85,7 @@ describe("ContentBlockReader", () => {
 		generator.next();
 
 		expect(generator.next().value).toMatchObject([
-			BlockType.REGION,
+			BlockType.LAYOUT,
 			{
 				content: {
 					content: "layout",
@@ -294,7 +294,7 @@ describe("ContentBlockReader", () => {
 		void generator.next();
 
 		expect(generator.next().value).toMatchObject([
-			BlockType.REGION,
+			BlockType.LAYOUT,
 			{
 				parent: {
 					content: {
@@ -561,7 +561,7 @@ describe("ContentBlockReader", () => {
 		]);
 
 		expect(blockParser.next().value).toMatchObject([
-			BlockType.REGION,
+			BlockType.LAYOUT,
 			{
 				parent: {
 					content: headToken,
