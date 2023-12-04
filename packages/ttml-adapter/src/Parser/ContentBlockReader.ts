@@ -18,7 +18,8 @@ enum NodeAttributes {
 	NO_ATTRS /********/ = 0b000000,
 	IGNORED /*********/ = 0b000001,
 	GROUP_TRACKED /***/ = 0b000010,
-	PRE_EMITTED /*****/ = 0b000100,
+	PRE_EMITTABLE /***/ = 0b000100,
+	PRE_EMITTED /*****/ = 0b001000,
 }
 
 export type DocumentBlockTuple = [
@@ -269,6 +270,21 @@ function isNodePreEmitted(
 	node: NodeWithAttributes,
 ): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.PRE_EMITTED } {
 	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTED);
+}
+
+function isNodePreEmittable(
+	node: NodeWithAttributes,
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.PRE_EMITTABLE } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTABLE);
+}
+
+function setNodePreEmitted(node: NodeWithAttributes): void {
+	if (!(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTABLE)) {
+		return;
+	}
+
+	node[nodeAttributesSymbol] ^= NodeAttributes.PRE_EMITTED;
+	node[nodeAttributesSymbol] ^= NodeAttributes.PRE_EMITTABLE;
 }
 
 function createNodeWithAttributes<NodeType extends object>(
