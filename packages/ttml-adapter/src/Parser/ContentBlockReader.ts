@@ -15,7 +15,7 @@ export enum BlockType {
 }
 
 enum NodeAttributes {
-	NO_ATTRS /*********/ = 0b000000,
+	NO_ATTRS /********/ = 0b000000,
 	IGNORED /*********/ = 0b000001,
 	GROUP_TRACKED /***/ = 0b000010,
 	PRE_EMITTED /*****/ = 0b000100,
