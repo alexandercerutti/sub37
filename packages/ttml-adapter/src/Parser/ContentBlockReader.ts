@@ -111,15 +111,20 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
-				let trackedNode: NodeWithRelationship<Token & NodeWithAttributes>;
+				if (isBlockClassElement(token) && isNodePreEmittable(nodeTree.currentNode.content)) {
+					setNodePreEmitted(nodeTree.currentNode.content);
 
-				if (isTokenAllowedToGroupTrack(token)) {
-					trackedNode = nodeTree.track(
-						createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED),
-					);
-				} else {
-					trackedNode = nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+					/**
+					 * Emitting the current node before everything else in this round. We might want to
+					 * check if this is a "div" or a "body" and act in a different way for other elements,
+					 * if we'll introduce some more PreEmittable nodes.
+					 */
+					yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
 				}
+
+				let trackedNode: NodeWithRelationship<Token & NodeWithAttributes> = nodeTree.track(
+					createNodeWithAttributes(token, NodeAttributes.NO_ATTRS),
+				);
 
 				if (
 					isTokenAllowedToGroupTrack(token) &&
@@ -164,35 +169,48 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (isBlockClassElement(token) && !isNodePreEmitted(nodeTree.currentNode.content)) {
-					const { content: lastToken } = nodeTree.currentNode;
-					const { content: tagName, attributes } = lastToken;
+				relationshipTree.setCurrent(token.content);
 
-					if (tagName === "div" || tagName === "body") {
-						makeNodePreEmitted(nodeTree.currentNode.content);
-
-						if (Object.keys(attributes).length) {
-							yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
-						}
+				if (token.content === "tt" || token.content === "div" || token.content === "body") {
+					if (token.content === "tt") {
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
+						yield [BlockType.DOCUMENT, nodeTree.currentNode];
+						continue;
 					}
-				}
 
-				if (token.content === "tt") {
-					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
-					relationshipTree.setCurrent(token.content);
+					if (isNodePreEmittable(nodeTree.currentNode.content)) {
+						// Pre emitting the previous one before adding another one
+						setNodePreEmitted(nodeTree.currentNode.content);
+						yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
+					}
 
-					yield [BlockType.DOCUMENT, nodeTree.currentNode];
+					if (Object.keys(token.attributes).length) {
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTABLE));
+					}
+
 					continue;
 				}
 
-				relationshipTree.setCurrent(token.content);
+				if (isBlockClassElement(token) && isNodePreEmittable(nodeTree.currentNode.content)) {
+					setNodePreEmitted(nodeTree.currentNode.content);
 
-				if (isTokenAllowedToGroupTrack(token)) {
-					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
-				} else {
-					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+					/**
+					 * Emitting the current node before everything else. We might want to check if
+					 * this is a "div" or a "body" and act in a different way for other kind of elements
+					 * if we'll introduce some more preEmittable nodes.
+					 */
+					yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
 				}
 
+				let nextAttributes: NodeAttributes;
+
+				if (isTokenAllowedToGroupTrack(token)) {
+					nextAttributes |= NodeAttributes.GROUP_TRACKED;
+				} else {
+					nextAttributes |= NodeAttributes.NO_ATTRS;
+				}
+
+				nodeTree.push(createNodeWithAttributes(token, nextAttributes));
 				break;
 			}
 
@@ -283,8 +301,8 @@ function setNodePreEmitted(node: NodeWithAttributes): void {
 		return;
 	}
 
-	node[nodeAttributesSymbol] ^= NodeAttributes.PRE_EMITTED;
-	node[nodeAttributesSymbol] ^= NodeAttributes.PRE_EMITTABLE;
+	node[nodeAttributesSymbol] =
+		(node[nodeAttributesSymbol] & ~NodeAttributes.PRE_EMITTABLE) | NodeAttributes.PRE_EMITTED;
 }
 
 function createNodeWithAttributes<NodeType extends object>(
@@ -297,8 +315,4 @@ function createNodeWithAttributes<NodeType extends object>(
 			writable: true,
 		},
 	});
-}
-
-function makeNodePreEmitted(node: NodeWithAttributes) {
-	node[nodeAttributesSymbol] = node[nodeAttributesSymbol] | NodeAttributes.PRE_EMITTED;
 }
