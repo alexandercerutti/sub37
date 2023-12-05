@@ -90,11 +90,6 @@ export default class TTMLAdapter extends BaseAdapter {
 			}
 
 			switch (true) {
-				/**
-				 * @TODO upgrade to Typescript 5.3 after Nov 14
-				 * to have Control Flow Access to narrow value
-				 * when using switch (true).
-				 */
 				case isDocumentBlockTuple(value): {
 					if (documentSettings) {
 						/**
@@ -103,16 +98,12 @@ export default class TTMLAdapter extends BaseAdapter {
 						throw new Error("Malformed TTML track: multiple <tt> were found.");
 					}
 
-					const block: DocumentBlockTuple[1] = value[1];
-
-					documentSettings = parseDocumentSupportedAttributes(block.content.attributes || {});
+					documentSettings = parseDocumentSupportedAttributes(value[1].content.attributes || {});
 					break;
 				}
 
 				case isLayoutBlockTuple(value): {
-					const block: LayoutBlockTuple[1] = value[1];
-
-					const { children } = block;
+					const { children } = value[1];
 
 					for (const { content: regionToken, children: regionChildren } of children) {
 						if (regionToken.content !== "region") {
@@ -144,8 +135,7 @@ export default class TTMLAdapter extends BaseAdapter {
 				}
 
 				case isStyleBlockTuple(value): {
-					const block: StyleBlockTuple[1] = value[1];
-					const { children } = block;
+					const { children } = value[1];
 
 					for (const { content: tagToken } of children) {
 						if (tagToken.content !== "style") {
@@ -169,7 +159,6 @@ export default class TTMLAdapter extends BaseAdapter {
 				}
 
 				case isSelfClosingBlockTuple(value): {
-					const block: SelfClosingBlockTuple[1] = value[1];
 					break;
 				}
 			}
