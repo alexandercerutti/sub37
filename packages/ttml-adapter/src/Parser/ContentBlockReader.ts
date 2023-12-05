@@ -171,13 +171,13 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 				relationshipTree.setCurrent(token.content);
 
-				if (token.content === "tt" || token.content === "div" || token.content === "body") {
-					if (token.content === "tt") {
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
-						yield [BlockType.DOCUMENT, nodeTree.currentNode];
-						continue;
-					}
+				if (token.content === "tt") {
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
+					yield [BlockType.DOCUMENT, nodeTree.currentNode];
+					continue;
+				}
 
+				if (token.content === "div" || token.content === "body") {
 					if (isNodePreEmittable(nodeTree.currentNode.content)) {
 						// Pre emitting the previous one before adding another one
 						setNodePreEmitted(nodeTree.currentNode.content);
