@@ -1,65 +1,65 @@
 import type { Token } from "./Token";
+import { memoizationFactory } from "./memoizationFactory";
 
 export interface TTMLStyle {
 	id: string;
 	attributes: Record<string, string>;
 }
 
-export function parseStyleFactory(): (token: Token) => TTMLStyle | undefined {
+export const createStyleParser = memoizationFactory(function styleParserExecutor(
 	/**
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
 	 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
 	 */
-	const stylesIDREFSMap = new Map<string, TTMLStyle>([]);
+	stylesIDREFSStorage: Map<string, TTMLStyle>,
+	token: Token,
+): TTMLStyle | undefined {
+	if (token.content !== "style") {
+		return undefined;
+	}
 
-	return function parseStyle(token: Token): TTMLStyle | undefined {
-		if (token.content !== "style") {
-			return undefined;
-		}
+	let styleCache: Record<string, string> | undefined = undefined;
 
-		let styleCache: Record<string, string> | undefined = undefined;
+	const { attributes } = token;
 
-		const { attributes } = token;
+	const id = attributes["xml:id"];
+	const attrs = excludeUnsupportedStyleAttributes(attributes);
 
-		const id = attributes["xml:id"];
-		const attrs = excludeUnsupportedStyleAttributes(attributes);
+	if (!attributes["style"]) {
+		styleCache = attrs;
+	}
 
-		if (!attributes["style"]) {
-			styleCache = attrs;
-		}
-
-		const style = resolveIDREFConflict(stylesIDREFSMap, {
-			id,
-			get attributes(): TTMLStyle["attributes"] {
-				if (typeof styleCache !== "undefined") {
-					return styleCache;
-				}
-
-				const parentStyle = stylesIDREFSMap.get(attributes["style"]);
-
-				if (!parentStyle) {
-					styleCache = attrs;
-					return styleCache;
-				}
-
-				styleCache = Object.create(attrs);
-
-				for (const [styleName, value] of Object.entries(parentStyle.attributes)) {
-					styleCache[styleName] = value;
-				}
-
+	const style = resolveIDREFConflict(stylesIDREFSStorage, {
+		id,
+		get attributes(): TTMLStyle["attributes"] {
+			if (typeof styleCache !== "undefined") {
 				return styleCache;
-			},
-		});
+			}
 
-		/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
-		stylesIDREFSMap.set(id, style);
+			const parentStyle = stylesIDREFSStorage.get(attributes["style"]);
 
-		return style;
-	};
-}
+			if (!parentStyle) {
+				styleCache = attrs;
+				return styleCache;
+			}
 
-export function excludeUnsupportedStyleAttributes(
+			styleCache = Object.create(attrs);
+
+			for (const [styleName, value] of Object.entries(parentStyle.attributes)) {
+				styleCache[styleName] = value;
+			}
+
+			return styleCache;
+		},
+	});
+
+	/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
+	stylesIDREFSStorage.set(id, style);
+
+	return style;
+});
+
+function excludeUnsupportedStyleAttributes(
 	attributes: Record<string, string>,
 ): Record<string, string> {
 	const attrs: Record<string, string> = {};

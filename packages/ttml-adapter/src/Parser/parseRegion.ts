@@ -1,18 +1,48 @@
 import type { Region } from "@sub37/server";
 import type { Token } from "./Token";
-import { parseStyleFactory, type TTMLStyle } from "./parseStyle";
+import { createStyleParser, type TTMLStyle } from "./parseStyle";
+import { NodeWithRelationship } from "./Tags/NodeTree";
+import { memoizationFactory } from "./memoizationFactory";
+
+type StyleParser = ReturnType<typeof createStyleParser>;
 
 /**
  * @param rawRegionData
  */
 
-export function parseRegion(token: Token, nestedStylesTokens: Token[] = []): Region {
-	const localStyleParser = parseStyleFactory();
+export const createRegionParser = memoizationFactory(function regionParserExecutor(
+	regionStorage: Map<string, TTMLRegion>,
+	token: Token,
+	children: NodeWithRelationship<Token>[],
+	styleParser: StyleParser = createStyleParser(),
+): Region | undefined {
+	if (regionStorage.has(token.attributes["xml:id"])) {
+		/**
+		 * @TODO should we resolve the conflict here
+		 * or just ignore the region? The spec seems
+		 * to say nothing about this...
+		 */
+		return undefined;
+	}
+
 	const region = new TTMLRegion();
+	const nestedStyles = extractStylesChildren(children, styleParser);
+
+	region.styles = nestedStyles;
+	region.id = token.attributes["xml:id"];
+
+	regionStorage.set(region.id, region);
+	return region;
+});
+
+function extractStylesChildren(
+	regionChildren: NodeWithRelationship<Token>[],
+	styleParser: StyleParser = createStyleParser(),
+): TTMLStyle[] {
 	const nestedStyles: TTMLStyle[] = [];
 
-	for (const styleToken of nestedStylesTokens) {
-		const style = localStyleParser(styleToken);
+	for (const styleToken of regionChildren) {
+		const style = styleParser(styleToken.content);
 
 		if (!style) {
 			continue;
@@ -21,10 +51,7 @@ export function parseRegion(token: Token, nestedStylesTokens: Token[] = []): Reg
 		nestedStyles.push(style);
 	}
 
-	region.styles = nestedStyles;
-	region.id = token.attributes["xml:id"];
-
-	return region;
+	return nestedStyles;
 }
 
 class TTMLRegion implements Region {

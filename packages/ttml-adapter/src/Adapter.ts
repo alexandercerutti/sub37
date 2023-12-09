@@ -12,8 +12,8 @@ import {
 } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import * as Tags from "./Parser/Tags/index.js";
-import { parseStyleFactory } from "./Parser/parseStyle.js";
-import { parseRegion } from "./Parser/parseRegion.js";
+import { createStyleParser } from "./Parser/parseStyle.js";
+import { createRegionParser } from "./Parser/parseRegion.js";
 import {
 	LogicalGroupingContext,
 	addContextBeginPoint,
@@ -64,12 +64,11 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		let parsingState: BlockType = BlockType.HEADER;
 		const openTagsQueue = new Tags.NodeQueue();
-		const parseStyle = parseStyleFactory();
+		const parseStyle = createStyleParser();
+		const parseRegion = createRegionParser();
 		const globalStyles: TTMLStyle[] = [];
 
 		let documentSettings: TimeDetails;
-
-		const regionsMap: Map<string, Region> = new Map();
 
 		let groupContext = new LogicalGroupingContext();
 
@@ -110,25 +109,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						const styleTokenChildren = regionChildren
-							.filter((children) => children.content.content === "style")
-							.map((children) => children.content);
-
-						const region = parseRegion(regionToken, styleTokenChildren);
-
-						if (regionsMap.has(region.id)) {
-							/**
-							 * @TODO should we resolve the conflict here
-							 * or just ignore the region? Does the spec
-							 * say something about?
-							 *
-							 * If resolving conflict, we should also
-							 * resolve it when a region end tag happens.
-							 */
-							continue;
-						}
-
-						regionsMap.set(region.id, region);
+						parseRegion(regionToken, regionChildren, parseStyle);
 					}
 
 					break;
