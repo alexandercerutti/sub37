@@ -11,7 +11,6 @@ import {
 	isStyleTagToken,
 } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
-import * as Tags from "./Parser/Tags/index.js";
 import { createStyleParser } from "./Parser/parseStyle.js";
 import { createRegionParser } from "./Parser/parseRegion.js";
 import {
@@ -63,7 +62,6 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let parsingState: BlockType = BlockType.HEADER;
-		const openTagsQueue = new Tags.NodeQueue();
 		const parseStyle = createStyleParser();
 		const parseRegion = createRegionParser();
 		const globalStyles: TTMLStyle[] = [];
