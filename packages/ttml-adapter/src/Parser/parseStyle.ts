@@ -29,8 +29,8 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 		styleCache = attrs;
 	}
 
-	const style = resolveIDREFConflict(stylesIDREFSStorage, {
-		id,
+	const style = {
+		id: resolveIDREFConflict(stylesIDREFSStorage, id),
 		get attributes(): TTMLStyle["attributes"] {
 			if (typeof styleCache !== "undefined") {
 				return styleCache;
@@ -51,7 +51,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 
 			return styleCache;
 		},
-	});
+	};
 
 	/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
 	stylesIDREFSStorage.set(id, style);
@@ -79,25 +79,23 @@ function excludeUnsupportedStyleAttributes(
 	return attrs;
 }
 
-function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, style: TTMLStyle): TTMLStyle {
-	if (!idrefsMap.has(style.id)) {
-		return style;
+function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
+	if (!idrefsMap.has(id)) {
+		return id;
 	}
 
-	let styleConflictOverrideIdentifier = parseInt(style.id.match(/--(\d{1,})/)?.[1]);
+	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1]);
 
 	if (Number.isNaN(styleConflictOverrideIdentifier)) {
-		return style;
+		return id;
 	}
 
-	while (idrefsMap.has(`${style.id}--${styleConflictOverrideIdentifier}`)) {
+	while (idrefsMap.has(`${id}--${styleConflictOverrideIdentifier}`)) {
 		styleConflictOverrideIdentifier++;
 	}
 
-	style.id = style.id.replace(
+	return id.replace(
 		`--${styleConflictOverrideIdentifier}`,
 		`--${styleConflictOverrideIdentifier + 1}`,
 	);
-
-	return style;
 }
