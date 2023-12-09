@@ -109,7 +109,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						parseRegion(regionToken, regionChildren, parseStyle);
+						parseRegion.process(regionToken, regionChildren, parseStyle);
 					}
 
 					break;
@@ -123,7 +123,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						globalStyles.push(parseStyle(tagToken));
+						globalStyles.push(parseStyle.process(tagToken));
 					}
 
 					break;

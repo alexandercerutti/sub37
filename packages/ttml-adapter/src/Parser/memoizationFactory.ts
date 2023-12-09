@@ -8,6 +8,19 @@ export function memoizationFactory<MemoizedData extends object, Argv extends unk
 	return function memoizationCreator() {
 		const storage = new Map<string, MemoizedData>();
 
-		return (...args: Argv) => executor(storage, ...args);
+		return {
+			process(...args: Argv) {
+				return executor(storage, ...args);
+			},
+			get(id: string): MemoizedData | undefined {
+				let data: MemoizedData | undefined;
+
+				if (!(data = storage.get(id))) {
+					return undefined;
+				}
+
+				return data;
+			},
+		};
 	};
 }
