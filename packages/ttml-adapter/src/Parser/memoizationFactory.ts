@@ -15,6 +15,11 @@ export function memoizationFactory<
 		const storage = new Map<StorageKeySource, MemoizedData>();
 
 		return {
+			push(...args: [id: StorageKeySource, data: MemoizedData][]) {
+				for (const [id, data] of args) {
+					storage.set(id, data);
+				}
+			},
 			process(...args: Argv) {
 				return executor(storage, ...args);
 			},

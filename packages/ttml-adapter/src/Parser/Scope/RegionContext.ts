@@ -5,6 +5,7 @@ import { createRegionParser } from "../parseRegion";
 import type { Context, Scope } from "./Scope";
 
 const regionContextSymbol = Symbol("region");
+const regionParserGetterSymbol = Symbol("region.parser");
 
 type RegionParser = ReturnType<typeof createRegionParser>;
 
@@ -15,6 +16,7 @@ interface RegionContextState {
 
 interface RegionContext extends Context<RegionContext> {
 	regions: Region[];
+	[regionParserGetterSymbol]: RegionParser;
 }
 
 export function createRegionContext(contextState: RegionContextState[]): RegionContext {
@@ -23,6 +25,16 @@ export function createRegionContext(contextState: RegionContextState[]): RegionC
 	return {
 		parent: undefined,
 		identifier: regionContextSymbol,
+		mergeWith(context: RegionContext) {
+			const contextRegions = context[regionParserGetterSymbol].getAll();
+
+			for (const [id, data] of Object.entries(contextRegions)) {
+				regionParser.push([id, data]);
+			}
+		},
+		get [regionParserGetterSymbol]() {
+			return regionParser;
+		},
 		get regions(): Region[] {
 			const parentRegions: Region[] = this.parent?.regions ?? [];
 

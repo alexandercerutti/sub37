@@ -3,19 +3,31 @@ import { TTMLStyle, createStyleParser } from "../parseStyle";
 import type { Context, Scope } from "./Scope";
 
 const styleContextSymbol = Symbol("style");
+const styleParserGetterSymbol = Symbol("style.parser.getter");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
 interface StyleContext extends Context<StyleContext> {
 	styles: TTMLStyle[];
+	[styleParserGetterSymbol]: StyleParser;
 }
 
-export function createStyleContext(styles: Token[]): StyleContext {
+export function createStyleContext(styles: Token[] = []): StyleContext {
 	const stylesParser: StyleParser = createStyleParser();
 
 	return {
 		parent: undefined,
 		identifier: styleContextSymbol,
+		mergeWith(context: StyleContext): void {
+			const contextStyles = context[styleParserGetterSymbol].getAll();
+
+			for (const [id, data] of Object.entries(contextStyles)) {
+				stylesParser.push([id, data]);
+			}
+		},
+		get [styleParserGetterSymbol]() {
+			return stylesParser;
+		},
 		get styles(): TTMLStyle[] {
 			const parentStyles: TTMLStyle[] = this.parent ? Object.values(this.parent?.styles) : [];
 

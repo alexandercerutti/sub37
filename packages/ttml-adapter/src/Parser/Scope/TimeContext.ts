@@ -1,7 +1,7 @@
 import type { Context, Scope } from "./Scope";
 
 const timeContextSymbol = Symbol("time");
-const currentTimeContainerSymbol = Symbol("timecontainer");
+const currentStateSymbol = Symbol("state");
 
 interface TimeContextData {
 	begin?: number | undefined;
@@ -16,13 +16,16 @@ interface TimeContext extends Context<TimeContext> {
 	timeContainer: "par" | "seq";
 
 	// Just to retrieve the parent
-	[currentTimeContainerSymbol]: "par" | "seq";
+	[currentStateSymbol]: TimeContextData;
 }
 
-export function createTimeContext(state: TimeContextData): TimeContext {
+export function createTimeContext(state: TimeContextData = {}): TimeContext {
 	return {
 		parent: undefined,
 		identifier: timeContextSymbol,
+		mergeWith(context: TimeContext): void {
+			Object.assign(state, context[currentStateSymbol] || {});
+		},
 		/**
 		 * The begin of a cue can be inherited from parents.
 		 * It's default is 0 for both timeContainers kind, 'par'
@@ -101,15 +104,15 @@ export function createTimeContext(state: TimeContextData): TimeContext {
 		 * an indefinite duration, so they will always be shown.
 		 */
 		get timeContainer() {
-			return this.parent?.[currentTimeContainerSymbol] || this.parent?.timeContainer || "par";
+			return this.parent?.[currentStateSymbol].timeContainer || this.parent?.timeContainer || "par";
 		},
 
 		/**
 		 * This getter helps us to retrieve the parent's timeContainer
 		 * without affecting the elements.
 		 */
-		get [currentTimeContainerSymbol]() {
-			return state.timeContainer;
+		get [currentStateSymbol]() {
+			return state;
 		},
 	};
 }
