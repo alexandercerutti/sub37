@@ -21,6 +21,12 @@ export function memoizationFactory<MemoizedData extends object, Argv extends unk
 
 				return data;
 			},
+			getAll() {
+				return Object.fromEntries(storage);
+			},
+			get size() {
+				return storage.size;
+			},
 		};
 	};
 }
