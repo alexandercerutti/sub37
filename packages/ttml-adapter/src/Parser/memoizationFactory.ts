@@ -1,18 +1,24 @@
-interface MemoizationProtocol<MemoizedData extends object, Argv extends unknown[]> {
-	(storage: Map<string, MemoizedData>, ...args: Argv): MemoizedData;
+interface MemoizationProtocol<
+	MemoizedData extends object,
+	Argv extends unknown[],
+	StorageKeySource extends string = string,
+> {
+	(storage: Map<StorageKeySource, MemoizedData>, ...args: Argv): MemoizedData;
 }
 
-export function memoizationFactory<MemoizedData extends object, Argv extends unknown[]>(
-	executor: MemoizationProtocol<MemoizedData, Argv>,
-) {
+export function memoizationFactory<
+	MemoizedData extends object,
+	Argv extends unknown[],
+	StorageKeySource extends string = string,
+>(executor: MemoizationProtocol<MemoizedData, Argv, StorageKeySource>) {
 	return function memoizationCreator() {
-		const storage = new Map<string, MemoizedData>();
+		const storage = new Map<StorageKeySource, MemoizedData>();
 
 		return {
 			process(...args: Argv) {
 				return executor(storage, ...args);
 			},
-			get(id: string): MemoizedData | undefined {
+			get(id: StorageKeySource): MemoizedData | undefined {
 				let data: MemoizedData | undefined;
 
 				if (!(data = storage.get(id))) {
