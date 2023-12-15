@@ -37,6 +37,12 @@ import {
 	CueBlockTuple,
 	SelfClosingBlockTuple,
 } from "./Parser/ContentBlockReader.js";
+import { createScope, type Scope } from "./Parser/Scope/Scope.js";
+import { createTimeContext } from "./Parser/Scope/TimeContext.js";
+import { createStyleContext } from "./Parser/Scope/StyleContext.js";
+import { createRegionContext } from "./Parser/Scope/RegionContext.js";
+import { parseTimeString } from "./Parser/parseCue.js";
+import { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 
 enum BlockType {
 	IGNORED /***/ = 0b0001,
@@ -62,10 +68,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let parsingState: BlockType = BlockType.HEADER;
-		const parseStyle = createStyleParser();
-		const parseRegion = createRegionParser();
-		const globalStyles: TTMLStyle[] = [];
-
+		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext([]));
 		let documentSettings: TimeDetails;
 
 		let groupContext = new LogicalGroupingContext();
@@ -102,13 +105,20 @@ export default class TTMLAdapter extends BaseAdapter {
 				case isLayoutBlockTuple(value): {
 					const { children } = value[1];
 
+					const localRegions: {
+						region: Token;
+						children: NodeWithRelationship<Token>[];
+					}[] = [];
+
 					for (const { content: regionToken, children: regionChildren } of children) {
 						if (regionToken.content !== "region") {
 							continue;
 						}
 
-						parseRegion.process(regionToken, regionChildren, parseStyle);
+						localRegions.push({ region: regionToken, children: regionChildren });
 					}
+
+					treeScope.addContext(createRegionContext(localRegions));
 
 					break;
 				}
@@ -116,24 +126,97 @@ export default class TTMLAdapter extends BaseAdapter {
 				case isStyleBlockTuple(value): {
 					const { children } = value[1];
 
-					for (const { content: tagToken } of children) {
-						if (tagToken.content !== "style") {
-							continue;
-						}
+					const styleTags = children
+						.filter(({ content: token }) => token.content === "style")
+						.map(({ content }) => content);
 
-						globalStyles.push(parseStyle.process(tagToken));
-					}
+					treeScope.addContext(createStyleContext(styleTags));
 
 					break;
 				}
 
 				case isContentElementBlockTuple(value): {
-					const block: ContentElementBlockTuple[1] = value[1];
+					if (
+						treeScope.parent &&
+						value[1].parent.content.content !== "div" &&
+						value[1].content.content === "div"
+					) {
+						treeScope = treeScope.parent;
+					}
+
+					const localRegions: { region: Token; children: NodeWithRelationship<Token>[] }[] = [];
+
+					for (const { content: token, children } of value[1].children) {
+						switch (token.content) {
+							case "region": {
+								localRegions.push({
+									region: token,
+									children,
+								});
+							}
+						}
+					}
+
+					treeScope = createScope(treeScope, createRegionContext(localRegions));
+
 					break;
 				}
 
 				case isCueBlockTuple(value): {
-					const block: CueBlockTuple[1] = value[1];
+					const { attributes } = value[1].content;
+
+					const timeContainer =
+						attributes["timeContainer"] === "par" || attributes["timeContainer"] === "seq"
+							? attributes["timeContainer"]
+							: undefined;
+
+					const regionTokens: { region: Token; children: NodeWithRelationship<Token>[] }[] = [];
+
+					for (const { content, children } of value[1].children) {
+						if (content.content === "region") {
+							regionTokens.push({ region: content, children });
+						}
+					}
+
+					const localScope = createScope(
+						treeScope,
+						createTimeContext({
+							begin: parseTimeString(attributes["begin"], documentSettings),
+							dur: parseTimeString(attributes["end"], documentSettings),
+							end: parseTimeString(attributes["dur"], documentSettings),
+							timeContainer: timeContainer,
+						}),
+						createRegionContext(regionTokens),
+					);
+
+					for (const { content } of value[1].children) {
+						if (content.type === TokenType.STRING) {
+							/**
+							 * @TODO add text to current cue
+							 */
+							continue;
+						}
+
+						if (content.content === "span") {
+							const { attributes } = content;
+
+							const spanScope = createScope(
+								localScope,
+								createTimeContext({
+									begin: parseTimeString(attributes["begin"], documentSettings),
+									dur: parseTimeString(attributes["end"], documentSettings),
+									end: parseTimeString(attributes["dur"], documentSettings),
+									timeContainer: timeContainer,
+								}),
+							);
+
+							/**
+							 * @TODO understand if we should emit a new cue or add it to
+							 * current one
+							 */
+						}
+					}
+
 					break;
 				}
 
