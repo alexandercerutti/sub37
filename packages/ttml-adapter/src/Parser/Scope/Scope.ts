@@ -1,4 +1,5 @@
 export interface Scope {
+	parent: Scope | undefined;
 	getAllContexts(): Context[];
 	getContextByIdentifier(identifier: symbol): Context | undefined;
 	addContext(context: Context): void;
@@ -29,6 +30,9 @@ export function createScope(parent: Scope | undefined, ...contexts: Context[]): 
 	}
 
 	return {
+		get parent() {
+			return parent;
+		},
 		getAllContexts(): Context[] {
 			return Array.from(contextsMap, ([, context]) => context);
 		},
