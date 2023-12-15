@@ -1,25 +1,9 @@
-import type { TTMLStyle } from "./Parser/parseStyle.js";
 import type { TimeDetails } from "./Parser/TimeBase/index.js";
-import { BaseAdapter, Region } from "@sub37/server";
+import { BaseAdapter, CueNode, Region } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
-import {
-	Token,
-	TokenType,
-	isRegionEndTagToken,
-	isRegionStyleToken,
-	isRegionTagToken,
-	isStyleTagToken,
-} from "./Parser/Token.js";
+import { Token, TokenType } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
-import { createStyleParser } from "./Parser/parseStyle.js";
-import { createRegionParser } from "./Parser/parseRegion.js";
-import {
-	LogicalGroupingContext,
-	addContextBeginPoint,
-	addContextDuration,
-	addContextEndPoint,
-	setTimeContainerType,
-} from "./Parser/LogicalGroupingContext.js";
+import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
 import { parseDocumentSupportedAttributes } from "./Parser/TTRootAttributes.js";
 import {
 	type BlockTuple,
@@ -30,12 +14,6 @@ import {
 	isContentElementBlockTuple,
 	isCueBlockTuple,
 	isSelfClosingBlockTuple,
-	DocumentBlockTuple,
-	LayoutBlockTuple,
-	StyleBlockTuple,
-	ContentElementBlockTuple,
-	CueBlockTuple,
-	SelfClosingBlockTuple,
 } from "./Parser/ContentBlockReader.js";
 import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
@@ -440,14 +418,3 @@ function tokenSupportsLogicalGroupingSwitch(
 	return LOGICAL_GROUP_TOKENS.includes(token.content as LOGICAL_GROUP_TOKENS[number]);
 }
 
-const TokenRelationships = {
-	region: ["layout"],
-	style: ["styling", "region"],
-	layout: ["head"],
-	styling: ["head"],
-	head: ["tt"],
-	body: ["tt"],
-	div: ["body"],
-	span: ["span", "p"],
-	p: ["div", "body"],
-} as const;
