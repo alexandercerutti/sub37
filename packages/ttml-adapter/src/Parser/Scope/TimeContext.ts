@@ -19,7 +19,11 @@ interface TimeContext extends Context<TimeContext> {
 	[currentStateSymbol]: TimeContextData;
 }
 
-export function createTimeContext(state: TimeContextData = {}): TimeContext {
+export function createTimeContext(state: TimeContextData = {}): TimeContext | null {
+	if (!(state.begin && state.dur && state.end && state.timeContainer)) {
+		return null;
+	}
+
 	return {
 		parent: undefined,
 		identifier: timeContextSymbol,

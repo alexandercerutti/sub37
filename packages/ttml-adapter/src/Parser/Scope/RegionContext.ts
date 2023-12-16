@@ -19,7 +19,11 @@ interface RegionContext extends Context<RegionContext> {
 	[regionParserGetterSymbol]: RegionParser;
 }
 
-export function createRegionContext(contextState: RegionContextState[]): RegionContext {
+export function createRegionContext(contextState: RegionContextState[]): RegionContext | null {
+	if (!contextState.length) {
+		return null;
+	}
+
 	const regionParser: RegionParser = createRegionParser();
 
 	return {

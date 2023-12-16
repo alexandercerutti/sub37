@@ -11,9 +11,9 @@ export interface Context<ParentType extends ThisType<Context<unknown>> = unknown
 	mergeWith(context: Context): void;
 }
 
-export function createScope(parent: Scope | undefined, ...contexts: Context[]): Scope {
+export function createScope(parent: Scope | undefined, ...contexts: (Context | null)[]): Scope {
 	const contextsMap = new Map<symbol, Context>(
-		contexts.map((context) => [context.identifier, context]),
+		contexts.filter(Boolean).map((context) => [context.identifier, context]),
 	);
 
 	if (parent) {
@@ -40,6 +40,10 @@ export function createScope(parent: Scope | undefined, ...contexts: Context[]): 
 			return contextsMap.get(identifier) || undefined;
 		},
 		addContext(context: Context): void {
+			if (!context) {
+				return;
+			}
+
 			if (contextsMap.has(context.identifier)) {
 				contextsMap.get(context.identifier).mergeWith(context);
 				return;

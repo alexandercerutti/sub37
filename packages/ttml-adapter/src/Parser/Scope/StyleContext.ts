@@ -12,7 +12,11 @@ interface StyleContext extends Context<StyleContext> {
 	[styleParserGetterSymbol]: StyleParser;
 }
 
-export function createStyleContext(styles: Token[] = []): StyleContext {
+export function createStyleContext(styles: Token[] = []): StyleContext | null {
+	if (!styles.length) {
+		return null;
+	}
+
 	const stylesParser: StyleParser = createStyleParser();
 
 	return {
