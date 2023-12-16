@@ -3,7 +3,6 @@ import { BaseAdapter, CueNode, Region } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
-import { LogicalGroupingContext } from "./Parser/LogicalGroupingContext.js";
 import { parseDocumentSupportedAttributes } from "./Parser/TTRootAttributes.js";
 import {
 	type BlockTuple,
@@ -22,13 +21,6 @@ import { createRegionContext } from "./Parser/Scope/RegionContext.js";
 import { parseTimeString } from "./Parser/parseCue.js";
 import { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 
-enum BlockType {
-	IGNORED /***/ = 0b0001,
-	HEADER /****/ = 0b0010,
-	HEAD /******/ = 0b0100,
-	BODY /******/ = 0b1000,
-}
-
 export default class TTMLAdapter extends BaseAdapter {
 	public static override get supportedType() {
 		return "application/ttml+xml";
@@ -45,11 +37,8 @@ export default class TTMLAdapter extends BaseAdapter {
 			]);
 		}
 
-		let parsingState: BlockType = BlockType.HEADER;
 		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext([]));
 		let documentSettings: TimeDetails;
-
-		let groupContext = new LogicalGroupingContext();
 
 		const tokenizer = new Tokenizer(rawContent);
 		const blockReader = getNextContentBlock(tokenizer);
