@@ -1,6 +1,8 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
+import { createStyleContext, readScopeStyleContext } from "../lib/Parser/Scope/StyleContext.js";
+import { TokenType } from "../lib/Parser/Token.js";
 
 /**
  * @typedef {import("../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
@@ -183,5 +185,81 @@ describe("Scope and contexts", () => {
 
 	describe("RegionContext", () => {});
 
-	describe("StyleContext", () => {});
+	describe("StyleContext", () => {
+		it("should allow adding some styles", () => {
+			const scope = createScope(
+				undefined,
+				createStyleContext([
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t1",
+						},
+					},
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t2",
+						},
+					},
+				]),
+			);
+
+			expect(readScopeStyleContext(scope).styles).toEqual([
+				{ id: "t1", attributes: {} },
+				{ id: "t2", attributes: {} },
+			]);
+		});
+
+		it("should be able to iterate all the parent styles", () => {
+			const scope1 = createScope(
+				undefined,
+				createStyleContext([
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t1",
+						},
+					},
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t2",
+						},
+					},
+				]),
+			);
+
+			const scope2 = createScope(
+				scope1,
+				createStyleContext([
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t3",
+						},
+					},
+					{
+						type: TokenType.START_TAG,
+						content: "style",
+						attributes: {
+							"xml:id": "t4",
+						},
+					},
+				]),
+			);
+
+			expect(readScopeStyleContext(scope2).styles).toMatchObject([
+				{ id: "t3", attributes: {} },
+				{ id: "t4", attributes: {} },
+				{ id: "t1", attributes: {} },
+				{ id: "t2", attributes: {} },
+			]);
+		});
+	});
 });
