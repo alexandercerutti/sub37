@@ -2,9 +2,9 @@ import type { Context, Scope } from "./Scope";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
-const beginSymbol = Symbol("state");
-const endSymbol = Symbol("state");
-const durSymbol = Symbol("state");
+const beginSymbol = Symbol("time.begin");
+const endSymbol = Symbol("time.end");
+const durSymbol = Symbol("time.dur");
 
 interface TimeContextData {
 	begin?: number | undefined;
@@ -124,13 +124,13 @@ export function createTimeContext(state: TimeContextData = {}): TimeContext | nu
 			return state;
 		},
 		get [endSymbol]() {
-			return state.end || this.parent[endSymbol] || undefined;
+			return state.end || this.parent?.[endSymbol] || undefined;
 		},
 		get [beginSymbol]() {
-			return state.begin || this.parent[beginSymbol] || 0;
+			return state.begin || this.parent?.[beginSymbol] || 0;
 		},
 		get [durSymbol]() {
-			return state.dur || this.parent[durSymbol] || 0;
+			return state.dur || this.parent?.[durSymbol] || 0;
 		},
 	};
 }
