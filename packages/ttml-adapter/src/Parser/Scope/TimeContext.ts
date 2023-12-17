@@ -27,7 +27,7 @@ interface TimeContext extends Context<TimeContext> {
 }
 
 export function createTimeContext(state: TimeContextData = {}): TimeContext | null {
-	if (!(state.begin || state.dur || state.end || state.timeContainer)) {
+	if (!Object.keys(state).length) {
 		return null;
 	}
 
@@ -127,10 +127,10 @@ export function createTimeContext(state: TimeContextData = {}): TimeContext | nu
 			return state.end || this.parent?.[endSymbol] || undefined;
 		},
 		get [beginSymbol]() {
-			return state.begin || this.parent?.[beginSymbol] || 0;
+			return state.begin || this.parent?.[beginSymbol] || undefined;
 		},
 		get [durSymbol]() {
-			return state.dur || this.parent?.[durSymbol] || 0;
+			return state.dur || this.parent?.[durSymbol] || undefined;
 		},
 	};
 }
