@@ -33,10 +33,10 @@ export function getTimeBaseProvider(
 
 		default: {
 			/**
-			 * @TODO Transform in a better error
+			 * If not specified, the default time base must be considered to be media.
+			 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-timeBase
 			 */
-
-			throw new Error(`Provider not found for timeBase '${timeBase}'.`);
+			return Media;
 		}
 	}
 }
