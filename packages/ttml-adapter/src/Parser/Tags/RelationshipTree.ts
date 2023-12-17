@@ -17,7 +17,7 @@ export class RelationshipTree {
 						createRegionNode(),
 						new RelationshipNode("p", [
 							createRegionNode(),
-							new RelationshipNode("span"),
+							new RelationshipNode("span").setSelfReference(),
 							new RelationshipNode("br"),
 						]),
 					]).setSelfReference(),
