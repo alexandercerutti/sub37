@@ -117,7 +117,7 @@ export function createTimeContext(state: TimeContextData = {}): TimeContext | nu
 		 * an indefinite duration, so they will always be shown.
 		 */
 		get timeContainer() {
-			return this.parent?.[currentStateSymbol].timeContainer || this.parent?.timeContainer || "par";
+			return this.parent?.[currentStateSymbol].timeContainer || "par";
 		},
 
 		get [currentStateSymbol]() {
