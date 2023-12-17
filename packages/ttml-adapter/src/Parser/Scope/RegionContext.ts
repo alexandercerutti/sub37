@@ -30,6 +30,13 @@ export function createRegionContext(contextState: RegionContextState[]): RegionC
 		parent: undefined,
 		identifier: regionContextSymbol,
 		mergeWith(context: RegionContext) {
+			// Processing the actual regions first
+			if (!regionParser.size) {
+				for (let i = 0; i < contextState.length; i++) {
+					regionParser.process(contextState[i].region, contextState[i].children);
+				}
+			}
+
 			const contextRegions = context[regionParserGetterSymbol].getAll();
 
 			for (const [id, data] of Object.entries(contextRegions)) {

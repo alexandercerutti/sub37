@@ -23,6 +23,13 @@ export function createStyleContext(styles: Token[] = []): StyleContext | null {
 		parent: undefined,
 		identifier: styleContextSymbol,
 		mergeWith(context: StyleContext): void {
+			// Processing the actual styles first
+			if (!stylesParser.size) {
+				for (let i = 0; i < styles.length; i++) {
+					stylesParser.process(styles[i]);
+				}
+			}
+
 			const contextStyles = context[styleParserGetterSymbol].getAll();
 
 			for (const [id, data] of Object.entries(contextStyles)) {
