@@ -27,7 +27,7 @@ interface TimeContext extends Context<TimeContext> {
 }
 
 export function createTimeContext(state: TimeContextData = {}): TimeContext | null {
-	if (!(state.begin && state.dur && state.end && state.timeContainer)) {
+	if (!(state.begin || state.dur || state.end || state.timeContainer)) {
 		return null;
 	}
 
