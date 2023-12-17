@@ -2,6 +2,9 @@ import type { Context, Scope } from "./Scope";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
+const beginSymbol = Symbol("state");
+const endSymbol = Symbol("state");
+const durSymbol = Symbol("state");
 
 interface TimeContextData {
 	begin?: number | undefined;
@@ -11,9 +14,13 @@ interface TimeContextData {
 }
 
 interface TimeContext extends Context<TimeContext> {
-	startTime: number;
-	endTime: number;
-	timeContainer: "par" | "seq";
+	readonly startTime: number;
+	readonly endTime: number;
+	readonly timeContainer: "par" | "seq";
+
+	readonly [beginSymbol]?: number | undefined;
+	readonly [endSymbol]?: number | undefined;
+	readonly [durSymbol]?: number | undefined;
 
 	// Just to retrieve the parent
 	[currentStateSymbol]: TimeContextData;
@@ -55,7 +62,9 @@ export function createTimeContext(state: TimeContextData = {}): TimeContext | nu
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#timing-attribute-dur
 		 */
 		get endTime() {
-			const { end, dur, timeContainer } = state;
+			const end = this[endSymbol];
+			const dur = this[durSymbol];
+			const timeContainer = this.timeContainer;
 
 			if (typeof end === "undefined") {
 				return dur || timeContainer === "par" ? Infinity : 0;
@@ -111,12 +120,17 @@ export function createTimeContext(state: TimeContextData = {}): TimeContext | nu
 			return this.parent?.[currentStateSymbol].timeContainer || this.parent?.timeContainer || "par";
 		},
 
-		/**
-		 * This getter helps us to retrieve the parent's timeContainer
-		 * without affecting the elements.
-		 */
 		get [currentStateSymbol]() {
 			return state;
+		},
+		get [endSymbol]() {
+			return state.end || this.parent[endSymbol] || undefined;
+		},
+		get [beginSymbol]() {
+			return state.begin || this.parent[beginSymbol] || 0;
+		},
+		get [durSymbol]() {
+			return state.dur || this.parent[durSymbol] || 0;
 		},
 	};
 }
