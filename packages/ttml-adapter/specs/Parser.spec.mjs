@@ -1,7 +1,6 @@
 // @ts-check
 
 import { describe, expect, it } from "@jest/globals";
-import { LogicalGroupingContext } from "../lib/Parser/LogicalGroupingContext.js";
 import { matchClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/clockTime.js";
 import { matchOffsetTimeExpression } from "../lib/Parser/TimeExpressions/matchers/offsetTime.js";
 import { matchWallClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/wallclockTime.js";
@@ -92,89 +91,3 @@ describe("parseCue", () => {
 		);
 	});
 });
-
-describe("LogicalGroupingContext", () => {
-	/**
-	 * @type { LogicalGroupingContext }
-	 */
-
-	let group;
-
-	beforeEach(() => {
-		group = new LogicalGroupingContext();
-	});
-
-	describe("styles", () => {
-		it("should allow adding some styles", () => {
-			addStylesToGroup(group);
-
-			const stylesIterator = group.styles;
-
-			expect(stylesIterator.next()).toEqual({
-				value: {
-					id: "t1",
-					attributes: {},
-				},
-				done: false,
-			});
-			expect(stylesIterator.next()).toEqual({
-				value: {
-					id: "t2",
-					attributes: {},
-				},
-				done: false,
-			});
-			/**
-			 * We need to do so, otherwise a for-of loop won't
-			 * return the last item
-			 */
-			expect(stylesIterator.next()).toEqual({
-				value: undefined,
-				done: true,
-			});
-		});
-
-		it("should be able to iterate all the parent styles", () => {
-			addStylesToGroup(group);
-
-			for (let i = 0; i < 6; i++) {
-				group = new LogicalGroupingContext(group);
-				addStylesToGroup(group);
-			}
-
-			const stylesIterator = group.styles;
-			expect(stylesIterator.length).toBe(14);
-
-			/**
-			 * @type { import("../lib/Parser/parseStyle.js").TTMLStyle[] }
-			 */
-
-			let exploredStyles = [];
-
-			for (const style of stylesIterator) {
-				exploredStyles.push(style);
-			}
-
-			expect(exploredStyles.length).toBe(14);
-		});
-	});
-});
-
-/**
- *
- * @param {LogicalGroupingContext} group
- * @returns
- */
-
-function addStylesToGroup(group) {
-	group.addStyles(
-		{
-			id: "t1",
-			attributes: {},
-		},
-		{
-			id: "t2",
-			attributes: {},
-		},
-	);
-}
