@@ -19,7 +19,20 @@ interface TimeContext extends Context<TimeContext> {
 	readonly timeContainer: "par" | "seq";
 
 	readonly [beginSymbol]?: number | undefined;
+
+	/**
+	 * Also called "active end"
+	 */
 	readonly [endSymbol]?: number | undefined;
+
+	/**
+	 * SMIL Standard, from which TTML inherits some
+	 * attributes behavior, defines that default for "dur"
+	 * is 0 (or, as they call it, "indefinite").
+	 *
+	 * @see https://www.w3.org/TR/2008/REC-SMIL3-20081201/smil-timing.html#Timing-Ex:0DurDiscreteMedia
+	 */
+
 	readonly [durSymbol]?: number | undefined;
 
 	// Just to retrieve the parent
