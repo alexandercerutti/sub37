@@ -155,5 +155,26 @@ export function readScopeTimeContext(scope: Scope): TimeContext | undefined {
 		return undefined;
 	}
 
-	return context as TimeContext;
+	return createProxyTimeContext(context as TimeContext);
+}
+
+/**
+ * A TimeContext Proxy is needed to allow reading a context
+ * like you were reading from a sub context.
+ *
+ * This allows us to obtain the right `timeContainer` for
+ * a child when querying a time context.
+ *
+ * @param parent
+ * @returns
+ */
+
+function createProxyTimeContext(parent: TimeContext): TimeContext {
+	return Object.create(parent, {
+		parent: {
+			get() {
+				return parent;
+			},
+		},
+	});
 }
