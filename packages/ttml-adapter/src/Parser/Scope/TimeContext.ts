@@ -178,3 +178,9 @@ function createProxyTimeContext(parent: TimeContext): TimeContext {
 		},
 	});
 }
+
+export function isTimeContainerStardardString(
+	timeContainer: string,
+): timeContainer is "par" | "seq" {
+	return timeContainer === "par" || timeContainer === "seq";
+}

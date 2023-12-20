@@ -1,6 +1,6 @@
 export interface NodeWithRelationship<ContentType extends object> {
 	children: Array<NodeWithRelationship<ContentType>>;
-	parent: NodeWithRelationship<ContentType>;
+	parent?: NodeWithRelationship<ContentType> | undefined;
 	content: ContentType;
 }
 

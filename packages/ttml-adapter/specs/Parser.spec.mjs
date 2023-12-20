@@ -1,9 +1,13 @@
 // @ts-check
 
 import { describe, expect, it } from "@jest/globals";
+import { parseCue } from "../lib/Parser/parseCue.js";
 import { matchClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/clockTime.js";
 import { matchOffsetTimeExpression } from "../lib/Parser/TimeExpressions/matchers/offsetTime.js";
 import { matchWallClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/wallclockTime.js";
+import { createScope } from "../lib/Parser/Scope/Scope.js";
+import { createTimeContext } from "../lib/Parser/Scope/TimeContext.js";
+import { TokenType } from "../lib/Parser/Token.js";
 
 describe("parseCue", () => {
 	describe("regex time conversion", () => {
@@ -89,5 +93,230 @@ describe("parseCue", () => {
 			"should return a value based on frames, subframes, hours, minutes and seconds",
 			() => {},
 		);
+	});
+
+	it("should be coherent with anonymous span", () => {
+		const Hello = {
+			content: {
+				content: "Hello",
+				attributes: {},
+				type: TokenType.STRING,
+			},
+			children: [],
+		};
+
+		const Guten = {
+			content: {
+				content: "Guten ",
+				attributes: {},
+				type: TokenType.STRING,
+			},
+			children: [],
+		};
+
+		const Tag = {
+			content: {
+				content: "Tag",
+				attributes: {},
+				type: TokenType.STRING,
+			},
+			children: [],
+		};
+
+		const NamedSpan1 = {
+			content: {
+				content: "span",
+				attributes: {},
+				type: TokenType.START_TAG,
+			},
+			children: [
+				Guten,
+				{
+					content: {
+						content: "span",
+						attributes: {},
+						type: TokenType.START_TAG,
+					},
+					children: [Tag],
+				},
+			],
+		};
+
+		const Allo = {
+			content: {
+				content: "Allo",
+				attributes: {},
+				type: TokenType.STRING,
+			},
+			children: [],
+		};
+
+		const Paragraph = {
+			content: {
+				content: "p",
+				attributes: {
+					timeContainer: "seq",
+					"xml:id": "par-01",
+				},
+				type: TokenType.START_TAG,
+			},
+			children: [Hello, NamedSpan1, Allo],
+		};
+
+		Hello.parent = Paragraph;
+		Allo.parent = Paragraph;
+		NamedSpan1.parent = Paragraph;
+		Guten.parent = NamedSpan1;
+		Tag.parent = NamedSpan1.children[0];
+
+		const parsed = parseCue(Paragraph, createScope(undefined), {});
+
+		expect(parsed).toBeInstanceOf(Array);
+		expect(parsed.length).toBe(4);
+		expect(parsed[0]).toMatchObject({
+			content: "Hello",
+			startTime: 0,
+			endTime: 0,
+		});
+		expect(parsed[1]).toMatchObject({
+			content: "Guten ",
+			startTime: 0,
+			endTime: Infinity,
+		});
+		expect(parsed[2]).toMatchObject({
+			content: "Tag",
+			startTime: 0,
+			endTime: Infinity,
+		});
+		expect(parsed[3]).toMatchObject({
+			content: "Allo",
+			startTime: 0,
+			endTime: 0,
+		});
+	});
+
+	it("should be return timestamps", () => {
+		const Paragraph1 = {
+			content: {
+				content: "p",
+				attributes: {
+					"xml:id": "par-01",
+				},
+				type: TokenType.START_TAG,
+			},
+			children: [
+				{
+					content: {
+						type: TokenType.START_TAG,
+						content: "span",
+						attributes: {
+							begin: "0s",
+						},
+					},
+					children: [
+						{
+							content: {
+								type: TokenType.STRING,
+								content: "Lorem",
+								attributes: {},
+							},
+							children: [],
+						},
+					],
+				},
+				{
+					content: {
+						type: TokenType.START_TAG,
+						content: "span",
+						attributes: {
+							begin: "1s",
+						},
+					},
+					children: [
+						{
+							content: {
+								type: TokenType.STRING,
+								content: "ipsum",
+								attributes: {},
+							},
+							children: [],
+						},
+					],
+				},
+				{
+					content: {
+						type: TokenType.START_TAG,
+						content: "span",
+						attributes: {
+							begin: "2s",
+						},
+					},
+					children: [
+						{
+							content: {
+								type: TokenType.STRING,
+								content: "dolor",
+								attributes: {},
+							},
+							children: [],
+						},
+					],
+				},
+				{
+					content: {
+						type: TokenType.START_TAG,
+						content: "span",
+						attributes: {
+							begin: "3s",
+						},
+					},
+					children: [
+						{
+							content: {
+								type: TokenType.STRING,
+								content: "sit",
+								attributes: {},
+							},
+							children: [],
+						},
+					],
+				},
+			],
+		};
+
+		const parsed = parseCue(
+			Paragraph1,
+			createScope(
+				undefined,
+				createTimeContext({
+					begin: 0,
+					end: 25000,
+				}),
+			),
+			{},
+		);
+
+		expect(parsed).toBeInstanceOf(Array);
+		expect(parsed.length).toBe(4);
+		expect(parsed[0]).toMatchObject({
+			content: "Lorem",
+			startTime: 0,
+			endTime: 25000,
+		});
+		expect(parsed[1]).toMatchObject({
+			content: "ipsum",
+			startTime: 1000,
+			endTime: 25000,
+		});
+		expect(parsed[2]).toMatchObject({
+			content: "dolor",
+			startTime: 2000,
+			endTime: 25000,
+		});
+		expect(parsed[3]).toMatchObject({
+			content: "sit",
+			startTime: 3000,
+			endTime: 25000,
+		});
 	});
 });
