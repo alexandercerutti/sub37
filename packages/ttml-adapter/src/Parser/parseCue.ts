@@ -37,8 +37,8 @@ export function parseCue(
 		scope,
 		createTimeContext({
 			begin: parseTimeString(attributes["begin"], documentSettings),
-			dur: parseTimeString(attributes["end"], documentSettings),
-			end: parseTimeString(attributes["dur"], documentSettings),
+			dur: parseTimeString(attributes["dur"], documentSettings),
+			end: parseTimeString(attributes["end"], documentSettings),
 			timeContainer: timeContainer,
 		}),
 		createRegionContext(regionTokens),
@@ -97,8 +97,8 @@ function parseCueContents(
 				scope,
 				createTimeContext({
 					begin: parseTimeString(attributes["begin"], documentSettings),
-					dur: parseTimeString(attributes["end"], documentSettings),
-					end: parseTimeString(attributes["dur"], documentSettings),
+					dur: parseTimeString(attributes["dur"], documentSettings),
+					end: parseTimeString(attributes["end"], documentSettings),
 					timeContainer,
 				}),
 			);
