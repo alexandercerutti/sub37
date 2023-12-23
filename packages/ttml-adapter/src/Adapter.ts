@@ -18,8 +18,8 @@ import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContext } from "./Parser/Scope/StyleContext.js";
 import { createRegionContext } from "./Parser/Scope/RegionContext.js";
-import { parseTimeString } from "./Parser/parseCue.js";
 import { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
+import { parseCue } from "./Parser/parseCue.js";
 
 export default class TTMLAdapter extends BaseAdapter {
 	public static override get supportedType() {
@@ -37,6 +37,7 @@ export default class TTMLAdapter extends BaseAdapter {
 			]);
 		}
 
+		let cues: CueNode[] = [];
 		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext([]));
 		let documentSettings: TimeDetails;
 
@@ -130,59 +131,8 @@ export default class TTMLAdapter extends BaseAdapter {
 				}
 
 				case isCueBlockTuple(value): {
-					const { attributes } = value[1].content;
-
-					const timeContainer =
-						attributes["timeContainer"] === "par" || attributes["timeContainer"] === "seq"
-							? attributes["timeContainer"]
-							: undefined;
-
-					const regionTokens: { region: Token; children: NodeWithRelationship<Token>[] }[] = [];
-
-					for (const { content, children } of value[1].children) {
-						if (content.content === "region") {
-							regionTokens.push({ region: content, children });
-						}
-					}
-
-					const localScope = createScope(
-						treeScope,
-						createTimeContext({
-							begin: parseTimeString(attributes["begin"], documentSettings),
-							dur: parseTimeString(attributes["end"], documentSettings),
-							end: parseTimeString(attributes["dur"], documentSettings),
-							timeContainer: timeContainer,
-						}),
-						createRegionContext(regionTokens),
-					);
-
-					for (const { content } of value[1].children) {
-						if (content.type === TokenType.STRING) {
-							/**
-							 * @TODO add text to current cue
-							 */
-							continue;
-						}
-
-						if (content.content === "span") {
-							const { attributes } = content;
-
-							const spanScope = createScope(
-								localScope,
-								createTimeContext({
-									begin: parseTimeString(attributes["begin"], documentSettings),
-									dur: parseTimeString(attributes["end"], documentSettings),
-									end: parseTimeString(attributes["dur"], documentSettings),
-									timeContainer: timeContainer,
-								}),
-							);
-
-							/**
-							 * @TODO understand if we should emit a new cue or add it to
-							 * current one
-							 */
-						}
-					}
+					const node = value[1];
+					cues.push(...parseCue(node, treeScope, documentSettings));
 
 					break;
 				}
@@ -193,6 +143,6 @@ export default class TTMLAdapter extends BaseAdapter {
 			}
 		}
 
-		return BaseAdapter.ParseResult([], []);
+		return BaseAdapter.ParseResult(cues, []);
 	}
 }
