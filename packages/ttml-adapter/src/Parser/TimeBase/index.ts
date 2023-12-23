@@ -58,6 +58,7 @@ export interface TimeDetails {
  */
 
 interface TimeBaseProviderProtocol {
+	readonly timeBaseNameSymbol: symbol;
 	getMillisecondsByClockTime(match: ClockTimeMatch, timeDetails: TimeDetails): number;
 	getMillisecondsByWallClockTime(match: WallClockMatch): number;
 	getMillisecondsByOffsetTime(match: OffsetTimeMatch, timeDetails: TimeDetails): number;

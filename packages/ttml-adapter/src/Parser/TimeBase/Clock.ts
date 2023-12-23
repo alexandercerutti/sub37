@@ -4,6 +4,9 @@ import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
 import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
+/** To keep track and debug */
+export const timeBaseNameSymbol = Symbol("Clock");
+
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	/**
 	 * `fraction` is already embedded in seconds. `Frames` and

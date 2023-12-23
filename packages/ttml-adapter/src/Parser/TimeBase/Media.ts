@@ -10,6 +10,9 @@ import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
 import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
+/** To keep track and debug */
+export const timeBaseNameSymbol = Symbol("Media");
+
 export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
