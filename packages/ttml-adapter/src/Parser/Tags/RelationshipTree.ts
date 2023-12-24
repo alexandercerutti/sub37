@@ -1,31 +1,40 @@
+interface NavigationDescriptor {
+	navigate(): void;
+}
+
 export class RelationshipTree {
 	private root: RelationshipNode;
 	private currentElement: RelationshipNode;
 
 	public constructor() {
-		this.root = new RelationshipNode(null, [
-			new RelationshipNode("tt", [
-				new RelationshipNode("head", [
-					new RelationshipNode("styling", [
-						new RelationshipNode("initial"),
-						new RelationshipNode("style"),
-					]),
-					new RelationshipNode("layout", [createRegionNode()]),
-				]),
-				new RelationshipNode("body", [
-					new RelationshipNode("div", [
-						createRegionNode(),
-						new RelationshipNode("p", [
-							createRegionNode(),
-							new RelationshipNode("span").setSelfReference(),
-							new RelationshipNode("br"),
+		this.root = parentLinkedTree(
+			createRelationshipNode(null, [
+				createRelationshipNode("tt", [
+					createRelationshipNode("head", [
+						createRelationshipNode("styling", [
+							createRelationshipNode("initial"),
+							createRelationshipNode("style"),
 						]),
-					]).setSelfReference(),
+						createRelationshipNode("layout", [createRegionNode()]),
+					]),
+					createRelationshipNode("body", [
+						createRelationshipNode(
+							"div",
+							[
+								createRegionNode(),
+								createRelationshipNode("p", [
+									createRegionNode(),
+									createRelationshipNode("span", [], true),
+									createRelationshipNode("br"),
+								]),
+							],
+							true,
+						),
+					]),
 				]),
 			]),
-		]);
+		);
 
-		associateNodeParents(this.root);
 		this.currentElement = this.root;
 	}
 
@@ -33,79 +42,76 @@ export class RelationshipTree {
 		return this.currentElement;
 	}
 
-	public ascend(): void {
-		if (!this.currentElement) {
-			return;
+	public getDirectionDescriptor(name: string): NavigationDescriptor | null {
+		const element = this.currentElement.getDirectionByName(name);
+
+		if (!element) {
+			return null;
 		}
 
-		this.currentElement = this.currentElement.parent;
-	}
-
-	public setCurrent(element: string): void {
-		const comparisonNode = new RelationshipNode(element);
-
-		if (!element || RelationshipNode.is(this.currentElement, comparisonNode)) {
-			return;
-		}
-
-		const directionElement = this.currentElement.get(comparisonNode);
-
-		if (!directionElement) {
-			throw new Error(
-				`Internal navigation error: cannot navigate from <${this.currentElement.element}> to <${element}>: unreachable children`,
-			);
-		}
-
-		this.currentElement = directionElement;
-	}
-}
-
-function associateNodeParents(node: RelationshipNode): void {
-	if (!node) {
-		return;
-	}
-
-	for (const children of node.children) {
-		children.parent = node;
-
-		if (children.element !== node.element) {
-			associateNodeParents(children);
-		}
+		return {
+			navigate: () => {
+				this.currentElement = element;
+			},
+		};
 	}
 }
 
 function createRegionNode(): RelationshipNode {
-	return new RelationshipNode("region", [new RelationshipNode("style")]);
+	return createRelationshipNode("region", [createRelationshipNode("style")]);
 }
 
-class RelationshipNode {
-	parent: RelationshipNode = null;
-	element: string;
-	children: Array<RelationshipNode>;
+interface RelationshipNode {
+	readonly name: string;
+	readonly directions: Map<string, RelationshipNode>;
+	getDirectionByName(element: string): RelationshipNode;
+	addDirections(...directions: RelationshipNode[]): void;
+}
 
-	constructor(element: string | null, children: Array<RelationshipNode> = []) {
-		this.element = element;
-		this.children = children;
+function createRelationshipNode(
+	name: string,
+	directions: RelationshipNode[] = [],
+	selfNavigatable: boolean = false,
+): RelationshipNode {
+	const availableDirections = new Map<string, RelationshipNode>();
+
+	const node = {
+		name,
+		directions: availableDirections,
+		getDirectionByName(element: string): RelationshipNode {
+			return availableDirections.get(element);
+		},
+		addDirections(...routes: RelationshipNode[]): void {
+			for (const direction of routes) {
+				availableDirections.set(direction.name, direction);
+			}
+		},
+	} satisfies RelationshipNode;
+
+	node.addDirections(...directions);
+
+	if (selfNavigatable) {
+		availableDirections.set(name, node);
 	}
 
-	static is(el1: RelationshipNode, el2: RelationshipNode): boolean {
-		if (!el1 || !el2) {
-			return false;
-		}
+	return node;
+}
 
-		return el1.element === el2.element;
+function parentLinkedTree(node: RelationshipNode, parent?: RelationshipNode): RelationshipNode {
+	/**
+	 * Self-linked elements
+	 */
+	if (node === parent) {
+		return node;
 	}
 
-	public setSelfReference(): this {
-		this.children.push(this);
-		return this;
+	for (const [, direction] of node.directions) {
+		parentLinkedTree(direction, node);
 	}
 
-	public has(element: string): boolean {
-		return this.children.some((node) => node.element === element);
+	if (parent) {
+		node.addDirections(parent);
 	}
 
-	public get(element: RelationshipNode): RelationshipNode {
-		return this.children.find((node) => RelationshipNode.is(node, element));
-	}
+	return node;
 }

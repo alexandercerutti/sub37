@@ -104,10 +104,9 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (
-					relationshipTree.currentNode.parent &&
-					!relationshipTree.currentNode.has(token.content)
-				) {
+				const relDescriptor = relationshipTree.getDirectionDescriptor(token.content);
+
+				if (!relDescriptor) {
 					break;
 				}
 
@@ -156,7 +155,9 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				if (!relationshipTree.currentNode.has(token.content)) {
+				const relDescriptor = relationshipTree.getDirectionDescriptor(token.content);
+
+				if (!relDescriptor) {
 					/**
 					 * Even if token does not respect it parent relatioship,
 					 * we still add it to the queue to mark its end later.
@@ -169,7 +170,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					continue;
 				}
 
-				relationshipTree.setCurrent(token.content);
+				relDescriptor.navigate();
 
 				if (token.content === "tt") {
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
@@ -231,15 +232,24 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 					break;
 				}
 
-				relationshipTree.ascend();
+				const relDescriptor = relationshipTree.getDirectionDescriptor(
+					nodeTree.currentNode.parent.content.content,
+				);
+
+				if (!relDescriptor) {
+					break;
+				}
+
+				relDescriptor.navigate();
 
 				if (
 					isTokenAllowedToGroupTrack(token) &&
 					!isNodeGroupTracked(nodeTree.currentNode.parent.content)
 				) {
 					const blockType: BlockTuple[0] = BlockTupleMap.get(nodeTree.currentNode.content.content);
+					const currentElement = nodeTree.pop();
 
-					yield [blockType, nodeTree.pop()];
+					yield [blockType, currentElement];
 					break;
 				}
 
