@@ -8,7 +8,7 @@ const styleParserGetterSymbol = Symbol("style.parser.getter");
 type StyleParser = ReturnType<typeof createStyleParser>;
 
 interface StyleContext extends Context<StyleContext> {
-	styles: TTMLStyle[];
+	styles: Map<string, TTMLStyle>;
 	[styleParserGetterSymbol]: StyleParser;
 }
 
@@ -39,8 +39,8 @@ export function createStyleContext(styles: Token[] = []): StyleContext | null {
 		get [styleParserGetterSymbol]() {
 			return stylesParser;
 		},
-		get styles(): TTMLStyle[] {
-			const parentStyles: TTMLStyle[] = this.parent ? Object.values(this.parent?.styles) : [];
+		get styles(): Map<string, TTMLStyle> {
+			const parentStyles = this.parent ? this.parent?.styles : new Map<string, TTMLStyle>();
 
 			if (!stylesParser.size) {
 				for (let i = 0; i < styles.length; i++) {
@@ -48,7 +48,10 @@ export function createStyleContext(styles: Token[] = []): StyleContext | null {
 				}
 			}
 
-			return [...Object.values(stylesParser.getAll()), ...parentStyles];
+			return new Map<string, TTMLStyle>([
+				...parentStyles,
+				...Object.entries(stylesParser.getAll()),
+			]);
 		},
 	};
 }

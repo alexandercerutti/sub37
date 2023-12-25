@@ -25,6 +25,10 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
 	const attrs = excludeUnsupportedStyleAttributes(attributes);
 
+	if (!Object.keys(attrs).length) {
+		return undefined;
+	}
+
 	if (!attributes["style"]) {
 		styleCache = attrs;
 	}
@@ -65,11 +69,7 @@ function excludeUnsupportedStyleAttributes(
 	const attrs: Record<string, string> = {};
 
 	for (let attr in attributes) {
-		if (attr.startsWith("xml:")) {
-			continue;
-		}
-
-		if (attr === "condition") {
+		if (!attr.startsWith("tts:")) {
 			continue;
 		}
 

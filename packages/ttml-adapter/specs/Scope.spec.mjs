@@ -195,6 +195,7 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t1",
+							"tts:textColor": "blue",
 						},
 					},
 					{
@@ -202,15 +203,18 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t2",
+							"tts:textColor": "blue",
 						},
 					},
 				]),
 			);
 
-			expect(readScopeStyleContext(scope).styles).toEqual([
-				{ id: "t1", attributes: {} },
-				{ id: "t2", attributes: {} },
-			]);
+			expect(readScopeStyleContext(scope).styles).toMatchObject(
+				new Map([
+					["t1", { id: "t1", attributes: {} }],
+					["t2", { id: "t2", attributes: {} }],
+				]),
+			);
 		});
 
 		it("should be able to iterate all the parent styles", () => {
@@ -222,6 +226,7 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t1",
+							"tts:textColor": "blue",
 						},
 					},
 					{
@@ -229,6 +234,7 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t2",
+							"tts:textColor": "blue",
 						},
 					},
 				]),
@@ -242,6 +248,7 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t3",
+							"tts:textColor": "blue",
 						},
 					},
 					{
@@ -249,17 +256,21 @@ describe("Scope and contexts", () => {
 						content: "style",
 						attributes: {
 							"xml:id": "t4",
+							"tts:textColor": "blue",
 						},
 					},
 				]),
 			);
 
-			expect(readScopeStyleContext(scope2).styles).toMatchObject([
-				{ id: "t3", attributes: {} },
-				{ id: "t4", attributes: {} },
-				{ id: "t1", attributes: {} },
-				{ id: "t2", attributes: {} },
-			]);
+			expect(readScopeStyleContext(scope2).styles).toBeInstanceOf(Map);
+			expect(readScopeStyleContext(scope2).styles).toMatchObject(
+				new Map([
+					["t1", { id: "t1", attributes: {} }],
+					["t2", { id: "t2", attributes: {} }],
+					["t3", { id: "t3", attributes: {} }],
+					["t4", { id: "t4", attributes: {} }],
+				]),
+			);
 		});
 	});
 });
