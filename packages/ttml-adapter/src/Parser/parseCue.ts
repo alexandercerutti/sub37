@@ -69,8 +69,6 @@ function parseCueContents(
 		? regionContext.regions.find((region) => region.id === parentRegionId)
 		: undefined;
 
-	console.log(parentRegionId, ":", matchingRegion);
-
 	for (let i = 0; i < rootChildren.length; i++) {
 		const { content, children } = rootChildren[i];
 
