@@ -22,7 +22,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 
 	const { attributes } = token;
 
-	const id = attributes["xml:id"];
+	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
 	const attrs = excludeUnsupportedStyleAttributes(attributes);
 
 	if (!attributes["style"]) {
