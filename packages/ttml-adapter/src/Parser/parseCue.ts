@@ -12,7 +12,7 @@ import {
 	isTimeContainerStardardString,
 	readScopeTimeContext,
 } from "./Scope/TimeContext.js";
-import { createRegionContext } from "./Scope/RegionContext.js";
+import { createRegionContext, readScopeRegionContext } from "./Scope/RegionContext.js";
 
 export function parseCue(
 	node: NodeWithRelationship<Token>,
@@ -46,6 +46,7 @@ export function parseCue(
 
 	return parseCueContents(
 		attributes["xml:id"] || "unkpar",
+		attributes["region"],
 		node.children,
 		localScope,
 		documentSettings,
@@ -54,6 +55,7 @@ export function parseCue(
 
 function parseCueContents(
 	parentId: string,
+	parentRegionId: string,
 	rootChildren: NodeWithRelationship<Token>[],
 	scope: Scope,
 	documentSettings: TimeDetails,
@@ -61,6 +63,13 @@ function parseCueContents(
 ): CueNode[] {
 	let cues: CueNode[] = previousCues;
 	const timeContext = readScopeTimeContext(scope);
+	const regionContext = readScopeRegionContext(scope);
+
+	const matchingRegion = parentRegionId
+		? regionContext.regions.find((region) => region.id === parentRegionId)
+		: undefined;
+
+	console.log(parentRegionId, ":", matchingRegion);
 
 	for (let i = 0; i < rootChildren.length; i++) {
 		const { content, children } = rootChildren[i];
@@ -77,6 +86,7 @@ function parseCueContents(
 						content: "",
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
+						region: matchingRegion,
 					}),
 				);
 			}
@@ -104,7 +114,12 @@ function parseCueContents(
 			);
 
 			const timeContext = readScopeTimeContext(localScope);
+			const regionContext = readScopeRegionContext(localScope);
+
 			let nextCueID = attributes["xml:id"] || `${parentId}-${i}`;
+			const matchingRegion = attributes["region"]
+				? regionContext.regions.find((region) => region.id === attributes["region"])
+				: undefined;
 
 			if (isTimestamp(attributes)) {
 				cues.push(
@@ -113,12 +128,20 @@ function parseCueContents(
 						content: "",
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
+						region: matchingRegion,
 					}),
 				);
 			}
 
 			if (children.length) {
-				cues = parseCueContents(nextCueID, children, localScope, documentSettings, cues);
+				cues = parseCueContents(
+					nextCueID,
+					attributes["region"],
+					children,
+					localScope,
+					documentSettings,
+					cues,
+				);
 			}
 
 			continue;
