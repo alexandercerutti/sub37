@@ -251,51 +251,53 @@ function splitCueNodeByBreakpoints(
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < cueNode.content.length; i++) {
-		if (shouldCueNodeBreak(cueNode.content, i)) {
-			/**
-			 * Reordering because IBT serves nodes from left to right,
-			 * but left nodes are the smallest. In case of a global entity,
-			 * it is inserted as the first node. Hence, it will will result
-			 * as the last entity here. If so, we render wrong elements.
-			 *
-			 * Getting all the current entities and next entities so we can
-			 * check if this is the last character before an entity begin
-			 * (i.e. we have to break).
-			 */
-
-			const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
-				reorderEntitiesComparisonFn,
-			);
-
-			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
-
-			const cue = Object.create(cueNode, {
-				content: {
-					value: content,
-				},
-				entities: {
-					value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
-				},
-			});
-
-			if (idVariations > 0) {
-				cue.id = `${cue.id}/${idVariations}`;
-			}
-
-			/**
-			 * If we detect a new line, we want to force the creation
-			 * of a new line on the next content. So we increase the variation
-			 * so that rendering will break line on a different cue id.
-			 */
-
-			if (cueNode.content[i] === "\x0A") {
-				idVariations++;
-			}
-
-			cues.push(cue);
-
-			previousContentBreakIndex = i + 1;
+		if (!shouldCueNodeBreak(cueNode.content, i)) {
+			continue;
 		}
+
+		/**
+		 * Reordering because IBT serves nodes from left to right,
+		 * but left nodes are the smallest. In case of a global entity,
+		 * it is inserted as the first node. Hence, it will will result
+		 * as the last entity here. If so, we render wrong elements.
+		 *
+		 * Getting all the current entities and next entities so we can
+		 * check if this is the last character before an entity begin
+		 * (i.e. we have to break).
+		 */
+
+		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
+			reorderEntitiesComparisonFn,
+		);
+
+		const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
+
+		const cue = Object.create(cueNode, {
+			content: {
+				value: content,
+			},
+			entities: {
+				value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
+			},
+		});
+
+		if (idVariations > 0) {
+			cue.id = `${cue.id}/${idVariations}`;
+		}
+
+		/**
+		 * If we detect a new line, we want to force the creation
+		 * of a new line on the next content. So we increase the variation
+		 * so that rendering will break line on a different cue id.
+		 */
+
+		if (cueNode.content[i] === "\x0A") {
+			idVariations++;
+		}
+
+		cues.push(cue);
+
+		previousContentBreakIndex = i + 1;
 	}
 
 	return cues;
