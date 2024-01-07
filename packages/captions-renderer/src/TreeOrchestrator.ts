@@ -251,22 +251,22 @@ function splitCueNodeByBreakpoints(
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < cueNode.content.length; i++) {
-		/**
-		 * Reordering because IBT serves nodes from left to right,
-		 * but left nodes are the smallest. In case of a global entity,
-		 * it is inserted as the first node. Hence, it will will result
-		 * as the last entity here. If so, we render wrong elements.
-		 *
-		 * Getting all the current entities and next entities so we can
-		 * check if this is the last character before an entity begin
-		 * (i.e. we have to break).
-		 */
+		if (shouldCueNodeBreak(cueNode.content, i)) {
+			/**
+			 * Reordering because IBT serves nodes from left to right,
+			 * but left nodes are the smallest. In case of a global entity,
+			 * it is inserted as the first node. Hence, it will will result
+			 * as the last entity here. If so, we render wrong elements.
+			 *
+			 * Getting all the current entities and next entities so we can
+			 * check if this is the last character before an entity begin
+			 * (i.e. we have to break).
+			 */
 
-		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
-			reorderEntitiesComparisonFn,
-		);
+			const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
+				reorderEntitiesComparisonFn,
+			);
 
-		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
 			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
 
 			const cue = Object.create(cueNode, {
@@ -301,46 +301,14 @@ function splitCueNodeByBreakpoints(
 	return cues;
 }
 
-function shouldCueNodeBreak(
-	cueNodeContent: string,
-	entitiesAtCoordinates: Entities.GenericEntity[],
-	currentIndex: number,
-): boolean {
+function shouldCueNodeBreak(cueNodeContent: string, currentIndex: number): boolean {
 	const char = cueNodeContent[currentIndex];
 
-	return (
-		isCharacterWhitespace(char) ||
-		indexMatchesEntityBegin(currentIndex, entitiesAtCoordinates) ||
-		indexMatchesEntityEnd(currentIndex, entitiesAtCoordinates) ||
-		isCueContentEnd(cueNodeContent, currentIndex)
-	);
+	return isCharacterWhitespace(char) || isCueContentEnd(cueNodeContent, currentIndex);
 }
 
 function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
-}
-
-function indexMatchesEntityBegin(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	for (const entity of entities) {
-		if (index + 1 === entity.offset) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	const lastEntity = entities[entities.length - 1];
-	return lastEntity.offset + lastEntity.length === index;
 }
 
 function isCueContentEnd(cueNodeContent: string, index: number): boolean {
