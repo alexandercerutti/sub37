@@ -329,28 +329,30 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): N
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
 
-		if (entity instanceof Entities.Tag) {
-			const node = getHTMLElementByEntity(entity);
+		if (!(entity instanceof Entities.Tag)) {
+			continue;
+		}
 
-			if (entity.styles) {
-				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					switch (key) {
-						case "color": {
-							/** Otherwise user cannot override the default style and track style */
-							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-							break;
-						}
+		const node = getHTMLElementByEntity(entity);
 
-						default: {
-							node.style.cssText += `${key}:${value};`;
-						}
+		if (entity.styles) {
+			for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
+				switch (key) {
+					case "color": {
+						/** Otherwise user cannot override the default style and track style */
+						node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
+						break;
+					}
+
+					default: {
+						node.style.cssText += `${key}:${value};`;
 					}
 				}
 			}
-
-			node.appendChild(latestNode);
-			latestNode = node;
 		}
+
+		node.appendChild(latestNode);
+		latestNode = node;
 	}
 
 	subRoot.appendChild(latestNode);
