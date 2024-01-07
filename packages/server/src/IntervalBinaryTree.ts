@@ -72,7 +72,7 @@ function insert<LeafShape extends object>(
 		return node;
 	}
 
-	if (node.low <= root.low) {
+	if (node.low < root.low) {
 		root.left = insert(root.left, node);
 	} else {
 		root.right = insert(root.right, node);
