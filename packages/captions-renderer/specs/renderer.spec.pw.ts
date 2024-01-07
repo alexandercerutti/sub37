@@ -182,3 +182,49 @@ STYLE
 	expect(bgColor1).toBe("red");
 	expect(bgColor2).toBe("blue");
 });
+
+test("An entity wrapping part of a word, should be rendered as such", async ({ page }) => {
+	/**
+	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
+	 */
+
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+00:00:00.000 --> 00:00:20.000
+I am Fred<i>-ish</i>
+`;
+
+	await page.goto(SUB37_SAMPLE_PAGE_PATH);
+
+	const fakeVideoLocator = page.locator("fake-video");
+
+	await Promise.all([
+		fakeVideoLocator.evaluate((element) => {
+			const promise = new Promise<void>((resolve) => {
+				element.addEventListener(
+					"playing",
+					() => {
+						resolve();
+					},
+					{ once: true },
+				);
+			});
+
+			return promise;
+		}),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
+		element.pause();
+		element.currentTime = 3;
+	});
+
+	const regionsLocator = page.locator("captions-renderer > main > .region span");
+	const evaluation = await regionsLocator.evaluate((element) =>
+		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
+	);
+
+	expect(evaluation[3]).toBe(" -ish");
+});
