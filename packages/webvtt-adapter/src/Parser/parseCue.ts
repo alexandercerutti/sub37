@@ -44,8 +44,20 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.START_TAG: {
-				if (Tags.isSupported(token.content)) {
-					openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
+				if (!Tags.isSupported(token.content)) {
+					break;
+				}
+
+				openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
+
+				if (currentCue.text.length) {
+					hsCues.push(currentCue);
+					currentCue = createCue(
+						currentCue.startTime,
+						currentCue.endTime,
+						currentCue.id,
+						currentCue.renderingModifiers,
+					);
 				}
 
 				break;
@@ -71,6 +83,16 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 						const out = openTagsQueue.pop();
 						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
+				}
+
+				if (currentCue.text.length) {
+					hsCues.push(currentCue);
+					currentCue = createCue(
+						currentCue.startTime,
+						currentCue.endTime,
+						currentCue.id,
+						currentCue.renderingModifiers,
+					);
 				}
 
 				break;
