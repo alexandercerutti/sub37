@@ -162,8 +162,6 @@ WEBVTT
 
 				entities: [
 					new Entities.Tag({
-						offset: 0,
-						length: 31,
 						tagType: 1,
 						attributes: new Map([["voice", "Fred>"]]),
 						classes: [],
@@ -190,8 +188,6 @@ WEBVTT
 
 				entities: [
 					new Entities.Tag({
-						offset: 0,
-						length: 19,
 						tagType: 2,
 						attributes: new Map([["lang", "en-US"]]),
 						classes: ["mimmo"],
@@ -219,7 +215,7 @@ WEBVTT
 			expect(parsingResult.data[0]).toMatchObject({
 				startTime: 16000,
 				endTime: 24000,
-				content: " This\n",
+				content: "This",
 				id: "cue-9-180",
 				/**
 				 * @type {import("@sub37/server").RenderingModifiers}
@@ -233,8 +229,6 @@ WEBVTT
 				},
 				entities: [
 					new Entities.Tag({
-						offset: 1,
-						length: 4,
 						tagType: 16,
 						attributes: new Map(),
 						classes: ["mimmo"],
@@ -245,7 +239,7 @@ WEBVTT
 			expect(parsingResult.data[1]).toMatchObject({
 				startTime: 18000,
 				endTime: 24000,
-				content: " can\n",
+				content: "can",
 				id: "cue-9-180",
 				/**
 				 * @type {import("@sub37/server").RenderingModifiers}
@@ -259,8 +253,6 @@ WEBVTT
 				},
 				entities: [
 					new Entities.Tag({
-						offset: 1,
-						length: 3,
 						tagType: 16,
 						attributes: new Map(),
 						classes: [],
@@ -279,12 +271,12 @@ WEBVTT
 
 			const parsingResult = adapter.parse(RUBY_RT_AUTOCLOSE);
 			expect(parsingResult).toBeInstanceOf(ParseResult);
-			expect(parsingResult.data.length).toEqual(1);
+			expect(parsingResult.data.length).toEqual(4);
 
 			expect(parsingResult.data[0]).toMatchObject({
 				startTime: 5000,
 				endTime: 10000,
-				content: "漢 kan 字 ji\n",
+				content: "漢 ",
 				id: "cue-9-79",
 				/**
 				 * @type {import("@sub37/server").RenderingModifiers}
@@ -299,24 +291,91 @@ WEBVTT
 				entities: [
 					new Entities.Tag({
 						tagType: Entities.TagType.RUBY,
-						offset: 0,
-						length: 10,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+				],
+			});
+
+			expect(parsingResult.data[1]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: "kan",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
 						styles: {},
 					}),
 					new Entities.Tag({
 						tagType: Entities.TagType.RT,
-						offset: 2,
-						length: 3,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+				],
+			});
+			expect(parsingResult.data[2]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: " 字 ",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						tagType: Entities.TagType.RUBY,
+						attributes: new Map(),
+						classes: [],
+						styles: {},
+					}),
+				],
+			});
+			expect(parsingResult.data[3]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: "ji",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/server").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					new Entities.Tag({
+						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
 						styles: {},
 					}),
 					new Entities.Tag({
 						tagType: Entities.TagType.RT,
-						offset: 8,
-						length: 2,
 						attributes: new Map(),
 						classes: [],
 						styles: {},
@@ -346,8 +405,7 @@ Alberto, come to look at Marcello!
 
 			expect(parsingResult.data[0]).toMatchObject({
 				content:
-					"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-					"Alberto, come to look at Marcello!\n",
+					"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
 				startTime: 5000,
 				endTime: 10000,
 				entities: [],
@@ -389,8 +447,7 @@ Alberto, come to look at Marcello!
 					const parsingResult = adapter.parse(CUE_WITH_STYLE_WITHOUT_ID);
 
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					expect(parsingResult.data[0]).toMatchObject({
 						content,
@@ -403,10 +460,6 @@ Alberto, come to look at Marcello!
 								},
 								attributes: new Map(),
 								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
 								classes: [],
 							}),
 						],
@@ -426,8 +479,7 @@ Alberto, come to look at Marcello!
 
 				it("should add only style that matches the id", () => {
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					const CUE_WITH_STYLE_WITH_CSS_ID = `
 WEBVTT
@@ -461,10 +513,6 @@ Alberto, come to look at Marcello!
 								},
 								tagType: Entities.TagType.SPAN,
 								attributes: new Map(),
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
 								classes: [],
 							}),
 						],
@@ -509,10 +557,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							new Entities.Tag({
 								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
 								attributes: new Map(),
 								styles: {
 									"background-color": "red",
@@ -535,10 +579,6 @@ Alberto, come to look at Marcello!
 				});
 
 				it("should add only style that matches the tag", () => {
-					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
-
 					const CUE_WITH_STYLE_WITH_CSS_TAG = `
 WEBVTT
 
@@ -560,7 +600,7 @@ Alberto, come to look at Marcello!
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
 					expect(parsingResult1.data[0]).toMatchObject({
-						content,
+						content: "Mamma mia, Marcello",
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
@@ -569,8 +609,6 @@ Alberto, come to look at Marcello!
 								styles: {
 									"background-color": "purple",
 								},
-								offset: 0,
-								length: 19,
 								attributes: new Map(),
 								classes: [],
 							}),
@@ -587,13 +625,27 @@ Alberto, come to look at Marcello!
 							leftOffset: 0,
 						},
 					});
+
+					expect(parsingResult1.data[1]).toMatchObject({
+						content: ", that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
+						startTime: 5000,
+						endTime: 10000,
+						entities: [],
+						id: "cue-103-244",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							id: 97,
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
 				});
 
 				it("should apply all styles and tags", () => {
-					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
-
 					const CUE_WITH_STYLE_WITH_CSS_TAG = `
 WEBVTT
 
@@ -616,24 +668,47 @@ Alberto, come to look at Marcello!
 					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
 
 					expect(parsingResult1.data[0]).toMatchObject({
-						content,
+						content: "Mamma mia, Marcello",
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
 							new Entities.Tag({
+								tagType: Entities.TagType.SPAN,
+								attributes: new Map(),
+								styles: {
+									"background-color": "red",
+								},
+								classes: [],
+							}),
+							new Entities.Tag({
 								tagType: Entities.TagType.BOLD,
-								offset: 0,
-								length: 19,
 								attributes: new Map(),
 								styles: {
 									"background-color": "purple",
 								},
 								classes: [],
 							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/server").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							id: 97,
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
+
+					expect(parsingResult1.data[1]).toMatchObject({
+						content: ", that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
 							new Entities.Tag({
 								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length: content.length,
 								attributes: new Map(),
 								styles: {
 									"background-color": "red",
@@ -657,8 +732,7 @@ Alberto, come to look at Marcello!
 
 				it("should apply all styles for tags with the same attributes", () => {
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					const CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES = `
 WEBVTT
@@ -688,8 +762,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							new Entities.Tag({
 								tagType: 1,
-								offset: 0,
-								length: 87,
 								attributes: new Map(),
 								styles: {
 									"background-color": "purple",
@@ -743,8 +815,6 @@ Alberto, come to look at Marcello!
 						entities: [
 							new Entities.Tag({
 								tagType: 1,
-								offset: 0,
-								length: 87,
 								attributes: new Map([["voice", "Fred"]]),
 								styles: {
 									"background-color": "pink",

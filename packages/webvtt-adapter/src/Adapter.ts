@@ -158,20 +158,8 @@ export default class WebVTTAdapter extends BaseAdapter {
 						const entities: Entities.Tag[] = [];
 
 						if (stylesEntities.length) {
-							/**
-							 * Having the same length of the style entities here allows
-							 * us to prevent having several elements with the same styles
-							 * in renderer.
-							 */
-
-							const superCue = Object.getPrototypeOf(cue);
-							const length =
-								superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
-
 							entities.push(
 								new Entities.Tag({
-									offset: 0,
-									length,
 									tagType: Entities.TagType.SPAN,
 									attributes: new Map(),
 									classes: [],

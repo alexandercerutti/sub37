@@ -60,6 +60,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					);
 				}
 
+				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 				break;
 			}
 
@@ -80,8 +81,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					}
 
 					if (openTagsQueue.current.token.content === token.content) {
-						const out = openTagsQueue.pop();
-						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
+						openTagsQueue.pop();
 					}
 				}
 
@@ -93,12 +93,18 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 						currentCue.id,
 						currentCue.renderingModifiers,
 					);
+
+					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 				}
 
 				break;
 			}
 
 			case TokenType.STRING: {
+				if (!currentCue.text.length && Tokenizer.isWhitespace(token.content)) {
+					break;
+				}
+
 				currentCue.text += token.content;
 				break;
 			}
@@ -127,6 +133,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue.id,
 					currentCue.renderingModifiers,
 				);
+				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 
 				break;
 			}
@@ -147,7 +154,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 	addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 
-	if (currentCue.text.length) {
+	if (!isCueDataTextEmpty(currentCue)) {
 		hsCues.push(currentCue);
 	}
 
@@ -156,7 +163,9 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 function addCueEntities(cue: CueParsedData, entities: Entities.Tag[]) {
 	for (const entity of entities) {
-		cue.tags.push(entity);
+		if (!cue.tags.length || !cue.tags.find((t) => t.tagType === entity.tagType)) {
+			cue.tags.push(entity);
+		}
 	}
 }
 

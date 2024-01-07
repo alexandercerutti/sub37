@@ -40,8 +40,6 @@ WEBVTT
 					tags: [
 						{
 							type: 1,
-							offset: 0,
-							length: 31,
 							attributes: new Map([["voice", "Fred>"]]),
 							tagType: 1,
 						},
@@ -285,8 +283,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 0,
-					length: 27,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -295,8 +291,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 0,
-					length: 39,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -305,8 +299,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 0,
-					length: 40,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -315,8 +307,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 0,
-					length: 36,
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -325,8 +315,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 0,
-					length: 28,
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -335,8 +323,6 @@ WEBVTT
 				{
 					type: 1,
 					tagType: 1,
-					offset: 1,
-					length: 26,
 					attributes: new Map([["voice", "Announcer3"]]),
 				},
 			]);

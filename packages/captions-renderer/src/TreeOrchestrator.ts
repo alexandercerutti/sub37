@@ -437,12 +437,12 @@ function getSubtreeFromCueNodes(
 			break;
 		}
 
-		const currentCueEntity = currentCue.entities[i];
-		const previousCueEntity = previousCue.entities[i];
+		const currentCueEntity = currentCue.entities[i] as Entities.Tag;
+		const previousCueEntity = previousCue.entities[i] as Entities.Tag;
 
 		if (
-			currentCueEntity.length !== previousCueEntity.length ||
-			currentCueEntity.offset !== previousCueEntity.offset
+			currentCueEntity.type !== previousCueEntity.type ||
+			currentCueEntity.tagType !== previousCueEntity.tagType
 		) {
 			break;
 		}

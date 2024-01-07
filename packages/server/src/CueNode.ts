@@ -68,7 +68,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		 * in captions renderer
 		 */
 
-		this[entitiesSymbol] = value.sort(reorderEntitiesComparisonFn);
+		this[entitiesSymbol] = value;
 	}
 
 	public set region(value: Region) {
@@ -100,8 +100,4 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 			},
 		};
 	}
-}
-
-function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	return e1.offset <= e2.offset ? -1 : 1;
 }

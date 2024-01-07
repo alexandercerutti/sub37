@@ -30,14 +30,10 @@ export function createTagEntitiesFromUnpaired(
 	const entities: Entities.Tag[] = [];
 
 	while (nodeCursor !== null) {
-		if (currentCue.text.length - nodeCursor.index !== 0) {
-			/**
-			 * If an entity startTag is placed between two timestamps
-			 * the closing timestamp should not have the new tag associated.
-			 * tag.index is zero-based.
-			 */
+		const entity = createTagEntity(currentCue, nodeCursor);
 
-			entities.push(createTagEntity(currentCue, nodeCursor));
+		if (!currentCue.tags.length || !currentCue.tags.find((e) => e.tagType === entity.tagType)) {
+			entities.unshift(entity);
 		}
 
 		nodeCursor = nodeCursor.parent;
@@ -47,15 +43,6 @@ export function createTagEntitiesFromUnpaired(
 }
 
 export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Entities.Tag {
-	/**
-	 * If length is negative, that means that the tag was opened before
-	 * the beginning of the current Cue. Therefore, offset should represent
-	 * the beginning of the **current cue** and the length should be set to
-	 * current cue content.
-	 */
-
-	const tagOpenedInCurrentCue = currentCue.text.length - tagStart.index > 0;
-
 	const attributes = new Map(
 		tagStart.token.annotations?.map((annotation) => {
 			if (tagStart.token.content === "lang") {
@@ -73,10 +60,6 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 
 	return new Entities.Tag({
 		tagType: EntitiesTokenMap[tagStart.token.content],
-		offset: tagOpenedInCurrentCue ? tagStart.index : 0,
-		length: tagOpenedInCurrentCue
-			? currentCue.text.length - tagStart.index
-			: currentCue.text.length,
 		attributes,
 		classes: tagStart.token.classes,
 	});
