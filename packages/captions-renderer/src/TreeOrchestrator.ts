@@ -1,5 +1,5 @@
 import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
-import { IntervalBinaryTree, Entities } from "@sub37/server";
+import { Entities } from "@sub37/server";
 import { CSSVAR_TEXT_COLOR } from "./constants";
 
 const rootElementSymbol = Symbol("to.root.element");
@@ -119,13 +119,7 @@ export default class TreeOrchestrator {
 				continue;
 			}
 
-			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
-
-			for (let i = 0; i < cueNode.entities.length; i++) {
-				entitiesTree.addNode(cueNode.entities[i]);
-			}
-
-			cues.push(...splitCueNodeByBreakpoints(cueNode, entitiesTree));
+			cues.push(...splitCueNodeByBreakpoints(cueNode));
 		}
 
 		let latestCueId = "";
@@ -242,10 +236,7 @@ export default class TreeOrchestrator {
 	}
 }
 
-function splitCueNodeByBreakpoints(
-	cueNode: CueNode,
-	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
-): CueNode[] {
+function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 	let idVariations = 0;
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
@@ -255,29 +246,11 @@ function splitCueNodeByBreakpoints(
 			continue;
 		}
 
-		/**
-		 * Reordering because IBT serves nodes from left to right,
-		 * but left nodes are the smallest. In case of a global entity,
-		 * it is inserted as the first node. Hence, it will will result
-		 * as the last entity here. If so, we render wrong elements.
-		 *
-		 * Getting all the current entities and next entities so we can
-		 * check if this is the last character before an entity begin
-		 * (i.e. we have to break).
-		 */
-
-		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
-			reorderEntitiesComparisonFn,
-		);
-
-		const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
+		const content = cueNode.content.substring(previousContentBreakIndex, i + 1).trim();
 
 		const cue = Object.create(cueNode, {
 			content: {
 				value: content,
-			},
-			entities: {
-				value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
 			},
 		});
 
@@ -485,29 +458,4 @@ function getSubtreeFromCueNodes(
 		firstDifferentEntityIndex,
 		textNode,
 	];
-}
-
-function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	if (e1.offset < e2.offset) {
-		/** e1 starts before e2 */
-		return -1;
-	}
-
-	/**
-	 * The condition `e1.offset > e2.offset` is not possible.
-	 * Otherwise there would be an issue with parser. Tags open
-	 * and close like onions. Hence, here we have `e1.offset == e2.offset`
-	 */
-
-	if (e1.length < e2.length) {
-		/** e1 ends before e2, so it must be set last */
-		return 1;
-	}
-
-	if (e1.length > e2.length) {
-		/** e2 ends before e1, so it must be set first */
-		return -1;
-	}
-
-	return 0;
 }
