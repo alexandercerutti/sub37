@@ -50,7 +50,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 				openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
 
-				if (currentCue.text.length) {
+				if (!isCueDataTextEmpty(currentCue)) {
 					hsCues.push(currentCue);
 					currentCue = createCue(
 						currentCue.startTime,
@@ -85,7 +85,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					}
 				}
 
-				if (currentCue.text.length) {
+				if (!isCueDataTextEmpty(currentCue)) {
 					hsCues.push(currentCue);
 					currentCue = createCue(
 						currentCue.startTime,
@@ -109,7 +109,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 				 * Next cues will be the timestamped ones.
 				 */
 
-				if (currentCue.text.length) {
+				if (!isCueDataTextEmpty(currentCue)) {
 					/**
 					 * Closing the current entities for the previous cue,
 					 * still without resetting open tags, because timestamps
@@ -174,4 +174,10 @@ function createCue(
 		id,
 		renderingModifiers,
 	};
+}
+
+const EMPTY_STRING_REGEX = /\x0A|\x09|\x20|\x0C|/;
+
+function isCueDataTextEmpty(cue: CueParsedData): boolean {
+	return !cue.text.length || !cue.text.replace(EMPTY_STRING_REGEX, "").length;
 }
