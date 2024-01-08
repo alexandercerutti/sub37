@@ -8,8 +8,6 @@ describe("Tag entities", () => {
 			const entity = new Entities.Tag({
 				attributes: new Map(),
 				classes: [],
-				length: 0,
-				offset: 0,
 				tagType: Entities.TagType.BOLD,
 			});
 
