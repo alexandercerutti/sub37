@@ -1,5 +1,6 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
+import { TagType } from "@sub37/server/lib/Entities/Tag.js";
 import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
 import { WebVTTRenderingModifiers } from "../lib/Parser/RenderingModifiers.js";
 
@@ -41,7 +42,7 @@ WEBVTT
 						{
 							type: 1,
 							attributes: new Map([["voice", "Fred>"]]),
-							tagType: 1,
+							tagType: TagType.VOICE,
 						},
 					],
 					/**
@@ -282,7 +283,7 @@ WEBVTT
 			expect(parsingResult[0].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -290,7 +291,7 @@ WEBVTT
 			expect(parsingResult[1].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -298,7 +299,7 @@ WEBVTT
 			expect(parsingResult[2].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -306,7 +307,7 @@ WEBVTT
 			expect(parsingResult[3].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -314,7 +315,7 @@ WEBVTT
 			expect(parsingResult[4].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -322,7 +323,7 @@ WEBVTT
 			expect(parsingResult[5].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: 1,
+					tagType: TagType.VOICE,
 					attributes: new Map([["voice", "Announcer3"]]),
 				},
 			]);
@@ -495,7 +496,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_NO_ATTRIBUTES)).toEqual({
 				type: 2,
-				tagName: 32,
+				tagName: "b",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map(),
@@ -513,7 +514,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ONE_ATTRIBUTE)).toEqual({
 				type: 2,
-				tagName: 1,
+				tagName: "v",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([["voice", "Esme"]]),
@@ -529,7 +530,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ATTRIBUTES)).toEqual({
 				type: 2,
-				tagName: 1,
+				tagName: "v",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([

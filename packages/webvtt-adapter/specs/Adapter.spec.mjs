@@ -5,6 +5,7 @@ import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTAdapter from "../lib/Adapter.js";
 import { MissingContentError } from "../lib/MissingContentError.js";
 import { InvalidFormatError } from "../lib/InvalidFormatError.js";
+import { TagType } from "@sub37/server/lib/Entities/Tag.js";
 
 describe("WebVTTAdapter", () => {
 	/** @type {WebVTTAdapter} */
@@ -162,7 +163,7 @@ WEBVTT
 
 				entities: [
 					new Entities.Tag({
-						tagType: 1,
+						tagType: TagType.VOICE,
 						attributes: new Map([["voice", "Fred>"]]),
 						classes: [],
 					}),
@@ -188,7 +189,7 @@ WEBVTT
 
 				entities: [
 					new Entities.Tag({
-						tagType: 2,
+						tagType: TagType.LANG,
 						attributes: new Map([["lang", "en-US"]]),
 						classes: ["mimmo"],
 					}),
@@ -229,7 +230,7 @@ WEBVTT
 				},
 				entities: [
 					new Entities.Tag({
-						tagType: 16,
+						tagType: TagType.CLASS,
 						attributes: new Map(),
 						classes: ["mimmo"],
 					}),
@@ -253,7 +254,7 @@ WEBVTT
 				},
 				entities: [
 					new Entities.Tag({
-						tagType: 16,
+						tagType: TagType.CLASS,
 						attributes: new Map(),
 						classes: [],
 					}),
@@ -605,7 +606,7 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							new Entities.Tag({
-								tagType: 32,
+								tagType: TagType.BOLD,
 								styles: {
 									"background-color": "purple",
 								},
@@ -761,7 +762,7 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							new Entities.Tag({
-								tagType: 1,
+								tagType: TagType.VOICE,
 								attributes: new Map(),
 								styles: {
 									"background-color": "purple",
@@ -814,7 +815,7 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							new Entities.Tag({
-								tagType: 1,
+								tagType: TagType.VOICE,
 								attributes: new Map([["voice", "Fred"]]),
 								styles: {
 									"background-color": "pink",
