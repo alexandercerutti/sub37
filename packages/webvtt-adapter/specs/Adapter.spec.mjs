@@ -294,7 +294,6 @@ WEBVTT
 						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 				],
 			});
@@ -319,13 +318,11 @@ WEBVTT
 						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 					new Entities.Tag({
 						tagType: Entities.TagType.RT,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 				],
 			});
@@ -349,7 +346,6 @@ WEBVTT
 						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 				],
 			});
@@ -373,13 +369,11 @@ WEBVTT
 						tagType: Entities.TagType.RUBY,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 					new Entities.Tag({
 						tagType: Entities.TagType.RT,
 						attributes: new Map(),
 						classes: [],
-						styles: {},
 					}),
 				],
 			});
@@ -455,13 +449,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								styles: {
-									"background-color": "purple",
-								},
-								attributes: new Map(),
-								tagType: Entities.TagType.SPAN,
-								classes: [],
+							new Entities.Style({
+								"background-color": "purple",
 							}),
 						],
 						id: "cue-53-187",
@@ -508,13 +497,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								styles: {
-									"background-color": "purple",
-								},
-								tagType: Entities.TagType.SPAN,
-								attributes: new Map(),
-								classes: [],
+							new Entities.Style({
+								"background-color": "purple",
 							}),
 						],
 						id: "test",
@@ -556,13 +540,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: Entities.TagType.SPAN,
-								attributes: new Map(),
-								styles: {
-									"background-color": "red",
-								},
-								classes: [],
+							new Entities.Style({
+								"background-color": "red",
 							}),
 						],
 						id: "123",
@@ -607,11 +586,11 @@ Alberto, come to look at Marcello!
 						entities: [
 							new Entities.Tag({
 								tagType: TagType.BOLD,
-								styles: {
-									"background-color": "purple",
-								},
 								attributes: new Map(),
 								classes: [],
+							}),
+							new Entities.Style({
+								"background-color": "purple",
 							}),
 						],
 						id: "cue-103-244",
@@ -673,21 +652,16 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: Entities.TagType.SPAN,
-								attributes: new Map(),
-								styles: {
-									"background-color": "red",
-								},
-								classes: [],
+							new Entities.Style({
+								"background-color": "red",
 							}),
 							new Entities.Tag({
 								tagType: Entities.TagType.BOLD,
 								attributes: new Map(),
-								styles: {
-									"background-color": "purple",
-								},
 								classes: [],
+							}),
+							new Entities.Style({
+								"background-color": "purple",
 							}),
 						],
 						id: "test",
@@ -708,13 +682,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: Entities.TagType.SPAN,
-								attributes: new Map(),
-								styles: {
-									"background-color": "red",
-								},
-								classes: [],
+							new Entities.Style({
+								"background-color": "red",
 							}),
 						],
 						id: "test",
@@ -764,10 +733,10 @@ Alberto, come to look at Marcello!
 							new Entities.Tag({
 								tagType: TagType.VOICE,
 								attributes: new Map(),
-								styles: {
-									"background-color": "purple",
-								},
 								classes: [],
+							}),
+							new Entities.Style({
+								"background-color": "purple",
 							}),
 						],
 						id: "test",
@@ -817,10 +786,13 @@ Alberto, come to look at Marcello!
 							new Entities.Tag({
 								tagType: TagType.VOICE,
 								attributes: new Map([["voice", "Fred"]]),
-								styles: {
-									"background-color": "pink",
-								},
 								classes: [],
+							}),
+							new Entities.Style({
+								"background-color": "red",
+							}),
+							new Entities.Style({
+								"background-color": "pink",
 							}),
 						],
 						id: "test",

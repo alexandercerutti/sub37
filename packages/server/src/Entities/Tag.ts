@@ -25,19 +25,16 @@ export class Tag extends GenericEntity {
 	public tagType: TagType;
 	public attributes: Map<string, string | undefined>;
 	public classes: string[];
-	public styles?: { [key: string]: string };
 
 	public constructor(params: {
 		tagType: TagType;
 		attributes: Map<string, string | undefined>;
-		styles?: Tag["styles"];
 		classes: Tag["classes"];
 	}) {
 		super(Type.TAG);
 
 		this.tagType = params.tagType;
 		this.attributes = params.attributes;
-		this.styles = params.styles || {};
 		this.classes = params.classes || [];
 	}
 }
