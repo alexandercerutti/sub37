@@ -40,33 +40,4 @@ export class Tag extends GenericEntity {
 		this.styles = params.styles || {};
 		this.classes = params.classes || [];
 	}
-
-	public setStyles(styles: string | Tag["styles"]): void {
-		const declarations = getKeyValueFromCSSRawDeclarations(styles);
-		Object.assign(this.styles, declarations);
-	}
-}
-
-function getKeyValueFromCSSRawDeclarations(declarationsRaw: string | object): object {
-	if (typeof declarationsRaw !== "string" && typeof declarationsRaw !== "object") {
-		return {};
-	}
-
-	if (typeof declarationsRaw === "object") {
-		return declarationsRaw;
-	}
-
-	const stylesObject: { [key: string]: string } = {};
-	const declarations = declarationsRaw.split(/\s*;\s*/);
-
-	for (const declaration of declarations) {
-		if (!declaration.length) {
-			continue;
-		}
-
-		const [key, value] = declaration.split(/\s*:\s*/);
-		stylesObject[key] = value;
-	}
-
-	return stylesObject;
 }
