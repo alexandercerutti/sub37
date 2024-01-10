@@ -1,21 +1,22 @@
-import { GenericEntity, Type } from "./Generic.js";
+import { type EntityProtocol, Type } from "./index.js";
 
-export class Style extends GenericEntity {
-	public styles: Record<string, string> = {};
-
-	public constructor(styles: string | Record<string, string>) {
-		super(Type.STYLE);
-
-		if (typeof styles === "string") {
-			const declarations = getKeyValueFromCSSRawDeclarations(styles);
-			Object.assign(this.styles, declarations);
-		} else if (typeof styles === "object" && styles) {
-			Object.assign(this.styles, styles);
-		}
-	}
+export interface StyleEntity extends EntityProtocol {
+	type: Type.STYLE;
+	styles: Record<string, string>;
 }
 
-function getKeyValueFromCSSRawDeclarations(declarationsRaw: string | object): object {
+export function createStyleEntity(stylesSource: string | Record<string, string>): StyleEntity {
+	const styles = getKeyValueFromCSSRawDeclarations(stylesSource);
+
+	return {
+		type: Type.STYLE,
+		styles,
+	};
+}
+
+function getKeyValueFromCSSRawDeclarations(
+	declarationsRaw: string | Record<string, string>,
+): Record<string, string> {
 	if (typeof declarationsRaw !== "string" && typeof declarationsRaw !== "object") {
 		return {};
 	}

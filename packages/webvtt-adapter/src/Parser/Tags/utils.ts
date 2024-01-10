@@ -20,14 +20,14 @@ export function isSupported(content: string): boolean {
 export function createTagEntitiesFromUnpaired(
 	openTagsQueue: NodeQueue,
 	currentCue: CueParsedData,
-): Entities.Tag[] {
+): Entities.TagEntity[] {
 	let nodeCursor: Node = openTagsQueue.current;
 
 	if (!nodeCursor) {
 		return [];
 	}
 
-	const entities: Entities.Tag[] = [];
+	const entities: Entities.TagEntity[] = [];
 
 	while (nodeCursor !== null) {
 		const entity = createTagEntity(currentCue, nodeCursor);
@@ -42,7 +42,7 @@ export function createTagEntitiesFromUnpaired(
 	return entities;
 }
 
-export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Entities.Tag {
+export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Entities.TagEntity {
 	const attributes = new Map(
 		tagStart.token.annotations?.map((annotation) => {
 			if (tagStart.token.content === "lang") {
@@ -58,9 +58,9 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 		}),
 	);
 
-	return new Entities.Tag({
-		tagType: EntitiesTokenMap[tagStart.token.content],
+	return Entities.createTagEntity(
+		EntitiesTokenMap[tagStart.token.content],
 		attributes,
-		classes: tagStart.token.classes,
-	});
+		tagStart.token.classes,
+	);
 }

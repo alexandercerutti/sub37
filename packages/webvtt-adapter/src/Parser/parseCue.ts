@@ -20,7 +20,7 @@ export interface CueParsedData {
 	startTime: number;
 	endTime: number;
 	regionName?: string;
-	tags: Entities.Tag[];
+	tags: Entities.TagEntity[];
 	text: string;
 	renderingModifiers: RenderingModifiers;
 }
@@ -161,7 +161,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	return hsCues;
 }
 
-function addCueEntities(cue: CueParsedData, entities: Entities.Tag[]) {
+function addCueEntities(cue: CueParsedData, entities: Entities.TagEntity[]) {
 	for (const entity of entities) {
 		if (!cue.tags.length || !cue.tags.find((t) => t.tagType === entity.tagType)) {
 			cue.tags.push(entity);

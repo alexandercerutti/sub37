@@ -12,7 +12,7 @@ interface CueProps {
 	endTime: number;
 	content: string;
 	renderingModifiers?: RenderingModifiers;
-	entities?: Entities.GenericEntity[];
+	entities?: Entities.AllEntities[];
 	region?: Region;
 }
 
@@ -43,7 +43,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	public renderingModifiers?: RenderingModifiers;
 
 	private [regionSymbol]?: Region;
-	private [entitiesSymbol]: Entities.GenericEntity[] = [];
+	private [entitiesSymbol]: Entities.AllEntities[] = [];
 
 	constructor(data: CueProps) {
 		this.id = data.id;
@@ -58,11 +58,11 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		}
 	}
 
-	public get entities(): Entities.GenericEntity[] {
+	public get entities(): Entities.AllEntities[] {
 		return this[entitiesSymbol];
 	}
 
-	public set entities(value: Entities.GenericEntity[]) {
+	public set entities(value: Entities.AllEntities[]) {
 		/**
 		 * Reordering cues entities for a later reconciliation
 		 * in captions renderer

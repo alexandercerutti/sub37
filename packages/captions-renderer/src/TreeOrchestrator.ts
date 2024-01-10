@@ -322,7 +322,7 @@ function getNodeAtDepth(index: number, node: Node) {
 	return latestNodePointer;
 }
 
-function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
+function entitiesToDOM(rootNode: Node, ...entities: Entities.AllEntities[]): Node {
 	const subRoot = new DocumentFragment();
 	let latestNode: Node = rootNode;
 

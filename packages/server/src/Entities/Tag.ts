@@ -1,4 +1,4 @@
-import { GenericEntity, Type } from "./Generic.js";
+import { EntityProtocol, Type } from "./index.js";
 
 /**
  * TagType is an enum containing
@@ -21,20 +21,22 @@ export enum TagType {
 	UNDERLINE /***/ = "u",
 }
 
-export class Tag extends GenericEntity {
-	public tagType: TagType;
-	public attributes: Map<string, string | undefined>;
-	public classes: string[];
+export interface TagEntity extends EntityProtocol {
+	type: Type.TAG;
+	tagType: TagType;
+	attributes: Map<string, string | undefined>;
+	classes: string[];
+}
 
-	public constructor(params: {
-		tagType: TagType;
-		attributes: Map<string, string | undefined>;
-		classes: Tag["classes"];
-	}) {
-		super(Type.TAG);
-
-		this.tagType = params.tagType;
-		this.attributes = params.attributes;
-		this.classes = params.classes || [];
-	}
+export function createTagEntity(
+	tagType: TagType,
+	attributes: Map<string, string | undefined>,
+	classes: string[] = [],
+): TagEntity {
+	return {
+		type: Type.TAG,
+		tagType,
+		attributes,
+		classes,
+	};
 }
