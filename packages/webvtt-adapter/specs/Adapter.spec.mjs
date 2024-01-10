@@ -161,13 +161,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [
-					new Entities.Tag({
-						tagType: TagType.VOICE,
-						attributes: new Map([["voice", "Fred>"]]),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.VOICE, new Map([["voice", "Fred>"]]), [])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -187,13 +181,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [
-					new Entities.Tag({
-						tagType: TagType.LANG,
-						attributes: new Map([["lang", "en-US"]]),
-						classes: ["mimmo"],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.LANG, new Map([["lang", "en-US"]]), ["mimmo"])],
 			});
 		});
 
@@ -228,13 +216,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						tagType: TagType.CLASS,
-						attributes: new Map(),
-						classes: ["mimmo"],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.CLASS, new Map(), ["mimmo"])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -252,13 +234,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						tagType: TagType.CLASS,
-						attributes: new Map(),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.CLASS, new Map(), [])],
 			});
 		});
 
@@ -289,13 +265,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						tagType: Entities.TagType.RUBY,
-						attributes: new Map(),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(Entities.TagType.RUBY, new Map(), [])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -314,16 +284,8 @@ WEBVTT
 					leftOffset: 0,
 				},
 				entities: [
-					new Entities.Tag({
-						tagType: Entities.TagType.RUBY,
-						attributes: new Map(),
-						classes: [],
-					}),
-					new Entities.Tag({
-						tagType: Entities.TagType.RT,
-						attributes: new Map(),
-						classes: [],
-					}),
+					Entities.createTagEntity(Entities.TagType.RUBY, new Map(), []),
+					Entities.createTagEntity(Entities.TagType.RT, new Map(), []),
 				],
 			});
 			expect(parsingResult.data[2]).toMatchObject({
@@ -341,13 +303,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						tagType: Entities.TagType.RUBY,
-						attributes: new Map(),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(Entities.TagType.RUBY, new Map(), [])],
 			});
 			expect(parsingResult.data[3]).toMatchObject({
 				startTime: 5000,
@@ -365,16 +321,8 @@ WEBVTT
 					leftOffset: 0,
 				},
 				entities: [
-					new Entities.Tag({
-						tagType: Entities.TagType.RUBY,
-						attributes: new Map(),
-						classes: [],
-					}),
-					new Entities.Tag({
-						tagType: Entities.TagType.RT,
-						attributes: new Map(),
-						classes: [],
-					}),
+					Entities.createTagEntity(Entities.TagType.RUBY, new Map(), []),
+					Entities.createTagEntity(Entities.TagType.RT, new Map(), []),
 				],
 			});
 		});
@@ -449,7 +397,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -497,7 +445,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -540,7 +488,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "red",
 							}),
 						],
@@ -584,12 +532,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: TagType.BOLD,
-								attributes: new Map(),
-								classes: [],
-							}),
-							new Entities.Style({
+							Entities.createTagEntity(TagType.BOLD, new Map(), []),
+							Entities.createStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -652,15 +596,11 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "red",
 							}),
-							new Entities.Tag({
-								tagType: Entities.TagType.BOLD,
-								attributes: new Map(),
-								classes: [],
-							}),
-							new Entities.Style({
+							Entities.createTagEntity(Entities.TagType.BOLD, new Map(), []),
+							Entities.createStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -682,7 +622,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "red",
 							}),
 						],
@@ -730,12 +670,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: TagType.VOICE,
-								attributes: new Map(),
-								classes: [],
-							}),
-							new Entities.Style({
+							Entities.createTagEntity(TagType.VOICE, new Map(), []),
+							Entities.createStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -783,15 +719,11 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: TagType.VOICE,
-								attributes: new Map([["voice", "Fred"]]),
-								classes: [],
-							}),
-							new Entities.Style({
+							Entities.createTagEntity(TagType.VOICE, new Map([["voice", "Fred"]]), []),
+							Entities.createStyleEntity({
 								"background-color": "red",
 							}),
-							new Entities.Style({
+							Entities.createStyleEntity({
 								"background-color": "pink",
 							}),
 						],

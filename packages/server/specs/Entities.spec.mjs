@@ -5,11 +5,7 @@ import { Entities } from "../lib/index.js";
 describe("Tag entities", () => {
 	describe("Setting styles", () => {
 		it("should return empty object if not a string or an object", () => {
-			const entity = new Entities.Tag({
-				attributes: new Map(),
-				classes: [],
-				tagType: Entities.TagType.BOLD,
-			});
+			const entity = Entities.createTagEntity(Entities.TagType.BOLD, new Map());
 
 			// @ts-expect-error
 			entity.setStyles();
