@@ -125,6 +125,14 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					let latestRootCue: CueNode | undefined = undefined;
 
+					/**
+					 * @TODO performing a filter and a remap for each parsed cue might be useless
+					 */
+
+					const globalStylesEntities = styles
+						.filter((style) => style.type === Parser.StyleDomain.GLOBAL)
+						.map((style) => new Entities.Style(style.styleString));
+
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							continue;
@@ -146,38 +154,33 @@ export default class WebVTTAdapter extends BaseAdapter {
 							latestRootCue = cue;
 						}
 
-						const stylesEntities = styles
-							.filter((style) => {
-								return (
-									(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
-									style.type === Parser.StyleDomain.GLOBAL
-								);
-							})
-							.sort(styleSpecificitySorter);
+						const stylesById = styles
+							.filter(
+								(style) => style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id,
+							)
+							.map((style) => new Entities.Style(style.styleString));
 
-						const entities: Entities.Tag[] = [];
-
-						if (stylesEntities.length) {
-							entities.push(
-								new Entities.Tag({
-									tagType: Entities.TagType.SPAN,
-									attributes: new Map(),
-									classes: [],
-								}),
-							);
-
-							for (let style of stylesEntities) {
-								entities[0].setStyles(style.styleString);
-							}
-						}
+						const entities: Entities.GenericEntity[] = [
+							...globalStylesEntities,
+							...stylesById,
+							...parsedCue.tags,
+						];
 
 						for (const tag of parsedCue.tags) {
-							entities.push(tag);
-
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
 								}
+
+								/**
+								 * Looking for a matching tag that has the same:
+								 *  - tag name
+								 *  - number of attributes
+								 *  - exact matching attributes
+								 *  - classes amount
+								 *  - exact matching classes
+								 *  - A nice smile :)
+								 */
 
 								if (style.tagName && style.tagName !== tag.tagType) {
 									continue;
@@ -211,7 +214,11 @@ export default class WebVTTAdapter extends BaseAdapter {
 									}
 								}
 
-								tag.setStyles(style.styleString);
+								/**
+								 * YAY 🎉 We found a matching tag for a style!
+								 */
+
+								entities.push(new Entities.Style(style.styleString));
 							}
 						}
 
@@ -331,25 +338,4 @@ function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 
 function isError(evaluation: BlockTuple | Error): evaluation is Error {
 	return !Array.isArray(evaluation) && evaluation instanceof Error;
-}
-
-/**
- * Reorders styles so that Global styles are placed
- * before id styles
- *
- * @param s1
- * @param s2
- * @returns
- */
-
-function styleSpecificitySorter(s1: Parser.Style, s2: Parser.Style) {
-	if (s1.type === s2.type) {
-		return 0;
-	}
-
-	if (s1.type === Parser.StyleDomain.ID && s2.type === Parser.StyleDomain.GLOBAL) {
-		return 1;
-	}
-
-	return -1;
 }
