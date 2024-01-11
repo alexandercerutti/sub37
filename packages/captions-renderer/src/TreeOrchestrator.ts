@@ -326,29 +326,34 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.AllEntities[]): Nod
 	const subRoot = new DocumentFragment();
 	let latestNode: Node = rootNode;
 
-	for (let i = entities.length - 1; i >= 0; i--) {
-		const entity = entities[i];
+	const styleEntities = entities
+		.filter(Entities.isStyleEntity)
+		.flatMap((entity) => Object.entries(entity.styles));
+	const tagEntities = entities.filter(Entities.isTagEntity);
 
-		if (!(entity instanceof Entities.Tag)) {
-			continue;
+	if (styleEntities.length) {
+		const styleNode = document.createElement("span");
+
+		for (const [key, styleValue] of styleEntities) {
+			let value: string = styleValue;
+
+			if (key === "color") {
+				/** Otherwise user cannot override the default style and track style */
+				value = `var(${CSSVAR_TEXT_COLOR}, ${styleValue});`;
+			}
+
+			styleNode.style.cssText += `${key}:${value}`;
 		}
 
+		styleNode.appendChild(latestNode);
+		latestNode = styleNode;
+	}
+
+	for (const entity of tagEntities) {
 		const node = getHTMLElementByEntity(entity);
 
-		if (entity.styles) {
-			for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-				switch (key) {
-					case "color": {
-						/** Otherwise user cannot override the default style and track style */
-						node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-						break;
-					}
-
-					default: {
-						node.style.cssText += `${key}:${value};`;
-					}
-				}
-			}
+		if (!node) {
+			continue;
 		}
 
 		node.appendChild(latestNode);
@@ -359,8 +364,8 @@ function entitiesToDOM(rootNode: Node, ...entities: Entities.AllEntities[]): Nod
 	return subRoot;
 }
 
-function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
-	const element: HTMLElement = (() => {
+function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undefined {
+	const element: HTMLElement | undefined = (() => {
 		switch (entity.tagType) {
 			case Entities.TagType.BOLD: {
 				return document.createElement("b");
@@ -388,10 +393,14 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 				return node;
 			}
 			default: {
-				return document.createElement("span");
+				return undefined;
 			}
 		}
 	})();
+
+	if (!element) {
+		return undefined;
+	}
 
 	for (const className of entity.classes) {
 		element.classList.add(className);
@@ -437,8 +446,8 @@ function getSubtreeFromCueNodes(
 			break;
 		}
 
-		const currentCueEntity = currentCue.entities[i] as Entities.Tag;
-		const previousCueEntity = previousCue.entities[i] as Entities.Tag;
+		const currentCueEntity = currentCue.entities[i] as Entities.TagEntity;
+		const previousCueEntity = previousCue.entities[i] as Entities.TagEntity;
 
 		if (
 			currentCueEntity.type !== previousCueEntity.type ||

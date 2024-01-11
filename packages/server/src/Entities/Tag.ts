@@ -40,3 +40,7 @@ export function createTagEntity(
 		classes,
 	};
 }
+
+export function isTagEntity(entity: EntityProtocol): entity is TagEntity {
+	return entity.type === Type.TAG;
+}

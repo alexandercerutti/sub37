@@ -39,3 +39,7 @@ function getKeyValueFromCSSRawDeclarations(
 
 	return stylesObject;
 }
+
+export function isStyleEntity(entity: EntityProtocol): entity is StyleEntity {
+	return entity.type === Type.STYLE;
+}
