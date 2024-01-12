@@ -414,6 +414,15 @@ function addNode(node: Node, content: Node): Node {
 	return node;
 }
 
+/**
+ * Compares two cues to check where the first not-shared
+ * entity should be placed in the DOM tree.
+ *
+ * @param currentCue
+ * @param previousCue
+ * @returns
+ */
+
 function getSubtreeFromCueNodes(
 	currentCue: CueNode,
 	previousCue?: CueNode,
@@ -426,7 +435,7 @@ function getSubtreeFromCueNodes(
 		return [fragment, 0, textNode];
 	}
 
-	if (!previousCue?.entities.length) {
+	if (!previousCue?.entities.length || previousCue.id !== currentCue.id) {
 		return [entitiesToDOM(textNode, ...currentCue.entities), currentCue.entities.length, textNode];
 	}
 
@@ -455,13 +464,6 @@ function getSubtreeFromCueNodes(
 		) {
 			break;
 		}
-	}
-
-	if (firstDifferentEntityIndex >= currentCue.entities.length) {
-		/** We already reached that depth */
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, firstDifferentEntityIndex, textNode];
 	}
 
 	return [
