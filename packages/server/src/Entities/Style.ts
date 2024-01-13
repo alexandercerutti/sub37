@@ -1,8 +1,8 @@
 import { type EntityProtocol, Type } from "./index.js";
 
 export interface StyleEntity extends EntityProtocol {
-	type: Type.STYLE;
-	styles: Record<string, string>;
+	readonly type: Type.STYLE;
+	readonly styles: Record<string, string>;
 }
 
 export function createStyleEntity(stylesSource: string | Record<string, string>): StyleEntity {
