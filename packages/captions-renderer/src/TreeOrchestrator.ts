@@ -290,7 +290,11 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
+function commitDOMTree(
+	rootNode: Node | undefined,
+	cueSubTreeRoot: Node,
+	diffDepth: number,
+): HTMLElement {
 	const root = rootNode || createLine();
 	addNode(getNodeAtDepth(diffDepth, root.lastChild), cueSubTreeRoot);
 	return root as HTMLElement;
