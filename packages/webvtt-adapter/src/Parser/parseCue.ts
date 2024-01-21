@@ -73,7 +73,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 					if (token.content === "ruby" && openTagsQueue.current.token.content === "rt") {
 						const out = openTagsQueue.pop();
-						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
+						addCueEntities(currentCue, [Tags.createTagEntityByNode(out)]);
 					}
 
 					if (openTagsQueue.current.token.content === token.content) {

@@ -11,7 +11,6 @@ export enum TagType {
 	SPAN /********/ = "span",
 	RUBY /********/ = "ruby",
 	RT /**********/ = "rt",
-	CLASS /*******/ = "c",
 	BOLD /********/ = "b",
 	ITALIC /******/ = "i",
 	UNDERLINE /***/ = "u",

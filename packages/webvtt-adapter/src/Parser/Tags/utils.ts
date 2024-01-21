@@ -1,5 +1,5 @@
 import { Entities } from "@sub37/server";
-import { EntitiesTokenMap } from "./tokenEntities.js";
+import { createTagEntity } from "./Entities/Tag.js";
 import type { CueParsedData } from "../parseCue.js";
 import type Node from "./Node.js";
 import type NodeQueue from "./NodeQueue.js";
@@ -26,7 +26,7 @@ export function createTagEntitiesFromUnpaired(
 	const entities: Entities.TagEntity[] = [];
 
 	while (nodeCursor !== null) {
-		const entity = createTagEntity(currentCue, nodeCursor);
+		const entity = createTagEntityByNode(nodeCursor);
 
 		if (!currentCue.tags.length || !currentCue.tags.find((e) => e.tagType === entity.tagType)) {
 			entities.unshift(entity);
@@ -38,7 +38,7 @@ export function createTagEntitiesFromUnpaired(
 	return entities;
 }
 
-export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Entities.TagEntity {
+export function createTagEntityByNode(tagStart: Node): Entities.TagEntity {
 	const attributes = new Map(
 		tagStart.token.annotations?.map((annotation) => {
 			if (tagStart.token.content === "lang") {
@@ -54,9 +54,5 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 		}),
 	);
 
-	return Entities.createTagEntity(
-		EntitiesTokenMap[tagStart.token.content] || EntitiesTokenMap["span"],
-		attributes,
-		tagStart.token.classes,
-	);
+	return createTagEntity(tagStart.token.content, attributes, tagStart.token.classes);
 }

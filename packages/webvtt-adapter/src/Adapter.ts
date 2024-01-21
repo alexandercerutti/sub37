@@ -160,13 +160,12 @@ export default class WebVTTAdapter extends BaseAdapter {
 							)
 							.map((style) => Entities.createStyleEntity(style.styleString));
 
-						const entities: Entities.AllEntities[] = [
-							...globalStylesEntities,
-							...stylesById,
-							...parsedCue.tags,
-						];
+						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
 
 						for (const tag of parsedCue.tags) {
+							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
+							entities.push(originalEntity);
+
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
