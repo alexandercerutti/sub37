@@ -161,7 +161,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [Entities.createTagEntity(TagType.VOICE, new Map([["voice", "Fred>"]]), [])],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map([["voice", "Fred>"]]), [])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -181,7 +181,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [Entities.createTagEntity(TagType.LANG, new Map([["lang", "en-US"]]), ["mimmo"])],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map([["lang", "en-US"]]), ["mimmo"])],
 			});
 		});
 
@@ -216,7 +216,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [Entities.createTagEntity(TagType.CLASS, new Map(), ["mimmo"])],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map(), ["mimmo"])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -234,7 +234,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [Entities.createTagEntity(TagType.CLASS, new Map(), [])],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map(), [])],
 			});
 		});
 
@@ -670,10 +670,8 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createTagEntity(TagType.VOICE, new Map(), []),
-							Entities.createStyleEntity({
-								"background-color": "purple",
-							}),
+							Entities.createTagEntity(TagType.SPAN, new Map(), []),
+							Entities.createStyleEntity("background-color: purple"),
 						],
 						id: "test",
 						/**
@@ -719,7 +717,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createTagEntity(TagType.VOICE, new Map([["voice", "Fred"]]), []),
+							Entities.createTagEntity(TagType.SPAN, new Map([["voice", "Fred"]]), []),
 							Entities.createStyleEntity({
 								"background-color": "red",
 							}),
