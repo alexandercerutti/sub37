@@ -8,7 +8,13 @@ interface RendererFixture {
 	waitForEvent(event: "playing"): Promise<void>;
 }
 
+const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
+
 export const RendererFixture = base.extend<RendererFixture>({
+	page({ page }, use) {
+		page.goto(SUB37_SAMPLE_PAGE_PATH);
+		return use(page);
+	},
 	getFakeVideo({ page }, use) {
 		return use(() => page.locator("fake-video"));
 	},
