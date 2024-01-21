@@ -53,5 +53,5 @@ export function createTagEntity(
 		classes: {
 			value: classes,
 		},
-	} satisfies PropertyDescriptorMap);
+	});
 }
