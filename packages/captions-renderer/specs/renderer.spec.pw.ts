@@ -173,6 +173,53 @@ I am Fred<i>-ish</i>
 	expect(evaluation[3]).toBe(" -ish");
 });
 
-/**
- * @TODO add test to check classes given a track with tag entity
- */
+test("A global-style should get applied to all the cues", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	const peachpuff = `rgb(255, 218, 185)`;
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+STYLE
+::cue {
+  color: peachpuff;
+}
+
+00:00:00.000 --> 00:00:20.000 region:fred align:left
+<v Fred>Hi, my name is Fred
+
+00:00:02.500 --> 00:00:22.500 region:bill align:right
+<v Bill>Hi, I’m Bill
+`;
+
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(3);
+
+	const regionsLocator = page.locator("captions-renderer > main > .region span");
+
+	const fredLocator = regionsLocator.locator('span[voice="Fred"]');
+	const billLocator = regionsLocator.locator('span[voice="Bill"]');
+
+	expect(fredLocator.isVisible()).toBeTruthy();
+	expect(billLocator.isVisible()).toBeTruthy();
+
+	const [textColorFred, textColorBill] = await Promise.all([
+		fredLocator.evaluate((element) =>
+			getComputedStyle(element.children[0]).getPropertyValue("color"),
+		),
+		billLocator.evaluate((element) =>
+			getComputedStyle(element.children[0]).getPropertyValue("color"),
+		),
+	]);
+
+	expect(textColorFred).toBe(peachpuff);
+	expect(textColorBill).toBe(peachpuff);
+});
