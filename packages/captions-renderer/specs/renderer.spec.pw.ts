@@ -1,9 +1,14 @@
-import { test, expect } from "@playwright/test";
-import type { FakeHTMLVideoElement } from "../../sample/src/components/customElements/fake-video";
+import { expect } from "@playwright/test";
+import { RendererFixture as test } from "./RendererFixture.js";
 
 const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
 
-test("Renderer should render two regions if the tracks owns two regions", async ({ page }) => {
+test("Renderer should render two regions if the tracks owns two regions", async ({
+	page,
+	waitForEvent,
+	pauseServing,
+	seekToSecond,
+}) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -32,34 +37,23 @@ scroll:up
 
 	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
-test("Renderer should render two regions, one of them is the default one", async ({ page }) => {
+test("Renderer should render two regions, one of them is the default one", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -80,35 +74,22 @@ scroll:up
 
 	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
 test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
 	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
 }) => {
 	/**
 	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
@@ -144,29 +125,13 @@ STYLE
 
 	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	const regionsLocator = page.locator("captions-renderer > main > .region");
 
