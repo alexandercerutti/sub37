@@ -1,8 +1,6 @@
 import { expect } from "@playwright/test";
 import { RendererFixture as test } from "./RendererFixture.js";
 
-const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
-
 test("Renderer should render two regions if the tracks owns two regions", async ({
 	page,
 	waitForEvent,
@@ -34,8 +32,6 @@ scroll:up
 00:00:02.500 --> 00:00:22.500 region:bill align:right
 <v Bill>Hi, I’m Bill
 `;
-
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	await Promise.all([
 		waitForEvent("playing"),
@@ -71,8 +67,6 @@ scroll:up
 00:00:02.500 --> 00:00:22.500 align:right
 <v Bill>Hi, I’m Bill
 `;
-
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	await Promise.all([
 		waitForEvent("playing"),
@@ -122,8 +116,6 @@ STYLE
 00:00:02.500 --> 00:00:22.500
 <v Bill>Hi, I’m Bill
 `;
-
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
 
 	await Promise.all([
 		waitForEvent("playing"),
