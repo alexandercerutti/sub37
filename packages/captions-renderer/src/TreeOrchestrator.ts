@@ -386,15 +386,8 @@ function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undef
 			case Entities.TagType.RUBY: {
 				return document.createElement("ruby");
 			}
-			case Entities.TagType.LANG:
-			case Entities.TagType.VOICE: {
-				const node = document.createElement("span");
-
-				for (let [key, value] of entity.attributes) {
-					node.setAttribute(key, value ? value : "");
-				}
-
-				return node;
+			case Entities.TagType.SPAN: {
+				return document.createElement("span");
 			}
 			default: {
 				return undefined;
@@ -404,6 +397,10 @@ function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undef
 
 	if (!element) {
 		return undefined;
+	}
+
+	for (let [key, value] of entity.attributes) {
+		element.setAttribute(key, value ? value : "");
 	}
 
 	for (const className of entity.classes) {

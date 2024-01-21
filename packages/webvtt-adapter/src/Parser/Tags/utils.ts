@@ -4,10 +4,6 @@ import type { CueParsedData } from "../parseCue.js";
 import type Node from "./Node.js";
 import type NodeQueue from "./NodeQueue.js";
 
-export function isSupported(content: string): boolean {
-	return EntitiesTokenMap.hasOwnProperty(content);
-}
-
 /**
  * Creates entities from tree entities that have not been popped
  * out yet, without removing them from the tree
@@ -59,7 +55,7 @@ export function createTagEntity(currentCue: CueParsedData, tagStart: Node): Enti
 	);
 
 	return Entities.createTagEntity(
-		EntitiesTokenMap[tagStart.token.content],
+		EntitiesTokenMap[tagStart.token.content] || EntitiesTokenMap["span"],
 		attributes,
 		tagStart.token.classes,
 	);

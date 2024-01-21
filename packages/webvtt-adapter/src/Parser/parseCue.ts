@@ -44,10 +44,6 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.START_TAG: {
-				if (!Tags.isSupported(token.content)) {
-					break;
-				}
-
 				openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
 
 				if (!isCueDataTextEmpty(currentCue)) {
@@ -65,7 +61,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 			}
 
 			case TokenType.END_TAG: {
-				if (Tags.isSupported(token.content) && openTagsQueue.length) {
+				if (openTagsQueue.length) {
 					if (!openTagsQueue.current) {
 						break;
 					}

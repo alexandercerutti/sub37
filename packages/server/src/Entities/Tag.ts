@@ -1,18 +1,14 @@
 import { EntityProtocol, Type } from "./index.js";
 
 /**
- * TagType is an enum containing
- * recognized types in adapters
- * like vtt
+ * TagType includes only the common tag types that
+ * could or will show in adapters.
  *
- * @TODO this enum should not include WebVTT-only element
- * like class, voice and lang
+ * If missing, "span" should be used.
  */
 
 export enum TagType {
 	SPAN /********/ = "span",
-	VOICE /*******/ = "v",
-	LANG /********/ = "lang",
 	RUBY /********/ = "ruby",
 	RT /**********/ = "rt",
 	CLASS /*******/ = "c",

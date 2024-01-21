@@ -4,9 +4,8 @@ export const EntitiesTokenMap: { [key: string]: Entities.TagType } = {
 	b: Entities.TagType.BOLD,
 	c: Entities.TagType.CLASS,
 	i: Entities.TagType.ITALIC,
-	lang: Entities.TagType.LANG,
+	span: Entities.TagType.SPAN,
 	rt: Entities.TagType.RT,
 	ruby: Entities.TagType.RUBY,
 	u: Entities.TagType.UNDERLINE,
-	v: Entities.TagType.VOICE,
 };
