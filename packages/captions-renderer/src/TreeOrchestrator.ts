@@ -51,7 +51,10 @@ export default class TreeOrchestrator {
 			className: ROOT_CLASS_NAME,
 		});
 
-		this[rootElementSymbol] = root.appendChild(document.createElement("div"));
+		const regionScrollElement = document.createElement("div");
+		regionScrollElement.dataset["role"] = "scroll-root";
+
+		this[rootElementSymbol] = root.appendChild(regionScrollElement);
 
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
@@ -76,6 +79,7 @@ export default class TreeOrchestrator {
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
+			modifiersElement.dataset["role"] = "rendering-modifier";
 
 			const styles: Partial<CSSStyleDeclaration> = {
 				position: "relative",
