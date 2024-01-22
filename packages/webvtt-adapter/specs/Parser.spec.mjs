@@ -42,7 +42,7 @@ WEBVTT
 						{
 							type: 1,
 							attributes: new Map([["voice", "Fred>"]]),
-							tagType: TagType.SPAN,
+							tagType: "v",
 						},
 					],
 					/**
@@ -283,7 +283,7 @@ WEBVTT
 			expect(parsingResult[0].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -291,7 +291,7 @@ WEBVTT
 			expect(parsingResult[1].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -299,7 +299,7 @@ WEBVTT
 			expect(parsingResult[2].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
@@ -307,7 +307,7 @@ WEBVTT
 			expect(parsingResult[3].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -315,7 +315,7 @@ WEBVTT
 			expect(parsingResult[4].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
@@ -323,7 +323,7 @@ WEBVTT
 			expect(parsingResult[5].tags).toMatchObject([
 				{
 					type: 1,
-					tagType: TagType.SPAN,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer3"]]),
 				},
 			]);

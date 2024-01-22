@@ -129,10 +129,10 @@ STYLE
 
 	const [bgColor1, bgColor2] = await Promise.all([
 		regionsLocator
-			.locator('span[voice="Fred"]')
+			.locator('span[voice="Fred"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 		regionsLocator
-			.locator('span[voice="Bill"]')
+			.locator('span[voice="Bill"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 	]);
 
