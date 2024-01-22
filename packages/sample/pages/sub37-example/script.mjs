@@ -9,7 +9,7 @@ import "../../src/components/customElements/fake-video";
 /**
  * @typedef {import("../../src/components/customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
  * @typedef {import("../../src/components/customElements/scheduled-textarea").ScheduledTextArea} ScheduledTextArea
- * @typedef {import("@sub37/captions-renderer").Renderer} CaptionsRenderer
+ * @typedef {import("@sub37/captions-renderer").CaptionsRenderer} CaptionsRenderer
  */
 
 /**
