@@ -237,3 +237,4 @@ function getRegionModifierId(r1: RenderingModifiers, r2: RenderingModifiers): nu
 }
 
 customElements.define("captions-renderer", Renderer);
+export type CaptionsRenderer = typeof Renderer;
