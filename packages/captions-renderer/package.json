@@ -24,7 +24,7 @@
 	},
 	"homepage": "https://github.com/alexandercerutti/sub37#readme",
 	"devDependencies": {
-		"@playwright/test": "^1.28.1"
+		"@playwright/test": "^1.41.1"
 	},
 	"files": [
 		"lib/**/*.+(js|d.ts)!(*.map)"

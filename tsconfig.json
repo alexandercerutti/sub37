@@ -6,6 +6,5 @@
 		"paths": {
 			"@sub37/*": ["packages/*/src"]
 		}
-	},
-	"include": ["packages/**/src/**/*"]
+	}
 }
