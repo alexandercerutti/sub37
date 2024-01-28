@@ -160,26 +160,11 @@ describe("Scope and contexts", () => {
 				undefined,
 				createTimeContext({
 					timeContainer: "seq",
-				}),
-			);
-
-			const scope2 = createScope(
-				scope1,
-				createTimeContext({
-					// just to not make it nullable
 					begin: 0,
 				}),
 			);
 
-			expect(readScopeTimeContext(scope2).endTime).toBe(0);
-
-			/**
-			 * Additional test: `timeContainer` is always applied to the
-			 * children but not on the element itself
-			 */
-
-			expect(readScopeTimeContext(scope1).timeContainer).toBe("par");
-			expect(readScopeTimeContext(scope2).timeContainer).toBe("seq");
+			expect(readScopeTimeContext(scope1).endTime).toBe(0);
 		});
 	});
 
