@@ -1,6 +1,7 @@
 import "@sub37/captions-renderer";
 import { Server } from "@sub37/server";
 import { WebVTTAdapter } from "@sub37/webvtt-adapter";
+import { TTMLAdapter } from "@sub37/ttml-adapter";
 import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
 import "../../src/components/customElements/scheduled-textarea";
@@ -22,7 +23,7 @@ const defaultTrackLoadBtn = document.getElementById("load-default-track");
  * @type {Server}
  */
 
-const server = new Server(WebVTTAdapter);
+const server = new Server(WebVTTAdapter, TTMLAdapter);
 
 /**
  * @type {FakeHTMLVideoElement}
@@ -141,7 +142,7 @@ videoTag.addEventListener("pause", () => {
 	}
 });
 
-scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
+scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
 
 	const timeStart = performance.now();
@@ -156,17 +157,17 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 
 		await Promise.resolve();
 
-		server.createSession(
-			[
-				{
-					lang: "any",
-					content: vttTrack,
-					mimeType: "text/vtt",
-					active: true,
-				},
-			],
-			contentMimeType,
-		);
+		const isWebVTTTrackSelected = contentMimeType === "text/vtt";
+		const isTTMLTrackSelected = contentMimeType === "application/ttml+xml";
+
+		server.createSession([
+			{
+				lang: "any",
+				content: track,
+				mimeType: contentMimeType,
+				active: true,
+			},
+		]);
 		console.info(
 			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
 			"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
