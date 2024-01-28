@@ -46,7 +46,7 @@ export function parseCue(
 
 	return parseCueContents(
 		attributes["xml:id"] || "unkpar",
-		attributes["region"],
+		attributes,
 		node.children,
 		localScope,
 		documentSettings,
@@ -55,7 +55,7 @@ export function parseCue(
 
 function parseCueContents(
 	parentId: string,
-	parentRegionId: string,
+	parentAttributes: Record<string, string> = {},
 	rootChildren: NodeWithRelationship<Token>[],
 	scope: Scope,
 	documentSettings: TimeDetails,
@@ -65,8 +65,8 @@ function parseCueContents(
 	const timeContext = readScopeTimeContext(scope);
 	const regionContext = readScopeRegionContext(scope);
 
-	const matchingRegion = parentRegionId
-		? regionContext.regions.find((region) => region.id === parentRegionId)
+	const matchingRegion = parentAttributes?.["region"]
+		? regionContext.regions.find((region) => region.id === parentAttributes["region"])
 		: undefined;
 
 	for (let i = 0; i < rootChildren.length; i++) {
@@ -134,7 +134,7 @@ function parseCueContents(
 			if (children.length) {
 				cues = parseCueContents(
 					nextCueID,
-					attributes["region"],
+					attributes,
 					children,
 					localScope,
 					documentSettings,
