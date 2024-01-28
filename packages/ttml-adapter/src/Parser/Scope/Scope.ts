@@ -11,6 +11,18 @@ export interface Context<ParentType extends ThisType<Context<unknown>> = unknown
 	mergeWith(context: Context): void;
 }
 
+/**
+ * A scope is associated to an element inside the
+ * tree (a "span", "p", "div", "body" (global)).
+ *
+ * Therefore reading should be seen as you are reading
+ * it by being one of its children.
+ *
+ * @param parent
+ * @param contexts
+ * @returns
+ */
+
 export function createScope(parent: Scope | undefined, ...contexts: (Context | null)[]): Scope {
 	const contextsMap = new Map<symbol, Context>(
 		contexts.filter(Boolean).map((context) => [context.identifier, context]),
