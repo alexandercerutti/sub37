@@ -9,8 +9,8 @@ const regionParserGetterSymbol = Symbol("region.parser");
 
 type RegionParser = ReturnType<typeof createRegionParser>;
 
-interface RegionContextState {
-	region: Token;
+export interface RegionContextState {
+	attributes: Record<string, string>;
 	children: NodeWithRelationship<Token>[];
 }
 
@@ -33,7 +33,7 @@ export function createRegionContext(contextState: RegionContextState[]): RegionC
 			// Processing the actual regions first
 			if (!regionParser.size) {
 				for (let i = 0; i < contextState.length; i++) {
-					regionParser.process(contextState[i].region, contextState[i].children);
+					regionParser.process(contextState[i].attributes, contextState[i].children);
 				}
 			}
 
@@ -51,7 +51,7 @@ export function createRegionContext(contextState: RegionContextState[]): RegionC
 
 			if (!regionParser.size) {
 				for (let i = 0; i < contextState.length; i++) {
-					regionParser.process(contextState[i].region, contextState[i].children);
+					regionParser.process(contextState[i].attributes, contextState[i].children);
 				}
 			}
 

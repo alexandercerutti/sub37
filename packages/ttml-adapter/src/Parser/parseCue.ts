@@ -12,7 +12,12 @@ import {
 	isTimeContainerStardardString,
 	readScopeTimeContext,
 } from "./Scope/TimeContext.js";
-import { createRegionContext, readScopeRegionContext } from "./Scope/RegionContext.js";
+import {
+	type RegionContextState,
+	createRegionContext,
+	readScopeRegionContext,
+} from "./Scope/RegionContext.js";
+import { createStyleContext, readScopeStyleContext } from "./Scope/StyleContext";
 
 export function parseCue(
 	node: NodeWithRelationship<Token>,
@@ -25,11 +30,11 @@ export function parseCue(
 		? attributes["timeContainer"]
 		: undefined;
 
-	const regionTokens: { region: Token; children: NodeWithRelationship<Token>[] }[] = [];
+	const regionTokens: RegionContextState[] = [];
 
 	for (const { content, children } of node.children) {
 		if (content.content === "region") {
-			regionTokens.push({ region: content, children });
+			regionTokens.push({ attributes: content.attributes, children });
 		}
 	}
 

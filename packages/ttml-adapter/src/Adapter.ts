@@ -1,7 +1,6 @@
 import type { TimeDetails } from "./Parser/TimeBase/index.js";
-import { BaseAdapter, CueNode, Region } from "@sub37/server";
+import { BaseAdapter, CueNode } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
-import { Token, TokenType } from "./Parser/Token.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import { parseDocumentSupportedAttributes } from "./Parser/TTRootAttributes.js";
 import {
@@ -17,8 +16,7 @@ import {
 import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContext } from "./Parser/Scope/StyleContext.js";
-import { createRegionContext } from "./Parser/Scope/RegionContext.js";
-import { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
+import { type RegionContextState, createRegionContext } from "./Parser/Scope/RegionContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 
 export default class TTMLAdapter extends BaseAdapter {
@@ -73,17 +71,14 @@ export default class TTMLAdapter extends BaseAdapter {
 				case isLayoutBlockTuple(value): {
 					const { children } = value[1];
 
-					const localRegions: {
-						region: Token;
-						children: NodeWithRelationship<Token>[];
-					}[] = [];
+					const localRegions: RegionContextState[] = [];
 
 					for (const { content: regionToken, children: regionChildren } of children) {
 						if (regionToken.content !== "region") {
 							continue;
 						}
 
-						localRegions.push({ region: regionToken, children: regionChildren });
+						localRegions.push({ attributes: regionToken.attributes, children: regionChildren });
 					}
 
 					treeScope.addContext(createRegionContext(localRegions));
@@ -116,13 +111,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						treeScope = treeScope.parent;
 					}
 
-					const localRegions: { region: Token; children: NodeWithRelationship<Token>[] }[] = [];
+					const localRegions: RegionContextState[] = [];
 
 					for (const { content: token, children } of value[1].children) {
 						switch (token.content) {
 							case "region": {
 								localRegions.push({
-									region: token,
+									attributes: token.attributes,
 									children,
 								});
 							}

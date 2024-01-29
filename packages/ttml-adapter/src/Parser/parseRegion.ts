@@ -12,11 +12,11 @@ type StyleParser = ReturnType<typeof createStyleParser>;
 
 export const createRegionParser = memoizationFactory(function regionParserExecutor(
 	regionStorage: Map<string, TTMLRegion>,
-	token: Token,
+	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 	styleParser: StyleParser = createStyleParser(),
 ): Region | undefined {
-	if (regionStorage.has(token.attributes["xml:id"])) {
+	if (regionStorage.has(attributes["xml:id"])) {
 		/**
 		 * @TODO should we resolve the conflict here
 		 * or just ignore the region? The spec seems
@@ -29,7 +29,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	const nestedStyles = extractStylesChildren(children, styleParser);
 
 	region.styles = nestedStyles;
-	region.id = token.attributes["xml:id"];
+	region.id = attributes["xml:id"];
 
 	regionStorage.set(region.id, region);
 	return region;
