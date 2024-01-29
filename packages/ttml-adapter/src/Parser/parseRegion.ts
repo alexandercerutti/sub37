@@ -42,7 +42,11 @@ function extractStylesChildren(
 	const nestedStyles: TTMLStyle[] = [];
 
 	for (const styleToken of regionChildren) {
-		const style = styleParser.process(styleToken.content);
+		if (styleToken.content.content !== "style") {
+			continue;
+		}
+
+		const style = styleParser.process(styleToken.content.attributes);
 
 		if (!style) {
 			continue;

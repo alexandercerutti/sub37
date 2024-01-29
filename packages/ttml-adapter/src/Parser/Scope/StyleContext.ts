@@ -1,4 +1,3 @@
-import type { Token } from "../Token";
 import { TTMLStyle, createStyleParser } from "../parseStyle";
 import type { Context, Scope } from "./Scope";
 
@@ -12,22 +11,18 @@ interface StyleContext extends Context<StyleContext> {
 	[styleParserGetterSymbol]: StyleParser;
 }
 
-export function createStyleContext(styles: Token[] = []): StyleContext | null {
-	if (!styles.length) {
-		return null;
-	}
-
+export function createStyleContext(styles: Record<string, string> = {}): StyleContext | null {
 	const stylesParser: StyleParser = createStyleParser();
 
 	return {
 		parent: undefined,
 		identifier: styleContextSymbol,
 		mergeWith(context: StyleContext): void {
-			// Processing the actual styles first
 			if (!stylesParser.size) {
-				for (let i = 0; i < styles.length; i++) {
-					stylesParser.process(styles[i]);
-				}
+				/**
+				 * Processing the actual styles first
+				 */
+				stylesParser.process(styles);
 			}
 
 			const contextStyles = context[styleParserGetterSymbol].getAll();
@@ -43,9 +38,10 @@ export function createStyleContext(styles: Token[] = []): StyleContext | null {
 			const parentStyles = this.parent ? this.parent?.styles : new Map<string, TTMLStyle>();
 
 			if (!stylesParser.size) {
-				for (let i = 0; i < styles.length; i++) {
-					stylesParser.process(styles[i]);
-				}
+				/**
+				 * Processing the actual styles first
+				 */
+				stylesParser.process(styles);
 			}
 
 			return new Map<string, TTMLStyle>([

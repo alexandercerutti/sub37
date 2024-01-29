@@ -1,4 +1,3 @@
-import type { Token } from "./Token";
 import { memoizationFactory } from "./memoizationFactory";
 
 export interface TTMLStyle {
@@ -12,15 +11,13 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
 	 */
 	stylesIDREFSStorage: Map<string, TTMLStyle>,
-	token: Token,
+	/**
+	 * All the attributes belonging to a tag.
+	 * They'll be filtered out
+	 */
+	attributes: Record<string, string>,
 ): TTMLStyle | undefined {
-	if (token.content !== "style") {
-		return undefined;
-	}
-
 	let styleCache: Record<string, string> | undefined = undefined;
-
-	const { attributes } = token;
 
 	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
 	const attrs = excludeUnsupportedStyleAttributes(attributes);

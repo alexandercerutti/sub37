@@ -38,7 +38,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let cues: CueNode[] = [];
-		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext([]));
+		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext({}));
 		let documentSettings: TimeDetails;
 
 		const tokenizer = new Tokenizer(rawContent);
@@ -94,9 +94,13 @@ export default class TTMLAdapter extends BaseAdapter {
 				case isStyleBlockTuple(value): {
 					const { children } = value[1];
 
-					const styleTags = children
-						.filter(({ content: token }) => token.content === "style")
-						.map(({ content }) => content);
+					const styleTags = children.reduce<Record<string, string>>((acc, { content: token }) => {
+						if (token.content !== "style") {
+							return acc;
+						}
+
+						return Object.assign(acc, token.attributes);
+					}, {});
 
 					treeScope.addContext(createStyleContext(styleTags));
 
