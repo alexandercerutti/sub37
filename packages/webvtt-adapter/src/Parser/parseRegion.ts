@@ -24,7 +24,17 @@ export function parseRegion(rawRegionData: string): Region {
 					break;
 				}
 
-				region[key] = [parseInt(x), parseInt(y)];
+				const xInteger = parseInt(x);
+				const yInteger = parseInt(y);
+
+				if (Number.isNaN(xInteger) || Number.isNaN(yInteger)) {
+					break;
+				}
+
+				const clampedX = Math.max(0, Math.min(xInteger, 100));
+				const clampedY = Math.max(0, Math.min(yInteger, 100));
+
+				region[key] = [clampedX, clampedY];
 				break;
 			}
 
