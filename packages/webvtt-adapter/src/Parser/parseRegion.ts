@@ -97,7 +97,7 @@ class WebVTTRegion implements Region {
 	 */
 	public regionanchor?: [number, number];
 
-	public getOrigin(): [x: number, y: number] {
+	public getOrigin(): [x: string, y: string] {
 		const height = VH_LINE_HEIGHT * this.lines;
 
 		const [regionAnchorWidth = 0, regionAnchorHeight = 0] = this.regionanchor || [];
@@ -111,8 +111,8 @@ class WebVTTRegion implements Region {
 		const leftOffset = (regionAnchorWidth * this.width) / 100;
 		const topOffset = (regionAnchorHeight * height) / 100;
 
-		const originX = viewportAnchorWidth - leftOffset;
-		const originY = viewportAnchorHeight - topOffset;
+		const originX = `${viewportAnchorWidth - leftOffset}%`;
+		const originY = `${viewportAnchorHeight - topOffset}%`;
 
 		return [originX, originY];
 	}
