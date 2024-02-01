@@ -19,6 +19,11 @@ export function parseRegion(rawRegionData: string): Region {
 			case "regionanchor":
 			case "viewportanchor": {
 				const [x = "0%", y = "0%"] = value.split(",");
+
+				if (!x.endsWith("%") || !y.endsWith("%")) {
+					break;
+				}
+
 				region[key] = [parseInt(x), parseInt(y)];
 				break;
 			}
