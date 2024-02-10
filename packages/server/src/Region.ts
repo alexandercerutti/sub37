@@ -14,10 +14,10 @@ export interface Region {
 	 * Allows each parser how to express
 	 * the position of the region.
 	 *
-	 * @returns {[x: string, y: string]} coordinates with measure unit
+	 * @returns {[x: string | number, y: string | number]} coordinates with measure unit
 	 */
 
-	getOrigin(): [x: string, y: string];
+	getOrigin(): [x: number | string, y: number | string];
 
 	/**
 	 * Allows each parser how to express
@@ -25,8 +25,10 @@ export interface Region {
 	 *
 	 * @param viewportWidth
 	 * @param viewportHeight
-	 * @returns {[x: string, y: string]} coordinates with measure unit
 	 */
 
-	getOrigin(viewportWidth: number, viewportHeight: number): [x: string, y: string];
+	getOrigin(
+		viewportWidth: number,
+		viewportHeight: number,
+	): [x: number | string, y: number | string];
 }
