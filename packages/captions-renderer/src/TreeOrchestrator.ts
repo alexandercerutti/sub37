@@ -1,5 +1,5 @@
 import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
-import { IntervalBinaryTree, Entities } from "@sub37/server";
+import { Entities } from "@sub37/server";
 import { CSSVAR_TEXT_COLOR } from "./constants";
 
 const rootElementSymbol = Symbol("to.root.element");
@@ -119,13 +119,7 @@ export default class TreeOrchestrator {
 				continue;
 			}
 
-			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
-
-			for (let i = 0; i < cueNode.entities.length; i++) {
-				entitiesTree.addNode(cueNode.entities[i]);
-			}
-
-			cues.push(...splitCueNodeByBreakpoints(cueNode, entitiesTree));
+			cues.push(...splitCueNodeByBreakpoints(cueNode));
 		}
 
 		let latestCueId = "";
@@ -242,112 +236,65 @@ export default class TreeOrchestrator {
 	}
 }
 
-function splitCueNodeByBreakpoints(
-	cueNode: CueNode,
-	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
-): CueNode[] {
+function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 	let idVariations = 0;
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < cueNode.content.length; i++) {
+		if (!shouldCueNodeBreak(cueNode.content, i)) {
+			continue;
+		}
+
+		const content = cueNode.content.substring(previousContentBreakIndex, i + 1).trim();
+
+		const cue = Object.create(cueNode, {
+			content: {
+				value: content,
+			},
+		});
+
+		if (idVariations > 0) {
+			cue.id = `${cue.id}/${idVariations}`;
+		}
+
 		/**
-		 * Reordering because IBT serves nodes from left to right,
-		 * but left nodes are the smallest. In case of a global entity,
-		 * it is inserted as the first node. Hence, it will will result
-		 * as the last entity here. If so, we render wrong elements.
-		 *
-		 * Getting all the current entities and next entities so we can
-		 * check if this is the last character before an entity begin
-		 * (i.e. we have to break).
+		 * If we detect a new line, we want to force the creation
+		 * of a new line on the next content. So we increase the variation
+		 * so that rendering will break line on a different cue id.
 		 */
 
-		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
-			reorderEntitiesComparisonFn,
-		);
-
-		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
-			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
-
-			const cue = Object.create(cueNode, {
-				content: {
-					value: content,
-				},
-				entities: {
-					value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
-				},
-			});
-
-			if (idVariations > 0) {
-				cue.id = `${cue.id}/${idVariations}`;
-			}
-
-			/**
-			 * If we detect a new line, we want to force the creation
-			 * of a new line on the next content. So we increase the variation
-			 * so that rendering will break line on a different cue id.
-			 */
-
-			if (cueNode.content[i] === "\x0A") {
-				idVariations++;
-			}
-
-			cues.push(cue);
-
-			previousContentBreakIndex = i + 1;
+		if (cueNode.content[i] === "\x0A") {
+			idVariations++;
 		}
+
+		cues.push(cue);
+
+		previousContentBreakIndex = i + 1;
 	}
 
 	return cues;
 }
 
-function shouldCueNodeBreak(
-	cueNodeContent: string,
-	entitiesAtCoordinates: Entities.GenericEntity[],
-	currentIndex: number,
-): boolean {
+function shouldCueNodeBreak(cueNodeContent: string, currentIndex: number): boolean {
 	const char = cueNodeContent[currentIndex];
 
-	return (
-		isCharacterWhitespace(char) ||
-		indexMatchesEntityBegin(currentIndex, entitiesAtCoordinates) ||
-		indexMatchesEntityEnd(currentIndex, entitiesAtCoordinates) ||
-		isCueContentEnd(cueNodeContent, currentIndex)
-	);
+	return isCharacterWhitespace(char) || isCueContentEnd(cueNodeContent, currentIndex);
 }
 
 function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
 }
 
-function indexMatchesEntityBegin(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	for (const entity of entities) {
-		if (index + 1 === entity.offset) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	const lastEntity = entities[entities.length - 1];
-	return lastEntity.offset + lastEntity.length === index;
-}
-
 function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
+function commitDOMTree(
+	rootNode: Node | undefined,
+	cueSubTreeRoot: Node,
+	diffDepth: number,
+): HTMLElement {
 	const root = rootNode || createLine();
 	addNode(getNodeAtDepth(diffDepth, root.lastChild), cueSubTreeRoot);
 	return root as HTMLElement;
@@ -379,43 +326,50 @@ function getNodeAtDepth(index: number, node: Node) {
 	return latestNodePointer;
 }
 
-function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
+function entitiesToDOM(rootNode: Node, ...entities: Entities.AllEntities[]): Node {
 	const subRoot = new DocumentFragment();
 	let latestNode: Node = rootNode;
 
-	for (let i = entities.length - 1; i >= 0; i--) {
-		const entity = entities[i];
+	const styleEntities = entities
+		.filter(Entities.isStyleEntity)
+		.flatMap((entity) => Object.entries(entity.styles));
+	const tagEntities = entities.filter(Entities.isTagEntity);
 
-		if (entity instanceof Entities.Tag) {
-			const node = getHTMLElementByEntity(entity);
+	if (styleEntities.length) {
+		const styleNode = document.createElement("span");
 
-			if (entity.styles) {
-				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					switch (key) {
-						case "color": {
-							/** Otherwise user cannot override the default style and track style */
-							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-							break;
-						}
+		for (const [key, styleValue] of styleEntities) {
+			let value: string = styleValue;
 
-						default: {
-							node.style.cssText += `${key}:${value};`;
-						}
-					}
-				}
+			if (key === "color") {
+				/** Otherwise user cannot override the default style and track style */
+				value = `var(${CSSVAR_TEXT_COLOR}, ${styleValue});`;
 			}
 
-			node.appendChild(latestNode);
-			latestNode = node;
+			styleNode.style.cssText += `${key}:${value}`;
 		}
+
+		styleNode.appendChild(latestNode);
+		latestNode = styleNode;
+	}
+
+	for (const entity of tagEntities) {
+		const node = getHTMLElementByEntity(entity);
+
+		if (!node) {
+			continue;
+		}
+
+		node.appendChild(latestNode);
+		latestNode = node;
 	}
 
 	subRoot.appendChild(latestNode);
 	return subRoot;
 }
 
-function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
-	const element: HTMLElement = (() => {
+function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undefined {
+	const element: HTMLElement | undefined = (() => {
 		switch (entity.tagType) {
 			case Entities.TagType.BOLD: {
 				return document.createElement("b");
@@ -432,21 +386,22 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 			case Entities.TagType.RUBY: {
 				return document.createElement("ruby");
 			}
-			case Entities.TagType.LANG:
-			case Entities.TagType.VOICE: {
-				const node = document.createElement("span");
-
-				for (let [key, value] of entity.attributes) {
-					node.setAttribute(key, value ? value : "");
-				}
-
-				return node;
+			case Entities.TagType.SPAN: {
+				return document.createElement("span");
 			}
 			default: {
-				return document.createElement("span");
+				return undefined;
 			}
 		}
 	})();
+
+	if (!element) {
+		return undefined;
+	}
+
+	for (let [key, value] of entity.attributes) {
+		element.setAttribute(key, value ? value : "");
+	}
 
 	for (const className of entity.classes) {
 		element.classList.add(className);
@@ -460,6 +415,15 @@ function addNode(node: Node, content: Node): Node {
 	return node;
 }
 
+/**
+ * Compares two cues to check where the first not-shared
+ * entity should be placed in the DOM tree.
+ *
+ * @param currentCue
+ * @param previousCue
+ * @returns
+ */
+
 function getSubtreeFromCueNodes(
 	currentCue: CueNode,
 	previousCue?: CueNode,
@@ -472,7 +436,7 @@ function getSubtreeFromCueNodes(
 		return [fragment, 0, textNode];
 	}
 
-	if (!previousCue?.entities.length) {
+	if (!previousCue?.entities.length || previousCue.id !== currentCue.id) {
 		return [entitiesToDOM(textNode, ...currentCue.entities), currentCue.entities.length, textNode];
 	}
 
@@ -492,22 +456,15 @@ function getSubtreeFromCueNodes(
 			break;
 		}
 
-		const currentCueEntity = currentCue.entities[i];
-		const previousCueEntity = previousCue.entities[i];
+		const currentCueEntity = currentCue.entities[i] as Entities.TagEntity;
+		const previousCueEntity = previousCue.entities[i] as Entities.TagEntity;
 
 		if (
-			currentCueEntity.length !== previousCueEntity.length ||
-			currentCueEntity.offset !== previousCueEntity.offset
+			currentCueEntity.type !== previousCueEntity.type ||
+			currentCueEntity.tagType !== previousCueEntity.tagType
 		) {
 			break;
 		}
-	}
-
-	if (firstDifferentEntityIndex >= currentCue.entities.length) {
-		/** We already reached that depth */
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, firstDifferentEntityIndex, textNode];
 	}
 
 	return [
@@ -515,29 +472,4 @@ function getSubtreeFromCueNodes(
 		firstDifferentEntityIndex,
 		textNode,
 	];
-}
-
-function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	if (e1.offset < e2.offset) {
-		/** e1 starts before e2 */
-		return -1;
-	}
-
-	/**
-	 * The condition `e1.offset > e2.offset` is not possible.
-	 * Otherwise there would be an issue with parser. Tags open
-	 * and close like onions. Hence, here we have `e1.offset == e2.offset`
-	 */
-
-	if (e1.length < e2.length) {
-		/** e1 ends before e2, so it must be set last */
-		return 1;
-	}
-
-	if (e1.length > e2.length) {
-		/** e2 ends before e1, so it must be set first */
-		return -1;
-	}
-
-	return 0;
 }

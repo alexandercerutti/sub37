@@ -22,7 +22,7 @@ enum BlockType {
 	CUE /*******/ = 0b1000,
 }
 
-export default class Adapter extends BaseAdapter {
+export default class WebVTTAdapter extends BaseAdapter {
 	static override get supportedType() {
 		return "text/vtt";
 	}
@@ -125,6 +125,14 @@ export default class Adapter extends BaseAdapter {
 
 					let latestRootCue: CueNode | undefined = undefined;
 
+					/**
+					 * @TODO performing a filter and a remap for each parsed cue might be useless
+					 */
+
+					const globalStylesEntities = styles
+						.filter((style) => style.type === Parser.StyleDomain.GLOBAL)
+						.map((style) => Entities.createStyleEntity(style.styleString));
+
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							continue;
@@ -146,50 +154,32 @@ export default class Adapter extends BaseAdapter {
 							latestRootCue = cue;
 						}
 
-						const stylesEntities = styles
-							.filter((style) => {
-								return (
-									(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
-									style.type === Parser.StyleDomain.GLOBAL
-								);
-							})
-							.sort(styleSpecificitySorter);
+						const stylesById = styles
+							.filter(
+								(style) => style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id,
+							)
+							.map((style) => Entities.createStyleEntity(style.styleString));
 
-						const entities: Entities.Tag[] = [];
-
-						if (stylesEntities.length) {
-							/**
-							 * Having the same length of the style entities here allows
-							 * us to prevent having several elements with the same styles
-							 * in renderer.
-							 */
-
-							const superCue = Object.getPrototypeOf(cue);
-							const length =
-								superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
-
-							entities.push(
-								new Entities.Tag({
-									offset: 0,
-									length,
-									tagType: Entities.TagType.SPAN,
-									attributes: new Map(),
-									classes: [],
-								}),
-							);
-
-							for (let style of stylesEntities) {
-								entities[0].setStyles(style.styleString);
-							}
-						}
+						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
 
 						for (const tag of parsedCue.tags) {
-							entities.push(tag);
+							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
+							entities.push(originalEntity);
 
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
 								}
+
+								/**
+								 * Looking for a matching tag that has the same:
+								 *  - tag name
+								 *  - number of attributes
+								 *  - exact matching attributes
+								 *  - classes amount
+								 *  - exact matching classes
+								 *  - A nice smile :)
+								 */
 
 								if (style.tagName && style.tagName !== tag.tagType) {
 									continue;
@@ -223,7 +213,11 @@ export default class Adapter extends BaseAdapter {
 									}
 								}
 
-								tag.setStyles(style.styleString);
+								/**
+								 * YAY 🎉 We found a matching tag for a style!
+								 */
+
+								entities.push(Entities.createStyleEntity(style.styleString));
 							}
 						}
 
@@ -343,25 +337,4 @@ function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 
 function isError(evaluation: BlockTuple | Error): evaluation is Error {
 	return !Array.isArray(evaluation) && evaluation instanceof Error;
-}
-
-/**
- * Reorders styles so that Global styles are placed
- * before id styles
- *
- * @param s1
- * @param s2
- * @returns
- */
-
-function styleSpecificitySorter(s1: Parser.Style, s2: Parser.Style) {
-	if (s1.type === s2.type) {
-		return 0;
-	}
-
-	if (s1.type === Parser.StyleDomain.ID && s2.type === Parser.StyleDomain.GLOBAL) {
-		return 1;
-	}
-
-	return -1;
 }

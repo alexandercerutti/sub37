@@ -20,7 +20,7 @@ export interface CueParsedData {
 	startTime: number;
 	endTime: number;
 	regionName?: string;
-	tags: Entities.Tag[];
+	tags: Entities.TagEntity[];
 	text: string;
 	renderingModifiers: RenderingModifiers;
 }
@@ -44,15 +44,24 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
 			case TokenType.START_TAG: {
-				if (Tags.isSupported(token.content)) {
-					openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
+				openTagsQueue.push(new Tags.Node(currentCue.text.length, token));
+
+				if (!isCueDataTextEmpty(currentCue)) {
+					hsCues.push(currentCue);
+					currentCue = createCue(
+						currentCue.startTime,
+						currentCue.endTime,
+						currentCue.id,
+						currentCue.renderingModifiers,
+					);
 				}
 
+				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 				break;
 			}
 
 			case TokenType.END_TAG: {
-				if (Tags.isSupported(token.content) && openTagsQueue.length) {
+				if (openTagsQueue.length) {
 					if (!openTagsQueue.current) {
 						break;
 					}
@@ -64,19 +73,34 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 					if (token.content === "ruby" && openTagsQueue.current.token.content === "rt") {
 						const out = openTagsQueue.pop();
-						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
+						addCueEntities(currentCue, [Tags.createTagEntityByNode(out)]);
 					}
 
 					if (openTagsQueue.current.token.content === token.content) {
-						const out = openTagsQueue.pop();
-						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
+						openTagsQueue.pop();
 					}
+				}
+
+				if (!isCueDataTextEmpty(currentCue)) {
+					hsCues.push(currentCue);
+					currentCue = createCue(
+						currentCue.startTime,
+						currentCue.endTime,
+						currentCue.id,
+						currentCue.renderingModifiers,
+					);
+
+					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 				}
 
 				break;
 			}
 
 			case TokenType.STRING: {
+				if (!currentCue.text.length && Tokenizer.isWhitespace(token.content)) {
+					break;
+				}
+
 				currentCue.text += token.content;
 				break;
 			}
@@ -87,7 +111,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 				 * Next cues will be the timestamped ones.
 				 */
 
-				if (currentCue.text.length) {
+				if (!isCueDataTextEmpty(currentCue)) {
 					/**
 					 * Closing the current entities for the previous cue,
 					 * still without resetting open tags, because timestamps
@@ -105,6 +129,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue.id,
 					currentCue.renderingModifiers,
 				);
+				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 
 				break;
 			}
@@ -125,16 +150,18 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 
 	addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 
-	if (currentCue.text.length) {
+	if (!isCueDataTextEmpty(currentCue)) {
 		hsCues.push(currentCue);
 	}
 
 	return hsCues;
 }
 
-function addCueEntities(cue: CueParsedData, entities: Entities.Tag[]) {
+function addCueEntities(cue: CueParsedData, entities: Entities.TagEntity[]) {
 	for (const entity of entities) {
-		cue.tags.push(entity);
+		if (!cue.tags.length || !cue.tags.find((t) => t.tagType === entity.tagType)) {
+			cue.tags.push(entity);
+		}
 	}
 }
 
@@ -152,4 +179,10 @@ function createCue(
 		id,
 		renderingModifiers,
 	};
+}
+
+const EMPTY_STRING_REGEX = /\x0A|\x09|\x20|\x0C|/;
+
+function isCueDataTextEmpty(cue: CueParsedData): boolean {
+	return !cue.text.length || !cue.text.replace(EMPTY_STRING_REGEX, "").length;
 }
