@@ -12,5 +12,9 @@
 		"vite": "^3.1.0",
 		"vite-plugin-checker": "^0.5.1",
 		"vite-tsconfig-paths": "^3.5.1"
+	},
+	"dependencies": {
+		"@sub37/captions-renderer": "^1.0.2",
+		"@sub37/server": "^1.0.2"
 	}
 }
