@@ -66,7 +66,7 @@ export default class TreeOrchestrator {
 		const [originX, originY] = trackRegionSettings?.getOrigin(
 			parent.offsetWidth,
 			parent.offsetHeight,
-		) ?? [0, 70];
+		) ?? ["0%", "70%"];
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${trackRegionSettings?.width ?? 100}%`,

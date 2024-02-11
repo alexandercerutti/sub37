@@ -13,6 +13,8 @@ export interface Region {
 	/**
 	 * Allows each parser how to express
 	 * the position of the region.
+	 *
+	 * @returns {[x: string | number, y: string | number]} coordinates with measure unit
 	 */
 
 	getOrigin(): [x: number | string, y: number | string];

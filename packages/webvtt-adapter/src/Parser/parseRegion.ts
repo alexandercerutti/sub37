@@ -19,7 +19,22 @@ export function parseRegion(rawRegionData: string): Region {
 			case "regionanchor":
 			case "viewportanchor": {
 				const [x = "0%", y = "0%"] = value.split(",");
-				region[key] = [parseInt(x), parseInt(y)];
+
+				if (!x.endsWith("%") || !y.endsWith("%")) {
+					break;
+				}
+
+				const xInteger = parseInt(x);
+				const yInteger = parseInt(y);
+
+				if (Number.isNaN(xInteger) || Number.isNaN(yInteger)) {
+					break;
+				}
+
+				const clampedX = Math.max(0, Math.min(xInteger, 100));
+				const clampedY = Math.max(0, Math.min(yInteger, 100));
+
+				region[key] = [clampedX, clampedY];
 				break;
 			}
 
@@ -92,7 +107,7 @@ class WebVTTRegion implements Region {
 	 */
 	public regionanchor?: [number, number];
 
-	public getOrigin(): [x: number, y: number] {
+	public getOrigin(): [x: string, y: string] {
 		const height = VH_LINE_HEIGHT * this.lines;
 
 		const [regionAnchorWidth = 0, regionAnchorHeight = 0] = this.regionanchor || [];
@@ -106,8 +121,8 @@ class WebVTTRegion implements Region {
 		const leftOffset = (regionAnchorWidth * this.width) / 100;
 		const topOffset = (regionAnchorHeight * height) / 100;
 
-		const originX = viewportAnchorWidth - leftOffset;
-		const originY = viewportAnchorHeight - topOffset;
+		const originX = `${viewportAnchorWidth - leftOffset}%`;
+		const originY = `${viewportAnchorHeight - topOffset}%`;
 
 		return [originX, originY];
 	}
