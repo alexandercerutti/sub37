@@ -31,6 +31,8 @@ export interface OrchestratorSettings {
 const LINES_TRANSITION_TIME_MS = 250;
 const ROOT_CLASS_NAME = "region";
 
+const UNIT_REGEX = /\d+\.?\d+?[a-zA-Z%]+$/;
+
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
@@ -63,16 +65,24 @@ export default class TreeOrchestrator {
 				trackRegionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
 
-		const [originX, originY] = trackRegionSettings?.getOrigin(
+		let [originX, originY] = trackRegionSettings?.getOrigin(
 			parent.offsetWidth,
 			parent.offsetHeight,
 		) ?? ["0%", "70%"];
 
+		if (typeof originX === "number" || !UNIT_REGEX.test(originX)) {
+			originX = `${originX}%`;
+		}
+
+		if (typeof originY === "number" || !UNIT_REGEX.test(originY)) {
+			originY = `${originY}%`;
+		}
+
 		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${trackRegionSettings?.width ?? 100}%`,
 			height: `${this.settings.lines * 1.5}em`,
-			left: `${originX}%`,
-			top: `${originY}%`,
+			left: originX,
+			top: originY,
 		};
 
 		Object.assign(root.style, rootStyles);
