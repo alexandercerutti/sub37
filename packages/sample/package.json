@@ -14,7 +14,8 @@
 		"vite-tsconfig-paths": "^4.3.1"
 	},
 	"dependencies": {
-		"@sub37/captions-renderer": "^1.0.2",
-		"@sub37/server": "^1.0.2"
+		"@sub37/captions-renderer": "workspace:^",
+		"@sub37/server": "workspace:^",
+		"@sub37/webvtt-adapter": "workspace:^"
 	}
 }

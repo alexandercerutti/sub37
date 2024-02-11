@@ -15,9 +15,9 @@
 		"srt"
 	],
 	"scripts": {
-		"build": "npx lerna run build",
-		"test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest -c jest.config.mjs --silent",
-		"sample:serve": "npm --prefix packages/sample run dev"
+		"build": "pnpm lerna run build",
+		"test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" pnpm jest -c jest.config.mjs --silent",
+		"sample:serve": "pnpm --prefix packages/sample run dev"
 	},
 	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
 	"license": "MIT",
