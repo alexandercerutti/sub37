@@ -78,9 +78,11 @@ export default class TreeOrchestrator {
 			originY = `${originY}%`;
 		}
 
+		const regionHeight = `${trackRegionSettings?.height || this.settings.lines * 1.5}em`;
+
 		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${trackRegionSettings?.width ?? 100}%`,
-			height: `${this.settings.lines * 1.5}em`,
+			height: regionHeight,
 			left: originX,
 			top: originY,
 		};
