@@ -18,6 +18,15 @@ export interface OrchestratorSettings {
 	 * Defaults to `false`.
 	 */
 	shiftDownFirstLine?: boolean;
+
+	/**
+	 * When a track region's height might cut a line, this
+	 * allows renderer to paint the full line in its height
+	 * instead of cut.
+	 *
+	 * Defaults to `false`.
+	 */
+	roundRegionHeightLineFit?: boolean;
 }
 
 /**
@@ -37,6 +46,7 @@ export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
 		shiftDownFirstLine: false,
+		roundRegionHeightLineFit: false,
 	};
 
 	private [rootElementSymbol]: HTMLDivElement;
@@ -78,11 +88,16 @@ export default class TreeOrchestrator {
 			originY = `${originY}%`;
 		}
 
-		const regionHeight = `${trackRegionSettings?.height || this.settings.lines * 1.5}em`;
+		let lineHeightEM = 1.5;
+		let regionHeight = trackRegionSettings?.height || this.settings.lines * lineHeightEM;
+
+		if (regionHeight % lineHeightEM > 0 && this.settings.roundRegionHeightLineFit) {
+			regionHeight = Math.ceil(regionHeight / lineHeightEM) * lineHeightEM;
+		}
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${trackRegionSettings?.width ?? 100}%`,
-			height: regionHeight,
+			height: `${regionHeight}em`,
 			left: originX,
 			top: originY,
 		};
