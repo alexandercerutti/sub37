@@ -25,6 +25,12 @@ const defaultTrackLoadBtn = document.getElementById("load-default-track");
 const server = new Server(WebVTTAdapter);
 
 /**
+ * Instance to let tests access to the server instance
+ */
+
+window.captionsServer = server;
+
+/**
  * @type {FakeHTMLVideoElement}
  */
 
@@ -227,4 +233,14 @@ server.addEventListener("cuestart", (cues) => {
 server.addEventListener("cuestop", () => {
 	console.log("CUES STOP");
 	presenter.setCue();
+});
+
+/**
+ * @type {CaptionsRenderer}
+ */
+
+const rendererElement = document.getElementsByTagName("captions-renderer")[0];
+rendererElement.setRegionProperties({
+	shiftDownFirstLine: false,
+	roundRegionHeightToNearest: true,
 });
