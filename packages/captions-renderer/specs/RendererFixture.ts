@@ -11,8 +11,11 @@ interface RendererFixture {
 const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
 
 export const RendererFixture = base.extend<RendererFixture>({
-	page({ page }, use) {
-		page.goto(SUB37_SAMPLE_PAGE_PATH);
+	async page({ page }, use) {
+		if (!page.url().includes(SUB37_SAMPLE_PAGE_PATH)) {
+			await page.goto(SUB37_SAMPLE_PAGE_PATH);
+		}
+
 		return use(page);
 	},
 	getFakeVideo({ page }, use) {
