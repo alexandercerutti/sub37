@@ -766,6 +766,39 @@ Alberto, come to look at Marcello!
 					});
 				});
 			});
+
+			it("shouldn't be applied to an entity if the selector is wrong", () => {
+				const TRACK_WITH_WRONG_STYLE_SELECTOR = `
+WEBVTT
+
+STYLE
+::cue([v="Fred"]) {
+  color: blue;
+}
+
+00:00:00.000 --> 00:00:20.000 region:fred align:left
+<v Fred>Hi, my name is Fred
+
+00:00:02.500 --> 00:00:22.500 region:bill align:right
+<v Bill>Hi, I’m Bill
+`;
+
+				const parsingResult = adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR);
+
+				const entities = parsingResult.data
+					.flatMap((cue) => cue.entities)
+					.filter((entity) => entity.type === 1);
+
+				for (let i = 0; i < entities.length; i++) {
+					if (entities[i].type !== 1) {
+						continue;
+					}
+
+					expect(/** @type {Entities.Tag} */ (entities[i]).styles).toEqual({});
+				}
+
+				expect(entities[0].type);
+			});
 		});
 	});
 });
