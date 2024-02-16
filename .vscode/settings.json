@@ -3,5 +3,5 @@
 	"editor.trimAutoWhitespace": true,
 	"editor.detectIndentation": true,
 
-	"jest.jestCommandLine": "node --experimental-vm-modules --no-warnings ./node_modules/.bin/jest -c jest.config.mjs --runInBand"
+	"jest.jestCommandLine": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" pnpm jest -c jest.config.mjs --runInBand"
 }
