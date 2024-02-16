@@ -203,7 +203,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 									for (const [key, value] of tag.attributes) {
 										const styleAttributeValue = style.attributes.get(key);
 
-										if (styleAttributeValue === null) {
+										if (!styleAttributeValue) {
 											continue stylesLoop;
 										}
 
