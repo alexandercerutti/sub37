@@ -18,6 +18,15 @@ export interface OrchestratorSettings {
 	 * Defaults to `false`.
 	 */
 	shiftDownFirstLine?: boolean;
+
+	/**
+	 * When a track region's height might cut a line, this
+	 * allows renderer to paint the full line in its height
+	 * instead of cut.
+	 *
+	 * Defaults to `false`.
+	 */
+	roundRegionHeightLineFit?: boolean;
 }
 
 /**
@@ -31,10 +40,13 @@ export interface OrchestratorSettings {
 const LINES_TRANSITION_TIME_MS = 250;
 const ROOT_CLASS_NAME = "region";
 
+const UNIT_REGEX = /\d+\.?\d+?[a-zA-Z%]+$/;
+
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
 		lines: 2,
 		shiftDownFirstLine: false,
+		roundRegionHeightLineFit: false,
 	};
 
 	private [rootElementSymbol]: HTMLDivElement;
@@ -51,7 +63,10 @@ export default class TreeOrchestrator {
 			className: ROOT_CLASS_NAME,
 		});
 
-		this[rootElementSymbol] = root.appendChild(document.createElement("div"));
+		const regionScrollElement = document.createElement("div");
+		regionScrollElement.dataset["role"] = "scroll-root";
+
+		this[rootElementSymbol] = root.appendChild(regionScrollElement);
 
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
@@ -60,22 +75,38 @@ export default class TreeOrchestrator {
 				trackRegionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
 
-		const [originX, originY] = trackRegionSettings?.getOrigin(
+		let [originX, originY] = trackRegionSettings?.getOrigin(
 			parent.offsetWidth,
 			parent.offsetHeight,
-		) ?? [0, 70];
+		) ?? ["0%", "70%"];
+
+		if (typeof originX === "number" || !UNIT_REGEX.test(originX)) {
+			originX = `${originX}%`;
+		}
+
+		if (typeof originY === "number" || !UNIT_REGEX.test(originY)) {
+			originY = `${originY}%`;
+		}
+
+		let lineHeightEM = 1.5;
+		let regionHeight = trackRegionSettings?.height || this.settings.lines * lineHeightEM;
+
+		if (regionHeight % lineHeightEM > 0 && this.settings.roundRegionHeightLineFit) {
+			regionHeight = Math.ceil(regionHeight / lineHeightEM) * lineHeightEM;
+		}
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
 			width: `${trackRegionSettings?.width ?? 100}%`,
-			height: `${this.settings.lines * 1.5}em`,
-			left: `${originX}%`,
-			top: `${originY}%`,
+			height: `${regionHeight}em`,
+			left: originX,
+			top: originY,
 		};
 
 		Object.assign(root.style, rootStyles);
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
+			modifiersElement.dataset["role"] = "rendering-modifier";
 
 			const styles: Partial<CSSStyleDeclaration> = {
 				position: "relative",

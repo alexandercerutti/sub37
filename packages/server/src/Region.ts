@@ -7,12 +7,31 @@
 
 export interface Region {
 	id: string;
+
+	/**
+	 * Expressed in percentage
+	 */
+
 	width: number;
+
+	/**
+	 * When not specified, region's height
+	 * equals to the max visible amount of
+	 * lines, specified through the property
+	 * 'lines' below.
+	 *
+	 * Expressed in `em`s
+	 */
+
+	height?: number;
+
 	lines: number;
 
 	/**
 	 * Allows each parser how to express
 	 * the position of the region.
+	 *
+	 * @returns {[x: string | number, y: string | number]} coordinates with measure unit
 	 */
 
 	getOrigin(): [x: number | string, y: number | string];

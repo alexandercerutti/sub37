@@ -290,7 +290,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * Cuebox's left edge matches at position
 				 * point and ends at 100%.
 				 *
-				 * For schemas, refer to width on "center" case.
+				 * For schemas, refer to width on "line-left" case.
 				 */
 
 				return this.position;

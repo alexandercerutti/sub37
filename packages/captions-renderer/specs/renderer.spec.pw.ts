@@ -1,9 +1,26 @@
-import { test, expect } from "@playwright/test";
-import type { FakeHTMLVideoElement } from "../../sample/src/components/customElements/fake-video";
+import { expect } from "@playwright/test";
+import { RendererFixture as test } from "./RendererFixture.js";
+import type { Server } from "@sub37/server";
+import type { CaptionsRenderer } from "../lib/index.js";
+import type { Region } from "@sub37/server";
+import type { CueNode } from "@sub37/server";
 
-const SUB37_SAMPLE_PAGE_PATH = "./pages/sub37-example/index.html";
+declare global {
+	/**
+	 * Window is the interface for each browser
+	 * in this case
+	 */
+	interface Window {
+		captionsServer: Server;
+	}
+}
 
-test("Renderer should render two regions if the tracks owns two regions", async ({ page }) => {
+test("Renderer should render two regions if the tracks owns two regions", async ({
+	page,
+	waitForEvent,
+	pauseServing,
+	seekToSecond,
+}) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -30,36 +47,23 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
-
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
-test("Renderer should render two regions, one of them is the default one", async ({ page }) => {
+test("Renderer should render two regions, one of them is the default one", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
@@ -78,37 +82,22 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
-
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
 });
 
 test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
 	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
 }) => {
 	/**
 	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
@@ -142,31 +131,13 @@ STYLE
 <v Bill>Hi, I’m Bill
 `;
 
-	await page.goto(SUB37_SAMPLE_PAGE_PATH);
-
-	const fakeVideoLocator = page.locator("fake-video");
-
 	await Promise.all([
-		fakeVideoLocator.evaluate((element) => {
-			const promise = new Promise<void>((resolve) => {
-				element.addEventListener(
-					"playing",
-					(event) => {
-						resolve();
-					},
-					{ once: true },
-				);
-			});
-
-			return promise;
-		}),
+		waitForEvent("playing"),
 		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
 	]);
 
-	await fakeVideoLocator.evaluate<void, FakeHTMLVideoElement>((element) => {
-		element.pause();
-		element.currentTime = 3;
-	});
+	await pauseServing();
+	await seekToSecond(3);
 
 	const regionsLocator = page.locator("captions-renderer > main > .region");
 
@@ -181,4 +152,131 @@ STYLE
 
 	expect(bgColor1).toBe("red");
 	expect(bgColor2).toBe("blue");
+});
+
+test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up
+
+00:00:00.000 --> 00:00:20.000 region:fred align:left
+<v Fred>Hi, my name is Fred
+
+00:00:02.500 --> 00:00:22.500 align:right
+<v Bill>Hi, I’m Bill
+
+00:00:03.000 --> 00:00:25.000 region:fred align:left
+<v Fred>Would
+<00:00:05.250>you
+<00:00:05.500>like
+<00:00:05.750>to
+<00:00:06.000>get
+<00:00:06.250>a
+<00:00:06.500>coffee?
+
+00:00:07.500 --> 00:00:27.500 align:right
+<v Bill>Sure! I’ve only had one today.
+
+00:00:10.000 --> 00:00:30.000 region:fred align:left
+<v Fred>This is my fourth!
+
+00:00:12.500 --> 00:00:32.500 region:fred align:left
+<v Fred>OK, let’s go.
+`;
+
+	/**
+	 * Injecting a listener to rewrite the first
+	 * and injecting renderer properties
+	 */
+
+	await page.evaluate(() => {
+		function isRendererElement(element: Element | null): element is InstanceType<CaptionsRenderer> {
+			return typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function";
+		}
+
+		const rendererElement = document.querySelector("captions-renderer");
+
+		if (!isRendererElement(rendererElement)) {
+			throw new Error("No renderer element found.");
+		}
+
+		rendererElement.setRegionProperties({
+			roundRegionHeightLineFit: true,
+		});
+
+		const regionInstance = new (class implements Region {
+			public height = 3.2;
+			public width: number = 100;
+			public lines: number = 3;
+			public scroll?: "up" | "none" = "none";
+			public id = "testRegionCustom";
+
+			getOrigin(): [x: string, y: string] {
+				return ["0%", "0%"];
+			}
+		})();
+
+		window.captionsServer.addEventListener("cuestart", (cues: CueNode[]) => {
+			for (const cue of cues) {
+				if (cue.region?.id === "fred") {
+					cue.region = regionInstance;
+				}
+			}
+		});
+	});
+
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(10);
+
+	let fredRegionHeight = await page
+		.locator("captions-renderer > main > .region:first-child")
+		.evaluate((element) => element.style.height);
+
+	expect(fredRegionHeight).toBe("4.5em");
+
+	/**
+	 * Now disabling the setting and seek to rerender the cues.
+	 */
+
+	await page.evaluate(() => {
+		function isRendererElement(element: Element | null): element is InstanceType<CaptionsRenderer> {
+			return typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function";
+		}
+
+		const rendererElement = document.querySelector("captions-renderer");
+
+		if (!isRendererElement(rendererElement)) {
+			throw new Error("No renderer element found.");
+		}
+
+		rendererElement.setRegionProperties({
+			roundRegionHeightLineFit: false,
+		});
+	});
+
+	await seekToSecond(9.5);
+	await seekToSecond(10);
+
+	fredRegionHeight = await page
+		.locator("captions-renderer > main > .region:first-child")
+		.evaluate((element) => element.style.height);
+
+	expect(fredRegionHeight).toBe("3.2em");
 });

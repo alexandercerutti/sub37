@@ -16,15 +16,22 @@ jobs:
     name: Testing Workflow Linux
     runs-on: ubuntu-latest
     steps:
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
           check-latest: true
-      - run: |
-          npm ci
-          npm run build
-          npx playwright install --with-deps
-          npm run test
+          cache: "pnpm"
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pnpm dlx playwright install --with-deps
+      - name: Building and running tests
+        run: |
+          pnpm build
+          pnpm test
           cd packages/captions-renderer
-          npm run test:e2e
+          pnpm test:e2e
