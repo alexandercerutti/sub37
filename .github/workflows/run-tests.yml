@@ -30,7 +30,7 @@ jobs:
           pnpm install
           pnpm dlx playwright install --with-deps
       - name: Building and running tests
-      - run: |
+        run: |
           pnpm build
           pnpm test
           cd packages/captions-renderer
