@@ -207,7 +207,11 @@ export default class WebVTTAdapter extends BaseAdapter {
 											continue stylesLoop;
 										}
 
-										if (styleAttributeValue && styleAttributeValue !== value) {
+										if (
+											styleAttributeValue &&
+											styleAttributeValue !== value &&
+											styleAttributeValue !== "*"
+										) {
 											continue stylesLoop;
 										}
 									}
