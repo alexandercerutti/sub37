@@ -23,12 +23,13 @@
 			"request": "launch",
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
-			"disableOptimisticBPs": true,
+			"env": {
+				"NODE_OPTIONS": "--experimental-vm-modules --no-warnings"
+			},
+			"runtimeExecutable": "pnpm",
 			"cwd": "${workspaceFolder}",
 			"args": [
-				"--experimental-vm-modules",
-				"--no-warnings",
-				"${workspaceRoot}/node_modules/.bin/jest",
+				"jest",
 				"-c",
 				"${workspaceRoot}/jest.config.mjs",
 				"--runInBand",
