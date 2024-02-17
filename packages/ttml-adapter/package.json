@@ -5,7 +5,7 @@
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
-		"@sub37/server": "^1.0.0"
+		"@sub37/server": "workspace:^"
 	},
 	"scripts": {
 		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",

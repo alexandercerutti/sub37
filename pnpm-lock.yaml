@@ -33,8 +33,8 @@ importers:
   packages/captions-renderer:
     dependencies:
       '@sub37/server':
-        specifier: ^1.0.0
-        version: 1.1.0
+        specifier: workspace:^
+        version: link:../server
     devDependencies:
       '@playwright/test':
         specifier: ^1.41.1
@@ -74,14 +74,14 @@ importers:
   packages/ttml-adapter:
     dependencies:
       '@sub37/server':
-        specifier: ^1.0.0
-        version: 1.1.0
+        specifier: workspace:^
+        version: link:../server
 
   packages/webvtt-adapter:
     dependencies:
       '@sub37/server':
-        specifier: ^1.0.0
-        version: 1.1.0
+        specifier: workspace:^
+        version: link:../server
 
 packages:
 
@@ -1653,10 +1653,6 @@ packages:
     dependencies:
       '@sinonjs/commons': 2.0.0
     dev: true
-
-  /@sub37/server@1.1.0:
-    resolution: {integrity: sha512-l5xs9Jso1YWx9ggLqsUIG0VH3Yudb8PoYecCBswKyBWc9N/O2xy2igVGp7amBQsj8egMH++F5ykRSmTVu/sXGQ==}
-    dev: false
 
   /@tootallnate/once@2.0.0:
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
