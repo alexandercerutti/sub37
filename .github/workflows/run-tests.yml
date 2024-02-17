@@ -16,15 +16,15 @@ jobs:
     name: Testing Workflow Linux
     runs-on: ubuntu-latest
     steps:
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
           check-latest: true
           cache: "pnpm"
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 8
       - name: Install dependencies
         run: |
           pnpm install
