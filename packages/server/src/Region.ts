@@ -7,7 +7,24 @@
 
 export interface Region {
 	id: string;
+
+	/**
+	 * Expressed in percentage
+	 */
+
 	width: number;
+
+	/**
+	 * When not specified, region's height
+	 * equals to the max visible amount of
+	 * lines, specified through the property
+	 * 'lines' below.
+	 *
+	 * Expressed in `em`s
+	 */
+
+	height?: number;
+
 	lines: number;
 
 	/**
