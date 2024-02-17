@@ -149,7 +149,7 @@ function getSelectorComponents(
 		selector = tag;
 
 		if (attribute) {
-			attributes.push([attribute, value]);
+			attributes.push([attribute, value || "*"]);
 		}
 	}
 

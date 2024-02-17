@@ -5,12 +5,12 @@
 	"main": "lib/index.js",
 	"type": "module",
 	"devDependencies": {
-		"typescript": "^5.3.2"
+		"typescript": "^5.3.3"
 	},
 	"scripts": {
-		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
-		"test": "npm run build && npm --prefix ../.. run test",
-		"prepublishOnly": "npm run build"
+		"build": "rm -rf lib && pnpm tsc -p tsconfig.build.json",
+		"test": "pnpm build && pnpm --prefix ../.. test",
+		"prepublishOnly": "pnpm build"
 	},
 	"repository": {
 		"type": "git",

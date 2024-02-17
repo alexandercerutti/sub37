@@ -15,7 +15,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 	styleParser: StyleParser = createStyleParser(),
-): Region | undefined {
+): TTMLRegion | undefined {
 	if (regionStorage.has(attributes["xml:id"])) {
 		/**
 		 * @TODO should we resolve the conflict here

@@ -2,7 +2,7 @@ interface Ticker {
 	run(currentTime?: number): void;
 }
 
-function createTicker(tickCallback: (currentTime?: number) => void) {
+function createTicker(tickCallback: (currentTime?: number) => void): Ticker {
 	return {
 		run(currentTime?: number) {
 			tickCallback(currentTime);

@@ -2,6 +2,7 @@ import type { CueNode, RenderingModifiers } from "@sub37/server";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,
+	CSSVAR_REGION_AREA_BG_COLOR,
 	CSSVAR_REGION_BG_COLOR,
 	CSSVAR_TEXT_BG_COLOR,
 	CSSVAR_TEXT_COLOR,
@@ -79,6 +80,7 @@ div.region {
 	overflow-y: hidden;
 	min-height: 1.5em;
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
+	background-color: var(${CSSVAR_REGION_AREA_BG_COLOR}, transparent);
 }
 
 div.region > div {
@@ -237,3 +239,4 @@ function getRegionModifierId(r1: RenderingModifiers, r2: RenderingModifiers): nu
 }
 
 customElements.define("captions-renderer", Renderer);
+export type CaptionsRenderer = typeof Renderer;
