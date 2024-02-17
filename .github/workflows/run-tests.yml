@@ -21,10 +21,17 @@ jobs:
         with:
           node-version-file: .nvmrc
           check-latest: true
+          cache: "pnpm"
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pnpm dlx playwright install --with-deps
+      - name: Building and running tests
       - run: |
-          npm ci
-          npm run build
-          npx playwright install --with-deps
-          npm run test
+          pnpm build
+          pnpm test
           cd packages/captions-renderer
-          npm run test:e2e
+          pnpm test:e2e
