@@ -1,6 +1,6 @@
 {
 	"name": "@sub37/server",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"description": "Server component for subtitles",
 	"main": "lib/index.js",
 	"type": "module",
