@@ -758,19 +758,11 @@ STYLE
 
 				const parsingResult = adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR);
 
-				const entities = parsingResult.data
-					.flatMap((cue) => cue.entities)
-					.filter((entity) => entity.type === 1);
+				for (let i = 0; i < parsingResult.data.length; i++) {
+					const entities = parsingResult.data[i].entities;
 
-				for (let i = 0; i < entities.length; i++) {
-					if (entities[i].type !== 1) {
-						continue;
-					}
-
-					expect(/** @type {Entities.Tag} */ (entities[i]).styles).toEqual({});
+					expect(entities.filter(Entities.isStyleEntity)).toEqual([]);
 				}
-
-				expect(entities[0].type);
 			});
 		});
 	});
