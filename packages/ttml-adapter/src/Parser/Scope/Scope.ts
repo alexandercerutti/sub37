@@ -24,9 +24,16 @@ export interface Context<ParentType extends ThisType<Context<unknown>> = unknown
  */
 
 export function createScope(parent: Scope | undefined, ...contexts: (Context | null)[]): Scope {
-	const contextsMap = new Map<symbol, Context>(
-		contexts.filter(Boolean).map((context) => [context.identifier, context]),
-	);
+	const contextsMap = new Map<symbol, Context>();
+
+	for (const context of contexts) {
+		if (!contextsMap.has(context.identifier)) {
+			contextsMap.set(context.identifier, context);
+			continue;
+		}
+
+		contextsMap.get(context.identifier).mergeWith(context);
+	}
 
 	if (parent) {
 		const parentContexts = parent.getAllContexts();

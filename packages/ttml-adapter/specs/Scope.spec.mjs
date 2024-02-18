@@ -171,33 +171,31 @@ describe("Scope and contexts", () => {
 	describe("RegionContext", () => {});
 
 	describe("StyleContext", () => {
-		it("should allow adding some styles", () => {
+		it("should merge multiple style contexts on the same scope, by giving priority to the last. Styles are merged", () => {
 			const scope = createScope(
 				undefined,
-				createStyleContext([
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t1",
-							"tts:textColor": "blue",
-						},
-					},
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t2",
-							"tts:textColor": "blue",
-						},
-					},
-				]),
+				createStyleContext({
+					"xml:id": "t1",
+					"tts:textColor": "blue",
+					"tts:backgroundColor": "rose",
+				}),
+				createStyleContext({
+					"xml:id": "t2",
+					"tts:textColor": "blue",
+				}),
 			);
 
 			expect(readScopeStyleContext(scope).styles).toMatchObject(
 				new Map([
-					["t1", { id: "t1", attributes: {} }],
-					["t2", { id: "t2", attributes: {} }],
+					[
+						"t2",
+						{
+							attributes: {
+								"tts:textColor": "blue",
+								"tts:backgroundColor": "rose",
+							},
+						},
+					],
 				]),
 			);
 		});
@@ -205,55 +203,25 @@ describe("Scope and contexts", () => {
 		it("should be able to iterate all the parent styles", () => {
 			const scope1 = createScope(
 				undefined,
-				createStyleContext([
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t1",
-							"tts:textColor": "blue",
-						},
-					},
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t2",
-							"tts:textColor": "blue",
-						},
-					},
-				]),
+				createStyleContext({
+					"xml:id": "t1",
+					"tts:textColor": "blue",
+				}),
 			);
 
 			const scope2 = createScope(
 				scope1,
-				createStyleContext([
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t3",
-							"tts:textColor": "blue",
-						},
-					},
-					{
-						type: TokenType.START_TAG,
-						content: "style",
-						attributes: {
-							"xml:id": "t4",
-							"tts:textColor": "blue",
-						},
-					},
-				]),
+				createStyleContext({
+					"xml:id": "t2",
+					"tts:textColor": "rose",
+				}),
 			);
 
 			expect(readScopeStyleContext(scope2).styles).toBeInstanceOf(Map);
 			expect(readScopeStyleContext(scope2).styles).toMatchObject(
 				new Map([
-					["t1", { id: "t1", attributes: {} }],
-					["t2", { id: "t2", attributes: {} }],
-					["t3", { id: "t3", attributes: {} }],
-					["t4", { id: "t4", attributes: {} }],
+					["t1", { id: "t1", attributes: { "tts:textColor": "blue" } }],
+					["t2", { id: "t2", attributes: { "tts:textColor": "rose" } }],
 				]),
 			);
 		});

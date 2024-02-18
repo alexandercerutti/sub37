@@ -8,34 +8,41 @@ type StyleParser = ReturnType<typeof createStyleParser>;
 
 interface StyleContext extends Context<StyleContext> {
 	styles: Map<string, TTMLStyle>;
+	unprocessedStyles: Record<string, string>;
 	[styleParserGetterSymbol]: StyleParser;
 }
 
-export function createStyleContext(styles: Record<string, string> = {}): StyleContext | null {
+export function createStyleContext(
+	initialStyles: Record<string, string> = {},
+): StyleContext | null {
+	const styles = Object.assign({}, initialStyles);
 	const stylesParser: StyleParser = createStyleParser();
 
 	return {
 		parent: undefined,
 		identifier: styleContextSymbol,
 		mergeWith(context: StyleContext): void {
-			if (!stylesParser.size) {
+			if (stylesParser.size) {
 				/**
-				 * Processing the actual styles first
+				 * Styles have been already processed, so we
+				 * must process context's too, if they
+				 * haven't been already.
 				 */
-				stylesParser.process(styles);
+
+				stylesParser.push(...Object.entries(context.styles));
+				return;
 			}
 
-			const contextStyles = context[styleParserGetterSymbol].getAll();
-
-			for (const [id, data] of Object.entries(contextStyles)) {
-				stylesParser.push([id, data]);
-			}
+			Object.assign(styles, context.unprocessedStyles);
 		},
 		get [styleParserGetterSymbol]() {
 			return stylesParser;
 		},
+		get unprocessedStyles(): Record<string, string> {
+			return styles;
+		},
 		get styles(): Map<string, TTMLStyle> {
-			const parentStyles = this.parent ? this.parent?.styles : new Map<string, TTMLStyle>();
+			const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();
 
 			if (!stylesParser.size) {
 				/**
