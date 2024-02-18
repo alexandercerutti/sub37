@@ -27,6 +27,10 @@ export function createScope(parent: Scope | undefined, ...contexts: (Context | n
 	const contextsMap = new Map<symbol, Context>();
 
 	for (const context of contexts) {
+		if (!context) {
+			continue;
+		}
+
 		if (!contextsMap.has(context.identifier)) {
 			contextsMap.set(context.identifier, context);
 			continue;
