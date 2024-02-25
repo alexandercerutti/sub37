@@ -18,9 +18,8 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 ): TTMLRegion | undefined {
 	if (regionStorage.has(attributes["xml:id"])) {
 		/**
-		 * @TODO should we resolve the conflict here
-		 * or just ignore the region? The spec seems
-		 * to say nothing about this...
+		 * Region is ignored if the id is not unique in the document
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-inline-regions
 		 */
 		return undefined;
 	}
