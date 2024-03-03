@@ -1,4 +1,48 @@
-import type { TimeDetails } from "./TimeBase";
+import type { Context, ContextFactory, Scope } from "./Scope";
+import type { TimeDetails } from "../TimeBase/index.js";
+
+const documentContextSymbol = Symbol("document");
+
+interface DocumentContext extends Context<DocumentContext> {
+	attributes: TimeDetails;
+}
+
+export function createDocumentContext(
+	rawAttributes: Record<string, string>,
+): ContextFactory<DocumentContext> {
+	return function (scope: Scope) {
+		const previousDocumentContext = readScopeDocumentContext(scope);
+
+		if (previousDocumentContext) {
+			throw new Error(
+				"A document context is already existing. One document context is allowed per time",
+			);
+		}
+
+		const attributes = parseDocumentSupportedAttributes(rawAttributes);
+
+		return {
+			parent: undefined,
+			identifier: documentContextSymbol,
+			mergeWith(context) {
+				throw new Error(
+					"Document context merge is not allowed. Only one document context can exists at the same time.",
+				);
+			},
+			attributes,
+		};
+	};
+}
+
+export function readScopeDocumentContext(scope: Scope): DocumentContext | undefined {
+	let context: Context | undefined;
+
+	if (!(context = scope.getContextByIdentifier(documentContextSymbol))) {
+		return undefined;
+	}
+
+	return context as DocumentContext;
+}
 
 export function parseDocumentSupportedAttributes(
 	attributes: Record<string, string>,

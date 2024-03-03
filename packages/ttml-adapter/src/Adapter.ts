@@ -1,8 +1,6 @@
-import type { TimeDetails } from "./Parser/TimeBase/index.js";
 import { BaseAdapter, CueNode } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
-import { parseDocumentSupportedAttributes } from "./Parser/TTRootAttributes.js";
 import {
 	type BlockTuple,
 	getNextContentBlock,
@@ -18,6 +16,7 @@ import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContext } from "./Parser/Scope/StyleContext.js";
 import { type RegionContextState, createRegionContext } from "./Parser/Scope/RegionContext.js";
 import { parseCue } from "./Parser/parseCue.js";
+import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 
 export default class TTMLAdapter extends BaseAdapter {
 	public static override get supportedType() {
@@ -37,7 +36,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		let cues: CueNode[] = [];
 		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext({}));
-		let documentSettings: TimeDetails;
 
 		const tokenizer = new Tokenizer(rawContent);
 		const blockReader = getNextContentBlock(tokenizer);
@@ -48,7 +46,7 @@ export default class TTMLAdapter extends BaseAdapter {
 			const { done, value } = block;
 
 			if (done) {
-				if (!documentSettings) {
+				if (!readScopeDocumentContext(treeScope)) {
 					throw new Error(`Document failed to parse: <tt> element is apparently missing.`);
 				}
 
@@ -57,14 +55,14 @@ export default class TTMLAdapter extends BaseAdapter {
 
 			switch (true) {
 				case isDocumentBlockTuple(value): {
-					if (documentSettings) {
+					if (readScopeDocumentContext(treeScope)) {
 						/**
 						 * @TODO Change in a fatal error;
 						 */
 						throw new Error("Malformed TTML track: multiple <tt> were found.");
 					}
 
-					documentSettings = parseDocumentSupportedAttributes(value[1].content.attributes || {});
+					treeScope.addContext(createDocumentContext(value[1].content.attributes || {}));
 					break;
 				}
 
@@ -131,7 +129,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 				case isCueBlockTuple(value): {
 					const node = value[1];
-					cues.push(...parseCue(node, treeScope, documentSettings));
+					cues.push(...parseCue(node, treeScope));
 
 					break;
 				}
