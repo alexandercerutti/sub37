@@ -3,8 +3,14 @@ import type { TimeDetails } from "../TimeBase/index.js";
 
 const documentContextSymbol = Symbol("document");
 
+export interface DocumentAttributes extends TimeDetails {
+	"ttp:displayAspectRatio"?: number[];
+	"ttp:pixelAspectRatio"?: number[];
+	"tts:extent"?: number[];
+}
+
 interface DocumentContext extends Context<DocumentContext> {
-	attributes: TimeDetails;
+	attributes: DocumentAttributes;
 }
 
 export function createDocumentContext(
@@ -44,14 +50,19 @@ export function readScopeDocumentContext(scope: Scope): DocumentContext | undefi
 	return context as DocumentContext;
 }
 
-export function parseDocumentSupportedAttributes(
+function parseDocumentSupportedAttributes(
 	attributes: Record<string, string>,
-): Readonly<TimeDetails> {
+): Readonly<DocumentAttributes> {
 	const frameRate = getFrameRateResolvedValue(attributes["ttp:frameRate"]);
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
+	const extent = getLinearWhitespaceValuesAsNumbers(attributes["ttp:pixelAspectRatio"]);
+
 	return Object.freeze({
+		/**
+		 * Time Attributes
+		 */
 		"ttp:dropMode": getDropModeResolvedValue(attributes["ttp:dropMode"]),
 		"ttp:frameRate": frameRate || 30,
 		"ttp:subFrameRate": subFrameRate || 1,
@@ -60,16 +71,70 @@ export function parseDocumentSupportedAttributes(
 		),
 		"ttp:tickRate": tickRate,
 		"ttp:timeBase": getTimeBaseResolvedValue(attributes["ttp:timeBase"]),
-	} satisfies TimeDetails);
+
+		/**
+		 * Container attributes
+		 */
+		"ttp:displayAspectRatio": getLinearWhitespaceValuesAsNumbers(
+			attributes["ttp:displayAspectRatio"],
+		),
+		"ttp:pixelAspectRatio": getPixelAspectRatio(
+			getLinearWhitespaceValuesAsNumbers(attributes["ttp:pixelAspectRatio"]),
+			extent,
+		),
+		"tts:extent": extent,
+	} satisfies DocumentAttributes);
 }
 
-function getDropModeResolvedValue(dropMode: string): TimeDetails["ttp:dropMode"] {
-	const dropModes: ReadonlyArray<TimeDetails["ttp:dropMode"]> = ["dropNTSC", "dropPAL", "nonDrop"];
+function getLinearWhitespaceValuesAsNumbers(rawValue: string | undefined): number[] {
+	if (!rawValue?.length) {
+		return [];
+	}
+
+	return rawValue.split("\x20").map((e) => parseFloat(e));
+}
+
+/**
+ * Having pixelAspectRatio without an extents is a standard
+ * deprecated behavior.
+ *
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-pixelAspectRatio
+ *
+ * Any undefined result of the function here, brings us
+ * to a different Aspect Ration calculation procedure.
+ *
+ * @param values
+ * @param extent
+ * @returns
+ */
+
+function getPixelAspectRatio(values: number[], extent?: number[]): [number, number] | undefined {
+	if (!values || values.length < 2 || !extent) {
+		return undefined;
+	}
+
+	const [numerator, denominator] = values;
+
+	if (!numerator || !denominator) {
+		return undefined;
+	}
+
+	return [numerator, denominator];
+}
+
+function getDropModeResolvedValue(dropMode: string): DocumentAttributes["ttp:dropMode"] {
+	const dropModes: ReadonlyArray<DocumentAttributes["ttp:dropMode"]> = [
+		"dropNTSC",
+		"dropPAL",
+		"nonDrop",
+	];
 
 	return dropModes.find((e) => e === dropMode) ?? "nonDrop";
 }
 
-function getFrameRateResolvedValue(frameRate: string): TimeDetails["ttp:frameRate"] | undefined {
+function getFrameRateResolvedValue(
+	frameRate: string,
+): DocumentAttributes["ttp:frameRate"] | undefined {
 	const parsed = parseFloat(frameRate);
 
 	if (Number.isNaN(parsed) || parsed <= 0) {
@@ -81,12 +146,12 @@ function getFrameRateResolvedValue(frameRate: string): TimeDetails["ttp:frameRat
 
 function getFrameRateMultiplerResolvedValue(
 	frameRateMultiplier: string | undefined,
-): TimeDetails["ttp:frameRateMultiplier"] {
+): DocumentAttributes["ttp:frameRateMultiplier"] {
 	if (!frameRateMultiplier) {
 		return 1;
 	}
 
-	const parsed = frameRateMultiplier.split("\x20").map((e) => parseFloat(e));
+	const parsed = getLinearWhitespaceValuesAsNumbers(frameRateMultiplier);
 
 	if (parsed.length < 2) {
 		return 1;
@@ -110,7 +175,7 @@ function getTickRateResolvedValue(
 	tickRate: string,
 	frameRate: number,
 	subFrameRate: number,
-): TimeDetails["ttp:tickRate"] {
+): DocumentAttributes["ttp:tickRate"] {
 	if (!tickRate) {
 		return (frameRate ?? 0) * (subFrameRate ?? 1) || 1;
 	}
@@ -118,8 +183,8 @@ function getTickRateResolvedValue(
 	return parseFloat(tickRate);
 }
 
-function getTimeBaseResolvedValue(timeBase: string): TimeDetails["ttp:timeBase"] {
-	const dropModes: ReadonlyArray<TimeDetails["ttp:timeBase"]> = ["media", "clock", "smpte"];
+function getTimeBaseResolvedValue(timeBase: string): DocumentAttributes["ttp:timeBase"] {
+	const dropModes: ReadonlyArray<DocumentAttributes["ttp:timeBase"]> = ["media", "clock", "smpte"];
 
 	return dropModes.find((e) => e === timeBase) ?? "media";
 }
