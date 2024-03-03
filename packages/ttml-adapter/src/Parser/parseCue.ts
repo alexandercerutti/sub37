@@ -18,12 +18,10 @@ import {
 	readScopeRegionContext,
 } from "./Scope/RegionContext.js";
 import { createStyleContext, readScopeStyleContext } from "./Scope/StyleContext";
+import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 
-export function parseCue(
-	node: NodeWithRelationship<Token>,
-	scope: Scope,
-	documentSettings: TimeDetails,
-): CueNode[] {
+export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
+	const { attributes: documentAttributes } = readScopeDocumentContext(scope);
 	const { attributes } = node.content;
 
 	const timeContainer = isTimeContainerStardardString(attributes["timeContainer"])
@@ -41,21 +39,15 @@ export function parseCue(
 	const localScope = createScope(
 		scope,
 		createTimeContext({
-			begin: parseTimeString(attributes["begin"], documentSettings),
-			dur: parseTimeString(attributes["dur"], documentSettings),
-			end: parseTimeString(attributes["end"], documentSettings),
+			begin: parseTimeString(attributes["begin"], documentAttributes),
+			dur: parseTimeString(attributes["dur"], documentAttributes),
+			end: parseTimeString(attributes["end"], documentAttributes),
 			timeContainer: timeContainer,
 		}),
 		createRegionContext(regionTokens),
 	);
 
-	return parseCueContents(
-		attributes["xml:id"] || "unkpar",
-		attributes,
-		node.children,
-		localScope,
-		documentSettings,
-	);
+	return parseCueContents(attributes["xml:id"] || "unkpar", attributes, node.children, localScope);
 }
 
 function parseCueContents(
@@ -63,10 +55,10 @@ function parseCueContents(
 	parentAttributes: Record<string, string> = {},
 	rootChildren: NodeWithRelationship<Token>[],
 	scope: Scope,
-	documentSettings: TimeDetails,
 	previousCues: CueNode[] = [],
 ): CueNode[] {
 	let cues: CueNode[] = previousCues;
+	const { attributes: documentAttributes } = readScopeDocumentContext(scope);
 	const timeContext = readScopeTimeContext(scope);
 	const regionContext = readScopeRegionContext(scope);
 
@@ -109,9 +101,9 @@ function parseCueContents(
 			const localScope = createScope(
 				scope,
 				createTimeContext({
-					begin: parseTimeString(attributes["begin"], documentSettings),
-					dur: parseTimeString(attributes["dur"], documentSettings),
-					end: parseTimeString(attributes["end"], documentSettings),
+					begin: parseTimeString(attributes["begin"], documentAttributes),
+					dur: parseTimeString(attributes["dur"], documentAttributes),
+					end: parseTimeString(attributes["end"], documentAttributes),
 					timeContainer,
 				}),
 			);
@@ -137,14 +129,7 @@ function parseCueContents(
 			}
 
 			if (children.length) {
-				cues = parseCueContents(
-					nextCueID,
-					attributes,
-					children,
-					localScope,
-					documentSettings,
-					cues,
-				);
+				cues = parseCueContents(nextCueID, attributes, children, localScope, cues);
 			}
 
 			continue;
