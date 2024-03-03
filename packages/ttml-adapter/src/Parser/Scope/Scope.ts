@@ -2,10 +2,14 @@ export interface Scope {
 	parent: Scope | undefined;
 	getAllContexts(): Context[];
 	getContextByIdentifier(identifier: symbol): Context | undefined;
-	addContext(context: Context): void;
+	addContext(context: ContextFactory): void;
 }
 
-export interface Context<ParentType extends ThisType<Context<unknown>> = unknown> {
+export type ContextFactory<ContextObject extends Context = Context> = (
+	scope: Scope,
+) => ContextObject | null;
+
+export interface Context<ParentType extends object = object> {
 	readonly identifier: symbol;
 	parent?: ParentType | undefined;
 	mergeWith(context: Context): void;
@@ -23,36 +27,46 @@ export interface Context<ParentType extends ThisType<Context<unknown>> = unknown
  * @returns
  */
 
-export function createScope(parent: Scope | undefined, ...contexts: (Context | null)[]): Scope {
+export function createScope(parent: Scope | undefined, ...contexts: ContextFactory[]): Scope {
 	const contextsMap = new Map<symbol, Context>();
 
-	for (const context of contexts) {
-		if (!context) {
-			continue;
-		}
+	function buildContexts(scope: Scope): Scope {
+		for (const contextMaker of contexts) {
+			if (!contextMaker) {
+				continue;
+			}
 
-		if (!contextsMap.has(context.identifier)) {
-			contextsMap.set(context.identifier, context);
-			continue;
-		}
+			const context = contextMaker(scope);
 
-		contextsMap.get(context.identifier).mergeWith(context);
-	}
+			if (!context) {
+				continue;
+			}
 
-	if (parent) {
-		const parentContexts = parent.getAllContexts();
-
-		for (const context of parentContexts) {
 			if (!contextsMap.has(context.identifier)) {
 				contextsMap.set(context.identifier, context);
 				continue;
 			}
 
-			contextsMap.get(context.identifier).parent = context;
+			contextsMap.get(context.identifier).mergeWith(context);
 		}
+
+		if (parent) {
+			const parentContexts = parent.getAllContexts();
+
+			for (const context of parentContexts) {
+				if (!contextsMap.has(context.identifier)) {
+					contextsMap.set(context.identifier, context);
+					continue;
+				}
+
+				contextsMap.get(context.identifier).parent = context;
+			}
+		}
+
+		return scope;
 	}
 
-	return {
+	return buildContexts({
 		get parent() {
 			return parent;
 		},
@@ -62,10 +76,12 @@ export function createScope(parent: Scope | undefined, ...contexts: (Context | n
 		getContextByIdentifier(identifier: symbol): Context {
 			return contextsMap.get(identifier) || undefined;
 		},
-		addContext(context: Context): void {
-			if (!context) {
+		addContext(contextFactory: ContextFactory): void {
+			if (!contextFactory) {
 				return;
 			}
+
+			const context = contextFactory(this);
 
 			if (contextsMap.has(context.identifier)) {
 				contextsMap.get(context.identifier).mergeWith(context);
@@ -86,5 +102,5 @@ export function createScope(parent: Scope | undefined, ...contexts: (Context | n
 
 			context.parent = parentContext;
 		},
-	};
+	});
 }

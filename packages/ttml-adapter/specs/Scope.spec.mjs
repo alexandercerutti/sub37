@@ -23,11 +23,11 @@ import { TokenType } from "../lib/Parser/Token.js";
 describe("Scope and contexts", () => {
 	describe("Scope", () => {
 		it("should accept several contexts as input", () => {
-			const mockedContext = jest.fn(
-				/** @type {mockedContext} */ () => {
-					const mockedContextSymbol = Symbol("mockedContextSymbol");
+			const mockedContext = /** @type {Context} */ () => {
+				const mockedContextSymbol = Symbol("mockedContextSymbol");
 
-					return {
+				const contextFactory = (_scope) => {
+					contextFactory.exposedContext = {
 						identifier: mockedContextSymbol,
 						get content() {
 							return [];
@@ -36,23 +36,37 @@ describe("Scope and contexts", () => {
 							return mockedContextSymbol;
 						},
 					};
-				},
-			);
+
+					return contextFactory.exposedContext;
+				};
+
+				contextFactory.exposedSymbol = mockedContextSymbol;
+
+				return contextFactory;
+			};
 
 			const contexts = [mockedContext(), mockedContext(), mockedContext(), mockedContext()];
 			const scope = createScope(undefined, ...contexts);
 
 			expect(scope.getAllContexts().length).toBe(4);
-			expect(scope.getContextByIdentifier(contexts[0].exposed_mockedSymbol)).toEqual(contexts[0]);
-			expect(scope.getContextByIdentifier(contexts[1].exposed_mockedSymbol)).toEqual(contexts[1]);
-			expect(scope.getContextByIdentifier(contexts[2].exposed_mockedSymbol)).toEqual(contexts[2]);
-			expect(scope.getContextByIdentifier(contexts[3].exposed_mockedSymbol)).toEqual(contexts[3]);
+			expect(scope.getContextByIdentifier(contexts[0].exposedSymbol)).toEqual(
+				contexts[0].exposedContext,
+			);
+			expect(scope.getContextByIdentifier(contexts[1].exposedSymbol)).toEqual(
+				contexts[1].exposedContext,
+			);
+			expect(scope.getContextByIdentifier(contexts[2].exposedSymbol)).toEqual(
+				contexts[2].exposedContext,
+			);
+			expect(scope.getContextByIdentifier(contexts[3].exposedSymbol)).toEqual(
+				contexts[3].exposedContext,
+			);
 		});
 
 		it("should merge two contexts with the same identifier", () => {
 			const mockedContextSymbol = Symbol("mockedContextSymbol");
-			const mockedContext = jest.fn(
-				/** @type {mockedContext} */ (contents) => {
+			const mockedContext = (contents) => {
+				return (_scope) => {
 					return {
 						identifier: mockedContextSymbol,
 						get content() {
@@ -68,8 +82,8 @@ describe("Scope and contexts", () => {
 							contents.push(...context.content);
 						},
 					};
-				},
-			);
+				};
+			};
 
 			const contexts = [mockedContext(["a", "b", "c", "d"]), mockedContext(["e", "f", "g", "h"])];
 			const scope = createScope(undefined, contexts[0]);

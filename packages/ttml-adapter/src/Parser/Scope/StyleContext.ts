@@ -1,5 +1,5 @@
 import { TTMLStyle, createStyleParser } from "../parseStyle";
-import type { Context, Scope } from "./Scope";
+import type { Context, ContextFactory, Scope } from "./Scope";
 
 const styleContextSymbol = Symbol("style");
 const styleParserGetterSymbol = Symbol("style.parser.getter");
@@ -14,48 +14,50 @@ interface StyleContext extends Context<StyleContext> {
 
 export function createStyleContext(
 	initialStyles: Record<string, string> = {},
-): StyleContext | null {
-	const styles = Object.assign({}, initialStyles);
-	const stylesParser: StyleParser = createStyleParser();
+): ContextFactory<StyleContext> | null {
+	return function (_scope: Scope) {
+		const styles = Object.assign({}, initialStyles);
+		const stylesParser: StyleParser = createStyleParser();
 
-	return {
-		parent: undefined,
-		identifier: styleContextSymbol,
-		mergeWith(context: StyleContext): void {
-			if (stylesParser.size) {
-				/**
-				 * Styles have been already processed, so we
-				 * must process context's too, if they
-				 * haven't been already.
-				 */
+		return {
+			parent: undefined,
+			identifier: styleContextSymbol,
+			mergeWith(context: StyleContext): void {
+				if (stylesParser.size) {
+					/**
+					 * Styles have been already processed, so we
+					 * must process context's too, if they
+					 * haven't been already.
+					 */
 
-				stylesParser.push(...Object.entries(context.styles));
-				return;
-			}
+					stylesParser.push(...Object.entries(context.styles));
+					return;
+				}
 
-			Object.assign(styles, context.unprocessedStyles);
-		},
-		get [styleParserGetterSymbol]() {
-			return stylesParser;
-		},
-		get unprocessedStyles(): Record<string, string> {
-			return styles;
-		},
-		get styles(): Map<string, TTMLStyle> {
-			const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();
+				Object.assign(styles, context.unprocessedStyles);
+			},
+			get [styleParserGetterSymbol]() {
+				return stylesParser;
+			},
+			get unprocessedStyles(): Record<string, string> {
+				return styles;
+			},
+			get styles(): Map<string, TTMLStyle> {
+				const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();
 
-			if (!stylesParser.size) {
-				/**
-				 * Processing the actual styles first
-				 */
-				stylesParser.process(styles);
-			}
+				if (!stylesParser.size) {
+					/**
+					 * Processing the actual styles first
+					 */
+					stylesParser.process(styles);
+				}
 
-			return new Map<string, TTMLStyle>([
-				...parentStyles,
-				...Object.entries(stylesParser.getAll()),
-			]);
-		},
+				return new Map<string, TTMLStyle>([
+					...parentStyles,
+					...Object.entries(stylesParser.getAll()),
+				]);
+			},
+		};
 	};
 }
 
