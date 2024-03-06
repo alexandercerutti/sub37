@@ -57,7 +57,7 @@ function parseDocumentSupportedAttributes(
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	const extent = getLinearWhitespaceValuesAsNumbers(attributes["ttp:pixelAspectRatio"]);
+	const extent = getLinearWhitespaceValuesAsNumbers(attributes["tts:extent"]);
 
 	return Object.freeze({
 		/**
