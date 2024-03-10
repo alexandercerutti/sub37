@@ -2,7 +2,7 @@ import { describe, it, expect, jest } from "@jest/globals";
 import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import { createStyleContext, readScopeStyleContext } from "../lib/Parser/Scope/StyleContext.js";
-import { TokenType } from "../lib/Parser/Token.js";
+import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 
 /**
  * @typedef {import("../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
@@ -112,55 +112,59 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end and dur, on the same context", () => {
 			const scope = createScope(
 				undefined,
+				createDocumentContext({}),
 				createTimeContext({
-					end: 10,
-					dur: 20,
+					end: "10s",
+					dur: "20s",
 				}),
 			);
 
-			expect(readScopeTimeContext(scope).endTime).toBe(10);
+			expect(readScopeTimeContext(scope).endTime).toBe(10000);
 		});
 
 		it("should return the minimum between end and dur, on the different contexts", () => {
 			const scope1 = createScope(
 				undefined,
+				createDocumentContext({}),
 				createTimeContext({
-					end: 20,
+					end: "20s",
 				}),
 			);
 
 			const scope2 = createScope(
 				scope1,
 				createTimeContext({
-					dur: 15,
+					dur: "15s",
 				}),
 			);
 
-			expect(readScopeTimeContext(scope2).endTime).toBe(15);
+			expect(readScopeTimeContext(scope2).endTime).toBe(15000);
 		});
 
 		it("should return the minimum between end - begin and dur plus the startTime, when begin is specified", () => {
 			const scope1 = createScope(
 				undefined,
+				createDocumentContext({}),
 				createTimeContext({
-					begin: 5,
-					end: 20,
+					begin: "5s",
+					end: "20s",
 				}),
 			);
 
 			const scope2 = createScope(
 				scope1,
 				createTimeContext({
-					dur: 16,
+					dur: "16s",
 				}),
 			);
 
-			expect(readScopeTimeContext(scope2).endTime).toBe(20);
+			expect(readScopeTimeContext(scope2).endTime).toBe(20000);
 		});
 
 		it("should return infinity if neither dur and end are specified", () => {
 			const scope = createScope(
 				undefined,
+				createDocumentContext({}),
 				createTimeContext({
 					timeContainer: "par",
 				}),
@@ -172,6 +176,7 @@ describe("Scope and contexts", () => {
 		it("should return 0 if neither dur and end are specified but cues are sequential", () => {
 			const scope1 = createScope(
 				undefined,
+				createDocumentContext({}),
 				createTimeContext({
 					timeContainer: "seq",
 					begin: 0,

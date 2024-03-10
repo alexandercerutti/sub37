@@ -1,3 +1,9 @@
+import type { TimeDetails } from "../TimeBase/index.js";
+import { getTimeBaseProvider } from "../TimeBase/index.js";
+import { matchClockTimeExpression } from "../TimeExpressions/matchers/clockTime.js";
+import { matchOffsetTimeExpression } from "../TimeExpressions/matchers/offsetTime.js";
+import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallclockTime.js";
+import { readScopeDocumentContext } from "./DocumentContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 
 const timeContextSymbol = Symbol("time");
@@ -7,6 +13,13 @@ const endSymbol = Symbol("time.end");
 const durSymbol = Symbol("time.dur");
 
 interface TimeContextData {
+	begin?: string | undefined;
+	end?: string | undefined;
+	dur?: string | undefined;
+	timeContainer?: string | undefined;
+}
+
+interface TimeContextState {
 	begin?: number | undefined;
 	end?: number | undefined;
 	dur?: number | undefined;
@@ -36,14 +49,27 @@ interface TimeContext extends Context<TimeContext> {
 	readonly [durSymbol]?: number | undefined;
 
 	// Just to retrieve the parent
-	[currentStateSymbol]: TimeContextData;
+	[currentStateSymbol]: TimeContextState;
 }
 
-export function createTimeContext(state: TimeContextData = {}): ContextFactory<TimeContext> {
-	return function (_scope: Scope) {
-		if (!Object.keys(state).length) {
+export function createTimeContext(contextInput: TimeContextData = {}): ContextFactory<TimeContext> {
+	return function (scope: Scope) {
+		if (!Object.keys(contextInput).length) {
 			return null;
 		}
+
+		const { attributes: documentAttributes } = readScopeDocumentContext(scope);
+
+		const timeContainer = isTimeContainerStardardString(contextInput["timeContainer"])
+			? contextInput["timeContainer"]
+			: undefined;
+
+		const state: TimeContextState = {
+			begin: parseTimeString(contextInput.begin, documentAttributes),
+			end: parseTimeString(contextInput.end, documentAttributes),
+			dur: parseTimeString(contextInput.dur, documentAttributes),
+			timeContainer,
+		};
 
 		return {
 			parent: undefined,
@@ -183,8 +209,46 @@ function createTimeContextProxy(context: TimeContext): TimeContext {
 	});
 }
 
-export function isTimeContainerStardardString(
-	timeContainer: string,
-): timeContainer is "par" | "seq" {
+function isTimeContainerStardardString(timeContainer: string): timeContainer is "par" | "seq" {
 	return timeContainer === "par" || timeContainer === "seq";
+}
+
+function parseTimeString(timeString: string, timeDetails: TimeDetails): number | undefined {
+	if (!timeString) {
+		return undefined;
+	}
+
+	const timeProvider = getTimeBaseProvider(timeDetails["ttp:timeBase"]);
+
+	{
+		const match = matchClockTimeExpression(timeString);
+
+		if (match) {
+			return timeProvider.getMillisecondsByClockTime(match, timeDetails);
+		}
+	}
+
+	{
+		const match = matchOffsetTimeExpression(timeString);
+
+		if (match) {
+			return timeProvider.getMillisecondsByOffsetTime(match, timeDetails);
+		}
+	}
+
+	{
+		const match = matchWallClockTimeExpression(timeString);
+
+		if (match) {
+			return timeProvider.getMillisecondsByWallClockTime(match);
+		}
+	}
+
+	/**
+	 * @TODO improve error type here
+	 */
+
+	throw new Error(
+		"Time format didn't match any supported format (ClockTime, OffsetTime or WallClock);",
+	);
 }

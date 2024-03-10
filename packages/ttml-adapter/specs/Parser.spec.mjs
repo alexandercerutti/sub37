@@ -8,6 +8,7 @@ import { matchWallClockTimeExpression } from "../lib/Parser/TimeExpressions/matc
 import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import { TokenType } from "../lib/Parser/Token.js";
+import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 
 describe("parseCue", () => {
 	describe("regex time conversion", () => {
@@ -169,7 +170,8 @@ describe("parseCue", () => {
 		Guten.parent = NamedSpan1;
 		Tag.parent = NamedSpan1.children[0];
 
-		const parsed = parseCue(Paragraph, createScope(undefined), {});
+		const scope = createScope(undefined, createDocumentContext({}));
+		const parsed = parseCue(Paragraph, scope);
 
 		expect(parsed).toBeInstanceOf(Array);
 		expect(parsed.length).toBe(4);
@@ -284,17 +286,15 @@ describe("parseCue", () => {
 			],
 		};
 
-		const parsed = parseCue(
-			Paragraph1,
-			createScope(
-				undefined,
-				createTimeContext({
-					begin: 0,
-					end: 25000,
-				}),
-			),
-			{},
+		const scope = createScope(
+			undefined,
+			createDocumentContext({}),
+			createTimeContext({
+				begin: "0s",
+				end: "25s",
+			}),
 		);
+		const parsed = parseCue(Paragraph1, scope);
 
 		expect(parsed).toBeInstanceOf(Array);
 		expect(parsed.length).toBe(4);

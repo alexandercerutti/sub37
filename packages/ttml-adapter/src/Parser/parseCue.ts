@@ -1,32 +1,17 @@
-import type { TimeDetails } from "./TimeBase";
 import { CueNode } from "@sub37/server";
-import { getTimeBaseProvider } from "./TimeBase/index.js";
-import { matchClockTimeExpression } from "./TimeExpressions/matchers/clockTime.js";
-import { matchOffsetTimeExpression } from "./TimeExpressions/matchers/offsetTime.js";
-import { matchWallClockTimeExpression } from "./TimeExpressions/matchers/wallclockTime.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
-import {
-	createTimeContext,
-	isTimeContainerStardardString,
-	readScopeTimeContext,
-} from "./Scope/TimeContext.js";
+import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import {
 	type RegionContextState,
 	createRegionContext,
 	readScopeRegionContext,
 } from "./Scope/RegionContext.js";
-import { createStyleContext, readScopeStyleContext } from "./Scope/StyleContext";
-import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
+import { createStyleContext, readScopeStyleContext } from "./Scope/StyleContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
-	const { attributes: documentAttributes } = readScopeDocumentContext(scope);
 	const { attributes } = node.content;
-
-	const timeContainer = isTimeContainerStardardString(attributes["timeContainer"])
-		? attributes["timeContainer"]
-		: undefined;
 
 	const regionTokens: RegionContextState[] = [];
 
@@ -39,10 +24,10 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	const localScope = createScope(
 		scope,
 		createTimeContext({
-			begin: parseTimeString(attributes["begin"], documentAttributes),
-			dur: parseTimeString(attributes["dur"], documentAttributes),
-			end: parseTimeString(attributes["end"], documentAttributes),
-			timeContainer: timeContainer,
+			begin: attributes["begin"],
+			dur: attributes["dur"],
+			end: attributes["end"],
+			timeContainer: attributes["timeContainer"],
 		}),
 		createRegionContext(regionTokens),
 	);
@@ -58,7 +43,6 @@ function parseCueContents(
 	previousCues: CueNode[] = [],
 ): CueNode[] {
 	let cues: CueNode[] = previousCues;
-	const { attributes: documentAttributes } = readScopeDocumentContext(scope);
 	const timeContext = readScopeTimeContext(scope);
 	const regionContext = readScopeRegionContext(scope);
 
@@ -94,17 +78,13 @@ function parseCueContents(
 		if (content.content === "span") {
 			const { attributes } = content;
 
-			const timeContainer = isTimeContainerStardardString(attributes["timeContainer"])
-				? attributes["timeContainer"]
-				: undefined;
-
 			const localScope = createScope(
 				scope,
 				createTimeContext({
-					begin: parseTimeString(attributes["begin"], documentAttributes),
-					dur: parseTimeString(attributes["dur"], documentAttributes),
-					end: parseTimeString(attributes["end"], documentAttributes),
-					timeContainer,
+					begin: attributes["begin"],
+					dur: attributes["dur"],
+					end: attributes["end"],
+					timeContainer: attributes["timeContainer"],
 				}),
 			);
 
@@ -137,46 +117,6 @@ function parseCueContents(
 	}
 
 	return cues;
-}
-
-export function parseTimeString(timeString: string, timeDetails: TimeDetails): number | undefined {
-	if (!timeString) {
-		return undefined;
-	}
-
-	const timeProvider = getTimeBaseProvider(timeDetails["ttp:timeBase"]);
-
-	{
-		const match = matchClockTimeExpression(timeString);
-
-		if (match) {
-			return timeProvider.getMillisecondsByClockTime(match, timeDetails);
-		}
-	}
-
-	{
-		const match = matchOffsetTimeExpression(timeString);
-
-		if (match) {
-			return timeProvider.getMillisecondsByOffsetTime(match, timeDetails);
-		}
-	}
-
-	{
-		const match = matchWallClockTimeExpression(timeString);
-
-		if (match) {
-			return timeProvider.getMillisecondsByWallClockTime(match);
-		}
-	}
-
-	/**
-	 * @TODO improve error type here
-	 */
-
-	throw new Error(
-		"Time format didn't match any supported format (ClockTime, OffsetTime or WallClock);",
-	);
 }
 
 function isTimestamp(attributes: Record<string, string>): boolean {
