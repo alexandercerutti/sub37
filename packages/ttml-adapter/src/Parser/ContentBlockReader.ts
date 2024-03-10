@@ -185,9 +185,7 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 						yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
 					}
 
-					if (Object.keys(token.attributes).length) {
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTABLE));
-					}
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTABLE));
 
 					continue;
 				}
