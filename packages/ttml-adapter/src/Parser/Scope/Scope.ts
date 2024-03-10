@@ -31,6 +31,14 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 	const contextsMap = new Map<symbol, Context>();
 
 	function buildContexts(scope: Scope): Scope {
+		if (parent) {
+			const parentContexts = parent.getAllContexts();
+
+			for (const context of parentContexts) {
+				contextsMap.set(context.identifier, context);
+			}
+		}
+
 		for (const contextMaker of contexts) {
 			if (!contextMaker) {
 				continue;
@@ -47,20 +55,15 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 				continue;
 			}
 
-			contextsMap.get(context.identifier).mergeWith(context);
-		}
+			const parentContext = parent?.getContextByIdentifier(context.identifier);
 
-		if (parent) {
-			const parentContexts = parent.getAllContexts();
-
-			for (const context of parentContexts) {
-				if (!contextsMap.has(context.identifier)) {
-					contextsMap.set(context.identifier, context);
-					continue;
-				}
-
-				contextsMap.get(context.identifier).parent = context;
+			if (parentContext) {
+				context.parent = parentContext;
+				contextsMap.set(context.identifier, context);
+				continue;
 			}
+
+			contextsMap.get(context.identifier).mergeWith(context);
 		}
 
 		return scope;
