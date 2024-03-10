@@ -40,7 +40,7 @@ export interface OrchestratorSettings {
 const LINES_TRANSITION_TIME_MS = 250;
 const ROOT_CLASS_NAME = "region";
 
-const UNIT_REGEX = /\d+\.?\d+?[a-zA-Z%]+$/;
+const UNIT_REGEX = /\d+(?:\.\d+)?[a-zA-Z%]+$/;
 
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
