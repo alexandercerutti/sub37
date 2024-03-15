@@ -205,10 +205,16 @@ export class Tokenizer {
 					}
 
 					if (isValidName(this.sourceWindow.nextChar)) {
-						this.sourceWindow.advance();
 						state = TokenizerState.START_TAG;
 					}
 
+					/**
+					 * @TODO should throw a parsing error if this is not
+					 * a valid name character, but meanwhile, this line
+					 * allows us to go on and not go into an infinite loop
+					 */
+
+					this.sourceWindow.advance();
 					break;
 				}
 
