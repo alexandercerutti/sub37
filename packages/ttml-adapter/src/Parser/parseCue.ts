@@ -75,6 +75,14 @@ function parseCueContents(
 			continue;
 		}
 
+		if (content.content === "br") {
+			if (cues.length) {
+				cues[cues.length - 1].content += "\n";
+			}
+
+			continue;
+		}
+
 		if (content.content === "span") {
 			const { attributes } = content;
 
