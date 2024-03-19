@@ -143,15 +143,114 @@ STYLE
 
 	const [bgColor1, bgColor2] = await Promise.all([
 		regionsLocator
-			.locator('span[voice="Fred"]')
+			.locator('span[voice="Fred"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 		regionsLocator
-			.locator('span[voice="Bill"]')
+			.locator('span[voice="Bill"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 	]);
 
 	expect(bgColor1).toBe("red");
 	expect(bgColor2).toBe("blue");
+});
+
+test("An entity wrapping part of a word, should be rendered as such", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	/**
+	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
+	 */
+
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+00:00:00.000 --> 00:00:20.000
+I am Fred<i>-ish</i>
+`;
+
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(3);
+
+	const regionsLocator = page.locator("captions-renderer > main > .region span");
+	const evaluation = await regionsLocator.evaluate((element) =>
+		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
+	);
+
+	expect(evaluation[3]).toBe(" -ish");
+});
+
+test("A global-style should get applied to all the cues", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	const peachpuff = `rgb(255, 218, 185)`;
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+STYLE
+::cue {
+  color: peachpuff;
+}
+
+00:00:02.500 --> 00:00:22.500 align:right
+<v Bill>Hi, I’m Bill
+
+00:00:03.000 --> 00:00:25.000 region:fred align:left
+<v Fred>Would
+<00:00:05.250>you
+<00:00:05.500>like
+<00:00:05.750>to
+<00:00:06.000>get
+<00:00:06.250>a
+<00:00:06.500>coffee?
+
+00:00:07.500 --> 00:00:27.500 align:right
+<v Bill>Sure! I’ve only had one today.
+
+00:00:10.000 --> 00:00:30.000 region:fred align:left
+<v Fred>This is my fourth!
+
+00:00:12.500 --> 00:00:32.500 region:fred align:left
+<v Fred>OK, let’s go.
+`;
+
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(3);
+
+	const regionsLocator = page.locator("captions-renderer > main > .region span");
+
+	const fredLocator = regionsLocator.locator('span[voice="Fred"]');
+	const billLocator = regionsLocator.locator('span[voice="Bill"]');
+
+	expect(fredLocator.isVisible()).toBeTruthy();
+	expect(billLocator.isVisible()).toBeTruthy();
+
+	const [textColorFred, textColorBill] = await Promise.all([
+		fredLocator.evaluate((element) =>
+			getComputedStyle(element.children[0]).getPropertyValue("color"),
+		),
+		billLocator.evaluate((element) =>
+			getComputedStyle(element.children[0]).getPropertyValue("color"),
+		),
+	]);
+
+	expect(textColorFred).toBe(peachpuff);
+	expect(textColorBill).toBe(peachpuff);
 });
 
 test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
@@ -174,26 +273,8 @@ scroll:up
 00:00:00.000 --> 00:00:20.000 region:fred align:left
 <v Fred>Hi, my name is Fred
 
-00:00:02.500 --> 00:00:22.500 align:right
+00:00:02.500 --> 00:00:22.500 region:bill align:right
 <v Bill>Hi, I’m Bill
-
-00:00:03.000 --> 00:00:25.000 region:fred align:left
-<v Fred>Would
-<00:00:05.250>you
-<00:00:05.500>like
-<00:00:05.750>to
-<00:00:06.000>get
-<00:00:06.250>a
-<00:00:06.500>coffee?
-
-00:00:07.500 --> 00:00:27.500 align:right
-<v Bill>Sure! I’ve only had one today.
-
-00:00:10.000 --> 00:00:30.000 region:fred align:left
-<v Fred>This is my fourth!
-
-00:00:12.500 --> 00:00:32.500 region:fred align:left
-<v Fred>OK, let’s go.
 `;
 
 	/**
