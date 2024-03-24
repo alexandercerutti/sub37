@@ -22,7 +22,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	let styleCache: Record<string, string> | undefined = undefined;
 
 	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
-	const attrs = excludeUnsupportedStyleAttributes(attributes);
+	const attrs = extractStyleAttributes(attributes);
 
 	if (!Object.keys(attrs).length) {
 		return undefined;
@@ -62,7 +62,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	return style;
 });
 
-function excludeUnsupportedStyleAttributes(
+function extractStyleAttributes(
 	attributes: Record<string, string>,
 ): Record<StyleAttributeString, string> {
 	const attrs: Record<StyleAttributeString, string> = {};
