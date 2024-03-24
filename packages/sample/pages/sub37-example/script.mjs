@@ -6,6 +6,7 @@ import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
 import "../../src/components/customElements/scheduled-textarea";
 import "../../src/components/customElements/fake-video";
+import "../../src/components/customElements/processorSelector";
 
 /**
  * @typedef {import("../../src/components/customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
