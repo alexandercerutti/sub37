@@ -1,8 +1,10 @@
 import { memoizationFactory } from "./memoizationFactory";
 
+type StyleAttributeString = `tts:${string}`;
+
 export interface TTMLStyle {
 	id: string;
-	attributes: Record<string, string>;
+	attributes: Record<StyleAttributeString, string>;
 }
 
 export const createStyleParser = memoizationFactory(function styleParserExecutor(
@@ -62,11 +64,11 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 
 function excludeUnsupportedStyleAttributes(
 	attributes: Record<string, string>,
-): Record<string, string> {
-	const attrs: Record<string, string> = {};
+): Record<StyleAttributeString, string> {
+	const attrs: Record<StyleAttributeString, string> = {};
 
 	for (let attr in attributes) {
-		if (!attr.startsWith("tts:")) {
+		if (!isStyleAttribute(attr)) {
 			continue;
 		}
 
@@ -74,6 +76,10 @@ function excludeUnsupportedStyleAttributes(
 	}
 
 	return attrs;
+}
+
+function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
+	return attribute.startsWith("tts:");
 }
 
 function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
