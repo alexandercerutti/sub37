@@ -46,3 +46,11 @@ describe("Adapter", () => {
 		it("should emit anonymous cues with duration 0 when parent doesn't specify a duration", () => {});
 	});
 });
+
+/**
+ * @TODO add tests for
+ *
+ *  - div with multiple regions (only the first should be used)
+ *  - p with multiple regions (only the first should be used)
+ *  - Nested div and p with a region each, both should be applied to the outcoming cue
+ */
