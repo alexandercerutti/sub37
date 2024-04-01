@@ -88,7 +88,7 @@ function parseCueContents(
 			 * Handling Anonymous spans
 			 */
 
-			if (!cues.length || cues[cues.length - 1].id !== parentId) {
+			if (!cues.length) {
 				cues.push(
 					new CueNode({
 						id: `${parentId}-anonymous-${i}`,
