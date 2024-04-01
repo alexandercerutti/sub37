@@ -1,4 +1,4 @@
-import { CueNode } from "@sub37/server";
+import { CueNode, Entities } from "@sub37/server";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
@@ -8,7 +8,8 @@ import {
 	createRegionContext,
 	readScopeRegionContext,
 } from "./Scope/RegionContext.js";
-import { createStyleContext, readScopeStyleContext } from "./Scope/StyleContext.js";
+import { readScopeStyleContext } from "./Scope/StyleContext.js";
+import type { TTMLStyle } from "./parseStyle.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	const { attributes } = node.content;
@@ -76,10 +77,6 @@ function parseCueContents(
 	const timeContext = readScopeTimeContext(scope);
 	const regionContext = readScopeRegionContext(scope);
 
-	const matchingRegion = parentAttributes?.["region"]
-		? regionContext.regions.find((region) => region.id === parentAttributes["region"])
-		: undefined;
-
 	for (let i = 0; i < rootChildren.length; i++) {
 		const { content, children } = rootChildren[i];
 
@@ -89,13 +86,36 @@ function parseCueContents(
 			 */
 
 			if (!cues.length) {
+				let styles: TTMLStyle[] = [];
+
+				const linkedRegion = regionContext.getRegionsById(parentAttributes?.["region"])[0];
+
+				/**
+				 * 11.3.1.2 Inline Regions
+				 *
+				 * When an attribute "region" is available on a block element,
+				 * inline regions should be ignored.
+				 */
+
+				if (!linkedRegion) {
+					const contextualRegions = regionContext.getRegionsById("contextual");
+
+					styles.push({
+						id: "contextual",
+						get attributes() {
+							return Object.assign({}, ...contextualRegions.map((region) => region.styles));
+						},
+					});
+				}
+
 				cues.push(
 					new CueNode({
 						id: `${parentId}-anonymous-${i}`,
 						content: "",
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
-						region: matchingRegion,
+						region: linkedRegion,
+						entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
 					}),
 				);
 			}
