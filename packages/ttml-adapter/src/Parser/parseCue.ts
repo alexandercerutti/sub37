@@ -43,6 +43,14 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 		break;
 	}
 
+	/**
+	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
+	 * element. They should be handled as an additional region, as per
+	 * this section 11.1.2.1 of the standard.
+	 *
+	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
+	 */
+
 	const localScope = createScope(
 		scope,
 		createTimeContext({
