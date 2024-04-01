@@ -162,6 +162,7 @@ function parseCueContents(
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
 						region: matchingRegion,
+						entities: cues[cues.length - 1]?.entities,
 					}),
 				);
 			}
