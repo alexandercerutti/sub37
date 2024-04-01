@@ -112,14 +112,31 @@ export default class TTMLAdapter extends BaseAdapter {
 					const localRegions: RegionContextState[] = [];
 
 					for (const { content: token, children } of value[1].children) {
-						switch (token.content) {
-							case "region": {
-								localRegions.push({
-									attributes: token.attributes,
-									children,
-								});
-							}
+						if (token.content !== "region") {
+							continue;
 						}
+
+						/**
+						 * 8.1.4 div
+						 *
+						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#content-vocabulary-div
+						 *
+						 * Paragraph element is defined to have up to one
+						 * region element inside of it (Kleene operators)
+						 *
+						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#conventions
+						 */
+
+						localRegions.push({
+							attributes: Object.create(token.attributes, {
+								"xml:id": {
+									value: "contextual",
+								},
+							}),
+							children,
+						});
+
+						break;
 					}
 
 					treeScope = createScope(treeScope, createRegionContext(localRegions));
