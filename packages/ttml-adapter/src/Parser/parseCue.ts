@@ -16,9 +16,31 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	const regionTokens: RegionContextState[] = [];
 
 	for (const { content, children } of node.children) {
-		if (content.content === "region") {
-			regionTokens.push({ attributes: content.attributes, children });
+		if (content.content !== "region") {
+			continue;
 		}
+
+		/**
+		 * 8.1.5 p
+		 *
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#content-vocabulary-p
+		 *
+		 * Paragraph element is defined to have up to one
+		 * region element inside of it (Kleene operators)
+		 *
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#conventions
+		 */
+
+		regionTokens.push({
+			attributes: Object.create(content.attributes, {
+				"xml:id": {
+					value: "contextual",
+				},
+			}),
+			children,
+		});
+
+		break;
 	}
 
 	const localScope = createScope(
