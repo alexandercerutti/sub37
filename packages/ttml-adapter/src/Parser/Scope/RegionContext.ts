@@ -1,7 +1,8 @@
 import { Region } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree";
 import type { Token } from "../Token";
-import { createRegionParser } from "../parseRegion";
+import { createRegionParser } from "../parseRegion.js";
+import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 
 const regionContextSymbol = Symbol("region");
@@ -16,6 +17,7 @@ export interface RegionContextState {
 
 interface RegionContext extends Context<RegionContext> {
 	regions: Region[];
+	getRegionsById(id: string | undefined): TTMLRegion[];
 	[regionParserGetterSymbol]: RegionParser;
 }
 
@@ -48,6 +50,14 @@ export function createRegionContext(
 			},
 			get [regionParserGetterSymbol]() {
 				return regionParser;
+			},
+			getRegionsById(id: string | undefined): TTMLRegion[] {
+				if (!id?.length) {
+					return [];
+				}
+
+				const regions = this.regions as TTMLRegion[];
+				return regions.filter((region) => region.id === id);
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
