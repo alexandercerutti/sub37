@@ -27,6 +27,30 @@ export function createDocumentContext(
 
 		const attributes = parseDocumentSupportedAttributes(rawAttributes);
 
+		/**
+		 * tts:extent on tt right now is not supported.
+		 *
+		 * Although it can only have as values "auto", "contain",
+		 * or "<length>px <length>px" (or "auto auto"), that would
+		 * imply we can resize our rendering area, which we are not
+		 * yet able to because adapters do not communicate any
+		 * "document details" to the renderer, such how much wide
+		 * should be the rendering area.
+		 *
+		 * If ever we'll be able to do that, we'll add a new style
+		 * context to the scope like this:
+		 *
+		 * ```js
+		 * if (attributes["tts:extent"]) {
+		 * 	scope.addContext(
+		 * 		createStyleContext({
+		 * 			"tts:extent": rawAttributes["tts:extent"],
+		 * 		}),
+		 * 	);
+		 * }
+		 * ```
+		 */
+
 		return {
 			parent: undefined,
 			identifier: documentContextSymbol,
