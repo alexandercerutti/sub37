@@ -1,5 +1,6 @@
 import type { Context, ContextFactory, Scope } from "./Scope";
 import type { TimeDetails } from "../TimeBase/index.js";
+import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
 
 const documentContextSymbol = Symbol("document");
 
@@ -82,7 +83,7 @@ function parseDocumentSupportedAttributes(
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	const extent = getLinearWhitespaceValuesAsNumbers(attributes["tts:extent"]);
+	const extent = AsNumbers(getSplittedLinearWhitespaceValues(attributes["tts:extent"]));
 
 	return Object.freeze({
 		/**
@@ -100,11 +101,11 @@ function parseDocumentSupportedAttributes(
 		/**
 		 * Container attributes
 		 */
-		"ttp:displayAspectRatio": getLinearWhitespaceValuesAsNumbers(
-			attributes["ttp:displayAspectRatio"],
+		"ttp:displayAspectRatio": AsNumbers(
+			getSplittedLinearWhitespaceValues(attributes["ttp:displayAspectRatio"]),
 		),
 		"ttp:pixelAspectRatio": getPixelAspectRatio(
-			getLinearWhitespaceValuesAsNumbers(attributes["ttp:pixelAspectRatio"]),
+			AsNumbers(getSplittedLinearWhitespaceValues(attributes["ttp:pixelAspectRatio"])),
 			extent,
 		),
 		"ttp:cellResolution": getCellResolutionComputedValue(attributes["ttp:cellResolution"]),
@@ -112,12 +113,8 @@ function parseDocumentSupportedAttributes(
 	} satisfies DocumentAttributes);
 }
 
-function getLinearWhitespaceValuesAsNumbers(rawValue: string | undefined): number[] {
-	if (!rawValue?.length) {
-		return [];
-	}
-
-	return rawValue.split("\x20").map((e) => parseFloat(e));
+function AsNumbers(values: string[]): number[] {
+	return values.map((e) => parseFloat(e));
 }
 
 /**
@@ -177,7 +174,7 @@ function getFrameRateMultiplerResolvedValue(
 		return 1;
 	}
 
-	const parsed = getLinearWhitespaceValuesAsNumbers(frameRateMultiplier);
+	const parsed = AsNumbers(getSplittedLinearWhitespaceValues(frameRateMultiplier));
 
 	if (parsed.length < 2) {
 		return 1;
