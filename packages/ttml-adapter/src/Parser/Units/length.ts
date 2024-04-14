@@ -2,18 +2,20 @@
  * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-value-length
  */
 
+const UNIT_MEASURE_NUMBER_REGEX = /((-|\+)?\d+(?:\.\d+)?)([a-zA-Z%]+)$/;
+
+const ALLOWED_SCALAR_UNITS = ["px", "em", "c", "rw", "rh"] as const;
+type ALLOWED_SCALAR_UNITS = typeof ALLOWED_SCALAR_UNITS;
+
 interface Scalar {
 	value: string;
-	unit: "px" | "em" | "c" | "rw" | "rh";
+	unit: ALLOWED_SCALAR_UNITS[number];
 }
 
 interface Percentage {
 	value: string;
 	unit: "%";
 }
-
-const UNIT_MEASURE_NUMBER_REGEX = /((-|\+)?\d+(?:\.\d+)?)([a-zA-Z%]+)$/;
-const ALLOWED_SCALAR_UNITS = ["px", "em", "c", "rw", "rh"] as const;
 
 function isScalarUnit(unit: string): unit is Scalar["unit"] {
 	return ALLOWED_SCALAR_UNITS.includes(unit as Scalar["unit"]);
