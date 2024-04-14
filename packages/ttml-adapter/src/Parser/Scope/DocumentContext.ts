@@ -6,6 +6,7 @@ const documentContextSymbol = Symbol("document");
 export interface DocumentAttributes extends TimeDetails {
 	"ttp:displayAspectRatio"?: number[];
 	"ttp:pixelAspectRatio"?: number[];
+	"ttp:cellResolution"?: number[];
 	"tts:extent"?: number[];
 }
 
@@ -106,6 +107,7 @@ function parseDocumentSupportedAttributes(
 			getLinearWhitespaceValuesAsNumbers(attributes["ttp:pixelAspectRatio"]),
 			extent,
 		),
+		"ttp:cellResolution": getCellResolutionComputedValue(attributes["ttp:cellResolution"]),
 		"tts:extent": extent,
 	} satisfies DocumentAttributes);
 }
@@ -211,4 +213,43 @@ function getTimeBaseResolvedValue(timeBase: string): DocumentAttributes["ttp:tim
 	const dropModes: ReadonlyArray<DocumentAttributes["ttp:timeBase"]> = ["media", "clock", "smpte"];
 
 	return dropModes.find((e) => e === timeBase) ?? "media";
+}
+
+function getCellResolutionComputedValue(
+	resolutionString: string,
+): DocumentAttributes["ttp:cellResolution"] {
+	const DEFAULTS = [32, 15];
+
+	if (!resolutionString.length) {
+		/**
+		 * If not specified, the number of columns and rows must be considered
+		 * to be 32 and 15, respectively.
+		 *
+		 * The choice of values 32 and 15 are based on this being the maximum
+		 * number of columns and rows defined by [CTA-608-E].
+		 *
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#cta608e
+		 */
+		return DEFAULTS;
+	}
+
+	let splittedValues = resolutionString.split("\x20").map((e) => parseInt(e));
+
+	if (splittedValues.length === 1) {
+		if (splittedValues[0] === 0) {
+			return DEFAULTS;
+		}
+
+		splittedValues = [splittedValues[0], splittedValues[0]];
+	}
+
+	if (splittedValues[0] === 0) {
+		splittedValues[0] = DEFAULTS[0];
+	}
+
+	if (splittedValues[1] === 0) {
+		splittedValues[1] = DEFAULTS[1];
+	}
+
+	return splittedValues;
 }
