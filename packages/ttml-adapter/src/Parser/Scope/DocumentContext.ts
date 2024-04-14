@@ -1,6 +1,7 @@
 import type { Context, ContextFactory, Scope } from "./Scope";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
+import { asNumbers, preventZeros } from "../Units/number.js";
 
 const documentContextSymbol = Symbol("document");
 
@@ -83,7 +84,7 @@ function parseDocumentSupportedAttributes(
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	const extent = AsNumbers(getSplittedLinearWhitespaceValues(attributes["tts:extent"]));
+	const extent = asNumbers(getSplittedLinearWhitespaceValues(attributes["tts:extent"]));
 
 	return Object.freeze({
 		/**
@@ -101,20 +102,16 @@ function parseDocumentSupportedAttributes(
 		/**
 		 * Container attributes
 		 */
-		"ttp:displayAspectRatio": AsNumbers(
+		"ttp:displayAspectRatio": asNumbers(
 			getSplittedLinearWhitespaceValues(attributes["ttp:displayAspectRatio"]),
 		),
 		"ttp:pixelAspectRatio": getPixelAspectRatio(
-			AsNumbers(getSplittedLinearWhitespaceValues(attributes["ttp:pixelAspectRatio"])),
+			asNumbers(getSplittedLinearWhitespaceValues(attributes["ttp:pixelAspectRatio"])),
 			extent,
 		),
 		"ttp:cellResolution": getCellResolutionComputedValue(attributes["ttp:cellResolution"]),
 		"tts:extent": extent,
 	} satisfies DocumentAttributes);
-}
-
-function AsNumbers(values: string[]): number[] {
-	return values.map((e) => parseFloat(e));
 }
 
 /**
@@ -174,7 +171,7 @@ function getFrameRateMultiplerResolvedValue(
 		return 1;
 	}
 
-	const parsed = AsNumbers(getSplittedLinearWhitespaceValues(frameRateMultiplier));
+	const parsed = asNumbers(getSplittedLinearWhitespaceValues(frameRateMultiplier));
 
 	if (parsed.length < 2) {
 		return 1;
@@ -230,7 +227,10 @@ function getCellResolutionComputedValue(
 		return DEFAULTS;
 	}
 
-	let splittedValues = resolutionString.split("\x20").map((e) => parseInt(e));
+	let splittedValues = preventZeros(
+		asNumbers(getSplittedLinearWhitespaceValues(resolutionString)),
+		DEFAULTS,
+	);
 
 	if (splittedValues.length === 1) {
 		if (splittedValues[0] === 0) {
