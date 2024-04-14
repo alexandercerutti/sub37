@@ -233,19 +233,7 @@ function getCellResolutionComputedValue(
 	);
 
 	if (splittedValues.length === 1) {
-		if (splittedValues[0] === 0) {
-			return DEFAULTS;
-		}
-
 		splittedValues = [splittedValues[0], splittedValues[0]];
-	}
-
-	if (splittedValues[0] === 0) {
-		splittedValues[0] = DEFAULTS[0];
-	}
-
-	if (splittedValues[1] === 0) {
-		splittedValues[1] = DEFAULTS[1];
 	}
 
 	return splittedValues;
