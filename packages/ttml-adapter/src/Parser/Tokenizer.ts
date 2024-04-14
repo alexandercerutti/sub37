@@ -129,13 +129,13 @@ export class Tokenizer {
 		return character === "\x0A";
 	}
 
-	public static isQuotationMark(character: string) {
+	public static isQuotationMark(character: string): boolean {
 		return (
-			character === "\u0022" ||
-			character === "\u201C" ||
-			character === "\u201D" ||
-			character === "\u201E" ||
-			character === "\u201F"
+			/* " */ character === "\u0022" ||
+			/* “ */ character === "\u201C" ||
+			/* ” */ character === "\u201D" ||
+			/* „ */ character === "\u201E" ||
+			/* ‟ */ character === "\u201F"
 		);
 	}
 
