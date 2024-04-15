@@ -209,6 +209,20 @@ function getTimeBaseResolvedValue(timeBase: string): DocumentAttributes["ttp:tim
 	return dropModes.find((e) => e === timeBase) ?? "media";
 }
 
+/**
+ * It is not assumed that the presentation of text or
+ * the alignment of individual glyph areas is coordinated
+ * with this grid.
+ *
+ * Such alignment is possible, but requires the use of a
+ * monospaced font and a font size whose EM square exactly
+ * matches the cell size.
+ *
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-cellResolution
+ * @param resolutionString
+ * @returns
+ */
+
 function getCellResolutionComputedValue(
 	resolutionString: string,
 ): DocumentAttributes["ttp:cellResolution"] {
