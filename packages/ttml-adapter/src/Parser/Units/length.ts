@@ -7,18 +7,24 @@ const UNIT_MEASURE_NUMBER_REGEX = /((-|\+)?\d+(?:\.\d+)?)([a-zA-Z%]+)$/;
 const ALLOWED_SCALAR_UNITS = ["px", "em", "c", "rw", "rh"] as const;
 type ALLOWED_SCALAR_UNITS = typeof ALLOWED_SCALAR_UNITS;
 
-interface Scalar {
-	value: string;
+export interface Scalar {
+	value: number;
 	unit: ALLOWED_SCALAR_UNITS[number];
 }
 
-interface Percentage {
-	value: string;
+export interface Percentage {
+	value: number;
 	unit: "%";
 }
 
 function isScalarUnit(unit: string): unit is Scalar["unit"] {
 	return ALLOWED_SCALAR_UNITS.includes(unit as Scalar["unit"]);
+}
+
+export function isScalar(maybeScalar: unknown): maybeScalar is Scalar {
+	return (
+		maybeScalar && typeof maybeScalar === "object" && isScalarUnit((maybeScalar as Scalar).unit)
+	);
 }
 
 function isPercentageUnit(unit: string): unit is "%" {
@@ -37,7 +43,7 @@ export function getParsedLength(value: string): Scalar | Percentage | null {
 	}
 
 	return {
-		value: match[1],
+		value: parseFloat(match[1]),
 		unit: match[2],
 	};
 }
