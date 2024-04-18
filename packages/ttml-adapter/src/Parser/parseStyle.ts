@@ -1,3 +1,4 @@
+import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory";
 
 type StyleAttributeString = `tts:${string}`;
@@ -13,6 +14,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
 	 */
 	stylesIDREFSStorage: Map<string, TTMLStyle>,
+	scope: Scope,
 	/**
 	 * All the attributes belonging to a tag.
 	 * They'll be filtered out

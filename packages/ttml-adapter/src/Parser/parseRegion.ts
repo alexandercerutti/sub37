@@ -12,6 +12,7 @@ type StyleParser = ReturnType<typeof createStyleParser>;
 
 export const createRegionParser = memoizationFactory(function regionParserExecutor(
 	regionStorage: Map<string, TTMLRegion>,
+	_scope: Scope | undefined,
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 	styleParser: StyleParser = createStyleParser(),

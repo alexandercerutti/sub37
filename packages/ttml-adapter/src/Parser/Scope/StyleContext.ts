@@ -15,9 +15,9 @@ interface StyleContext extends Context<StyleContext> {
 export function createStyleContext(
 	initialStyles: Record<string, string> = {},
 ): ContextFactory<StyleContext> | null {
-	return function (_scope: Scope) {
+	return function (scope: Scope) {
 		const styles = Object.assign({}, initialStyles);
-		const stylesParser: StyleParser = createStyleParser();
+		const stylesParser: StyleParser = createStyleParser(scope);
 
 		return {
 			parent: undefined,

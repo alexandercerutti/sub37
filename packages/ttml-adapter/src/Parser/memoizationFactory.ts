@@ -1,17 +1,19 @@
+import type { Scope } from "./Scope/Scope";
+
 interface MemoizationProtocol<
 	MemoizedData extends object,
 	Argv extends unknown[],
 	StorageKeySource extends string = string,
 > {
-	(storage: Map<StorageKeySource, MemoizedData>, ...args: Argv): MemoizedData;
+	(storage: Map<StorageKeySource, MemoizedData>, scope?: Scope, ...args: Argv): MemoizedData;
 }
 
 export function memoizationFactory<
 	MemoizedData extends object,
-	Argv extends unknown[],
+	ProcessArgv extends unknown[],
 	StorageKeySource extends string = string,
->(executor: MemoizationProtocol<MemoizedData, Argv, StorageKeySource>) {
-	return function memoizationCreator() {
+>(executor: MemoizationProtocol<MemoizedData, ProcessArgv, StorageKeySource>) {
+	return function memoizationCreator(scope?: Scope) {
 		const storage = new Map<StorageKeySource, MemoizedData>();
 
 		return {
@@ -20,8 +22,8 @@ export function memoizationFactory<
 					storage.set(id, data);
 				}
 			},
-			process(...args: Argv) {
-				return executor(storage, ...args);
+			process(...args: ProcessArgv) {
+				return executor(storage, scope, ...args);
 			},
 			get(id: StorageKeySource): MemoizedData | undefined {
 				let data: MemoizedData | undefined;
