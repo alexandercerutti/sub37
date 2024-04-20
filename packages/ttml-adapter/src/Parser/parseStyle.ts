@@ -109,25 +109,23 @@ function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): st
  * @see https://www.w3.org/TR/ttml2/#style-attribute-derivation
  */
 
-type MappedProperty<Destination extends string> = [Destination, unknown];
-type GenericMapper<T extends string = string> = (
-	value: string,
-) => ReadonlyArray<MappedProperty<T> | undefined>;
-
-function nullMapper(value: unknown): undefined {
-	return undefined;
-}
-
-function defaultValueMapper<T>(value: T): T {
+function defaultValueMapper(value: string): string {
 	return value;
 }
 
-function createPassThroughMapper<Dest extends string>(
-	destinationValue: Dest,
-	valueMapper: (value: unknown) => unknown = defaultValueMapper,
-): GenericMapper<Dest> {
-	return function (value: unknown) {
-		return [[destinationValue, valueMapper(value)]];
+type PropertiesCollection<Props extends string[]> = { readonly [K in keyof Props]: [Props[K], unknown] };
+type PropertiesMapper<Properties extends string[]> = (value: string) => PropertiesCollection<Properties>;
+
+function nullMapper(): PropertiesCollection<[]> {
+	return [];
+}
+
+function createPassThroughMapper<const Destination extends string, const Mapper extends (...args: any[]) => unknown>(
+	destinationValue: Destination,
+	valueMapper?: Mapper,
+): PropertiesMapper<[Destination]> {
+	return function <const Param extends string>(value: Param): PropertiesCollection<[Destination]> {
+		return [[destinationValue, (valueMapper || defaultValueMapper)(value)]];
 	};
 }
 
@@ -193,7 +191,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:writingMode": nullMapper,
 	// valid CSS, but it won't be used until we won't paint on a new layer or an absolute element...
 	"tts:zIndex": nullMapper,
-} as const satisfies { [key: string]: GenericMapper };
+} as const;
+
+type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
+
+type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Collection[number][0];
+
+type SupportedCSSProperties = {
+	[K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]: TTML_CSS_ATTRIBUTES_MAP[K] extends PropertiesMapper<infer Y> ? PropertiesCollection<Y> : never
+}
 
 function backgroundRepeatValueMapper(
 	value: "repeatX" | "repeatY" | "noRepeat" | "inherit",
