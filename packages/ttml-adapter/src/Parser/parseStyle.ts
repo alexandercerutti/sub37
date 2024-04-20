@@ -109,23 +109,23 @@ function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): st
  * @see https://www.w3.org/TR/ttml2/#style-attribute-derivation
  */
 
-function defaultValueMapper(value: string): string {
+function defaultValueMapper(_scope: Scope, value: string): string {
 	return value;
 }
 
 type PropertiesCollection<Props extends string[]> = { readonly [K in keyof Props]: [Props[K], unknown] };
-type PropertiesMapper<Properties extends string[]> = (value: string) => PropertiesCollection<Properties>;
+type PropertiesMapper<Properties extends string[]> = (scope: Scope, value: string) => PropertiesCollection<Properties>;
 
 function nullMapper(): PropertiesCollection<[]> {
 	return [];
 }
 
-function createPassThroughMapper<const Destination extends string, const Mapper extends (...args: any[]) => unknown>(
+function createPassThroughMapper<const Destination extends string, const Mapper extends (scope: Scope, ...args: any[]) => unknown>(
 	destinationValue: Destination,
 	valueMapper?: Mapper,
 ): PropertiesMapper<[Destination]> {
-	return function <const Param extends string>(value: Param): PropertiesCollection<[Destination]> {
-		return [[destinationValue, (valueMapper || defaultValueMapper)(value)]];
+	return function <const Param extends string>(scope: Scope, value: Param): PropertiesCollection<[Destination]> {
+		return [[destinationValue, (valueMapper || defaultValueMapper)(scope, value)]];
 	};
 }
 
@@ -202,6 +202,7 @@ type SupportedCSSProperties = {
 }
 
 function backgroundRepeatValueMapper(
+	_scope: Scope,
 	value: "repeatX" | "repeatY" | "noRepeat" | "inherit",
 ): "repeat-x" | "repeat-y" | "no-repeat" | "inherit" {
 	switch (value) {
@@ -228,6 +229,7 @@ function backgroundRepeatValueMapper(
 }
 
 function displayAlignValueMapper(
+	_scope: Scope,
 	value: "before" | "center" | "after" | "justify",
 ): "flex-start" | "center" | "flex-end" | "space-between" | undefined {
 	switch (value) {
@@ -253,7 +255,7 @@ function displayAlignValueMapper(
 	}
 }
 
-function paddingValueMapper(value: string): string | undefined {
+function paddingValueMapper(_scope: Scope, value: string): string | undefined {
 	if (!value.length) {
 		return undefined;
 	}
@@ -317,7 +319,7 @@ function paddingValueMapper(value: string): string | undefined {
  * @see https://www.w3.org/TR/ttml2/#style-attribute-textDecoration
  */
 
-function textDecorationValueMapper(_value: string): string | undefined {
+function textDecorationValueMapper(_scope: Scope, _value: string): string | undefined {
 	// See note above
 	return undefined;
 }
@@ -328,7 +330,7 @@ function isTextOrientationSupportedCSSValue(
 	return ["sideways", "mixed", "upright"].includes(value);
 }
 
-function textOrientationValueMapper(value: string): "sideways" | "mixed" | "upright" | undefined {
+function textOrientationValueMapper(_scope: Scope, value: string): "sideways" | "mixed" | "upright" | undefined {
 	if (isTextOrientationSupportedCSSValue(value)) {
 		return value;
 	}
