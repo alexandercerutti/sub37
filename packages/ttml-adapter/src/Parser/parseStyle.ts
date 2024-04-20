@@ -5,7 +5,7 @@ type StyleAttributeString = `tts:${string}`;
 
 export interface TTMLStyle {
 	id: string;
-	attributes: Record<StyleAttributeString, string>;
+	attributes: SupportedCSSProperties;
 }
 
 export const createStyleParser = memoizationFactory(function styleParserExecutor(
@@ -21,7 +21,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	 */
 	attributes: Record<string, string>,
 ): TTMLStyle | undefined {
-	let styleCache: Record<string, string> | undefined = undefined;
+	let styleCache: SupportedCSSProperties | undefined = undefined;
 
 	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
 	const attrs = extractStyleAttributes(attributes);
@@ -31,7 +31,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	}
 
 	if (!attributes["style"]) {
-		styleCache = attrs;
+		styleCache = convertAttributesToCSS(attrs, scope);
 	}
 
 	const style = {
@@ -44,13 +44,15 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 			const parentStyle = stylesIDREFSStorage.get(attributes["style"]);
 
 			if (!parentStyle) {
-				styleCache = attrs;
+				styleCache = convertAttributesToCSS(attrs, scope);
 				return styleCache;
 			}
 
-			styleCache = Object.create(attrs);
+			styleCache = Object.create(convertAttributesToCSS(attrs, scope));
 
-			for (const [styleName, value] of Object.entries(parentStyle.attributes)) {
+			const parentStylesEntries = Object.entries(parentStyle.attributes) as Array<[keyof SupportedCSSProperties, unknown]>;
+
+			for (const [styleName, value] of parentStylesEntries) {
 				styleCache[styleName] = value;
 			}
 
@@ -69,12 +71,12 @@ function extractStyleAttributes(
 ): Record<StyleAttributeString, string> {
 	const attrs: Record<StyleAttributeString, string> = {};
 
-	for (let attr in attributes) {
+	for (const attr in attributes) {
 		if (!isStyleAttribute(attr)) {
 			continue;
 		}
 
-		attrs[attr] = attributes[attr].replace("tts:", "");
+		attrs[attr] = attributes[attr];
 	}
 
 	return attrs;
@@ -120,7 +122,10 @@ function nullMapper(): PropertiesCollection<[]> {
 	return [];
 }
 
-function createPassThroughMapper<const Destination extends string, const Mapper extends (scope: Scope, ...args: any[]) => unknown>(
+function createPassThroughMapper<
+	const Destination extends string,
+	const Mapper extends (scope: Scope, ...args: any[]) => unknown
+>(
 	destinationValue: Destination,
 	valueMapper?: Mapper,
 ): PropertiesMapper<[Destination]> {
@@ -200,6 +205,36 @@ type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Coll
 type SupportedCSSProperties = {
 	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]?: unknown
 }
+
+function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
+	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
+}
+
+function convertAttributesToCSS(
+	attributes: Record<string, string>,
+	scope: Scope,
+): SupportedCSSProperties {
+	const convertedAttributes: SupportedCSSProperties = {};
+
+	for (const [key, value] of Object.entries(attributes)) {
+		if (!isMappedKey(key)) {
+			continue;
+		}
+
+		const mapped = TTML_CSS_ATTRIBUTES_MAP[key](scope, value);
+
+		for (const [mappedKey, mappedValue] of mapped) {
+			convertedAttributes[mappedKey] = mappedValue;
+		}
+	}
+
+	return convertedAttributes;
+}
+
+// ******************* //
+// *** CSS MAPPERS *** //
+// ******************* //
+
 
 function backgroundRepeatValueMapper(
 	_scope: Scope,
