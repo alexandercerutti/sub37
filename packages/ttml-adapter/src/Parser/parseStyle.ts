@@ -198,7 +198,7 @@ type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
 type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Collection[number][0];
 
 type SupportedCSSProperties = {
-	[K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]: TTML_CSS_ATTRIBUTES_MAP[K] extends PropertiesMapper<infer Y> ? PropertiesCollection<Y> : never
+	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]?: unknown
 }
 
 function backgroundRepeatValueMapper(
