@@ -27,15 +27,15 @@ type CellScalar = Scalar & { unit: "c" };
  * ```
  *
  * @param length The value to be converted
- * @param cellScalar the cell scalar to be used for conversion (e.g. the multiplier)
  * @param cellProgressionResolution the cell size for the specific direction (a.k.a. progression)
+ * @param cellScalar the cell scalar to be used for conversion (e.g. the multiplier)
  * @returns
  */
 
 export function getCellConvertedValueFromScalarToPixel(
 	length: number,
-	cellScalar: CellScalar,
 	cellProgressionResolution: number,
+	cellScalar: CellScalar,
 ): number | null {
 	if (!isCellScalar(cellScalar)) {
 		return null;
