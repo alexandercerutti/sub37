@@ -44,6 +44,6 @@ export function getCellConvertedValueFromScalarToPixel(
 	return (length / cellProgressionResolution) * cellScalar.value;
 }
 
-function isCellScalar(value: unknown): value is CellScalar {
+export function isCellScalar(value: unknown): value is CellScalar {
 	return isScalar(value) && value.unit === "c";
 }
