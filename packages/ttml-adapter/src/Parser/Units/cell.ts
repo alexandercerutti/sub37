@@ -2,10 +2,10 @@
  * Converters for 'cell' unit (i.e. 0.1c)
  */
 
-import type { Scalar } from "./length.js";
+import type { Length } from "./length.js";
 import { isScalar } from "./length.js";
 
-type CellScalar = Scalar & { unit: "c" };
+type CellScalar = Length & { unit: "c" };
 
 /**
  * @example
@@ -32,10 +32,10 @@ type CellScalar = Scalar & { unit: "c" };
  * @returns
  */
 
-export function getCellConvertedValueFromScalarToPixel(
+export function getCellScalarPixelConversion(
 	length: number,
 	cellProgressionResolution: number,
-	cellScalar: CellScalar,
+	cellScalar: Length,
 ): number | null {
 	if (!isCellScalar(cellScalar)) {
 		return null;
