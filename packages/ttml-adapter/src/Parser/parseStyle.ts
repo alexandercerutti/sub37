@@ -1,4 +1,9 @@
+import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
+import { getCellScalarPixelConversion, isCellScalar } from "./Units/cell.js";
+import type { Length } from "./Units/length.js";
+import { createLength, toLength } from "./Units/length.js";
+import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
 import { memoizationFactory } from "./memoizationFactory";
 
 type StyleAttributeString = `tts:${string}`;
@@ -159,7 +164,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:fontSelectionStrategy": nullMapper,
 	// Maps to CSS values. Must be handled differently
 	"tts:fontShear": nullMapper,
-	"tts:fontSize": createPassThroughMapper("font-size"),
+	"tts:fontSize": createPassThroughMapper("font-size", fontSizeValueMapper),
 	"tts:fontStyle": createPassThroughMapper("font-style"),
 	"tts:fontVariant": nullMapper, // Maps to multiple values. Must be handled differently
 	"tts:fontWeight": createPassThroughMapper("font-weight"),
@@ -384,4 +389,72 @@ function textOrientationValueMapper(_scope: Scope, value: string): "sideways" | 
 	}
 
 	return undefined;
+}
+
+/**
+ * TTML supports providing two <length> for `tts:fontSize`.
+ * However, CSS supports only one dimension, the vertical one.
+ * 
+ * To achieve the horizontal one, we are required to use
+ * `transform: scale(x, y)`, with the appropriate scaling factors,
+ * and create an element that should be putted to `display: inline-block`.
+ * 
+ * Therefore, we should calculate the factor (how?) and change introduce
+ * some style resetter or isolation in the renderer in order to achieve
+ * such style.
+ * 
+ * This element should probably wrap the whole subtitles elements.
+ * 
+ * Not exactly the moment. Sorry folks.
+ * 
+ * @param scope 
+ * @param value 
+ * @returns 
+ */
+
+function fontSizeValueMapper(scope: Scope, value: string): string {
+	const splittedValue = getSplittedLinearWhitespaceValues(value);
+	const { attributes: { "ttp:cellResolution": [, cellResolutionHeight], "tts:extent": [exHeight] }} = readScopeDocumentContext(scope);
+
+	if (!splittedValue.length) {
+		return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
+	}
+
+	if (splittedValue.length >= 2) {
+		const horizonalGlyphSizeParsed = toLength(splittedValue[0]);
+		const verticalGlyphSizeParsed = toLength(splittedValue[1]);
+
+		if (horizonalGlyphSizeParsed.unit !== verticalGlyphSizeParsed.unit) {
+			return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
+		}
+	}
+
+	const length = toLength(splittedValue[0]);
+	
+	if (isCellScalar(length)) {
+		const { attributes: { "ttp:cellResolution": [, cellResolutionHeight], "tts:extent": [exHeight] }} = readScopeDocumentContext(scope);
+
+		return createLength(
+			getCellScalarPixelConversion(exHeight, cellResolutionHeight, length),
+			"px"
+		).toString();
+	}
+
+	/**
+	 * @TODO handle "rw" and "rh"
+	 */
+
+	return length.toString();
+}
+
+function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
+	// Initial value is 1c
+	return createLength(
+		getCellScalarPixelConversion(
+			dimension,
+			cellResolutionDimension,
+			createLength(1, "c")
+		),
+		"px"
+	);
 }
