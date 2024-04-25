@@ -55,7 +55,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 
 			styleCache = Object.create(convertAttributesToCSS(attrs, scope));
 
-			const parentStylesEntries = Object.entries(parentStyle.attributes) as Array<[keyof SupportedCSSProperties, unknown]>;
+			const parentStylesEntries = Object.entries(parentStyle.attributes) as Array<[keyof SupportedCSSProperties, string]>;
 
 			for (const [styleName, value] of parentStylesEntries) {
 				styleCache[styleName] = value;
@@ -120,7 +120,7 @@ function defaultValueMapper(_scope: Scope, value: string): string {
 	return value;
 }
 
-type PropertiesCollection<Props extends string[]> = { readonly [K in keyof Props]: [Props[K], unknown] };
+type PropertiesCollection<Props extends string[]> = { readonly [K in keyof Props]: [Props[K], string] };
 type PropertiesMapper<Properties extends string[]> = (scope: Scope, value: string) => PropertiesCollection<Properties>;
 
 function nullMapper(): PropertiesCollection<[]> {
@@ -129,7 +129,7 @@ function nullMapper(): PropertiesCollection<[]> {
 
 function createPassThroughMapper<
 	const Destination extends string,
-	const Mapper extends (scope: Scope, ...args: any[]) => unknown
+	const Mapper extends (scope: Scope, ...args: any[]) => string
 >(
 	destinationValue: Destination,
 	valueMapper?: Mapper,
@@ -208,7 +208,7 @@ type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
 type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Collection[number][0];
 
 type SupportedCSSProperties = {
-	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]?: unknown
+	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]?: string
 }
 
 function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
