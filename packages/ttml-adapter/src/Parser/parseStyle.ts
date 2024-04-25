@@ -215,7 +215,7 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
 }
 
-function convertAttributesToCSS(
+export function convertAttributesToCSS(
 	attributes: Record<string, string>,
 	scope: Scope,
 ): SupportedCSSProperties {
