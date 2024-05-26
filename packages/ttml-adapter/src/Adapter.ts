@@ -14,7 +14,8 @@ import {
 import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContext } from "./Parser/Scope/StyleContext.js";
-import { type RegionContextState, createRegionContext } from "./Parser/Scope/RegionContext.js";
+import type { RegionContextState } from "./Parser/Scope/RegionContext.js";
+import { createRegionContext, findInlineRegionInChildren } from "./Parser/Scope/RegionContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 
@@ -109,37 +110,15 @@ export default class TTMLAdapter extends BaseAdapter {
 						treeScope = treeScope.parent;
 					}
 
-					const localRegions: RegionContextState[] = [];
+					const {
+						children,
+						content: { attributes },
+					} = value[1];
 
-					for (const { content: token, children } of value[1].children) {
-						if (token.content !== "region") {
-							continue;
-						}
-
-						/**
-						 * 8.1.4 div
-						 *
-						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#content-vocabulary-div
-						 *
-						 * Paragraph element is defined to have up to one
-						 * region element inside of it (Kleene operators)
-						 *
-						 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#conventions
-						 */
-
-						localRegions.push({
-							attributes: Object.create(token.attributes, {
-								"xml:id": {
-									value: "contextual",
-								},
-							}),
-							children,
-						});
-
-						break;
-					}
-
-					treeScope = createScope(treeScope, createRegionContext(localRegions));
+					treeScope = createScope(
+						treeScope,
+						createRegionContext(findInlineRegionInChildren(attributes["xml:id"], children)),
+					);
 
 					break;
 				}

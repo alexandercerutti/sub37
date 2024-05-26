@@ -4,45 +4,15 @@ import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import {
-	type RegionContextState,
 	createRegionContext,
 	readScopeRegionContext,
+	findInlineRegionInChildren,
 } from "./Scope/RegionContext.js";
 import { readScopeStyleContext } from "./Scope/StyleContext.js";
 import type { TTMLStyle } from "./parseStyle.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	const { attributes } = node.content;
-
-	const regionTokens: RegionContextState[] = [];
-
-	for (const { content, children } of node.children) {
-		if (content.content !== "region") {
-			continue;
-		}
-
-		/**
-		 * 8.1.5 p
-		 *
-		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#content-vocabulary-p
-		 *
-		 * Paragraph element is defined to have up to one
-		 * region element inside of it (Kleene operators)
-		 *
-		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#conventions
-		 */
-
-		regionTokens.push({
-			attributes: Object.create(content.attributes, {
-				"xml:id": {
-					value: "contextual",
-				},
-			}),
-			children,
-		});
-
-		break;
-	}
 
 	/**
 	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
@@ -60,7 +30,9 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
 		}),
-		createRegionContext(regionTokens),
+		createRegionContext(
+			findInlineRegionInChildren(node.content.attributes["xml:id"], node.children),
+		),
 	);
 
 	return parseCueContents(attributes["xml:id"] || "unkpar", attributes, node.children, localScope);
