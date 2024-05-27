@@ -18,17 +18,15 @@ export class RelationshipTree {
 						createRelationshipNode("layout", [createRegionNode()]),
 					]),
 					createRelationshipNode("body", [
-						createRelationshipNode(
-							"div",
-							[
+						withSelfReference(
+							createRelationshipNode("div", [
 								createRegionNode(),
 								createRelationshipNode("p", [
 									createRegionNode(),
-									createRelationshipNode("span", [], true),
+									withSelfReference(createRelationshipNode("span", [])),
 									createRelationshipNode("br"),
 								]),
-							],
-							true,
+							]),
 						),
 					]),
 				]),
@@ -71,7 +69,6 @@ interface RelationshipNode {
 function createRelationshipNode(
 	name: string,
 	directions: RelationshipNode[] = [],
-	selfNavigatable: boolean = false,
 ): RelationshipNode {
 	const availableDirections = new Map<string, RelationshipNode>();
 
@@ -90,10 +87,16 @@ function createRelationshipNode(
 
 	node.addDirections(...directions);
 
-	if (selfNavigatable) {
-		availableDirections.set(name, node);
-	}
+	return node;
+}
 
+/**
+ * Creates a definitions of an element that can be
+ * inserted in itself
+ */
+
+function withSelfReference(node: RelationshipNode): RelationshipNode {
+	node.addDirections(node);
 	return node;
 }
 
