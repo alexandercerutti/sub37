@@ -188,7 +188,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:showBackground": nullMapper,
 	"tts:textAlign": createPassThroughMapper("text-align"),
 	"tts:textCombine": createPassThroughMapper("text-combine-upright"),
-	"tts:textDecoration": createPassThroughMapper("text-combine-upright", textDecorationValueMapper),
+	"tts:textDecoration": createPassThroughMapper("text-decoration", textDecorationValueMapper),
 	"tts:textEmphasis": createPassThroughMapper("tts:textEmphasis"),
 	"tts:textOrientation": createPassThroughMapper("text-orientation", textOrientationValueMapper),
 	"tts:textOutline": createPassThroughMapper("outline"),
