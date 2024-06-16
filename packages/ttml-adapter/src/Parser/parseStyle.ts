@@ -46,19 +46,46 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 				return styleCache;
 			}
 
-			const parentStyle = stylesIDREFSStorage.get(attributes["style"]);
+			/**
+			 * @see https://www.w3.org/TR/2004/REC-xmlschema-2-20041028/#IDREFS
+			 */
 
-			if (!parentStyle) {
-				styleCache = convertAttributesToCSS(attrs, scope);
-				return styleCache;
+			const styleIDREFSSet = new Set(attributes["style"].split("\x20"));
+
+			for (const idref of styleIDREFSSet) {
+				/**
+				 * @TODO verify if an inherited style IDREF could be defined
+				 * before one inheriting from it.
+				 */
+
+				/**
+				 * A loop in a sequence of chained style references must be considered an error.
+				 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
+				 *
+				 * @TODO Maybe, some issue could happen in that case.
+				 * We should, somehow, keeping track of which styles have
+				 * been referenced when `attributes` is called.
+				 */
+
+				const parentStyle = stylesIDREFSStorage.get(idref);
+
+				if (!parentStyle) {
+					continue;
+				}
+
+				if (!styleCache) {
+					styleCache = Object.create(convertAttributesToCSS(attrs, scope));
+				}
+
+				const parentStylesEntries = Object.entries(parentStyle.attributes) as Array<
+					[keyof SupportedCSSProperties, string]
+				>;
+
+				Object.assign(styleCache, parentStylesEntries);
 			}
 
-			styleCache = Object.create(convertAttributesToCSS(attrs, scope));
-
-			const parentStylesEntries = Object.entries(parentStyle.attributes) as Array<[keyof SupportedCSSProperties, string]>;
-
-			for (const [styleName, value] of parentStylesEntries) {
-				styleCache[styleName] = value;
+			if (!styleCache) {
+				styleCache = convertAttributesToCSS(attrs, scope);
 			}
 
 			return styleCache;
