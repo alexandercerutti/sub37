@@ -320,3 +320,102 @@ describe("parseCue", () => {
 		});
 	});
 });
+
+describe("Regions parsing", () => {
+	it("should ignore a region if it's IDREF is not unique in the scope of document instance", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	/**
+	 * Add tests for createRegionParser: tts attributes should
+	 * belong to styles property
+	 */
+
+	it("should use only one inline region", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should use only attribute one if both attribute and inline region are available", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should ignore children with a different region attribute from the parent", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should ignore children with an inline region while parent has region attribute", () => {
+		/**
+		 * @TODO
+		 */
+	});
+});
+
+describe("Cell Resolution", () => {
+	it("should default if not available", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should default if its values are incorrect", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should be used it available and correct", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	it("should be allowed to be converted to pixels", () => {
+		/**
+		 * @TODO
+		 */
+	});
+
+	/**
+	 * @TODO Add tests for font-size cell conversion to pixel
+	 */
+
+	/**
+	 * @TODO Add tests for font-size percentage
+	 */
+});
+
+describe("Lengths", () => {
+	/**
+	 * Add tests for <length> unit measure with the dedicated parser
+	 */
+});
+
+describe("Styling", () => {
+	describe("Chaining Referential Styling", () => {
+		it("should be applied if one IDREF is specified through style attribute", () => {
+			/**
+			 * @TODO
+			 */
+		});
+
+		it("should be applied if multiple IDREFs are specified through style attribute", () => {
+			/**
+			 * @TODO
+			 */
+		});
+
+		it("should throw if there's a loop in styling referencing chain", () => {
+			/**
+			 * @TODO
+			 */
+		});
+	});
+});
