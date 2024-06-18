@@ -143,91 +143,488 @@ function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): st
  * @see https://www.w3.org/TR/ttml2/#style-attribute-derivation
  */
 
+type PropertiesCollection<Props extends string[]> = {
+	readonly [K in keyof Props]: [Props[K], string];
+};
+
+type PropertiesMapper<OutProperties extends string[]> = (
+	scope: Scope,
+	value: unknown,
+) => PropertiesCollection<OutProperties>;
+
+const AttributeFlags = {
+	INHERITABLE: 0b0001,
+} as const;
+
+interface AttributeDefinition<DestinationProperties extends string[] = string[]> {
+	readonly name: string;
+	readonly appliesTo: string[];
+	readonly default: unknown;
+	readonly allowedValues: Set<unknown>;
+	readonly namespace: string | undefined;
+	readonly toCSS: PropertiesMapper<DestinationProperties>;
+
+	flags: number;
+}
+
+function inheritable<Attr extends AttributeDefinition>(def: Attr): Readonly<Attr> {
+	def.flags ^= AttributeFlags.INHERITABLE;
+	return def;
+}
+
+function createAttributeDefinition<
+	DestinationProperties extends string[],
+	const AllowedValues extends string,
+>(
+	attributeName: string,
+	appliesTo: string[],
+	defaultValue: NoInfer<AllowedValues>,
+	allowedValues: Set<AllowedValues> | undefined,
+	mapper: PropertiesMapper<DestinationProperties>,
+): AttributeDefinition<DestinationProperties> {
+	return Object.create(null, {
+		name: {
+			value: attributeName,
+		},
+		appliesTo: {
+			value: appliesTo,
+		},
+		default: {
+			value: defaultValue,
+		},
+		allowedValues: {
+			value: allowedValues,
+		},
+		toCSS: {
+			value: (scope: Scope, value: unknown): PropertiesCollection<DestinationProperties> => {
+				if (allowedValues && !allowedValues.has(value as AllowedValues)) {
+					return nullMapper(scope, value) as PropertiesCollection<DestinationProperties>;
+				}
+
+				return mapper(scope, value);
+			},
+		},
+		namespace: {
+			get(): string {
+				const nameSlice = attributeName.split(":");
+				return nameSlice.length >= 2 ? nameSlice[0] : undefined;
+			},
+		},
+		flags: {
+			value: 0,
+			writable: true,
+		},
+	} satisfies PropertyDescriptorMap);
+}
+
 function defaultValueMapper(_scope: Scope, value: string): string {
 	return value;
 }
 
-type PropertiesCollection<Props extends string[]> = { readonly [K in keyof Props]: [Props[K], string] };
-type PropertiesMapper<Properties extends string[]> = (scope: Scope, value: string) => PropertiesCollection<Properties>;
-
-function nullMapper(): PropertiesCollection<[]> {
+function nullMapper(_scope: Scope, _value: unknown): PropertiesCollection<never[]> {
 	return [];
 }
 
 function createPassThroughMapper<
 	const Destination extends string,
-	const Mapper extends (scope: Scope, ...args: any[]) => string
->(
-	destinationValue: Destination,
-	valueMapper?: Mapper,
-): PropertiesMapper<[Destination]> {
-	return function <const Param extends string>(scope: Scope, value: Param): PropertiesCollection<[Destination]> {
+	const Mapper extends (scope: Scope, ...args: any[]) => string,
+>(destinationValue: Destination, valueMapper?: Mapper): PropertiesMapper<[Destination]> {
+	return function <const Param extends string>(
+		scope: Scope,
+		value: Param,
+	): PropertiesCollection<[Destination]> {
 		return [[destinationValue, (valueMapper || defaultValueMapper)(scope, value)]];
 	};
 }
 
 const TTML_CSS_ATTRIBUTES_MAP = {
-	"tts:backgroundClip": createPassThroughMapper("background-clip"),
-	"tts:backgroundColor": createPassThroughMapper("background-color"),
-	"tts:backgroundExtent": createPassThroughMapper("background-size"),
-	"tts:backgroundImage": createPassThroughMapper("background-image"),
-	"tts:backgroundOrigin": createPassThroughMapper("background-origin"),
-	"tts:backgroundPosition": createPassThroughMapper("background-position"),
-	"tts:backgroundRepeat": createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
-	"tts:border": createPassThroughMapper("border"),
+	"tts:backgroundClip": createAttributeDefinition(
+		"tts:backgroundClip",
+		["body", "div", "image", "p", "region", "span"],
+		"border",
+		new Set(["border", "content", "padding"]),
+		createPassThroughMapper("background-clip"),
+	),
+	"tts:backgroundColor": createAttributeDefinition(
+		"tts:backgroundColor",
+		["body", "div", "image", "p", "region", "span"],
+		"transparent",
+		undefined,
+		createPassThroughMapper("background-color"),
+	),
+	"tts:backgroundExtent": createAttributeDefinition(
+		"tts:backgroundExtent",
+		["body", "div", "image", "p", "region", "span"],
+		"",
+		undefined,
+		createPassThroughMapper("background-size"),
+	),
+	"tts:backgroundImage": createAttributeDefinition(
+		"tts:backgroundImage",
+		["body", "div", "image", "p", "region", "span"],
+		"none",
+		undefined,
+		createPassThroughMapper("background-image"),
+	),
+	"tts:backgroundOrigin": createAttributeDefinition(
+		"tts:backgroundOrigin",
+		["body", "div", "image", "p", "region", "span"],
+		"padding",
+		new Set(["border", "content", "padding"]),
+		createPassThroughMapper("background-origin"),
+	),
+	"tts:backgroundPosition": createAttributeDefinition(
+		"tts:backgroundPosition",
+		["body", "div", "image", "p", "region", "span"],
+		"0% 0%",
+		undefined,
+		createPassThroughMapper("background-position"),
+	),
+	"tts:backgroundRepeat": createAttributeDefinition(
+		"tts:backgroundRepeat",
+		["body", "div", "image", "p", "region", "span"],
+		"repeat",
+		new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
+		createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
+	),
+	"tts:border": createAttributeDefinition(
+		"tts:border",
+		["body", "div", "image", "p", "region", "span"],
+		"none",
+		undefined,
+		createPassThroughMapper("border"),
+	),
 	// not known
-	"tts:bpd": nullMapper,
-	"tts:color": createPassThroughMapper("color"),
-	"tts:direction": createPassThroughMapper("direction"),
+	"tts:bpd": createAttributeDefinition(
+		"tts:bpd",
+		["body", "div", "p", "span"],
+		"auto",
+		undefined,
+		nullMapper,
+	),
+	"tts:color": inheritable(
+		createAttributeDefinition(
+			"tts:color",
+			["span", ""],
+			"white",
+			undefined,
+			createPassThroughMapper("color"),
+		),
+	),
+	"tts:direction": inheritable(
+		createAttributeDefinition(
+			"tts:direction",
+			["p", "span"],
+			"ltr",
+			new Set(["ltr", "rtl"]),
+			createPassThroughMapper("direction"),
+		),
+	),
 	// ttml-only
-	"tts:disparity": nullMapper,
-	"tts:display": createPassThroughMapper("display"),
-	"tts:displayAlign": createPassThroughMapper("justify-content", displayAlignValueMapper),
-	// Maps to two CSS. We handle this in a different way
-	"tts:extent": nullMapper,
-	"tts:fontFamily": createPassThroughMapper("font-family"),
-	"tts:fontKerning": createPassThroughMapper("font-kerning"),
+	"tts:disparity": createAttributeDefinition(
+		"tts:disparity",
+		["region", "div", "p"],
+		"0px",
+		undefined,
+		nullMapper,
+	),
+	"tts:display": createAttributeDefinition(
+		"tts:display",
+		["body", "div", "image", "p", "region", "span"],
+		"auto",
+		new Set(["auto", "none", "inlineBlock"]),
+		createPassThroughMapper("display"),
+	),
+	"tts:displayAlign": createAttributeDefinition(
+		"tts:displayAlign",
+		["body", "div", "p", "region"],
+		"before",
+		new Set(["before", "center", "after", "justify"]),
+		createPassThroughMapper("justify-content", displayAlignValueMapper),
+	),
+	// Maps to two CSS. We handle this in a different way yet
+	"tts:extent": createAttributeDefinition(
+		"tts:extent",
+		["tt", "region", "image", "div", "p"],
+		"auto",
+		undefined,
+		nullMapper,
+	),
+	"tts:fontFamily": inheritable(
+		createAttributeDefinition(
+			"tts:fontFamily",
+			["p", "span"],
+			"default",
+			undefined,
+			createPassThroughMapper("font-family"),
+		),
+	),
+	"tts:fontKerning": inheritable(
+		createAttributeDefinition(
+			"tts:fontKerning",
+			["span"],
+			"normal",
+			new Set(["none", "normal"]),
+			createPassThroughMapper("font-kerning"),
+		),
+	),
 	// No CSS equivalent
-	"tts:fontSelectionStrategy": nullMapper,
+	"tts:fontSelectionStrategy": inheritable(
+		createAttributeDefinition(
+			"tts:fontSelectionStrategy",
+			["p", "span"],
+			"auto",
+			new Set(["auto", "character"]),
+			nullMapper,
+		),
+	),
 	// Maps to CSS values. Must be handled differently
-	"tts:fontShear": nullMapper,
-	"tts:fontSize": createPassThroughMapper("font-size", fontSizeValueMapper),
-	"tts:fontStyle": createPassThroughMapper("font-style"),
-	"tts:fontVariant": nullMapper, // Maps to multiple values. Must be handled differently
-	"tts:fontWeight": createPassThroughMapper("font-weight"),
-	"tts:ipd": nullMapper, // ???????
-	"tts:letterSpacing": createPassThroughMapper("letter-spacing"),
-	"tts:lineHeight": createPassThroughMapper("line-height"),
+	"tts:fontShear": inheritable(
+		createAttributeDefinition("tts:fontShear", ["span"], "0%", undefined, nullMapper),
+	),
+	"tts:fontSize": inheritable(
+		createAttributeDefinition(
+			"tts:fontSize",
+			["p", "span", "region"],
+			"1c",
+			undefined,
+			createPassThroughMapper("font-size", fontSizeValueMapper),
+		),
+	),
+	"tts:fontStyle": inheritable(
+		createAttributeDefinition(
+			"tts:fontStyle",
+			["p", "span"],
+			"normal",
+			new Set(["normal", "italic", "oblique"]),
+			createPassThroughMapper("font-style"),
+		),
+	),
+	"tts:fontVariant": inheritable(
+		createAttributeDefinition(
+			"tts:fontVariant",
+			["p", "span"],
+			"normal",
+			undefined,
+			nullMapper, // Maps to multiple values. Must be handled differently
+		),
+	),
+	"tts:fontWeight": inheritable(
+		createAttributeDefinition(
+			"tts:fontWeight",
+			["p", "span"],
+			"normal",
+			new Set(["normal", "bold"]),
+			createPassThroughMapper("font-weight"),
+		),
+	),
+	"tts:ipd": createAttributeDefinition(
+		"tts:ipd",
+		["body", "div", "p", "span"],
+		"auto",
+		undefined,
+		nullMapper, // ??????
+	),
+	"tts:letterSpacing": inheritable(
+		createAttributeDefinition(
+			"tts:letterSpacing",
+			["p", "span"],
+			"normal",
+			undefined,
+			createPassThroughMapper("letter-spacing"),
+		),
+	),
+	"tts:lineHeight": inheritable(
+		createAttributeDefinition(
+			"tts:lineHeight",
+			["p"],
+			"normal",
+			undefined,
+			createPassThroughMapper("line-height"),
+		),
+	),
 	// Maps to CSS values. Must be handled differently
-	"tts:lineShear": nullMapper,
+	"tts:lineShear": inheritable(
+		createAttributeDefinition("tts:lineShear", ["p"], "0%", undefined, nullMapper),
+	),
 	// ttml only
-	"tts:luminanceGain": nullMapper,
-	"tts:opacity": createPassThroughMapper("opacity"),
-	"tts:origin": nullMapper, // no css
-	"tts:overflow": createPassThroughMapper("overflow"),
-	"tts:padding": createPassThroughMapper("padding", paddingValueMapper),
-	"tts:position": createPassThroughMapper("background-position"),
-	"tts:ruby": nullMapper,
-	"tts:rubyAlign": createPassThroughMapper("ruby-align"),
-	"tts:rubyPosition": createPassThroughMapper("ruby-position"),
-	"tts:rubyReserve": nullMapper,
-	"tts:shear": nullMapper,
-	"tts:showBackground": nullMapper,
-	"tts:textAlign": createPassThroughMapper("text-align"),
-	"tts:textCombine": createPassThroughMapper("text-combine-upright"),
-	"tts:textDecoration": createPassThroughMapper("text-decoration", textDecorationValueMapper),
-	"tts:textEmphasis": createPassThroughMapper("tts:textEmphasis"),
-	"tts:textOrientation": createPassThroughMapper("text-orientation", textOrientationValueMapper),
-	"tts:textOutline": createPassThroughMapper("outline"),
-	"tts:textShadow": createPassThroughMapper("text-shadow"),
-	"tts:unicodeBidi": createPassThroughMapper("unicode-bidi"),
-	"tts:visibility": createPassThroughMapper("visibility"),
+	"tts:luminanceGain": createAttributeDefinition(
+		"tts:luminanceGain",
+		["region"],
+		"1.0",
+		undefined,
+		nullMapper,
+	),
+	"tts:opacity": createAttributeDefinition(
+		"tts:opacity",
+		["body", "div", "image", "p", "region", "span"],
+		"1.0",
+		undefined,
+		createPassThroughMapper("opacity"),
+	),
+	"tts:origin": createAttributeDefinition(
+		"tts:origin",
+		["region", "div", "p"],
+		"auto",
+		undefined,
+		nullMapper, // no css
+	),
+	"tts:overflow": createAttributeDefinition(
+		"tts:overflow",
+		["region"],
+		"hidden",
+		new Set(["visible", "hidden"]),
+		createPassThroughMapper("overflow"),
+	),
+	"tts:padding": createAttributeDefinition(
+		"tts:padding",
+		["body", "div", "image", "p", "region", "span"],
+		"0px",
+		undefined,
+		createPassThroughMapper("padding", paddingValueMapper),
+	),
+	"tts:position": createAttributeDefinition(
+		"tts:position",
+		["region", "div", "p"],
+		"top left",
+		undefined,
+		createPassThroughMapper("background-position"),
+	),
+	"tts:ruby": createAttributeDefinition(
+		"tts:ruby",
+		["span"],
+		"none",
+		new Set(["none", "container", "base", "baseContainer", "text", "textContainer", "delimiter"]),
+		nullMapper,
+	),
+	"tts:rubyAlign": inheritable(
+		createAttributeDefinition(
+			"tts:rubyAlign",
+			["span"],
+			"center",
+			new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
+			createPassThroughMapper("ruby-align"),
+		),
+	),
+	"tts:rubyPosition": inheritable(
+		createAttributeDefinition(
+			"tts:rubyPosition",
+			["span"],
+			"outside",
+			new Set(["before", "after", "outside"]),
+			createPassThroughMapper("ruby-position"),
+		),
+	),
+	"tts:rubyReserve": inheritable(
+		createAttributeDefinition("tts:rubyReserve", ["p"], "none", undefined, nullMapper),
+	),
+	"tts:shear": inheritable(
+		createAttributeDefinition("tts:shear", ["p"], "0%", undefined, nullMapper),
+	),
+	"tts:showBackground": createAttributeDefinition(
+		"tts:showBackground",
+		["region"],
+		"always",
+		new Set(["always", "whenActive"]),
+		nullMapper,
+	),
+	"tts:textAlign": createAttributeDefinition(
+		"tts:textAlign",
+		["p"],
+		"start",
+		new Set(["left", "center", "right", "start", "end", "justify"]),
+		createPassThroughMapper("text-align"),
+	),
+	"tts:textCombine": inheritable(
+		createAttributeDefinition(
+			"tts:textCombine",
+			["span"],
+			"none",
+			undefined,
+			createPassThroughMapper("text-combine-upright"),
+		),
+	),
+	"tts:textDecoration": inheritable(
+		createAttributeDefinition(
+			"tts:textDecoration",
+			["span"],
+			"none",
+			undefined,
+			createPassThroughMapper("text-decoration", textDecorationValueMapper),
+		),
+	),
+	"tts:textEmphasis": inheritable(
+		createAttributeDefinition(
+			"tts:textEmphasis",
+			["span"],
+			"none",
+			undefined,
+			createPassThroughMapper("text-emphasis"),
+		),
+	),
+	"tts:textOrientation": inheritable(
+		createAttributeDefinition(
+			"tts:textOrientation",
+			["span"],
+			"mixed",
+			new Set(["mixed", "sideways", "upright"]),
+			createPassThroughMapper("text-orientation", textOrientationValueMapper),
+		),
+	),
+	"tts:textOutline": inheritable(
+		createAttributeDefinition(
+			"tts:textOutline",
+			["span"],
+			"none",
+			undefined,
+			createPassThroughMapper("outline"),
+		),
+	),
+	"tts:textShadow": inheritable(
+		createAttributeDefinition(
+			"tts:textShadow",
+			["span"],
+			"none",
+			undefined,
+			createPassThroughMapper("text-shadow"),
+		),
+	),
+	"tts:unicodeBidi": createAttributeDefinition(
+		"tts:unicodeBidi",
+		["p", "span"],
+		"normal",
+		new Set(["normal", "embed", "bidiOverride", "isolate"]),
+		createPassThroughMapper("unicode-bidi"),
+	),
+	"tts:visibility": inheritable(
+		createAttributeDefinition(
+			"tts:visibility",
+			["body", "div", "image", "p", "region", "span"],
+			"visible",
+			new Set(["visible", "hidden"]),
+			createPassThroughMapper("visibility"),
+		),
+	),
 	// XLFO, not a direct mapping with CSS. Can use remap it somehow without impacting renderer?
-	"tts:wrapOption": nullMapper,
+	"tts:wrapOption": inheritable(
+		createAttributeDefinition(
+			"tts:wrapOption",
+			["span"],
+			"wrap",
+			new Set(["wrap", "noWrap"]),
+			nullMapper,
+		),
+	),
 	// Writing mode impacts rendering, so we must first verify nothing will break on that
-	"tts:writingMode": nullMapper,
+	"tts:writingMode": createAttributeDefinition(
+		"tts:writingMode",
+		["region"],
+		"lrtb",
+		new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
+		nullMapper,
+	),
 	// valid CSS, but it won't be used until we won't paint on a new layer or an absolute element...
-	"tts:zIndex": nullMapper,
+	"tts:zIndex": createAttributeDefinition("tts:zIndex", ["region"], "auto", undefined, nullMapper),
 } as const;
 
 type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
@@ -235,8 +632,10 @@ type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
 type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Collection[number][0];
 
 type SupportedCSSProperties = {
-	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]>>]?: string
-}
+	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<
+		ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]["toCSS"]>
+	>]?: string;
+};
 
 function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
@@ -253,7 +652,7 @@ export function convertAttributesToCSS(
 			continue;
 		}
 
-		const mapped = TTML_CSS_ATTRIBUTES_MAP[key](scope, value);
+		const mapped = TTML_CSS_ATTRIBUTES_MAP[key].toCSS(scope, value);
 
 		for (const [mappedKey, mappedValue] of mapped) {
 			convertedAttributes[mappedKey] = mappedValue;
@@ -266,7 +665,6 @@ export function convertAttributesToCSS(
 // ******************* //
 // *** CSS MAPPERS *** //
 // ******************* //
-
 
 function backgroundRepeatValueMapper(
 	_scope: Scope,
@@ -352,8 +750,9 @@ function paddingValueMapper(_scope: Scope, value: string): string | undefined {
  * @TODO TTML allows several values that CSS do not expect,
  * like `"noUnderline"`, `"noLineThrough"`, `"noOverline"`.
  *
- * However, resetting a is a difficult matter, as it requires
- * creating a span and setting it to have `display: inline-block`.
+ * However, resetting text-decoration is a difficult matter, as
+ * it requires creating a span and setting it to have
+ * `display: inline-block`.
  *
  * This is important as introducing such style, might compromise
  * the whole rendering in the captions-renderer.
@@ -397,7 +796,10 @@ function isTextOrientationSupportedCSSValue(
 	return ["sideways", "mixed", "upright"].includes(value);
 }
 
-function textOrientationValueMapper(_scope: Scope, value: string): "sideways" | "mixed" | "upright" | undefined {
+function textOrientationValueMapper(
+	_scope: Scope,
+	value: string,
+): "sideways" | "mixed" | "upright" | undefined {
 	if (isTextOrientationSupportedCSSValue(value)) {
 		return value;
 	}
@@ -421,27 +823,32 @@ function textOrientationValueMapper(_scope: Scope, value: string): "sideways" | 
 /**
  * TTML supports providing two <length> for `tts:fontSize`.
  * However, CSS supports only one dimension, the vertical one.
- * 
+ *
  * To achieve the horizontal one, we are required to use
  * `transform: scale(x, y)`, with the appropriate scaling factors,
  * and create an element that should be putted to `display: inline-block`.
- * 
+ *
  * Therefore, we should calculate the factor (how?) and change introduce
  * some style resetter or isolation in the renderer in order to achieve
  * such style.
- * 
+ *
  * This element should probably wrap the whole subtitles elements.
- * 
+ *
  * Not exactly the moment. Sorry folks.
- * 
- * @param scope 
- * @param value 
- * @returns 
+ *
+ * @param scope
+ * @param value
+ * @returns
  */
 
 function fontSizeValueMapper(scope: Scope, value: string): string {
 	const splittedValue = getSplittedLinearWhitespaceValues(value);
-	const { attributes: { "ttp:cellResolution": [, cellResolutionHeight], "tts:extent": [exHeight] }} = readScopeDocumentContext(scope);
+	const {
+		attributes: {
+			"ttp:cellResolution": [, cellResolutionHeight],
+			"tts:extent": [exHeight],
+		},
+	} = readScopeDocumentContext(scope);
 
 	if (!splittedValue.length) {
 		return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
@@ -457,13 +864,18 @@ function fontSizeValueMapper(scope: Scope, value: string): string {
 	}
 
 	const length = toLength(splittedValue[0]);
-	
+
 	if (isCellScalar(length)) {
-		const { attributes: { "ttp:cellResolution": [, cellResolutionHeight], "tts:extent": [exHeight] }} = readScopeDocumentContext(scope);
+		const {
+			attributes: {
+				"ttp:cellResolution": [, cellResolutionHeight],
+				"tts:extent": [exHeight],
+			},
+		} = readScopeDocumentContext(scope);
 
 		return createLength(
 			getCellScalarPixelConversion(exHeight, cellResolutionHeight, length),
-			"px"
+			"px",
 		).toString();
 	}
 
@@ -477,11 +889,7 @@ function fontSizeValueMapper(scope: Scope, value: string): string {
 function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
 	// Initial value is 1c
 	return createLength(
-		getCellScalarPixelConversion(
-			dimension,
-			cellResolutionDimension,
-			createLength(1, "c")
-		),
-		"px"
+		getCellScalarPixelConversion(dimension, cellResolutionDimension, createLength(1, "c")),
+		"px",
 	);
 }
