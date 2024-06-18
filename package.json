@@ -32,6 +32,6 @@
 		"jest-environment-jsdom": "^29.4.3",
 		"lerna": "^6.6.1",
 		"prettier": "^3.2.5",
-		"typescript": "^5.3.2"
+		"typescript": "^5.4.5"
 	}
 }
