@@ -27,3 +27,20 @@ export const SECONDS_REGEX = EXACT_TWODIGITS_REGEX;
 
 /** Includes both "hours2" and "hours3plus" */
 export const HOURS_REGEX = AT_LEAST_TWO_DIGITS_REGEX;
+
+// ************************ //
+// *** TIME EXPRESSIONS *** //
+// ************************ //
+
+/**
+ * Includes both
+ *
+ * - `hours2 ":" minutes`
+ * - `hours2 ":" minutes ":" seconds fraction?`
+ */
+export const HHMMSS_TIME_REGEX = new RegExp(
+	`(${HOURS2_REGEX.source}):(${MINUTES_REGEX.source})(?::(${SECONDS_REGEX.source})(?:${FRACTION_REGEX.source})?)?`,
+);
+
+/** years "-" months "-" days */
+export const DATE_REGEX = new RegExp(`(\\d{4})-(${MONTHS_REGEX.source})-(${DAYS_REGEX.source})`);

@@ -1,4 +1,4 @@
-import { DATE_REGEX, HHMMSS_TIME } from "../TimeExpressions.js";
+import { DATE_REGEX, HHMMSS_TIME_REGEX } from "../../Units/time.js";
 
 /**
  * Wallclock regexes are ordered by specificity
@@ -20,7 +20,7 @@ import { DATE_REGEX, HHMMSS_TIME } from "../TimeExpressions.js";
  */
 
 const WALLCLOCK_DATETIME_REGEX = new RegExp(
-	`wallclock\\("\\s*${DATE_REGEX.source}T(?:${HHMMSS_TIME.source})\\s*"\\)`,
+	`wallclock\\("\\s*${DATE_REGEX.source}T(?:${HHMMSS_TIME_REGEX.source})\\s*"\\)`,
 );
 
 /**
@@ -34,7 +34,7 @@ const WALLCLOCK_DATETIME_REGEX = new RegExp(
  * wallclock("22:10:15 ")
  * wallclock(" 22:10:15.000")
  */
-const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME.source}\\s*"\\)`);
+const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME_REGEX.source}\\s*"\\)`);
 
 /**
  * @definition
