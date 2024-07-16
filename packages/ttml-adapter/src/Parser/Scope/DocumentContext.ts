@@ -143,6 +143,10 @@ function getPixelAspectRatio(values: number[], extent?: number[]): [number, numb
 }
 
 function getDropModeResolvedValue(dropMode: string): DocumentAttributes["ttp:dropMode"] {
+	if (!dropMode) {
+		return "nonDrop";
+	}
+
 	const dropModes: ReadonlyArray<DocumentAttributes["ttp:dropMode"]> = [
 		"dropNTSC",
 		"dropPAL",
@@ -228,7 +232,7 @@ function getCellResolutionComputedValue(
 ): DocumentAttributes["ttp:cellResolution"] {
 	const DEFAULTS = [32, 15];
 
-	if (!resolutionString.length) {
+	if (!resolutionString?.length) {
 		/**
 		 * If not specified, the number of columns and rows must be considered
 		 * to be 32 and 15, respectively.
