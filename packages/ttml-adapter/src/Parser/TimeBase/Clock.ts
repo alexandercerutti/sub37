@@ -13,9 +13,7 @@ export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	 * `subframes` are not supported in `ttp:timeBase=clock`
 	 */
 	const [hours, minutes, seconds] = match;
-	let finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
-
-	return finalTime * 1000;
+	return getHHMMSSUnitsToSeconds(hours, minutes, seconds) * 1000;
 }
 
 /**
@@ -76,11 +74,12 @@ export function getMillisecondsByOffsetTime(
 	match: OffsetTimeMatch,
 	timeDetails: TimeDetails,
 ): number {
-	const [unit, fraction, metric] = match;
-	let finalTime = unit;
+	const [timeCount, fraction = 0, metric] = match;
+	let finalTime = timeCount;
 
 	if (metric === "t") {
-		return (finalTime / (timeDetails["ttp:tickRate"] || 1)) * 1000;
+		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.
+		return Math.ceil((finalTime / (timeDetails["ttp:tickRate"] || 1)) * 1000);
 	}
 
 	/**
@@ -92,5 +91,5 @@ export function getMillisecondsByOffsetTime(
 	 * Here is assumed we are working in seconds as per the function explanation
 	 */
 
-	return (finalTime + fraction) * 1000;
+	return (finalTime + fraction / 10) * 1000;
 }

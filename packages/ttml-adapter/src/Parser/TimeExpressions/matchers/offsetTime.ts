@@ -7,12 +7,12 @@ const OFFSET_TIME_REGEX = new RegExp(
 	`(${TIME_COUNT_REGEX.source}(?:${FRACTION_REGEX.source})?)(${TIME_METRIC_UNIT_REGEX.source})`,
 );
 
-export type OffsetTimeMatch = [unit: number, fraction: number, metric: string];
+export type OffsetTimeMatch = [timeCount: number, fraction: number, metric: string];
 
 function toOffsetTimeMatch(match: RegExpMatchArray): OffsetTimeMatch {
-	const [, unit, fraction, metric] = match;
+	const [, timeCount, fraction, metric] = match;
 
-	return [parseInt(unit), parseFloat(`0.${fraction}`) || 0, metric];
+	return [parseInt(timeCount) || 0, parseInt(fraction) || 0, metric || "s"];
 }
 
 export function matchOffsetTimeExpression(content: string): OffsetTimeMatch | null {
