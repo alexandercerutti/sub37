@@ -7,7 +7,7 @@
 import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
-import { getEffectiveFrameRate, getFrameComputedValue } from "../TimeExpressions/frames.js";
+import { getEffectiveFrameRate, clampPositiveFrameRateValue } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 /** To keep track and debug */
@@ -38,7 +38,7 @@ export function getMillisecondsByClockTime(
 	 * Subframes are accounted later
 	 */
 	const framesInSeconds =
-		getFrameComputedValue(frames, timeDetails["ttp:frameRate"]) /
+		clampPositiveFrameRateValue(frames, timeDetails["ttp:frameRate"]) /
 		getEffectiveFrameRate(timeDetails);
 	const countedFrames = finalTime * timeDetails["ttp:frameRate"] + framesInSeconds;
 
@@ -49,7 +49,7 @@ export function getMillisecondsByClockTime(
 	);
 
 	const totalSubframes =
-		getFrameComputedValue(subframes, timeDetails["ttp:subFrameRate"]) /
+		clampPositiveFrameRateValue(subframes, timeDetails["ttp:subFrameRate"]) /
 		timeDetails["ttp:subFrameRate"];
 
 	const totalFrames = countedFrames - droppedFrames + totalSubframes;

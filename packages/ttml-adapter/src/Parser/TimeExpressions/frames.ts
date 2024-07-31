@@ -19,16 +19,9 @@ export function getActualFramesInSeconds(
 		return 0;
 	}
 
-	/**
-	 * If a <time-expression> is expressed in terms of a clock-time
-	 * and a frames term is specified, then the value of this term
-	 * must be constrained to the interval [0…F-1], where F is the
-	 * frame rate determined by the ttp:frameRate parameter as
-	 * defined by 7.2.5 ttp:frameRate
-	 */
 	const totalFrames =
-		getFrameComputedValue(frames, timeDetails["ttp:frameRate"]) +
-		getFrameComputedValue(subframes, timeDetails["ttp:subFrameRate"]) /
+		clampPositiveFrameRateValue(frames, timeDetails["ttp:frameRate"]) +
+		clampPositiveFrameRateValue(subframes, timeDetails["ttp:subFrameRate"]) /
 			timeDetails["ttp:subFrameRate"];
 
 	/**
@@ -51,16 +44,21 @@ export function getEffectiveFrameRate(timeDetails: TimeDetails): number {
 }
 
 /**
- * Converts frame number and clamps it to be positive and lower than a rate.
- * @param frameString
+ * Clamps frame (or subframe) number to be positive and
+ * lower than a specified rate.
+ *
+ * {@link rate} is expected to be positive greater than 0 or fallabck,
+ * as per the definition of
+ *  - [ttp:frameRate](https://w3c.github.io/ttml2/#parameter-attribute-frameRate); and
+ *  - [ttp:subFrameRate](https://w3c.github.io/ttml2/#parameter-attribute-subFrameRate)
+ *
+ * Such rate check should be performed on field parsing.
+ *
+ * @param frame
  * @param rate
  * @returns
  */
 
-export function getFrameComputedValue(frame: number, rate: number): number {
-	if (rate <= 0 || Number.isNaN(frame)) {
-		return 0;
-	}
-
-	return Math.max(0, Math.min(frame, rate - 1));
+export function clampPositiveFrameRateValue(frame: number, rate: number): number {
+	return Math.max(0, Math.min(frame, rate));
 }

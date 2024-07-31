@@ -80,8 +80,33 @@ export function readScopeDocumentContext(scope: Scope): DocumentContext | undefi
 function parseDocumentSupportedAttributes(
 	attributes: Record<string, string>,
 ): Readonly<DocumentAttributes> {
+	/**
+	 * "If not specified, the frame rate must be considered
+	 * to be equal to some application defined frame rate,
+	 * or if no application defined frame rate applies,
+	 * then thirty (30) frames per second.
+	 *
+	 * If specified, then the frame rate must be greater
+	 * than zero (0)."
+	 *
+	 * @see https://w3c.github.io/ttml2/#parameter-attribute-frameRate
+	 *
+	 * Application is not allowed to specify a custom fallback value (yet?).
+	 */
 	const frameRate = getFrameRateResolvedValue(attributes["ttp:frameRate"]);
+
+	/**
+	 * "If not specified, the sub-frame rate must be considered
+	 * to be equal to some application defined sub-frame rate,
+	 * or if no application defined sub-frame rate applies, then one (1).
+	 * If specified, then the sub-frame rate must be greater than zero (0)"
+	 *
+	 * @see https://w3c.github.io/ttml2/#parameter-attribute-subFrameRate
+	 *
+	 * Application is not allowed to specify a custom fallback value (yet?).
+	 */
 	const subFrameRate = getFrameRateResolvedValue(attributes["ttp:subFrameRate"]);
+
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
 	const extent = asNumbers(getSplittedLinearWhitespaceValues(attributes["tts:extent"]));
