@@ -60,5 +60,9 @@ export function getEffectiveFrameRate(timeDetails: TimeDetails): number {
  */
 
 export function clampPositiveFrameRateValue(frame: number, rate: number): number {
+	if (!frame) {
+		return 0;
+	}
+
 	return Math.max(0, Math.min(frame, rate));
 }
