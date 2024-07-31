@@ -30,7 +30,7 @@ function toClockTimeMatch(match: RegExpMatchArray): ClockTimeMatch {
 		parseInt(minutes) || 0,
 		parseFloat(`${seconds || ""}.${fraction}`) || 0,
 		parseInt(frames) || undefined,
-		parseInt(subframes) || undefined,
+		parseFloat(`0.${subframes}`) || undefined,
 	];
 }
 
