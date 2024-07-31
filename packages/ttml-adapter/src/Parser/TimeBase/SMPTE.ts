@@ -58,6 +58,14 @@ export function getMillisecondsByClockTime(
 	return referenceBegin + SMTPETimeBase;
 }
 
+/**
+ * "It is considered an error if the wallclock-time form of
+ * a <time-expression> is used in a document instance and
+ * the government time base is not clock."
+ *
+ * @see https://w3c.github.io/ttml2/#timing-value-time-expression
+ */
+
 export function getMillisecondsByWallClockTime(): number {
 	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
 }
