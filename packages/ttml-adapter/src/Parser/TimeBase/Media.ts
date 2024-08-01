@@ -33,11 +33,14 @@ export function getMillisecondsByClockTime(
 	 * @TODO how to provide previous cue end time?
 	 */
 
+	/**
+	 * This is expected to be already in milliseconds
+	 */
 	const referenceBegin = 0;
 
 	const framesInSeconds = getActualFramesInSeconds(frames, subframes, timeDetails);
 
-	return (referenceBegin + finalTime + framesInSeconds) * 1000;
+	return referenceBegin + (finalTime + framesInSeconds) * 1000;
 }
 
 /**
