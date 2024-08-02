@@ -13,9 +13,17 @@ import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 /** To keep track and debug */
 export const timeBaseNameSymbol = Symbol("Media");
 
+/**
+ * @param match
+ * @param timeDetails
+ * @param [referenceBegin=0] previous cue end time in milliseconds
+ * @returns
+ */
+
 export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
 ): number {
 	const [hours, minutes, seconds, frames, subframes] = match;
 
@@ -28,15 +36,6 @@ export function getMillisecondsByClockTime(
 		 */
 		Math.trunc(seconds),
 	);
-
-	/**
-	 * @TODO how to provide previous cue end time?
-	 */
-
-	/**
-	 * This is expected to be already in milliseconds
-	 */
-	const referenceBegin = 0;
 
 	const framesInSeconds = getActualFramesInSeconds(frames, subframes, timeDetails);
 
@@ -75,25 +74,20 @@ export function getMillisecondsByWallClockTime(): number {
  *
  * @param match
  * @param timeDetails
+ * @param [referenceBegin=0] previous cue end time in milliseconds
  * @returns
  */
 
 export function getMillisecondsByOffsetTime(
 	match: OffsetTimeMatch,
 	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
 ): number {
-	const [unit, fraction, metric] = match;
-	let finalTime = unit;
-
-	/**
-	 * @TODO how to provide previous cue end time?
-	 */
-
-	const referenceBegin = 0;
+	const [ticks, fraction, metric] = match;
 
 	if (metric === "t") {
-		return (finalTime / (timeDetails["ttp:tickRate"] || 1)) * 1000;
+		return (ticks / (timeDetails["ttp:tickRate"] || 1)) * 1000;
 	}
 
-	return referenceBegin + (finalTime + fraction) * 1000;
+	return referenceBegin + (ticks + fraction) * 1000;
 }

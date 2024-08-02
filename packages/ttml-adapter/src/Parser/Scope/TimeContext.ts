@@ -220,11 +220,25 @@ function parseTimeString(timeString: string, timeDetails: TimeDetails): number |
 
 	const timeProvider = getTimeBaseProvider(timeDetails["ttp:timeBase"]);
 
+	/**
+	 * "[...] where referenceBegin is determined according to whether the nearest ancestor time container
+	 * employs parallel (par) or sequential (seq) semantics: if parallel or if sequential and no prior
+	 * sibling timed element exists, then referenceBegin is the media time that corresponds to the beginning
+	 * of the nearest ancestor time container or zero (0) if this time container is the root temporal extent;
+	 *
+	 * otherwise, if sequential and a prior sibling timed element exists, then referenceBegin is the media
+	 * time that corresponds to the active end of the immediately prior sibling timed element;"
+	 *
+	 * @FIXME pass the correct referenceBegin according above description
+	 */
+
+	const referenceBegin = 0;
+
 	{
 		const match = matchClockTimeExpression(timeString);
 
 		if (match) {
-			return timeProvider.getMillisecondsByClockTime(match, timeDetails);
+			return timeProvider.getMillisecondsByClockTime(match, timeDetails, referenceBegin);
 		}
 	}
 
@@ -232,7 +246,7 @@ function parseTimeString(timeString: string, timeDetails: TimeDetails): number |
 		const match = matchOffsetTimeExpression(timeString);
 
 		if (match) {
-			return timeProvider.getMillisecondsByOffsetTime(match, timeDetails);
+			return timeProvider.getMillisecondsByOffsetTime(match, timeDetails, referenceBegin);
 		}
 	}
 

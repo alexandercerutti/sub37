@@ -13,9 +13,18 @@ import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 /** To keep track and debug */
 export const timeBaseNameSymbol = Symbol("SMPTE");
 
+/**
+ *
+ * @param match
+ * @param timeDetails
+ * @param [referenceBegin=0] previous cue end time in milliseconds
+ * @returns
+ */
+
 export function getMillisecondsByClockTime(
 	match: ClockTimeMatch,
 	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
 ): number {
 	const [hours, minutes, seconds, frames, subframes] = match;
 	const finalTime = getHHMMSSUnitsToSeconds(
@@ -27,12 +36,6 @@ export function getMillisecondsByClockTime(
 		 */
 		Math.trunc(seconds),
 	);
-
-	/**
-	 * @TODO how to provide previous cue end time?
-	 */
-
-	const referenceBegin = 0;
 
 	/**
 	 * Subframes are accounted later
@@ -69,6 +72,14 @@ export function getMillisecondsByClockTime(
 export function getMillisecondsByWallClockTime(): number {
 	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
 }
+
+/**
+ * "If the computed value of the governing time base is smpte,
+ * then (1) use of an offset-time form of <time-expression> is
+ * deprecated [...]"
+ *
+ * @see https://w3c.github.io/ttml2/#timing-value-time-expression
+ */
 
 export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
 	throw new Error(
