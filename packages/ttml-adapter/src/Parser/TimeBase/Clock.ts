@@ -5,7 +5,7 @@ import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 /** To keep track and debug */
-export const timeBaseNameSymbol = Symbol("Clock");
+export const timeBaseNameSymbol = Symbol("Clock Time Base");
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
 	/**

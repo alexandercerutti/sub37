@@ -12,7 +12,7 @@ import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 /** To keep track and debug */
-export const timeBaseNameSymbol = Symbol("Media");
+export const timeBaseNameSymbol = Symbol("Media Time Base");
 
 /**
  * @param match

@@ -12,7 +12,7 @@ import { getEffectiveFrameRate, clampPositiveFrameRateValue } from "../TimeExpre
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 /** To keep track and debug */
-export const timeBaseNameSymbol = Symbol("SMPTE");
+export const timeBaseNameSymbol = Symbol("SMPTE Time Base");
 
 /**
  *
