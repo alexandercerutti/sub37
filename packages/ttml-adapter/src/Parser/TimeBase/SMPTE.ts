@@ -7,6 +7,7 @@
 import type { TimeDetails } from ".";
 import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
 import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
 import { getEffectiveFrameRate, clampPositiveFrameRateValue } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
@@ -69,7 +70,7 @@ export function getMillisecondsByClockTime(
  * @see https://w3c.github.io/ttml2/#timing-value-time-expression
  */
 
-export function getMillisecondsByWallClockTime(): number {
+export function getMillisecondsByWallClockTime(_date: WallClockMatch): number {
 	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
 }
 
@@ -81,7 +82,7 @@ export function getMillisecondsByWallClockTime(): number {
  * @see https://w3c.github.io/ttml2/#timing-value-time-expression
  */
 
-export function getMillisecondsByOffsetTime(match: OffsetTimeMatch): number {
+export function getMillisecondsByOffsetTime(_match: OffsetTimeMatch): number {
 	throw new Error(
 		"OffsetTime is not supported when using SMPTE as 'ttp:timeBase' as deprecated in TTML standard.",
 	);
