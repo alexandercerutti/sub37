@@ -132,8 +132,10 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	if (metric === "m") {
-		return referenceBegin + (timeCount * 60 + fraction) * 1000;
+		const fractionAsSeconds = fraction * 60;
+		return referenceBegin + (timeCount * 60 + fractionAsSeconds) * 1000;
 	}
 
-	return referenceBegin + (timeCount * 3600 + fraction) * 1000;
+	const fractionAsMinutes = fraction * 60;
+	return referenceBegin + (timeCount * 3600 + fractionAsMinutes * 60) * 1000;
 }
