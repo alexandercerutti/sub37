@@ -51,7 +51,7 @@ const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME_REGE
 const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
 export type WallClockMatch = Date;
 
-export function toWallClockWallTimeMatch(
+function toWallClockWallTimeMatch(
 	match: [hours: string, minutes: string, seconds: string, fraction?: string],
 ): WallClockMatch {
 	const [hours, minutes, seconds, fraction] = match;
@@ -67,9 +67,7 @@ export function toWallClockWallTimeMatch(
 	);
 }
 
-export function toWallClockDateMatch(
-	match: [year: string, month: string, day: string],
-): WallClockMatch {
+function toWallClockDateMatch(match: [year: string, month: string, day: string]): WallClockMatch {
 	const [year, month, day] = match;
 
 	const paddedMonth = month.padStart(2, "0");
@@ -78,7 +76,7 @@ export function toWallClockDateMatch(
 	return new Date(`${year}-${paddedMonth}-${paddedDay}T00:00:00`);
 }
 
-export function toWallClockDateTimeMatch(match: RegExpMatchArray): WallClockMatch {
+function toWallClockDateTimeMatch(match: RegExpMatchArray): WallClockMatch {
 	const [, year, month, day, hours, minutes, seconds, fraction] = match;
 
 	return new Date(
