@@ -56,22 +56,49 @@ export function getMillisecondsByWallClockTime(_date: WallClockMatch): number {
 }
 
 /**
- * TTML states:
+ * "If a time expression uses a clock-time form or an offset-time
+ * form that doesn't use the ticks (t) metric, then:
  *
- * ```text
- * If a time expression uses a clock-time form or an offset-time form that doesn't use the ticks (t) metric, then:
+ * 		M = referenceBegin + 3600 * hours + 60 * minutes + seconds + ((frames + (subFrames / subFrameRate)) / effectiveFrameRate)
  *
- * M = referenceBegin + 3600 * hours + 60 * minutes + seconds + ((frames + (subFrames / subFrameRate)) / effectiveFrameRate)
+ * [...]
  *
- * ...
+ * Otherwise, if a time expression uses an offset-time form that
+ * uses the ticks (t) metric, then:
  *
- * Otherwise, if a time expression uses an offset-time form that uses the ticks (t) metric, then:
+ * 		M = referenceBegin + ticks / tickRate
+ * "
  *
- * M = referenceBegin + ticks / tickRate
+ * However, omitting the "t" metric leaves us to the subset
+ * ("h" | "m" | "s" | "ms" | "f"). Since only one of them
+ * can be used in the same expression, using the first expression
+ * is not exactly possible as, if we take "10s" as an example,
+ * we would have:
+ *
+ * ```
+ * 		M = referenceBegin + 3600 * 0 + 60 * 0 + 10 + ((0 + (0 / subFrameRate)) / effectiveFrameRate)
  * ```
  *
- * But if we don't use offset-time, no other time-expression uses metrics. In that case, we don't have
- * access to hours and minutes. Therefore we are using only seconds.
+ * - This is surely valid for the subset ("h" | "m" | "s").
+ * - Using "ms" as a metric is a straight-forward operation as we
+ * 		aim to get milliseconds;
+ * - Using "f" as a metric requires us to look at the final part
+ * 		of the formula above.
+ *
+ * Same TTML zone also specifies such:
+ *
+ * "furthermore, [...] if the time expression takes the form of
+ * an offset-time expression, then the fraction component, if
+ * present, is added to the time-count component to form a
+ * real-valued time count component according to the specified
+ * offset metric"
+ *
+ * However, what's not very clear (yet) is which metric, outside
+ * "h" | "m" | "s" | "f", allow having a fraction... maybe the current
+ * implementation is not very correct and will require an adjustment.
+ * How should it be considered in case of milliseconds?
+ * Is correct to use fraction as a fraction of seconds in case of "h" and
+ * "m"?
  *
  * @param match
  * @param timeDetails
@@ -84,11 +111,29 @@ export function getMillisecondsByOffsetTime(
 	timeDetails: TimeDetails,
 	referenceBegin: number = 0,
 ): number {
-	const [ticks, fraction, metric] = match;
+	const [timeCount, fraction = 0, metric] = match;
 
 	if (metric === "t") {
-		return (ticks / (timeDetails["ttp:tickRate"] || 1)) * 1000;
+		return (timeCount / (timeDetails["ttp:tickRate"] || 1)) * 1000;
 	}
 
-	return referenceBegin + (ticks + fraction) * 1000;
+	if (metric === "f") {
+		const framesInSeconds = getActualFramesInSeconds(timeCount, fraction, timeDetails);
+		return referenceBegin + (timeCount + framesInSeconds) * 1000;
+	}
+
+	if (metric === "ms") {
+		// How is fraction used here? Should it be considered as a millisecond?
+		return referenceBegin + timeCount;
+	}
+
+	if (metric === "s") {
+		return referenceBegin + (timeCount + fraction) * 1000;
+	}
+
+	if (metric === "m") {
+		return referenceBegin + (timeCount * 60 + fraction) * 1000;
+	}
+
+	return referenceBegin + (timeCount * 3600 + fraction) * 1000;
 }
