@@ -114,7 +114,8 @@ export function getMillisecondsByOffsetTime(
 	const [timeCount, fraction = 0, metric] = match;
 
 	if (metric === "t") {
-		return (timeCount / (timeDetails["ttp:tickRate"] || 1)) * 1000;
+		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.
+		return Math.ceil((timeCount / (timeDetails["ttp:tickRate"] || 1)) * 1000);
 	}
 
 	if (metric === "f") {
