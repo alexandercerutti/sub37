@@ -8,11 +8,11 @@ import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 export const timeBaseNameSymbol = Symbol("Clock Time Base");
 
 export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
-	/**
-	 * `fraction` is already embedded in seconds. `Frames` and
-	 * `subframes` are not supported in `ttp:timeBase=clock`
-	 */
-	const [hours, minutes, seconds] = match;
+	const [hours, minutes, seconds, frames, subframes] = match;
+
+	assertClockTimeWithoutFrames(frames);
+	assertClockTimeWithoutSubframes(subframes);
+
 	return getHHMMSSUnitsToSeconds(hours, minutes, seconds) * 1000;
 }
 
@@ -114,4 +114,46 @@ export function getMillisecondsByOffsetTime(
 
 	const fractionAsMinutes = fraction * 60;
 	return (timeCount * 3600 + fractionAsMinutes * 60) * 1000;
+}
+
+/**
+ * "It is considered an error if a frames term or f (frames) metric
+ * is specified when the clock time base applies."
+ *
+ * @see https://w3c.github.io/ttml2/#timing-value-time-expression
+ *
+ * @param frames
+ * @returns
+ */
+
+function assertClockTimeWithoutFrames(frames: number | undefined): asserts frames is undefined {
+	if (!frames) {
+		return;
+	}
+
+	throw new Error(
+		`Cannot convert clock-time in milliseconds with Clock Time Base: 'frames' field is not allowed (received: '${frames}').`,
+	);
+}
+
+/**
+ * "It is considered an error if a sub-frames term is specified
+ * when the clock time base applies."
+ *
+ * @see https://w3c.github.io/ttml2/#timing-value-time-expression
+ *
+ * @param frames
+ * @returns
+ */
+
+function assertClockTimeWithoutSubframes(
+	subframes: number | undefined,
+): asserts subframes is undefined {
+	if (!subframes) {
+		return;
+	}
+
+	throw new Error(
+		`Cannot convert clock-time in milliseconds with Clock Time Base: 'subframes' field is not allowed (received: '${subframes}').`,
+	);
 }
