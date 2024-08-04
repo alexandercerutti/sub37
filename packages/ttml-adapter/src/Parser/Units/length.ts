@@ -1,3 +1,6 @@
+import type { Unit } from "./unit";
+import { createUnit } from "./unit.js";
+
 /**
  * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-value-length
  */
@@ -7,42 +10,33 @@ const UNIT_MEASURE_NUMBER_REGEX = /((?:-|\+)?\d+(?:\.\d+)?)([a-zA-Z%]+)$/;
 const ALLOWED_SCALAR_UNITS = ["px", "em", "c", "rw", "rh"] as const;
 type ALLOWED_SCALAR_UNITS = typeof ALLOWED_SCALAR_UNITS;
 
-interface Scalar {
-	value: number;
-	unit: ALLOWED_SCALAR_UNITS[number];
-	toString(): string;
-}
-
-interface Percentage {
-	value: number;
-	unit: "%";
-	toString(): string;
-}
+type Scalar = Unit<ALLOWED_SCALAR_UNITS[number]>;
+type Percentage = Unit<"%">;
 
 export type Length = Scalar | Percentage;
 
-function isScalarUnit(unit: string): unit is Scalar["unit"] {
-	return ALLOWED_SCALAR_UNITS.includes(unit as Scalar["unit"]);
+function isScalarUnit(metric: string): metric is Scalar["metric"] {
+	return ALLOWED_SCALAR_UNITS.includes(metric as Scalar["metric"]);
 }
 
 export function isLength(maybeLength: unknown): maybeLength is Length {
 	return (
 		Boolean(maybeLength) &&
-		typeof (maybeLength as Length).unit !== "undefined" &&
+		typeof (maybeLength as Length).metric !== "undefined" &&
 		typeof (maybeLength as Length).value === "number"
 	);
 }
 
 export function isScalar(maybeScalar: unknown): maybeScalar is Scalar {
-	return isLength(maybeScalar) && isScalarUnit((maybeScalar as Scalar).unit);
+	return isLength(maybeScalar) && isScalarUnit((maybeScalar as Scalar).metric);
 }
 
 export function isPercentage(maybeScalar: unknown): maybeScalar is Percentage {
-	return isLength(maybeScalar) && isPercentageUnit((maybeScalar as Percentage).unit);
+	return isLength(maybeScalar) && isPercentageUnit((maybeScalar as Percentage).metric);
 }
 
-function isPercentageUnit(unit: string): unit is "%" {
-	return unit === "%";
+function isPercentageUnit(metric: string): metric is "%" {
+	return metric === "%";
 }
 
 export function toLength(value: string): Scalar | Percentage | null {
@@ -56,19 +50,5 @@ export function toLength(value: string): Scalar | Percentage | null {
 		return null;
 	}
 
-	return createLength(parseFloat(match[1]), match[2]);
-}
-
-export function createLength(value: number, unit: Length["unit"]): Length {
-	if (!unit) {
-		throw new Error("Cannot create a length representation without a specified unit");
-	}
-
-	return {
-		value,
-		unit,
-		toString(): string {
-			return `${this.value}${this.unit}`;
-		},
-	};
+	return createUnit(parseFloat(match[1]), match[2]);
 }

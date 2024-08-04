@@ -5,7 +5,7 @@
 import type { Length } from "./length.js";
 import { isScalar } from "./length.js";
 
-type CellScalar = Length & { unit: "c" };
+type CellScalar = Length & { metric: "c" };
 
 /**
  * @example
@@ -45,5 +45,5 @@ export function getCellScalarPixelConversion(
 }
 
 export function isCellScalar(value: unknown): value is CellScalar {
-	return isScalar(value) && value.unit === "c";
+	return isScalar(value) && value.metric === "c";
 }
