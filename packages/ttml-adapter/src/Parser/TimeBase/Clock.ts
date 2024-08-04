@@ -48,8 +48,8 @@ export function getMillisecondsByWallClockTime(match: WallClockMatch): number {
  * ```
  *
  * But there is not any other time-expression that allows metrics, so
- * we assume we are talking about offset-time. However, in that case,
- * we don't have hours and minutes.
+ * we assume we are talking about offset-time. In that case, we have to consider
+ * all the other metrics.
  *
  * Also TTML standard states:
  *
@@ -81,14 +81,37 @@ export function getMillisecondsByOffsetTime(
 		return Math.ceil((timeCount / (timeDetails["ttp:tickRate"] || 1)) * 1000);
 	}
 
-	/**
-	 * ```text
-	 * The frames and sub-frames terms and the frames (f) metric
-	 * of time expressions do not apply when using the clock time base.
-	 * ```
-	 *
-	 * Here is assumed we are working in seconds as per the function explanation
-	 */
+	if (metric === "f") {
+		/**
+		 * "The frames and sub-frames terms and the frames (f) metric
+		 * of time expressions do not apply when using the clock time base."
+		 *
+		 * @see https://w3c.github.io/ttml2/#time-expression-semantics-clock
+		 */
 
-	return (timeCount + fraction / 10) * 1000;
+		throw new Error(
+			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics do not apply. Received "${timeCount + fraction}${metric}".`,
+		);
+	}
+
+	if (metric === "ms") {
+		/**
+		 * Is ms allowed in this case? Can we consider it as part of
+		 * the seconds? We actually want to obtain milliseconds, so
+		 * no need to convert, I guess?
+		 */
+		return timeCount;
+	}
+
+	if (metric === "s") {
+		return (timeCount + fraction) * 1000;
+	}
+
+	if (metric === "m") {
+		const fractionAsSeconds = fraction * 60;
+		return (timeCount * 60 + fractionAsSeconds) * 1000;
+	}
+
+	const fractionAsMinutes = fraction * 60;
+	return (timeCount * 3600 + fractionAsMinutes * 60) * 1000;
 }
