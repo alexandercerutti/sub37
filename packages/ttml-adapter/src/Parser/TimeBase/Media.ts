@@ -120,7 +120,7 @@ export function getMillisecondsByOffsetTime(
 
 	if (metric === "f") {
 		const framesInSeconds = getActualFramesInSeconds(timeCount, fraction, timeDetails);
-		return referenceBegin + (timeCount + framesInSeconds) * 1000;
+		return Math.ceil(referenceBegin + framesInSeconds * 1000);
 	}
 
 	if (metric === "ms") {
