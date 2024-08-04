@@ -28,15 +28,7 @@ export function getMillisecondsByClockTime(
 ): number {
 	const [hours, minutes, seconds, frames, subframes] = match;
 
-	const finalTime = getHHMMSSUnitsToSeconds(
-		hours,
-		minutes,
-		/**
-		 * Removing the decimal part, as a track with
-		 * `ttp:timeBase=media` should not have fractional parts
-		 */
-		Math.trunc(seconds),
-	);
+	const finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
 
 	const framesInSeconds = getActualFramesInSeconds(frames, subframes, timeDetails);
 
