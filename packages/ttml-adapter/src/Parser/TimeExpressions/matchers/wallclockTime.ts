@@ -1,4 +1,6 @@
 import { DATE_REGEX, HHMMSS_TIME_REGEX } from "../../Units/time.js";
+import type { Unit } from "../../Units/unit.js";
+import { createUnit } from "../../Units/unit.js";
 
 /**
  * Wallclock regexes are ordered by specificity
@@ -49,11 +51,11 @@ const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME_REGE
  */
 
 const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
-export type WallClockMatch = Date;
+export type WallClockUnit = Unit<"date">;
 
 function toWallClockWallTimeMatch(
 	match: [hours: string, minutes: string, seconds: string, fraction?: string],
-): WallClockMatch {
+): Date {
 	const [hours, minutes, seconds, fraction] = match;
 
 	return new Date(
@@ -67,7 +69,7 @@ function toWallClockWallTimeMatch(
 	);
 }
 
-function toWallClockDateMatch(match: [year: string, month: string, day: string]): WallClockMatch {
+function toWallClockDateMatch(match: [year: string, month: string, day: string]): Date {
 	const [year, month, day] = match;
 
 	const paddedMonth = month.padStart(2, "0");
@@ -76,16 +78,17 @@ function toWallClockDateMatch(match: [year: string, month: string, day: string])
 	return new Date(`${year}-${paddedMonth}-${paddedDay}T00:00:00`);
 }
 
-function toWallClockDateTimeMatch(match: RegExpMatchArray): WallClockMatch {
+function createWallClockDateTimeUnit(match: RegExpMatchArray): WallClockUnit {
 	const [, year, month, day, hours, minutes, seconds, fraction] = match;
 
-	return new Date(
+	const summedTimestamps =
 		toWallClockDateMatch([year, month, day]).getTime() +
-			toWallClockWallTimeMatch([hours, minutes, seconds, fraction]).getTime(),
-	);
+		toWallClockWallTimeMatch([hours, minutes, seconds, fraction]).getTime();
+
+	return createUnit(summedTimestamps, "date");
 }
 
-export function matchWallClockTimeExpression(content: string): WallClockMatch | null {
+export function matchWallClockTimeExpression(content: string): WallClockUnit | null {
 	if (typeof content !== "string") {
 		return null;
 	}
@@ -97,15 +100,18 @@ export function matchWallClockTimeExpression(content: string): WallClockMatch | 
 	let match: RegExpMatchArray | null = null;
 
 	if ((match = content.match(WALLCLOCK_DATETIME_REGEX))) {
-		return toWallClockDateTimeMatch(match);
+		return createWallClockDateTimeUnit(match);
 	}
 
 	if ((match = content.match(WALLCLOCK_WALLTIME_REGEX))) {
-		return toWallClockWallTimeMatch([match[1], match[2], match[3], match[4]]);
+		return createUnit(
+			toWallClockWallTimeMatch([match[1], match[2], match[3], match[4]]).getTime(),
+			"date",
+		);
 	}
 
 	if ((match = content.match(WALLCLOCK_DATE_REGEX))) {
-		return toWallClockDateMatch([match[1], match[2], match[3]]);
+		return createUnit(toWallClockDateMatch([match[1], match[2], match[3]]).getTime(), "date");
 	}
 
 	return null;

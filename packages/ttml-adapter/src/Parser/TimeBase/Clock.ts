@@ -1,19 +1,19 @@
 import type { TimeDetails } from ".";
-import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
-import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
-import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
+import type { ClockTimeUnit } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeUnit } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockUnit } from "../TimeExpressions/matchers/wallclockTime";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
 /** To keep track and debug */
 export const timeBaseNameSymbol = Symbol("Clock Time Base");
 
-export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
-	const [hours, minutes, seconds, frames, subframes] = match;
+export function getMillisecondsByClockTime(match: ClockTimeUnit): number {
+	const [hoursUnit, minutesUnit, secondsUnit, framesUnit, subframesUnit] = match;
 
-	assertClockTimeWithoutFrames(frames);
-	assertClockTimeWithoutSubframes(subframes);
+	assertClockTimeWithoutFrames(framesUnit?.value);
+	assertClockTimeWithoutSubframes(subframesUnit?.value);
 
-	return getHHMMSSUnitsToSeconds(hours, minutes, seconds) * 1000;
+	return getHHMMSSUnitsToSeconds(hoursUnit.value, minutesUnit.value, secondsUnit.value) * 1000;
 }
 
 /**
@@ -26,8 +26,8 @@ export function getMillisecondsByClockTime(match: ClockTimeMatch): number {
  * @param match
  */
 
-export function getMillisecondsByWallClockTime(match: WallClockMatch): number {
-	return match.getTime();
+export function getMillisecondsByWallClockTime(match: WallClockUnit): number {
+	return match.value;
 }
 
 /**
@@ -71,10 +71,10 @@ export function getMillisecondsByWallClockTime(match: WallClockMatch): number {
  */
 
 export function getMillisecondsByOffsetTime(
-	match: OffsetTimeMatch,
+	match: OffsetTimeUnit,
 	timeDetails: TimeDetails,
 ): number {
-	const [timeCount, metric] = match;
+	const { value: timeCount, metric } = match;
 
 	if (metric === "t") {
 		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.

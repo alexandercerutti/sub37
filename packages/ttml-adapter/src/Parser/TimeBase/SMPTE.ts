@@ -5,9 +5,9 @@
  */
 
 import type { TimeDetails } from ".";
-import type { ClockTimeMatch } from "../TimeExpressions/matchers/clockTime";
-import type { OffsetTimeMatch } from "../TimeExpressions/matchers/offsetTime";
-import type { WallClockMatch } from "../TimeExpressions/matchers/wallclockTime";
+import type { ClockTimeUnit } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeUnit } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockUnit } from "../TimeExpressions/matchers/wallclockTime";
 import { getEffectiveFrameRate, clampPositiveFrameRateValue } from "../TimeExpressions/frames.js";
 import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
 
@@ -23,11 +23,17 @@ export const timeBaseNameSymbol = Symbol("SMPTE Time Base");
  */
 
 export function getMillisecondsByClockTime(
-	match: ClockTimeMatch,
+	match: ClockTimeUnit,
 	timeDetails: TimeDetails,
 	referenceBegin: number = 0,
 ): number {
-	const [hours, minutes, seconds, frames, subframes] = match;
+	const [
+		{ value: hours },
+		{ value: minutes },
+		{ value: seconds },
+		{ value: frames },
+		{ value: subframes },
+	] = match;
 	const finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
 
 	/**
@@ -62,7 +68,7 @@ export function getMillisecondsByClockTime(
  * @see https://w3c.github.io/ttml2/#timing-value-time-expression
  */
 
-export function getMillisecondsByWallClockTime(_date: WallClockMatch): number {
+export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
 	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
 }
 
@@ -74,7 +80,7 @@ export function getMillisecondsByWallClockTime(_date: WallClockMatch): number {
  * @see https://w3c.github.io/ttml2/#timing-value-time-expression
  */
 
-export function getMillisecondsByOffsetTime(_match: OffsetTimeMatch): number {
+export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
 	throw new Error(
 		"OffsetTime is not supported when using SMPTE as 'ttp:timeBase' as deprecated in TTML standard.",
 	);
