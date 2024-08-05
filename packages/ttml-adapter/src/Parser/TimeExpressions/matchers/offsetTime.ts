@@ -1,25 +1,30 @@
-import { FRACTION_REGEX, TIME_COUNT_REGEX, TIME_METRIC_UNIT_REGEX } from "../../Units/time.js";
+import { AT_LEAST_ONE_DIGIT_TIME_REGEX } from "../../Units/time.js";
+
+/**
+ * hours | minutes | seconds | milliseconds | frames | ticks
+ */
+const TIME_METRIC_UNIT_REGEX = /h|m|s|ms|f|t/;
+
+const TIME_COUNT_WITH_FRACTION_REGEX = new RegExp(
+	`${AT_LEAST_ONE_DIGIT_TIME_REGEX.source}(?:\.${AT_LEAST_ONE_DIGIT_TIME_REGEX.source})?`,
+);
 
 /**
  * || time-count || fraction?    || metric
  * || <digit>+   || "." <digit>+ || "h" | "m" | "s" | "ms" | "f" | "t"
  */
 const OFFSET_TIME_REGEX = new RegExp(
-	`(${TIME_COUNT_REGEX.source}(?:${FRACTION_REGEX.source})?)(${TIME_METRIC_UNIT_REGEX.source})`,
+	`(${TIME_COUNT_WITH_FRACTION_REGEX.source}(${TIME_METRIC_UNIT_REGEX.source})`,
 );
 
-export type OffsetTimeMatch = [
-	timeCount: number,
-	fraction: number,
-	metric: "h" | "m" | "s" | "ms" | "f" | "t",
-];
+export type OffsetTimeMatch = [timeCount: number, metric: "h" | "m" | "s" | "ms" | "f" | "t"];
 
 function toOffsetTimeMatch(match: RegExpMatchArray): OffsetTimeMatch {
-	const [, timeCount, fraction, metric = "s"] = match;
+	const [, timeCount, metric = "s"] = match;
 
 	assertRecognizedMetric(metric);
 
-	return [parseInt(timeCount) || 0, parseFloat(`.${fraction}`) || 0, metric];
+	return [parseFloat(timeCount) || 0, metric];
 }
 
 /**

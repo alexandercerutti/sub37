@@ -16,16 +16,16 @@ describe("When timeBase is 'clock'", () => {
 	});
 
 	it("should return the milliseconds offset when converting to offset-time and metric is not a ticks", () => {
-		expect(getMillisecondsByOffsetTime([10, 5, "s"], {})).toBe(10500);
-		expect(getMillisecondsByOffsetTime([10, undefined, "s"], {})).toBe(10000);
+		expect(getMillisecondsByOffsetTime([10.5, "s"], {})).toBe(10500);
+		expect(getMillisecondsByOffsetTime([10, "s"], {})).toBe(10000);
 	});
 
 	it("should return the milliseconds offset when converting to offset-time and metric is ticks", () => {
-		expect(
-			getMillisecondsByOffsetTime([10_010_000, 100, "t"], { "ttp:tickRate": 10_000_000 }),
-		).toBe(1001);
-		expect(
-			getMillisecondsByOffsetTime([10_010_000, undefined, "t"], { "ttp:tickRate": 10_000_000 }),
-		).toBe(1001);
+		expect(getMillisecondsByOffsetTime([10_010_000.1, "t"], { "ttp:tickRate": 10_000_000 })).toBe(
+			1002,
+		);
+		expect(getMillisecondsByOffsetTime([10_010_000, "t"], { "ttp:tickRate": 10_000_000 })).toBe(
+			1001,
+		);
 	});
 });

@@ -103,7 +103,7 @@ export function getMillisecondsByOffsetTime(
 	timeDetails: TimeDetails,
 	referenceBegin: number = 0,
 ): number {
-	const [timeCount, fraction = 0, metric] = match;
+	const [timeCount, metric] = match;
 
 	if (metric === "t") {
 		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.
@@ -111,7 +111,11 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	if (metric === "f") {
-		const framesInSeconds = getActualFramesInSeconds(timeCount, fraction, timeDetails);
+		const frames = Math.trunc(timeCount);
+		// Not precise, but how much precision we need? 3.2 % 1 or this both return 0.2000[...]018
+		const subFrames = timeCount - Math.floor(timeCount);
+
+		const framesInSeconds = getActualFramesInSeconds(frames, subFrames, timeDetails);
 		return Math.ceil(referenceBegin + framesInSeconds * 1000);
 	}
 
@@ -121,14 +125,12 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	if (metric === "s") {
-		return referenceBegin + (timeCount + fraction) * 1000;
+		return referenceBegin + timeCount * 1000;
 	}
 
 	if (metric === "m") {
-		const fractionAsSeconds = fraction * 60;
-		return referenceBegin + (timeCount * 60 + fractionAsSeconds) * 1000;
+		return referenceBegin + timeCount * 60 * 1000;
 	}
 
-	const fractionAsMinutes = fraction * 60;
-	return referenceBegin + (timeCount * 3600 + fractionAsMinutes * 60) * 1000;
+	return referenceBegin + timeCount * 3600 * 1000;
 }

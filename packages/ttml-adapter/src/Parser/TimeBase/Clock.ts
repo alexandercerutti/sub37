@@ -74,7 +74,7 @@ export function getMillisecondsByOffsetTime(
 	match: OffsetTimeMatch,
 	timeDetails: TimeDetails,
 ): number {
-	const [timeCount, fraction = 0, metric] = match;
+	const [timeCount, metric] = match;
 
 	if (metric === "t") {
 		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.
@@ -90,7 +90,7 @@ export function getMillisecondsByOffsetTime(
 		 */
 
 		throw new Error(
-			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics do not apply. Received "${timeCount + fraction}${metric}".`,
+			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics do not apply. Received "${timeCount}${metric}".`,
 		);
 	}
 
@@ -104,16 +104,14 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	if (metric === "s") {
-		return (timeCount + fraction) * 1000;
+		return timeCount * 1000;
 	}
 
 	if (metric === "m") {
-		const fractionAsSeconds = fraction * 60;
-		return (timeCount * 60 + fractionAsSeconds) * 1000;
+		return timeCount * 60 * 1000;
 	}
 
-	const fractionAsMinutes = fraction * 60;
-	return (timeCount * 3600 + fractionAsMinutes * 60) * 1000;
+	return timeCount * 3600 * 1000;
 }
 
 /**
