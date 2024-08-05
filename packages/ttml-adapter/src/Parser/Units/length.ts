@@ -46,7 +46,15 @@ export function toLength(value: string): Scalar | Percentage | null {
 
 	const match = value.match(UNIT_MEASURE_NUMBER_REGEX);
 
-	if (!match?.length || !(isPercentageUnit(match[2]) || isScalarUnit(match[2]))) {
+	if (!match?.length) {
+		return null;
+	}
+
+	if (!match[2]) {
+		throw new Error("Cannot create a length representation without a specified unit");
+	}
+
+	if (!(isPercentageUnit(match[2]) || isScalarUnit(match[2]))) {
 		return null;
 	}
 
