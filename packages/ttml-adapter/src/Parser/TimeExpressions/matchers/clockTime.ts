@@ -24,7 +24,7 @@ export type ClockTimeUnit = [
 	Unit<"subframes">,
 ];
 
-function toClockTimeMatch(match: RegExpMatchArray): ClockTimeUnit {
+function createClockTimeUnit(match: RegExpMatchArray): ClockTimeUnit {
 	const [, hours, minutes, seconds, fraction, frames, subframes] = match;
 
 	return [
@@ -43,5 +43,5 @@ export function matchClockTimeExpression(content: string): ClockTimeUnit | null 
 		return null;
 	}
 
-	return toClockTimeMatch(match);
+	return createClockTimeUnit(match);
 }
