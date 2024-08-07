@@ -87,13 +87,37 @@ export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
 }
 
 /**
- * Black-and-white broadcasts were originally streamed at 30fps (NTSC).
- * With the introduction of the color in 1953, fps was reduced to 29.97fps.
+ * Black-and-white broadcasts were originally streamed at 30fps (NTSC) ("SMPTE 30").
+ *
+ * This means that video timing, world clock time and frames were synchronized (see
+ * table).
+ *
+ * | frames   | seconds | timecode    |
+ * |----------|---------|-------------|
+ * | 1800			| 60.0		| 00:01:00:00	|
+ * | 107,892	| 3596.4	| 00:59:56:12	|
+ * | 108,000	| 3600.0	| 01:00:00:00	|
+ *
+ * With the introduction of the color in 1953, fps was reduced to 29.97fps by NBC
+ * (now NTSC) to accomodate the color information.
  *
  * This translates to have a lag of 0.03 frames between real world and video
- * timecodes: 01:00:00:00 (h:m:s:frames) of real time becomes 00:59:56;12 of video
- * (3.6 seconds). How do we flat the difference? We have to discard some frames
- * from the counting (not from the video, of course).
+ * timecodes. Over short periods of time, this is not an issue but, in an period
+ * of one hour of real time (01:00:00:00 (h:m:s:frames)), becomes 00:59:56;12 of
+ * video (SMPTE 30), which is a loss of (3.6 seconds).
+ *
+ * **Running 12 hours consecutively would cause the time code clocks to be 43 seconds
+ * off compared to real clocks.**
+ *
+ * While talking about captioning, captions can get easily desynchronized the
+ * longer they become active. That's why it is important to know if the video
+ * content was recorded  with a DF (drop frame) or NDF (non-drop frame).
+ *
+ * This means that we can have an SMPTE 30 content that runs on DF 29.97 fps (DFPS)
+ * and a SMPTE 30 content that runs on NDF 29.97 fps.
+ *
+ * When using a DF Timecode, the way to flat the different is discarding some frames
+ * from the counting (we can't, ofc, discard them from the video).
  *
  * First of all, 30fps is 0.1% faster than 29.97fps (30fps / 29.97fps ≈ 1,001).
  *
@@ -170,6 +194,7 @@ export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
  * = (hours * 54 + minutes - floor (minute / 10)) * 2.
  *
  * @see https://studylib.net/doc/18881551/an-explanantion-of-drop-frame-vs.-non-drop
+ * @see https://support.telestream.net/s/article/Time-code-for-23-976-frames-per-second-video
  *
  * ___
  *
