@@ -34,15 +34,22 @@ export function getMillisecondsByClockTime(
 		{ value: frames },
 		{ value: subframes },
 	] = match;
-	const finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
+	const hhmmssInSeconds = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
 
 	/**
 	 * Subframes are accounted later
 	 */
-	const framesInSeconds =
-		clampPositiveFrameRateValue(frames, timeDetails["ttp:frameRate"]) /
-		getEffectiveFrameRate(timeDetails);
-	const countedFrames = finalTime * timeDetails["ttp:frameRate"] + framesInSeconds;
+	const clampedFrames = clampPositiveFrameRateValue(frames, timeDetails["ttp:frameRate"]);
+
+	/**
+	 * `S = (countedFrames - droppedFrames + subFrames / subFrameRate) / effectiveFrameRate`
+	 *
+	 * where
+	 *
+	 * `countedFrames = (3600 * hours + 60 * minutes + seconds) * frameRate + frames`
+	 */
+
+	const countedFrames = hhmmssInSeconds * timeDetails["ttp:frameRate"] + clampedFrames;
 
 	const droppedFrames = getDropFrames(
 		timeDetails["ttp:dropMode"],
@@ -50,14 +57,14 @@ export function getMillisecondsByClockTime(
 		Math.max(0, Math.min(minutes, 59)),
 	);
 
-	const totalSubframes =
+	const subFrameRate =
 		clampPositiveFrameRateValue(subframes, timeDetails["ttp:subFrameRate"]) /
 		timeDetails["ttp:subFrameRate"];
 
-	const totalFrames = countedFrames - droppedFrames + totalSubframes;
+	const totalFrames = countedFrames - droppedFrames + subFrameRate;
 
-	const SMTPETimeBase = totalFrames / getEffectiveFrameRate(timeDetails);
-	return referenceBegin + SMTPETimeBase;
+	const timeBaseSeconds = totalFrames / getEffectiveFrameRate(timeDetails);
+	return referenceBegin + timeBaseSeconds * 1000;
 }
 
 /**
