@@ -2,8 +2,9 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { getCellScalarPixelConversion, isCellScalar } from "./Units/cell.js";
 import type { Length } from "./Units/length.js";
-import { createLength, toLength } from "./Units/length.js";
+import { toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
+import { createUnit } from "./Units/unit.js";
 import { memoizationFactory } from "./memoizationFactory";
 
 type StyleAttributeString = `tts:${string}`;
@@ -858,7 +859,7 @@ function fontSizeValueMapper(scope: Scope, value: string): string {
 		const horizonalGlyphSizeParsed = toLength(splittedValue[0]);
 		const verticalGlyphSizeParsed = toLength(splittedValue[1]);
 
-		if (horizonalGlyphSizeParsed.unit !== verticalGlyphSizeParsed.unit) {
+		if (horizonalGlyphSizeParsed.metric !== verticalGlyphSizeParsed.metric) {
 			return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
 		}
 	}
@@ -873,7 +874,7 @@ function fontSizeValueMapper(scope: Scope, value: string): string {
 			},
 		} = readScopeDocumentContext(scope);
 
-		return createLength(
+		return createUnit(
 			getCellScalarPixelConversion(exHeight, cellResolutionHeight, length),
 			"px",
 		).toString();
@@ -888,8 +889,8 @@ function fontSizeValueMapper(scope: Scope, value: string): string {
 
 function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
 	// Initial value is 1c
-	return createLength(
-		getCellScalarPixelConversion(dimension, cellResolutionDimension, createLength(1, "c")),
+	return createUnit(
+		getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c")),
 		"px",
 	);
 }
