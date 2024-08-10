@@ -43,7 +43,7 @@ export class Tokenizer {
 	constructor(private rawContent: string) {}
 
 	static isWhitespace(character: string) {
-		return character == " " || character == "\x09" || character == "\x0C";
+		return character == "\x20" || character == "\x09" || character == "\x0C";
 	}
 
 	static isNewLine(character: string) {
