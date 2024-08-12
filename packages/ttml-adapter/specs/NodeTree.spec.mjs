@@ -25,7 +25,7 @@ describe("NodeTree", () => {
 	});
 
 	it("should keep the last pushed element as current when another one is tracked", () => {
-		/** This is useful to track self-closing tags */
+		/** This is useful to track empty tags */
 
 		nodeTree.push({ content: 5 });
 		nodeTree.track({ content: 6 });

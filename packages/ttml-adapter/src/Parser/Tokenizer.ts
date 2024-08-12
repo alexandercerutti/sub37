@@ -145,6 +145,7 @@ enum TokenizerState {
 
 export class Tokenizer {
 	private sourceWindow: ReturnType<typeof createTextSlidingWindow>;
+	private lastTagName: string = "";
 
 	public constructor(rawContent: string) {
 		this.sourceWindow = createTextSlidingWindow(rawContent, 0);
@@ -166,7 +167,6 @@ export class Tokenizer {
 		let state: TokenizerState = TokenizerState.UNKNOWN_CONTENT;
 		let result = "";
 
-		let tagName: string;
 		let attributes: { [key: string]: string } = {};
 		let currentAttributeName = "";
 		let currentAttributeValue = "";
@@ -176,6 +176,17 @@ export class Tokenizer {
 
 			switch (state) {
 				case TokenizerState.UNKNOWN_CONTENT: {
+					if (char === ">") {
+						/**
+						 * We emitted a start token for an
+						 * empty tag, so we must match its end.
+						 */
+						this.sourceWindow.advance();
+						return Token.EndTag(this.lastTagName);
+					}
+
+					this.lastTagName = "";
+
 					if (char !== "<") {
 						if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 							this.sourceWindow.advance();
@@ -332,21 +343,24 @@ export class Tokenizer {
 
 				case TokenizerState.START_TAG: {
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
-						tagName = result + char;
+						this.lastTagName = result + char;
 
-						this.sourceWindow.advance();
-						return Token.Tag(tagName, attributes);
+						/**
+						 * No need to advance, we need to recognize ">" to emit
+						 * an end tag.
+						 */
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
-						tagName = result + char;
+						this.lastTagName = result + char;
 
 						this.sourceWindow.advance();
-						return Token.StartTag(tagName, attributes);
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
-						tagName = result;
+						this.lastTagName = result;
 						result = "";
 						state = TokenizerState.START_TAG_ANNOTATION;
 
@@ -367,10 +381,10 @@ export class Tokenizer {
 						this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER) ||
 						this.sourceWindow.cursor === this.sourceWindow.content.length
 					) {
-						tagName = result;
+						this.lastTagName = result;
 
 						this.sourceWindow.advance();
-						return Token.EndTag(tagName);
+						return Token.EndTag(this.lastTagName);
 					}
 
 					this.sourceWindow.advance();
@@ -390,8 +404,11 @@ export class Tokenizer {
 
 				case TokenizerState.START_TAG_ANNOTATION: {
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
-						this.sourceWindow.advance();
-						return Token.Tag(tagName, attributes);
+						/**
+						 * No need to advance, we need to recognize ">" to emit
+						 * an end tag.
+						 */
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
@@ -400,7 +417,7 @@ export class Tokenizer {
 						}
 
 						this.sourceWindow.advance();
-						return Token.StartTag(tagName, attributes);
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (isValidName(char)) {
@@ -439,15 +456,18 @@ export class Tokenizer {
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
 						attributes[result] = undefined;
 
-						this.sourceWindow.advance();
-						return Token.Tag(tagName, attributes);
+						/**
+						 * No need to advance, we need to recognize ">" to emit
+						 * an end tag.
+						 */
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
 						attributes[result] = undefined;
 
 						this.sourceWindow.advance();
-						return Token.StartTag(tagName, attributes);
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					/**
@@ -466,15 +486,18 @@ export class Tokenizer {
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
 						attributes[currentAttributeName] = result.trimEnd();
 
-						this.sourceWindow.advance();
-						return Token.Tag(tagName, attributes);
+						/**
+						 * No need to advance, we need to recognize ">" to emit
+						 * an end tag.
+						 */
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
 						attributes[currentAttributeName] = result.trimEnd();
 
 						this.sourceWindow.advance();
-						return Token.StartTag(tagName, attributes);
+						return Token.StartTag(this.lastTagName, attributes);
 					}
 
 					if (isQuotationMark(char) || this.sourceWindow.peekAdvance(QUOTATION_MARK_CHECKER)) {

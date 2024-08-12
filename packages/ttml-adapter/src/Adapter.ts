@@ -9,7 +9,6 @@ import {
 	isStyleBlockTuple,
 	isContentElementBlockTuple,
 	isCueBlockTuple,
-	isSelfClosingBlockTuple,
 } from "./Parser/ContentBlockReader.js";
 import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
@@ -127,10 +126,6 @@ export default class TTMLAdapter extends BaseAdapter {
 					const node = value[1];
 					cues.push(...parseCue(node, treeScope));
 
-					break;
-				}
-
-				case isSelfClosingBlockTuple(value): {
 					break;
 				}
 			}

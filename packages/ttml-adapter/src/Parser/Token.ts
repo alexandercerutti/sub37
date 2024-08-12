@@ -1,5 +1,4 @@
 export enum TokenType {
-	TAG /** Self-closed tag */,
 	CDATA,
 	COMMENT,
 	START_TAG,
@@ -22,10 +21,6 @@ export class Token {
 
 	public static String(content: string): Token {
 		return new Token(TokenType.STRING, content);
-	}
-
-	public static Tag(tagName: string, attributes: Record<string, string>): Token {
-		return new Token(TokenType.TAG, tagName, attributes);
 	}
 
 	public static StartTag(tagName: string, attributes: Record<string, string>): Token {

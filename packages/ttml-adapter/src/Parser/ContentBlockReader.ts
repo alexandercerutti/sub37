@@ -5,13 +5,12 @@ import { Tokenizer } from "./Tokenizer.js";
 import { RelationshipTree } from "./Tags/RelationshipTree.js";
 
 export enum BlockType {
-	DOCUMENT /**********/ = 0b0000001,
-	HEADER /************/ = 0b0000010,
-	LAYOUT /************/ = 0b0000100,
-	STYLE /*************/ = 0b0001000,
-	CUE /***************/ = 0b0010000,
-	CONTENT_ELEMENT /***/ = 0b0100000,
-	SELFCLOSING /*******/ = 0b1000000,
+	DOCUMENT /**********/ = 0b000001,
+	HEADER /************/ = 0b000010,
+	LAYOUT /************/ = 0b000100,
+	STYLE /*************/ = 0b001000,
+	CUE /***************/ = 0b010000,
+	CONTENT_ELEMENT /***/ = 0b100000,
 }
 
 enum NodeAttributes {
@@ -33,11 +32,6 @@ export type LayoutBlockTuple = [blockType: BlockType.LAYOUT, payload: NodeWithRe
 
 export type StyleBlockTuple = [blockType: BlockType.STYLE, payload: NodeWithRelationship<Token>];
 
-export type SelfClosingBlockTuple = [
-	BlockTuple: BlockType.SELFCLOSING,
-	payload: NodeWithRelationship<Token>,
-];
-
 export type ContentElementBlockTuple = [
 	blockType: BlockType.CONTENT_ELEMENT,
 	payload: NodeWithRelationship<Token>,
@@ -48,8 +42,7 @@ export type BlockTuple =
 	| CueBlockTuple
 	| LayoutBlockTuple
 	| StyleBlockTuple
-	| ContentElementBlockTuple
-	| SelfClosingBlockTuple;
+	| ContentElementBlockTuple;
 
 const BlockTupleMap = new Map<string, BlockTuple[0]>([
 	["tt", BlockType.DOCUMENT],
@@ -81,10 +74,6 @@ export function isContentElementBlockTuple(block: BlockTuple): block is ContentE
 	return block[0] === BlockType.CONTENT_ELEMENT;
 }
 
-export function isSelfClosingBlockTuple(block: BlockTuple): block is SelfClosingBlockTuple {
-	return block[0] === BlockType.SELFCLOSING;
-}
-
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 
 interface NodeWithAttributes {
@@ -99,44 +88,6 @@ export function* getNextContentBlock(tokenizer: Tokenizer): Iterator<BlockTuple,
 
 	while ((token = tokenizer.nextToken())) {
 		switch (token.type) {
-			case TokenType.TAG: {
-				if (!nodeTree.currentNode || isNodeIgnored(nodeTree.currentNode.content)) {
-					continue;
-				}
-
-				const relDescriptor = relationshipTree.getDirectionDescriptor(token.content);
-
-				if (!relDescriptor) {
-					break;
-				}
-
-				if (isBlockClassElement(token) && isNodePreEmittable(nodeTree.currentNode.content)) {
-					setNodePreEmitted(nodeTree.currentNode.content);
-
-					/**
-					 * Emitting the current node before everything else in this round. We might want to
-					 * check if this is a "div" or a "body" and act in a different way for other elements,
-					 * if we'll introduce some more PreEmittable nodes.
-					 */
-					yield [BlockType.CONTENT_ELEMENT, nodeTree.currentNode];
-				}
-
-				let trackedNode: NodeWithRelationship<Token & NodeWithAttributes> = nodeTree.track(
-					createNodeWithAttributes(token, NodeAttributes.NO_ATTRS),
-				);
-
-				if (
-					isTokenAllowedToGroupTrack(token) &&
-					nodeTree.currentNode &&
-					!isNodeGroupTracked(nodeTree.currentNode.content)
-				) {
-					yield [BlockType.SELFCLOSING, trackedNode];
-					continue;
-				}
-
-				break;
-			}
-
 			case TokenType.STRING: {
 				if (!nodeTree.currentNode) {
 					continue;

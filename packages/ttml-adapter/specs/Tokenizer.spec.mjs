@@ -80,7 +80,7 @@ describe("Tokenizer", () => {
 			expect(result?.attributes).toEqual({});
 		});
 
-		it("should return a self-closing tag with all of its attributes", () => {
+		it("should return an empty tag with all of its attributes", () => {
 			const content = `
 				<style
 					xml:id="s1"
@@ -95,7 +95,7 @@ describe("Tokenizer", () => {
 
 			expect(result).not.toBeNull();
 			expect(result).toBeInstanceOf(Token);
-			expect(result?.type).toBe(TokenType.TAG);
+			expect(result?.type).toBe(TokenType.START_TAG);
 			expect(result?.content).toBe("style");
 			expect(result?.attributes).toEqual({
 				"xml:id": "s1",
@@ -258,8 +258,8 @@ describe("Tokenizer", () => {
 							<region tts:extent="540px 100px" tts:origin="50px 339px"/>
 								Some Content
 							</p>
-						<div/>
-					<body/>
+						</div>
+					</body>
 				</tt>
 			`;
 
@@ -272,7 +272,7 @@ describe("Tokenizer", () => {
 				tokens.push(token);
 			}
 
-			const [tt, body, div, p, region, stringToken] = tokens;
+			const [_tt, _body, _div, _p, _region, _regionEnd, stringToken] = tokens;
 
 			expect(stringToken).toMatchObject({
 				content: "Some Content",
