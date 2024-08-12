@@ -18,8 +18,6 @@ enum NodeAttributes {
 	NO_ATTRS /********/ = 0b000000,
 	IGNORED /*********/ = 0b000001,
 	GROUP_TRACKED /***/ = 0b000010,
-	PRE_EMITTABLE /***/ = 0b000100,
-	PRE_EMITTED /*****/ = 0b001000,
 }
 
 interface NodeWithAttributes {
@@ -36,27 +34,6 @@ function isNodeGroupTracked(
 	node: NodeWithAttributes,
 ): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.GROUP_TRACKED } {
 	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.GROUP_TRACKED);
-}
-
-function isNodePreEmitted(
-	node: NodeWithAttributes,
-): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.PRE_EMITTED } {
-	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTED);
-}
-
-function isNodePreEmittable(
-	node: NodeWithAttributes,
-): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.PRE_EMITTABLE } {
-	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTABLE);
-}
-
-function setNodePreEmitted(node: NodeWithAttributes): void {
-	if (!(node[nodeAttributesSymbol] & NodeAttributes.PRE_EMITTABLE)) {
-		return;
-	}
-
-	node[nodeAttributesSymbol] =
-		(node[nodeAttributesSymbol] & ~NodeAttributes.PRE_EMITTABLE) | NodeAttributes.PRE_EMITTED;
 }
 
 function createNodeWithAttributes<NodeType extends object>(
@@ -161,7 +138,8 @@ export default class TTMLAdapter extends BaseAdapter {
 							throw new Error("Malformed TTML track: multiple <tt> were found.");
 						}
 
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTED));
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+
 						treeScope.addContext(
 							createDocumentContext(nodeTree.currentNode.content.attributes || {}),
 						);
@@ -169,47 +147,30 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.content === "div" || token.content === "body") {
-						if (isNodePreEmittable(nodeTree.currentNode.content)) {
-							// Pre emitting the previous one before adding another one
-							setNodePreEmitted(nodeTree.currentNode.content);
-							// yield[(BlockType.CONTENT_ELEMENT, nodeTree.currentNode)];
-
-							if (
-								treeScope.parent &&
-								nodeTree.currentNode.parent.content.content !== "div" &&
-								nodeTree.currentNode.content.content === "div"
-							) {
-								treeScope = treeScope.parent;
-							}
-
-							const {
-								children,
-								content: { attributes },
-							} = nodeTree.currentNode;
-
-							treeScope = createScope(
-								treeScope,
-								createRegionContext(findInlineRegionInChildren(attributes["xml:id"], children)),
-							);
-
-							break;
+						if (
+							treeScope.parent &&
+							nodeTree.currentNode.parent.content.content !== "div" &&
+							nodeTree.currentNode.content.content === "div"
+						) {
+							treeScope = treeScope.parent;
 						}
 
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.PRE_EMITTABLE));
+						const {
+							children,
+							content: { attributes },
+						} = nodeTree.currentNode;
+
+						treeScope = createScope(
+							treeScope,
+							createRegionContext(findInlineRegionInChildren(attributes["xml:id"], children)),
+						);
+
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 
 						continue;
 					}
 
-					if (isBlockClassElement(token) && isNodePreEmittable(nodeTree.currentNode.content)) {
-						setNodePreEmitted(nodeTree.currentNode.content);
-
-						/**
-						 * Emitting the current node before everything else. We might want to check if
-						 * this is a "div" or a "body" and act in a different way for other kind of elements
-						 * if we'll introduce some more preEmittable nodes.
-						 */
-						// yield[(BlockType.CONTENT_ELEMENT, nodeTree.currentNode)];
-
+					if (isBlockClassElement(token)) {
 						if (
 							treeScope.parent &&
 							nodeTree.currentNode.parent.content.content !== "div" &&
@@ -252,10 +213,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					if (
-						isNodeIgnored(nodeTree.currentNode.content) ||
-						isNodePreEmitted(nodeTree.currentNode.content)
-					) {
+					if (isNodeIgnored(nodeTree.currentNode.content)) {
 						nodeTree.pop();
 						break;
 					}
