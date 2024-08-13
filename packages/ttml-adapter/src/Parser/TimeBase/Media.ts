@@ -126,7 +126,6 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	if (metric === "ms") {
-		// How is fraction used here? Should it be considered as a millisecond?
 		return referenceBegin + timeCount;
 	}
 
