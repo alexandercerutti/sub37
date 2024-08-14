@@ -68,35 +68,32 @@ export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
  * "
  *
  * However, omitting the "t" metric leaves us to the subset
- * ("h" | "m" | "s" | "ms" | "f"). Since only one of them
- * can be used in the same expression, using the first expression
- * is not exactly possible as, if we take "10s" as an example,
- * we would have:
+ * ("h" | "m" | "s" | "ms" | "f"). Only one of them can be
+ * used in the same expression, which leaves us with "zeroing"
+ * the missing fields. If we take "10s" as an example, we
+ * would have:
  *
  * ```
- * 		M = referenceBegin + 3600 * 0 + 60 * 0 + 10 + ((0 + (0 / subFrameRate)) / effectiveFrameRate)
+ * 		M = referenceBegin + (3600 * 0) + (60 * 0) + 10 + ((0 + (0 / subFrameRate)) / effectiveFrameRate)
  * ```
  *
- * - This is surely valid for the subset ("h" | "m" | "s").
- * - Using "ms" as a metric is a straight-forward operation as we
- * 		aim to get milliseconds;
- * - Using "f" as a metric requires us to look at the final part
- * 		of the formula above.
- *
- * Same TTML zone also specifies such:
+ * Same TTML zone also specifies:
  *
  * "furthermore, [...] if the time expression takes the form of
  * an offset-time expression, then the fraction component, if
  * present, is added to the time-count component to form a
  * real-valued time count component according to the specified
- * offset metric"
+ * offset metric".
  *
- * However, what's not very clear (yet) is which metric, outside
- * "h" | "m" | "s" | "f", allow having a fraction... maybe the current
- * implementation is not very correct and will require an adjustment.
- * How should it be considered in case of milliseconds?
- * Is correct to use fraction as a fraction of seconds in case of "h" and
- * "m"?
+ * Other than 'f', for which its fractional part is not subframes,
+ * and it is not actually clear what a fractional part of a frame
+ * could ever be, the fractional part directly belongs to the
+ * metric value itself.
+ *
+ * ```
+ * 2.5h => 3600 * 2.5 => 3600 * 2 + 60 * 30
+ * 2.5m => [...] 60 * 2.5 => [...] 60 * 2 + 30
+ * ```
  *
  * @param match
  * @param timeDetails

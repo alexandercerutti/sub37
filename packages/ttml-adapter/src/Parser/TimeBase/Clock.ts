@@ -90,16 +90,11 @@ export function getMillisecondsByOffsetTime(
 		 */
 
 		throw new Error(
-			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics do not apply. Received "${timeCount}${metric}".`,
+			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics does not apply. Received "${timeCount}${metric}".`,
 		);
 	}
 
 	if (metric === "ms") {
-		/**
-		 * Is ms allowed in this case? Can we consider it as part of
-		 * the seconds? We actually want to obtain milliseconds, so
-		 * no need to convert, I guess?
-		 */
 		return timeCount;
 	}
 
