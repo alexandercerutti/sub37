@@ -32,7 +32,7 @@ function createClockTimeUnit(match: RegExpMatchArray): ClockTimeUnit {
 		createUnit(parseInt(minutes) || 0, "minutes"),
 		createUnit(parseFloat(`${seconds || ""}.${fraction}`) || 0, "seconds"),
 		createUnit(parseInt(frames) || undefined, "frames"),
-		createUnit(parseFloat(`0.${subframes}`) || undefined, "subframes"),
+		createUnit(parseInt(subframes) || undefined, "subframes"),
 	];
 }
 
