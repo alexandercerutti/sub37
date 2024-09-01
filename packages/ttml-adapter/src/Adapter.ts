@@ -10,7 +10,8 @@ import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
-import { RelationshipTree } from "./Parser/Tags/RelationshipTree.js";
+import { createVisitor } from "./Parser/Tags/Representation/Visitor.js";
+import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 
@@ -88,7 +89,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext({}));
 
 		const nodeTree = new NodeTree<Token & NodeWithAttributes>();
-		const relationshipTree = new RelationshipTree();
+		const representationVisitor = createVisitor(RepresentationTree);
 		const tokenizer = new Tokenizer(rawContent);
 
 		let token: Token = null;
@@ -113,9 +114,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					const relDescriptor = relationshipTree.getDirectionDescriptor(token.content);
+					const destinationMatch = representationVisitor.match(token.content);
 
-					if (!relDescriptor) {
+					if (!destinationMatch) {
 						/**
 						 * Even if token does not respect it parent relatioship,
 						 * we still add it to the queue to mark its end later.
@@ -128,7 +129,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					relDescriptor.navigate();
+					representationVisitor.navigate(destinationMatch);
 
 					if (token.content === "tt") {
 						if (readScopeDocumentContext(treeScope)) {
@@ -218,15 +219,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					const relDescriptor = relationshipTree.getDirectionDescriptor(
-						nodeTree.currentNode.parent.content.content,
-					);
-
-					if (!relDescriptor) {
-						break;
-					}
-
-					relDescriptor.navigate();
+					representationVisitor.back();
 
 					if (
 						isTokenAllowedToGroupTrack(token) &&
