@@ -5,11 +5,15 @@ import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContext } from "./Parser/Scope/StyleContext.js";
 import type { RegionContextState } from "./Parser/Scope/RegionContext.js";
-import { createRegionContext, findInlineRegionInChildren } from "./Parser/Scope/RegionContext.js";
+import { createRegionContext, readScopeRegionContext } from "./Parser/Scope/RegionContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Parser/Scope/TemporalActiveContext.js";
 import { createVisitor } from "./Parser/Tags/Representation/Visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 
@@ -287,6 +291,21 @@ export default class TTMLAdapter extends BaseAdapter {
 								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 								continue;
+							}
+						} else if (token.attributes["region"]) {
+							const regionContext = readScopeRegionContext(treeScope);
+
+							if (
+								regionContext.regions.some((region) => region.id === token.attributes["region"])
+							) {
+								treeScope = createScope(treeScope, createTemporalActiveContext());
+
+								const tac = readScopeTemporalActiveContext(treeScope);
+
+								/**
+								 * @TODO add region here to TAC
+								 * @TODO extract region styles and add them to TAC
+								 */
 							}
 						}
 					}
