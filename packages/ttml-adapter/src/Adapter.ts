@@ -148,13 +148,13 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.content === "div" || token.content === "body") {
-						if (
-							treeScope.parent &&
-							nodeTree.currentNode.parent.content.content !== "div" &&
-							nodeTree.currentNode.content.content === "div"
-						) {
-							treeScope = treeScope.parent;
-						}
+						// if (
+						// 	treeScope.parent &&
+						// 	nodeTree.currentNode.parent.content.content !== "div" &&
+						// 	nodeTree.currentNode.content.content === "div"
+						// ) {
+						// 	treeScope = treeScope.parent;
+						// }
 
 						const {
 							children,
