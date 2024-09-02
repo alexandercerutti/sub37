@@ -206,6 +206,25 @@ export default class TTMLAdapter extends BaseAdapter {
 							const regionIdentifier: string | undefined = token.attributes["region"];
 
 							if (regionIdentifier && !temporalActiveContext.regions.has(regionIdentifier)) {
+								/**
+								 * @example
+								 *
+								 * ```
+								 * <tt>
+								 * 	<head>
+								 * 		...
+								 * 	</head>
+								 * 	<body region="r1">
+								 * 		<div>
+								 * 			<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
+								 * 			<!-- Same would be valid with a different region on a span inside the `p` -->
+								 * 			<p region="r2">...</p>
+								 * 		</div>
+								 * 	</body>
+								 * </tt>
+								 * ```
+								 */
+
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 								continue;
 							}
