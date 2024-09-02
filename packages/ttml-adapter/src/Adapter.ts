@@ -62,11 +62,18 @@ function isTokenAllowedToGroupTrack(token: Token): boolean {
  * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#element-vocab-group-table
  */
 
-const BLOCK_CLASS = ["div", "p"] as const;
-type BLOCK_CLASS = typeof BLOCK_CLASS;
+const BLOCK_CLASS_ELEMENT = ["div", "p"] as const;
+type BLOCK_CLASS_ELEMENT = typeof BLOCK_CLASS_ELEMENT;
 
-function isBlockClassElement(token: Token): boolean {
-	return BLOCK_CLASS.includes(token.content as BLOCK_CLASS[number]);
+function isBlockClassElement(content: string): content is BLOCK_CLASS_ELEMENT[number] {
+	return BLOCK_CLASS_ELEMENT.includes(content as BLOCK_CLASS_ELEMENT[number]);
+}
+
+const INLINE_CLASS_ELEMENT = ["span", "br"] as const;
+type INLINE_CLASS_ELEMENT = typeof INLINE_CLASS_ELEMENT;
+
+function isInlineClassElement(content: string): content is INLINE_CLASS_ELEMENT[number] {
+	return INLINE_CLASS_ELEMENT.includes(content as INLINE_CLASS_ELEMENT[number]);
 }
 
 export default class TTMLAdapter extends BaseAdapter {
