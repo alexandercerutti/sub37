@@ -147,6 +147,66 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					/**
+					 * Checking if there's a region collision between a parent and a children.
+					 * Regions will be evaluated when its end tag is received.
+					 */
+
+					if (isBlockClassElement(nodeTree.currentNode.content.content)) {
+						/**
+						 * body > div > region
+						 * div > p > region
+						 * p > span > region
+						 */
+
+						/** Region attribute could be in any of the parents */
+						const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
+
+						/**
+						 * [associate region] procedure at 11.3.1.3, defines that for
+						 * any [out-of-line region](https://w3c.github.io/ttml2/#terms-out-of-line-region),
+						 * a content element should be associated to the region by the first satisfied
+						 * condition among these:
+						 *
+						 *	- if the element specifies a region attribute [...] then the element is associated
+						 *			with the region referenced by that attribute;
+						 *	- if some ancestor of that element specifies a region attribute [...], then the
+						 *			element is associated with the region referenced by the most immediate ancestor
+						 *			that specifies this attribute;
+						 *	- if the element contains a descendant element that specifies a region attribute [...],
+						 *			then the element is associated with the region referenced by that attribute;
+						 *	- if a default region was implied (due to the absence of any region element),
+						 *			then the element is associated with the default region;
+						 * 	-	(otherwise) the element is not associated with any region.
+						 *
+						 * So some notes after reading this:
+						 *
+						 *  - If the third point is not applied, if e.g. we had a deep span with a region attribute, we
+						 * 			would end up with it to get pruned because parent wouldn't have a region and would
+						 * 			therefore get pruned itself.
+						 *  - As the [associate region] is executed for any out-of-line region, if any out-of-line
+						 *			region is defined, associating a content element to the default region is not
+						 *			possible. Firth rule will apply. Whenever fifth rule will apply, a content element
+						 *			is not associated with any region and then the element ignored / pruned.
+						 *
+						 * However, [associate region] is executed in a context of generating an ISD
+						 * (Intermediate Synchronic Document)
+						 * which is a thing we do not strictly do. As long as we obtain the same result of it,
+						 * we can skip parts and still be defined as compliant.
+						 *
+						 * Region completion will happen in the END_TAG, if not ignored.
+						 */
+
+						if (temporalActiveContext.regions.size) {
+							const regionIdentifier: string | undefined = token.attributes["region"];
+
+							if (regionIdentifier && !temporalActiveContext.regions.has(regionIdentifier)) {
+								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+								continue;
+							}
+						}
+					}
+
 					if (token.content === "div" || token.content === "body") {
 						// if (
 						// 	treeScope.parent &&
