@@ -152,13 +152,11 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * Regions will be evaluated when its end tag is received.
 					 */
 
-					if (isBlockClassElement(nodeTree.currentNode.content.content)) {
-						/**
-						 * body > div > region
-						 * div > p > region
-						 * p > span > region
-						 */
-
+					if (
+						isBlockClassElement(nodeTree.currentNode.content.content) ||
+						(isInlineClassElement(nodeTree.currentNode.content.content) &&
+							nodeTree.currentNode.content.content !== "br")
+					) {
 						/** Region attribute could be in any of the parents */
 						const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
 
