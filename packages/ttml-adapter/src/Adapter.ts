@@ -286,6 +286,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+								continue;
 							}
 						}
 					}
