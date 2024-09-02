@@ -49,6 +49,18 @@ function createNodeWithAttributes<NodeType extends object>(
 	});
 }
 
+function appendNodeAttributes<NodeType extends object>(
+	node: NodeType & NodeWithAttributes,
+	attributes: NodeAttributes,
+): NodeType & NodeWithAttributes {
+	if (typeof node[nodeAttributesSymbol] === "undefined") {
+		throw new Error("Cannot add attributes to node that has none.");
+	}
+
+	node[nodeAttributesSymbol] ^= attributes;
+	return node;
+}
+
 const GROUP_TRACKING_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
 type GROUP_TRACKING_ALLOWED_ELEMENTS = typeof GROUP_TRACKING_ALLOWED_ELEMENTS;
 
@@ -74,6 +86,13 @@ type INLINE_CLASS_ELEMENT = typeof INLINE_CLASS_ELEMENT;
 
 function isInlineClassElement(content: string): content is INLINE_CLASS_ELEMENT[number] {
 	return INLINE_CLASS_ELEMENT.includes(content as INLINE_CLASS_ELEMENT[number]);
+}
+
+const LAYOUT_CLASS_ELEMENT = ["region"] as const;
+type LAYOUT_CLASS_ELEMENT = typeof LAYOUT_CLASS_ELEMENT;
+
+function isLayoutClassElement(content: string): content is LAYOUT_CLASS_ELEMENT[number] {
+	return LAYOUT_CLASS_ELEMENT.includes(content as LAYOUT_CLASS_ELEMENT[number]);
 }
 
 export default class TTMLAdapter extends BaseAdapter {
@@ -227,6 +246,46 @@ export default class TTMLAdapter extends BaseAdapter {
 
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 								continue;
+							}
+
+							/**
+							 * If there's any [temporally active region], we have to
+							 * ignore the parent element if we find an inline region
+							 * element. The first step of _[construct intermediate document]_
+							 * at _11.3.1.3 Intermediate Synchronic Document Construction_,
+							 * defines that inline regions should be first resolved and
+							 * converted to normal regions.
+							 */
+
+							if (isLayoutClassElement(token.content)) {
+								/**
+								 * @example
+								 *
+								 * |--------------------------------|--------------------------------------------------------------|
+								 * | Before [process inline region]	|	 After [process inline region] 															 |
+								 * |--------------------------------|--------------------------------------------------------------|
+								 * | ```xml													| ```xml																											 |
+								 * | 	<tt>													|		<tt>																											 |
+								 * | 		<head>											|			<head>																									 |
+								 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
+								 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
+								 * | 		</head>											|			</head>															<!--      |   -->		 |
+								 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
+								 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
+								 * | 				<region ... />					|																					<!--   >--|   -->		 |
+								 * | 				<p>...</p>							|					<p>...</p>																					 |
+								 * | 			</div>										|				</div>																								 |
+								 * | 		</body>											|			</body>																									 |
+								 * | 	</tt>													|		</tt>																											 |
+								 * | ```														| ```																													 |
+								 * |________________________________|______________________________________________________________|
+								 *
+								 * Therefore the div will end up being pruned, because of a different region.
+								 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+								 */
+
+								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
+								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 							}
 						}
 					}
