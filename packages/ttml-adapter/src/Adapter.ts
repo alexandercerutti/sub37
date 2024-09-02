@@ -207,52 +207,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					if (token.content === "div" || token.content === "body") {
-						// if (
-						// 	treeScope.parent &&
-						// 	nodeTree.currentNode.parent.content.content !== "div" &&
-						// 	nodeTree.currentNode.content.content === "div"
-						// ) {
-						// 	treeScope = treeScope.parent;
-						// }
-
-						const {
-							children,
-							content: { attributes },
-						} = nodeTree.currentNode;
-
-						treeScope = createScope(
-							treeScope,
-							createRegionContext(findInlineRegionInChildren(attributes["xml:id"], children)),
-						);
-
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
-
-						continue;
-					}
-
-					if (isBlockClassElement(token)) {
-						if (
-							treeScope.parent &&
-							nodeTree.currentNode.parent.content.content !== "div" &&
-							nodeTree.currentNode.content.content === "div"
-						) {
-							treeScope = treeScope.parent;
-						}
-
-						const {
-							children,
-							content: { attributes },
-						} = nodeTree.currentNode;
-
-						treeScope = createScope(
-							treeScope,
-							createRegionContext(findInlineRegionInChildren(attributes["xml:id"], children)),
-						);
-
-						break;
-					}
-
 					let nextAttributes: NodeAttributes;
 
 					if (isTokenAllowedToGroupTrack(token)) {
