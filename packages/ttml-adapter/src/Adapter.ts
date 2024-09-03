@@ -314,6 +314,53 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					representationVisitor.back();
 
+					const parentNode = nodeTree.currentNode.parent.content.content;
+
+					/**
+					 * Processing inline regions to be saved
+					 */
+
+					if (
+						isBlockClassElement(parentNode) ||
+						(isInlineClassElement(parentNode) && parentNode !== "br")
+					) {
+						if (token.content === "region") {
+							/**
+							 * if the `[attributes]` information item property of R does not include
+							 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
+							 * generated value _ID_ that is unique within the scope of the TTML
+							 * document instance;
+							 *
+							 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;
+							 */
+
+							const regionId =
+								nodeTree.currentNode.content.attributes["xml:id"] ||
+								nodeTree.currentNode.parent.content.attributes["xml:id"];
+
+							const { children } = nodeTree.currentNode;
+
+							const inlineRegion: RegionContextState = {
+								attributes: Object.create(token.attributes, {
+									"xml:id": {
+										value: regionId,
+									},
+								}),
+								children,
+							};
+
+							treeScope = createScope(treeScope, createTemporalActiveContext());
+
+							const tac = readScopeTemporalActiveContext(treeScope);
+
+							/**
+							 * @TODO add region here to TAC
+							 * @TODO extract region styles and add them to TAC
+							 * @TODO ignore time attributes
+							 */
+						}
+					}
+
 					const currentTag = nodeTree.currentNode.content.content;
 					const currentElement = nodeTree.pop();
 
