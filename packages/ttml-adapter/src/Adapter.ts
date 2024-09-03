@@ -289,6 +289,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								/**
 								 * @TODO add region here to TAC
 								 * @TODO extract region styles and add them to TAC
+								 * @TODO process the time attributes
 								 */
 							}
 						}
@@ -358,10 +359,18 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * @TODO extract region styles and add them to TAC
 							 * @TODO ignore time attributes
 							 */
+
+							break;
 						}
 					}
 
 					const currentTag = nodeTree.currentNode.content.content;
+
+					/**
+					 * Processing [out-of-line region]
+					 * @see https://w3c.github.io/ttml2/#terms-out-of-line-region
+					 */
+
 					const currentElement = nodeTree.pop();
 
 					if (currentTag === "layout") {
@@ -381,6 +390,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						break;
 					}
+
+					/**
+					 * Processing out-of-line styles
+					 */
 
 					if (currentTag === "styling") {
 						const { children } = currentElement;
@@ -404,9 +417,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						break;
 					}
-
-					nodeTree.pop();
-					break;
 				}
 			}
 		}
