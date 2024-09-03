@@ -20,9 +20,8 @@ import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationT
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 
 enum NodeAttributes {
-	NO_ATTRS /********/ = 0b000000,
-	IGNORED /*********/ = 0b000001,
-	GROUP_TRACKED /***/ = 0b000010,
+	NO_ATTRS /***/ = 0b000,
+	IGNORED /****/ = 0b001,
 }
 
 interface NodeWithAttributes {
@@ -33,12 +32,6 @@ function isNodeIgnored(
 	node: NodeWithAttributes,
 ): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.IGNORED } {
 	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.IGNORED);
-}
-
-function isNodeGroupTracked(
-	node: NodeWithAttributes,
-): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.GROUP_TRACKED } {
-	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.GROUP_TRACKED);
 }
 
 function createNodeWithAttributes<NodeType extends object>(
@@ -63,15 +56,6 @@ function appendNodeAttributes<NodeType extends object>(
 
 	node[nodeAttributesSymbol] ^= attributes;
 	return node;
-}
-
-const GROUP_TRACKING_ALLOWED_ELEMENTS = ["p", "span", "layout", "styling"] as const;
-type GROUP_TRACKING_ALLOWED_ELEMENTS = typeof GROUP_TRACKING_ALLOWED_ELEMENTS;
-
-function isTokenAllowedToGroupTrack(token: Token): boolean {
-	return GROUP_TRACKING_ALLOWED_ELEMENTS.includes(
-		token.content as GROUP_TRACKING_ALLOWED_ELEMENTS[number],
-	);
 }
 
 /**
@@ -135,7 +119,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					nodeTree.track(createNodeWithAttributes(token, NodeAttributes.GROUP_TRACKED));
+					nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 					break;
 				}
 
@@ -310,15 +294,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					let nextAttributes: NodeAttributes;
-
-					if (isTokenAllowedToGroupTrack(token)) {
-						nextAttributes |= NodeAttributes.GROUP_TRACKED;
-					} else {
-						nextAttributes |= NodeAttributes.NO_ATTRS;
-					}
-
-					nodeTree.push(createNodeWithAttributes(token, nextAttributes));
+					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 					break;
 				}
 
@@ -338,56 +314,46 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					representationVisitor.back();
 
-					if (
-						isTokenAllowedToGroupTrack(token) &&
-						!isNodeGroupTracked(nodeTree.currentNode.parent.content)
-					) {
-						const currentTag = nodeTree.currentNode.content.content;
-						const currentElement = nodeTree.pop();
+					const currentTag = nodeTree.currentNode.content.content;
+					const currentElement = nodeTree.pop();
 
-						if (currentTag === "layout") {
-							const { children } = currentElement;
+					if (currentTag === "layout") {
+						const { children } = currentElement;
 
-							const localRegions: RegionContextState[] = [];
+						const localRegions: RegionContextState[] = [];
 
-							for (const { content: regionToken, children: regionChildren } of children) {
-								if (regionToken.content !== "region") {
-									continue;
-								}
-
-								localRegions.push({ attributes: regionToken.attributes, children: regionChildren });
+						for (const { content: regionToken, children: regionChildren } of children) {
+							if (regionToken.content !== "region") {
+								continue;
 							}
 
-							treeScope.addContext(createRegionContext(localRegions));
-
-							break;
+							localRegions.push({ attributes: regionToken.attributes, children: regionChildren });
 						}
 
-						if (currentTag === "styling") {
-							const { children } = currentElement;
+						treeScope.addContext(createRegionContext(localRegions));
 
-							const styleTags = children.reduce<Record<string, string>>(
-								(acc, { content: token }) => {
-									if (token.content !== "style") {
-										return acc;
-									}
+						break;
+					}
 
-									return Object.assign(acc, token.attributes);
-								},
-								{},
-							);
+					if (currentTag === "styling") {
+						const { children } = currentElement;
 
-							treeScope.addContext(createStyleContext(styleTags));
+						const styleTags = children.reduce<Record<string, string>>((acc, { content: token }) => {
+							if (token.content !== "style") {
+								return acc;
+							}
 
-							break;
-						}
+							return Object.assign(acc, token.attributes);
+						}, {});
 
-						if (currentTag === "p" || currentTag === "span") {
-							const node = currentElement;
-							cues.push(...parseCue(node, treeScope));
+						treeScope.addContext(createStyleContext(styleTags));
 
-							break;
-						}
+						break;
+					}
+
+					if (currentTag === "p" || currentTag === "span") {
+						const node = currentElement;
+						cues.push(...parseCue(node, treeScope));
 
 						break;
 					}
