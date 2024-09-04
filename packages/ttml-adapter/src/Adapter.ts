@@ -3,9 +3,12 @@ import { MissingContentError } from "./MissingContentError.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import { createScope, type Scope } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
-import { createStyleContext } from "./Parser/Scope/StyleContext.js";
-import type { RegionContextState } from "./Parser/Scope/RegionContext.js";
-import { createRegionContext, readScopeRegionContext } from "./Parser/Scope/RegionContext.js";
+import { createStyleContainerContext } from "./Parser/Scope/StyleContainerContext.js";
+import type { RegionContainerContextState } from "./Parser/Scope/RegionContainerContext.js";
+import {
+	createRegionContainerContext,
+	readScopeRegionContext,
+} from "./Parser/Scope/RegionContainerContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 import { Token, TokenType } from "./Parser/Token.js";
@@ -100,7 +103,11 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let cues: CueNode[] = [];
-		let treeScope: Scope = createScope(undefined, createTimeContext({}), createStyleContext({}));
+		let treeScope: Scope = createScope(
+			undefined,
+			createTimeContext({}),
+			createStyleContainerContext({}),
+		);
 
 		const nodeTree = new NodeTree<Token & NodeWithAttributes>();
 		const representationVisitor = createVisitor(RepresentationTree);
@@ -341,7 +348,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 							const { children } = nodeTree.currentNode;
 
-							const inlineRegion: RegionContextState = {
+							const inlineRegion: RegionContainerContextState = {
 								attributes: Object.create(token.attributes, {
 									"xml:id": {
 										value: regionId,
@@ -376,7 +383,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (currentTag === "layout") {
 						const { children } = currentElement;
 
-						const localRegions: RegionContextState[] = [];
+						const localRegions: RegionContainerContextState[] = [];
 
 						for (const { content: regionToken, children: regionChildren } of children) {
 							if (regionToken.content !== "region") {
@@ -386,7 +393,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							localRegions.push({ attributes: regionToken.attributes, children: regionChildren });
 						}
 
-						treeScope.addContext(createRegionContext(localRegions));
+						treeScope.addContext(createRegionContainerContext(localRegions));
 
 						break;
 					}
@@ -406,7 +413,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							return Object.assign(acc, token.attributes);
 						}, {});
 
-						treeScope.addContext(createStyleContext(styleTags));
+						treeScope.addContext(createStyleContainerContext(styleTags));
 
 						break;
 					}

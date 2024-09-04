@@ -10,20 +10,20 @@ const regionParserGetterSymbol = Symbol("region.parser");
 
 type RegionParser = ReturnType<typeof createRegionParser>;
 
-export interface RegionContextState {
+export interface RegionContainerContextState {
 	attributes: Record<string, string>;
 	children: NodeWithRelationship<Token>[];
 }
 
-interface RegionContext extends Context<RegionContext> {
+interface RegionContainerContext extends Context<RegionContainerContext> {
 	regions: Region[];
 	getRegionsById(id: string | undefined): TTMLRegion[];
 	[regionParserGetterSymbol]: RegionParser;
 }
 
-export function createRegionContext(
-	contextState: RegionContextState[],
-): ContextFactory<RegionContext> {
+export function createRegionContainerContext(
+	contextState: RegionContainerContextState[],
+): ContextFactory<RegionContainerContext> {
 	return function (scope: Scope) {
 		if (!contextState.length) {
 			return null;
@@ -34,7 +34,7 @@ export function createRegionContext(
 		return {
 			parent: undefined,
 			identifier: regionContextSymbol,
-			mergeWith(context: RegionContext) {
+			mergeWith(context: RegionContainerContext) {
 				// Processing the actual regions first
 				if (!regionParser.size) {
 					for (let i = 0; i < contextState.length; i++) {
@@ -74,14 +74,14 @@ export function createRegionContext(
 	};
 }
 
-export function readScopeRegionContext(scope: Scope): RegionContext | undefined {
+export function readScopeRegionContext(scope: Scope): RegionContainerContext | undefined {
 	let context: Context | undefined;
 
 	if (!(context = scope.getContextByIdentifier(regionContextSymbol))) {
 		return undefined;
 	}
 
-	return context as RegionContext;
+	return context as RegionContainerContext;
 }
 
 /**
@@ -100,13 +100,13 @@ export function readScopeRegionContext(scope: Scope): RegionContext | undefined 
  *
  * @param parentId parent's xml:id
  * @param childrenTokens parent's children
- * @returns {[RegionContextState]} A tuple to be given to the region context
+ * @returns {[RegionContainerContextState]} A tuple to be given to the region context
  */
 
 export function findInlineRegionInChildren(
 	parentId: string,
 	childrenTokens: NodeWithRelationship<Token>[],
-): [RegionContextState] | undefined {
+): [RegionContainerContextState] | undefined {
 	for (let i = 0; i < childrenTokens.length; i++) {
 		const { content: token, children } = childrenTokens[i];
 

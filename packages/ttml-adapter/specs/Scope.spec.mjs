@@ -1,7 +1,10 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
-import { createStyleContext, readScopeStyleContext } from "../lib/Parser/Scope/StyleContext.js";
+import {
+	createStyleContainerContext,
+	readScopeStyleContext as readScopeStyleContainerContext,
+} from "../lib/Parser/Scope/StyleContainerContext.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 
 /**
@@ -193,18 +196,18 @@ describe("Scope and contexts", () => {
 		it("should merge multiple style contexts on the same scope, by giving priority to the last. Styles are merged", () => {
 			const scope = createScope(
 				undefined,
-				createStyleContext({
+				createStyleContainerContext({
 					"xml:id": "t1",
 					"tts:textColor": "blue",
 					"tts:backgroundColor": "rose",
 				}),
-				createStyleContext({
+				createStyleContainerContext({
 					"xml:id": "t2",
 					"tts:textColor": "blue",
 				}),
 			);
 
-			expect(readScopeStyleContext(scope).styles).toMatchObject(
+			expect(readScopeStyleContainerContext(scope).styles).toMatchObject(
 				new Map([
 					[
 						"t2",
@@ -222,7 +225,7 @@ describe("Scope and contexts", () => {
 		it("should be able to iterate all the parent styles", () => {
 			const scope1 = createScope(
 				undefined,
-				createStyleContext({
+				createStyleContainerContext({
 					"xml:id": "t1",
 					"tts:textColor": "blue",
 				}),
@@ -230,14 +233,14 @@ describe("Scope and contexts", () => {
 
 			const scope2 = createScope(
 				scope1,
-				createStyleContext({
+				createStyleContainerContext({
 					"xml:id": "t2",
 					"tts:textColor": "rose",
 				}),
 			);
 
-			expect(readScopeStyleContext(scope2).styles).toBeInstanceOf(Map);
-			expect(readScopeStyleContext(scope2).styles).toMatchObject(
+			expect(readScopeStyleContainerContext(scope2).styles).toBeInstanceOf(Map);
+			expect(readScopeStyleContainerContext(scope2).styles).toMatchObject(
 				new Map([
 					["t1", { id: "t1", attributes: { "tts:textColor": "blue" } }],
 					["t2", { id: "t2", attributes: { "tts:textColor": "rose" } }],

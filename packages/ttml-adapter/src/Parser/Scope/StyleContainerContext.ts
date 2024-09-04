@@ -6,15 +6,15 @@ const styleParserGetterSymbol = Symbol("style.parser.getter");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
-interface StyleContext extends Context<StyleContext> {
+interface StyleContainerContext extends Context<StyleContainerContext> {
 	styles: Map<string, TTMLStyle>;
 	unprocessedStyles: Record<string, string>;
 	[styleParserGetterSymbol]: StyleParser;
 }
 
-export function createStyleContext(
+export function createStyleContainerContext(
 	initialStyles: Record<string, string> = {},
-): ContextFactory<StyleContext> | null {
+): ContextFactory<StyleContainerContext> | null {
 	return function (scope: Scope) {
 		const styles = Object.assign({}, initialStyles);
 		const stylesParser: StyleParser = createStyleParser(scope);
@@ -22,7 +22,7 @@ export function createStyleContext(
 		return {
 			parent: undefined,
 			identifier: styleContextSymbol,
-			mergeWith(context: StyleContext): void {
+			mergeWith(context: StyleContainerContext): void {
 				if (stylesParser.size) {
 					/**
 					 * Styles have been already processed, so we
@@ -61,12 +61,12 @@ export function createStyleContext(
 	};
 }
 
-export function readScopeStyleContext(scope: Scope): StyleContext | undefined {
+export function readScopeStyleContainerContext(scope: Scope): StyleContainerContext | undefined {
 	let context: Context | undefined;
 
 	if (!(context = scope.getContextByIdentifier(styleContextSymbol))) {
 		return undefined;
 	}
 
-	return context as StyleContext;
+	return context as StyleContainerContext;
 }
