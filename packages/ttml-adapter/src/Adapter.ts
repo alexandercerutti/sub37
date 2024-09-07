@@ -300,6 +300,11 @@ export default class TTMLAdapter extends BaseAdapter {
 								 */
 							}
 						}
+					} else if (isLayoutClassElement(token.content)) {
+						if (!token.attributes["xml:id"]) {
+							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+							continue;
+						}
 					}
 
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
@@ -385,12 +390,12 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						const localRegions: RegionContainerContextState[] = [];
 
-						for (const { content: regionToken, children: regionChildren } of children) {
-							if (regionToken.content !== "region") {
+						for (const { content: tokenContent, children: regionChildren } of children) {
+							if (tokenContent.content !== "region") {
 								continue;
 							}
 
-							localRegions.push({ attributes: regionToken.attributes, children: regionChildren });
+							localRegions.push({ attributes: tokenContent.attributes, children: regionChildren });
 						}
 
 						treeScope.addContext(createRegionContainerContext(localRegions));
