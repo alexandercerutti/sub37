@@ -7,6 +7,7 @@
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import { TTMLStyle } from "../parseStyle.js";
+import { readScopeRegionContext } from "./RegionContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
@@ -15,6 +16,7 @@ interface TemporalActiveContext extends Context<TemporalActiveContext> {
 }
 
 interface TemporalActiveInitParams {
+	regionsIDRef?: string;
 	stylesIDRefs?: string[];
 }
 
@@ -24,6 +26,7 @@ export function createTemporalActiveContext(
 	const store = Object.assign(
 		{
 			stylesIDRefs: [],
+			regionsIDRef: undefined,
 		},
 		initParams,
 	);
@@ -50,16 +53,21 @@ export function createTemporalActiveContext(
 					return this.parent?.computedStyles;
 				}
 
-				const styleContext = readScopeStyleContainerContext(scope);
-
-				if (!styleContext?.styles) {
-					return {};
-				}
-
 				const finalStylesAttributes: TTMLStyle["attributes"] = {};
 
-				for (const idref of idrefs) {
-					const style = styleContext.styles.get(idref);
+				const styleContext = readScopeStyleContainerContext(scope);
+				const regionContext = readScopeRegionContext(scope);
+
+				if (store.regionsIDRef) {
+					const region = regionContext.getRegionById(store.regionsIDRef);
+
+					if (region?.styles) {
+						Object.assign(finalStylesAttributes, region.styles);
+					}
+				}
+
+				for (const styleIdref of idrefs) {
+					const style = styleContext.styles.get(styleIdref);
 
 					if (!style) {
 						continue;
