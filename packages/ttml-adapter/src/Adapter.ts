@@ -367,15 +367,13 @@ export default class TTMLAdapter extends BaseAdapter {
 								children,
 							};
 
-							treeScope = createScope(treeScope, createTemporalActiveContext());
-
-							const tac = readScopeTemporalActiveContext(treeScope);
-
-							/**
-							 * @TODO add region here to TAC
-							 * @TODO extract region styles and add them to TAC
-							 * @TODO ignore time attributes
-							 */
+							treeScope = createScope(
+								treeScope,
+								createRegionContainerContext([inlineRegion]),
+								createTemporalActiveContext({
+									regionsIDRef: regionId,
+								}),
+							);
 
 							break;
 						}
