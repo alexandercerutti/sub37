@@ -289,15 +289,19 @@ export default class TTMLAdapter extends BaseAdapter {
 							if (
 								regionContext.regions.some((region) => region.id === token.attributes["region"])
 							) {
-								treeScope = createScope(treeScope, createTemporalActiveContext());
-
-								const tac = readScopeTemporalActiveContext(treeScope);
-
-								/**
-								 * @TODO add region here to TAC
-								 * @TODO extract region styles and add them to TAC
-								 * @TODO process the time attributes
-								 */
+								treeScope = createScope(
+									treeScope,
+									createTimeContext({
+										begin: token.attributes["begin"],
+										dur: token.attributes["dur"],
+										end: token.attributes["end"],
+										timeContainer: token.attributes["timeContainer"],
+									}),
+									createTemporalActiveContext({
+										regionsIDRef: token.attributes["region"],
+										stylesIDRefs: [],
+									}),
+								);
 							}
 						}
 					} else if (isLayoutClassElement(token.content)) {
