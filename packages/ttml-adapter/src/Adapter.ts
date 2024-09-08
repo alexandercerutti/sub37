@@ -351,10 +351,12 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;
 							 */
 
-							const regionId = `i_region-${
-								nodeTree.currentNode.content.attributes["xml:id"] ||
-								nodeTree.currentNode.parent.content.attributes["xml:id"]
-							}`;
+							const regionId =
+								token.attributes["xml:id"] ||
+								`i_region-${
+									nodeTree.currentNode.content.attributes["xml:id"] ||
+									nodeTree.currentNode.parent.content.attributes["xml:id"]
+								}`;
 
 							const { children } = nodeTree.currentNode;
 
