@@ -17,7 +17,7 @@ export interface RegionContainerContextState {
 
 interface RegionContainerContext extends Context<RegionContainerContext> {
 	regions: Region[];
-	getRegionsById(id: string | undefined): TTMLRegion[];
+	getRegionById(id: string | undefined): TTMLRegion | undefined;
 	[regionParserGetterSymbol]: RegionParser;
 }
 
@@ -51,13 +51,13 @@ export function createRegionContainerContext(
 			get [regionParserGetterSymbol]() {
 				return regionParser;
 			},
-			getRegionsById(id: string | undefined): TTMLRegion[] {
+			getRegionById(id: string | undefined): TTMLRegion | undefined {
 				if (!id?.length) {
-					return [];
+					return undefined;
 				}
 
 				const regions = this.regions as TTMLRegion[];
-				return regions.filter((region) => region.id === id);
+				return regions.filter((region) => region.id === id)[0];
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
