@@ -216,7 +216,8 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * Region completion will happen in the END_TAG, if not ignored.
 						 */
 
-						if (temporalActiveContext.region) {
+						/** If no region have been found until now, there is no TAC */
+						if (temporalActiveContext?.region) {
 							const regionIdentifier: string | undefined = token.attributes["region"];
 
 							if (regionIdentifier && temporalActiveContext.region.id !== regionIdentifier) {
