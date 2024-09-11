@@ -4,6 +4,7 @@
  * the same scope.
  */
 
+import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import { TTMLStyle } from "../parseStyle.js";
@@ -13,10 +14,11 @@ const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
 interface TemporalActiveContext extends Context<TemporalActiveContext> {
 	computedStyles: Record<string, string>;
+	region: TTMLRegion;
 }
 
 interface TemporalActiveInitParams {
-	regionsIDRef?: string;
+	regionIDRef?: string;
 	stylesIDRefs?: string[];
 }
 
@@ -26,8 +28,8 @@ export function createTemporalActiveContext(
 	const store = Object.assign(
 		{
 			stylesIDRefs: [],
-			regionsIDRef: undefined,
-		},
+			regionIDRef: undefined,
+		} satisfies TemporalActiveInitParams,
 		initParams,
 	);
 
@@ -58,8 +60,8 @@ export function createTemporalActiveContext(
 				const styleContext = readScopeStyleContainerContext(scope);
 				const regionContext = readScopeRegionContext(scope);
 
-				if (store.regionsIDRef) {
-					const region = regionContext.getRegionById(store.regionsIDRef);
+				if (store.regionIDRef) {
+					const region = regionContext.getRegionById(store.regionIDRef);
 
 					if (region?.styles) {
 						Object.assign(finalStylesAttributes, region.styles);
@@ -79,9 +81,14 @@ export function createTemporalActiveContext(
 				computedStyleCache = finalStylesAttributes;
 				return finalStylesAttributes;
 			},
-			// get regions(): Map<string, TTMLRegion> {
-			// 	return regionsArchive;
-			// },
+			get region(): TTMLRegion | undefined {
+				if (!store.regionIDRef) {
+					return undefined;
+				}
+
+				const regionContext = readScopeRegionContext(scope);
+				return regionContext.getRegionById(store.regionIDRef);
+			},
 		};
 	};
 }

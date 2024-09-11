@@ -216,10 +216,10 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * Region completion will happen in the END_TAG, if not ignored.
 						 */
 
-						if (temporalActiveContext.regions.size) {
+						if (temporalActiveContext.region) {
 							const regionIdentifier: string | undefined = token.attributes["region"];
 
-							if (regionIdentifier && !temporalActiveContext.regions.has(regionIdentifier)) {
+							if (regionIdentifier && temporalActiveContext.region.id !== regionIdentifier) {
 								/**
 								 * @example
 								 *
@@ -298,7 +298,7 @@ export default class TTMLAdapter extends BaseAdapter {
 										timeContainer: token.attributes["timeContainer"],
 									}),
 									createTemporalActiveContext({
-										regionsIDRef: token.attributes["region"],
+										regionIDRef: token.attributes["region"],
 										stylesIDRefs: [],
 									}),
 								);
@@ -373,7 +373,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								treeScope,
 								createRegionContainerContext([inlineRegion]),
 								createTemporalActiveContext({
-									regionsIDRef: regionId,
+									regionIDRef: regionId,
 								}),
 							);
 
