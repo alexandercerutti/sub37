@@ -220,7 +220,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (temporalActiveContext?.region) {
 							const regionIdentifier: string | undefined = token.attributes["region"];
 
-							if (regionIdentifier && temporalActiveContext.region.id !== regionIdentifier) {
+							if (temporalActiveContext.region.id !== regionIdentifier) {
 								/**
 								 * @example
 								 *
@@ -229,11 +229,16 @@ export default class TTMLAdapter extends BaseAdapter {
 								 * 	<head>
 								 * 		...
 								 * 	</head>
-								 * 	<body region="r1">
-								 * 		<div>
+								 * 	<body>
+								 * 		<div region="r1">
 								 * 			<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
 								 * 			<!-- Same would be valid with a different region on a span inside the `p` -->
 								 * 			<p region="r2">...</p>
+								 * 		</div>
+								 * 			<!-- whole div element will get pruned because parent has a region but
+								 * 					default region is not active. -->
+								 * 		<div>
+								 * 			...
 								 * 		</div>
 								 * 	</body>
 								 * </tt>
