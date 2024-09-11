@@ -331,6 +331,11 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					representationVisitor.back();
 
+					if (token.content === "tt") {
+						nodeTree.pop();
+						break;
+					}
+
 					const parentNode = nodeTree.currentNode.parent.content.content;
 
 					/**
