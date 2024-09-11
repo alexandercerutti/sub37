@@ -92,7 +92,7 @@ export function or(...nodes: NodeRepresentation<string>[]): KleeneNodeRepresenta
 		nodeName: "collector",
 		destinationFactory: () => [],
 		matches(nodeName: string) {
-			return nodes.some(({ matches }) => matches(nodeName));
+			return nodes.some((node) => node.matches(nodeName));
 		},
 	};
 }
