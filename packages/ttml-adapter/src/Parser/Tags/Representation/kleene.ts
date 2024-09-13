@@ -88,16 +88,20 @@ export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresent
 		},
 		matches: {
 			value(this: KleeneOperator<"?">, nodeName: string) {
-				if ((node as KleeneNodeRepresentation<KleeneOperationSymbols>)[operatorSymbol]) {
-					// Delegating to the inner operator
-					return node.matches(nodeName);
-				}
-
 				if (this[usagesSymbol] > 0) {
 					return false;
 				}
 
-				const matches = nodeName === node.nodeName;
+				let matches = nodeName === node.nodeName;
+
+				if (
+					!matches &&
+					(node as KleeneNodeRepresentation<KleeneOperationSymbols>)[operatorSymbol]
+				) {
+					// Delegating to the inner operator
+					matches = node.matches(nodeName);
+				}
+
 				this[usagesSymbol] += Number(matches);
 
 				return matches;

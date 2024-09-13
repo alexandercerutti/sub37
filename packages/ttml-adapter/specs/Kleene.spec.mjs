@@ -23,6 +23,31 @@ describe("Kleene", () => {
 			expect(operator.matches("test")).toBe(true);
 			expect(operator.matches("test")).toBe(true);
 		});
+
+		it("should delegate the matching function to a child operator", () => {
+			const operator = Kleene.zeroOrMore(
+				Kleene.or(
+					{
+						nodeName: "testA",
+						destinationFactory: () => [],
+						matches(nodeName) {
+							return nodeName === "testA";
+						},
+					},
+					{
+						nodeName: "testB",
+						destinationFactory: () => [],
+						matches(nodeName) {
+							return nodeName === "testB";
+						},
+					},
+				),
+			);
+
+			expect(operator.matches("testC")).toBe(false);
+			expect(operator.matches("testA")).toBe(true);
+			expect(operator.matches("testB")).toBe(true);
+		});
 	});
 
 	describe("OneOrMore (+)", () => {
@@ -58,6 +83,31 @@ describe("Kleene", () => {
 			expect(operator.matches("test")).toBe(true);
 			expect(operator.matches("test1")).toBe(false);
 		});
+
+		it("should delegate the matching function to a child operator", () => {
+			const operator = Kleene.oneOrMore(
+				Kleene.or(
+					{
+						nodeName: "testA",
+						destinationFactory: () => [],
+						matches(nodeName) {
+							return nodeName === "testA";
+						},
+					},
+					{
+						nodeName: "testB",
+						destinationFactory: () => [],
+						matches() {
+							return false;
+						},
+					},
+				),
+			);
+
+			expect(operator.matches("testA")).toBe(true);
+			expect(operator.matches("testB")).toBe(false);
+			expect(operator.matches("testC")).toBe(false);
+		});
 	});
 
 	describe("ZeroOrOne (?)", () => {
@@ -70,6 +120,31 @@ describe("Kleene", () => {
 
 			expect(operator.matches("test")).toBe(true);
 			expect(operator.matches("test")).toBe(false);
+		});
+
+		it("should delegate the matching function to a child operator", () => {
+			const operator = Kleene.zeroOrOne(
+				Kleene.or(
+					{
+						nodeName: "testA",
+						destinationFactory: () => [],
+						matches(nodeName) {
+							return nodeName === "testA";
+						},
+					},
+					{
+						nodeName: "testB",
+						destinationFactory: () => [],
+						matches() {
+							return true;
+						},
+					},
+				),
+			);
+
+			expect(operator.matches("testA")).toBe(true);
+			expect(operator.matches("testB")).toBe(false);
+			expect(operator.matches("testC")).toBe(false);
 		});
 	});
 });
