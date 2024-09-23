@@ -34,16 +34,17 @@ export function createVisitor(node: NodeRepresentation<string>): Visitor {
 			while (nextDestinationIndex < destinations.length) {
 				const dest = destinations[nextDestinationIndex];
 
-				if (dest.matches(nodeName)) {
-					/**
-					 * Committing the last index. So we mark we found a match
-					 * and we can start back again from here later.
-					 */
-					historyList.lastDestinationIndex = nextDestinationIndex;
-					return dest;
+				if (!dest.matches(nodeName)) {
+					nextDestinationIndex++;
+					continue;
 				}
 
-				nextDestinationIndex++;
+				/**
+				 * Committing the last index. So we mark we found a match
+				 * and we can start back again from here later.
+				 */
+				historyList.lastDestinationIndex = nextDestinationIndex;
+				return dest;
 			}
 
 			return null;
