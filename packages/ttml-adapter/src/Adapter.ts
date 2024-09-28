@@ -178,9 +178,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						(isInlineClassElement(nodeTree.currentNode.content.content) &&
 							nodeTree.currentNode.content.content !== "br")
 					) {
-						/** Region attribute could be in any of the parents */
-						const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
-
 						/**
 						 * [associate region] procedure at 11.3.1.3, defines that for
 						 * any [out-of-line region](https://w3c.github.io/ttml2/#terms-out-of-line-region),
@@ -216,35 +213,28 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * Region completion will happen in the END_TAG, if not ignored.
 						 */
 
-						/** If no region have been found until now, there is no TAC */
+						/** Region attribute could be in any of the parents */
+						const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
+
 						if (temporalActiveContext?.region) {
 							const regionIdentifier: string | undefined = token.attributes["region"];
 
+							/**
+							 * @example (out-of-line regions definitions in head omitted)
+							 *
+							 * ```
+							 * <div region="r1">
+							 * 	<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
+							 * 	<!-- Same would be valid with a different region on a span inside the `p` -->
+							 * 	<p region="r2">...</p>
+							 * </div>
+							 *
+							 * <!-- next div will get pruned as previous sibling
+							 * 		 has a region but default region is not active. -->
+							 * <div>...</div>
+							 * ```
+							 */
 							if (temporalActiveContext.region.id !== regionIdentifier) {
-								/**
-								 * @example
-								 *
-								 * ```
-								 * <tt>
-								 * 	<head>
-								 * 		...
-								 * 	</head>
-								 * 	<body>
-								 * 		<div region="r1">
-								 * 			<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
-								 * 			<!-- Same would be valid with a different region on a span inside the `p` -->
-								 * 			<p region="r2">...</p>
-								 * 		</div>
-								 * 			<!-- whole div element will get pruned because parent has a region but
-								 * 					default region is not active. -->
-								 * 		<div>
-								 * 			...
-								 * 		</div>
-								 * 	</body>
-								 * </tt>
-								 * ```
-								 */
-
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 								continue;
 							}
@@ -258,33 +248,32 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * converted to normal regions.
 							 */
 
+							/**
+							 * @example
+							 *
+							 * |--------------------------------|--------------------------------------------------------------|
+							 * | Before [process inline region]	|	 After [process inline region] 															 |
+							 * |--------------------------------|--------------------------------------------------------------|
+							 * | ```xml													| ```xml																											 |
+							 * | 	<tt>													|		<tt>																											 |
+							 * | 		<head>											|			<head>																									 |
+							 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
+							 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
+							 * | 		</head>											|			</head>															<!--      |   -->		 |
+							 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
+							 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
+							 * | 				<region ... />					|																					<!--   >--|   -->		 |
+							 * | 				<p>...</p>							|					<p>...</p>																					 |
+							 * | 			</div>										|				</div>																								 |
+							 * | 		</body>											|			</body>																									 |
+							 * | 	</tt>													|		</tt>																											 |
+							 * | ```														| ```																													 |
+							 * |________________________________|______________________________________________________________|
+							 *
+							 * Therefore the div will end up being pruned, because of a different region.
+							 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+							 */
 							if (isLayoutClassElement(token.content)) {
-								/**
-								 * @example
-								 *
-								 * |--------------------------------|--------------------------------------------------------------|
-								 * | Before [process inline region]	|	 After [process inline region] 															 |
-								 * |--------------------------------|--------------------------------------------------------------|
-								 * | ```xml													| ```xml																											 |
-								 * | 	<tt>													|		<tt>																											 |
-								 * | 		<head>											|			<head>																									 |
-								 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
-								 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
-								 * | 		</head>											|			</head>															<!--      |   -->		 |
-								 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
-								 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
-								 * | 				<region ... />					|																					<!--   >--|   -->		 |
-								 * | 				<p>...</p>							|					<p>...</p>																					 |
-								 * | 			</div>										|				</div>																								 |
-								 * | 		</body>											|			</body>																									 |
-								 * | 	</tt>													|		</tt>																											 |
-								 * | ```														| ```																													 |
-								 * |________________________________|______________________________________________________________|
-								 *
-								 * Therefore the div will end up being pruned, because of a different region.
-								 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
-								 */
-
 								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 								continue;
