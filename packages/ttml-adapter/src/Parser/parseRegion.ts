@@ -46,7 +46,8 @@ function extractStylesChildren(
 			continue;
 		}
 
-		const style = styleParser.process(styleToken.content.attributes);
+		const id = styleToken.content.attributes["xml:id"] || "";
+		const style = styleParser.process(id, styleToken.content.attributes);
 
 		if (!style) {
 			continue;

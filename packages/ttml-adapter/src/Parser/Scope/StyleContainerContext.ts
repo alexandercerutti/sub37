@@ -5,18 +5,21 @@ const styleContextSymbol = Symbol("style");
 const styleParserGetterSymbol = Symbol("style.parser.getter");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
+type StyleIDRef = string;
+type StyleIndex = Record<StyleIDRef, Record<string, string>>;
 
 interface StyleContainerContext extends Context<StyleContainerContext> {
 	styles: Map<string, TTMLStyle>;
-	unprocessedStyles: Record<string, string>;
+	registeredStyles: StyleIndex;
+	getStyleByIDRef(idref: string): TTMLStyle | undefined;
 	[styleParserGetterSymbol]: StyleParser;
 }
 
 export function createStyleContainerContext(
-	initialStyles: Record<string, string> = {},
+	registeredStyles: StyleIndex,
 ): ContextFactory<StyleContainerContext> | null {
 	return function (scope: Scope) {
-		const styles = Object.assign({}, initialStyles);
+		const stylesIndex = Object.assign({}, registeredStyles);
 		const stylesParser: StyleParser = createStyleParser(scope);
 
 		return {
@@ -30,17 +33,36 @@ export function createStyleContainerContext(
 					 * haven't been already.
 					 */
 
-					stylesParser.push(...Object.entries(context.styles));
+					for (const idref in context.registeredStyles) {
+						const style = context.registeredStyles[idref];
+
+						stylesParser.process(idref, style);
+					}
+
 					return;
 				}
 
-				Object.assign(styles, context.unprocessedStyles);
+				Object.assign(stylesIndex, context.registeredStyles);
 			},
 			get [styleParserGetterSymbol]() {
 				return stylesParser;
 			},
-			get unprocessedStyles(): Record<string, string> {
-				return styles;
+			get registeredStyles(): StyleIndex {
+				return registeredStyles;
+			},
+			getStyleByIDRef(idref: string): TTMLStyle | undefined {
+				if (!registeredStyles[idref]) {
+					console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
+					return this.parent?.getStyleByIDRef(idref);
+				}
+
+				const preprocessedStyle = stylesParser.get(idref);
+
+				if (!preprocessedStyle) {
+					return stylesParser.process(idref, stylesIndex[idref]);
+				}
+
+				return preprocessedStyle;
 			},
 			get styles(): Map<string, TTMLStyle> {
 				const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();

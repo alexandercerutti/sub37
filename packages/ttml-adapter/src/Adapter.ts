@@ -103,11 +103,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let cues: CueNode[] = [];
-		let treeScope: Scope = createScope(
-			undefined,
-			createTimeContext({}),
-			createStyleContainerContext({}),
-		);
+		let treeScope: Scope = createScope(undefined);
 
 		const nodeTree = new NodeTree<Token & NodeWithAttributes>();
 		const representationVisitor = createVisitor(RepresentationTree);
@@ -415,13 +411,21 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (currentTag === "styling") {
 						const { children } = currentElement;
 
-						const styleTags = children.reduce<Record<string, string>>((acc, { content: token }) => {
-							if (token.content !== "style") {
-								return acc;
-							}
+						const styleTags = children.reduce<Record<string, Record<string, string>>>(
+							(acc, { content: token }) => {
+								if (token.content !== "style") {
+									return acc;
+								}
 
-							return Object.assign(acc, token.attributes);
-						}, {});
+								if (!token.attributes["xml:id"]) {
+									return acc;
+								}
+
+								acc[token.attributes["xml:id"]] = token.attributes;
+								return acc;
+							},
+							{},
+						);
 
 						treeScope.addContext(createStyleContainerContext(styleTags));
 
