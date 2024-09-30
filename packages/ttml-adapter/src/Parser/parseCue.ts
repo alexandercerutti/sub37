@@ -3,13 +3,11 @@ import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
+import { createStyleContainerContext } from "./Scope/StyleContainerContext.js";
 import {
-	createRegionContext,
-	readScopeRegionContext,
-	findInlineRegionInChildren,
-} from "./Scope/RegionContext.js";
-import { readScopeStyleContext } from "./Scope/StyleContext.js";
-import type { TTMLStyle } from "./parseStyle.js";
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Scope/TemporalActiveContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	const { attributes } = node.content;
@@ -30,24 +28,35 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
 		}),
-		createRegionContext(
-			findInlineRegionInChildren(node.content.attributes["xml:id"], node.children),
-		),
+		createStyleContainerContext({ localStyles: attributes }),
+		createTemporalActiveContext({
+			stylesIDRefs: ["localStyles"],
+			regionIDRef: attributes["region"],
+		}),
 	);
 
-	return parseCueContents(attributes["xml:id"] || "unkpar", attributes, node.children, localScope);
+	const cues: CueNode[] = [];
+
+	for (let i = 0; i < node.children.length; i++) {
+		cues.push(...parseCueContents(attributes["xml:id"] || "unkpar", node.children, localScope));
+	}
+
+	return cues;
+
+	// return parseCueContents(attributes["xml:id"] || "unkpar", attributes, node.children, localScope);
 }
 
 function parseCueContents(
 	parentId: string,
-	parentAttributes: Record<string, string> = {},
 	rootChildren: NodeWithRelationship<Token>[],
 	scope: Scope,
 	previousCues: CueNode[] = [],
 ): CueNode[] {
 	let cues: CueNode[] = previousCues;
+	// const cues: CueNode[] = [];
+
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 	const timeContext = readScopeTimeContext(scope);
-	const regionContext = readScopeRegionContext(scope);
 
 	for (let i = 0; i < rootChildren.length; i++) {
 		const { content, children } = rootChildren[i];
@@ -58,36 +67,16 @@ function parseCueContents(
 			 */
 
 			if (!cues.length) {
-				let styles: TTMLStyle[] = [];
-
-				const linkedRegion = regionContext.getRegionsById(parentAttributes?.["region"])[0];
-
-				/**
-				 * 11.3.1.2 Inline Regions
-				 *
-				 * When an attribute "region" is available on a block element,
-				 * inline regions should be ignored.
-				 */
-
-				if (!linkedRegion) {
-					const contextualRegions = regionContext.getRegionsById("contextual");
-
-					styles.push({
-						id: "contextual",
-						get attributes() {
-							return Object.assign({}, ...contextualRegions.map((region) => region.styles));
-						},
-					});
-				}
-
 				cues.push(
 					new CueNode({
 						id: `${parentId}-anonymous-${i}`,
 						content: "",
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
-						region: linkedRegion,
-						entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
+
+						/** @TODO Fix region association */
+						region: undefined,
+						// entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
 					}),
 				);
 			}
@@ -119,12 +108,8 @@ function parseCueContents(
 			);
 
 			const timeContext = readScopeTimeContext(localScope);
-			const regionContext = readScopeRegionContext(localScope);
 
 			let nextCueID = attributes["xml:id"] || `${parentId}-${i}`;
-			const matchingRegion = attributes["region"]
-				? regionContext.regions.find((region) => region.id === attributes["region"])
-				: undefined;
 
 			if (isTimestamp(attributes)) {
 				cues.push(
@@ -133,14 +118,15 @@ function parseCueContents(
 						content: "",
 						startTime: timeContext.startTime,
 						endTime: timeContext.endTime,
-						region: matchingRegion,
+						/** @TODO Fix region association */
+						// region: matchingRegion,
 						entities: cues[cues.length - 1]?.entities,
 					}),
 				);
 			}
 
 			if (children.length) {
-				cues = parseCueContents(nextCueID, attributes, children, localScope, cues);
+				cues.push(...parseCue(rootChildren[i], localScope));
 			}
 
 			continue;
