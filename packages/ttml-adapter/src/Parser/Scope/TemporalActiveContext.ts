@@ -51,14 +51,20 @@ export function createTemporalActiveContext(
 
 				const idrefs = store.stylesIDRefs;
 
+				const styleContext = readScopeStyleContainerContext(scope);
+				const regionContext = readScopeRegionContext(scope);
+
 				if (!idrefs.length) {
-					return this.parent?.computedStyles;
+					const styles: Record<string, string> = {};
+
+					if (regionContext && store.regionIDRef) {
+						Object.assign(styles, regionContext.getStylesByRegionId(store.regionIDRef));
+					}
+
+					return Object.assign(styles, this.parent?.computedStyles);
 				}
 
 				const finalStylesAttributes: TTMLStyle["attributes"] = {};
-
-				const styleContext = readScopeStyleContainerContext(scope);
-				const regionContext = readScopeRegionContext(scope);
 
 				if (store.regionIDRef) {
 					const region = regionContext.getRegionById(store.regionIDRef);
@@ -69,7 +75,7 @@ export function createTemporalActiveContext(
 				}
 
 				for (const styleIdref of idrefs) {
-					const style = styleContext.styles.get(styleIdref);
+					const style = styleContext.getStyleByIDRef(styleIdref);
 
 					if (!style) {
 						continue;

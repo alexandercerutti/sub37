@@ -18,6 +18,7 @@ export interface RegionContainerContextState {
 interface RegionContainerContext extends Context<RegionContainerContext> {
 	regions: Region[];
 	getRegionById(id: string | undefined): TTMLRegion | undefined;
+	getStylesByRegionId(id: string | undefined): Record<string, string>;
 	[regionParserGetterSymbol]: RegionParser;
 }
 
@@ -58,6 +59,15 @@ export function createRegionContainerContext(
 
 				const regions = this.regions as TTMLRegion[];
 				return regions.filter((region) => region.id === id)[0];
+			},
+			getStylesByRegionId(id: string | undefined): Record<string, string> {
+				/**
+				 * Note: if no processing happened before by invoking `.regions`,
+				 * this will return empty. Might want to force processing
+				 * when invoking this, but I want to be sure.
+				 */
+				const region = regionParser.get(id);
+				return region.styles;
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
