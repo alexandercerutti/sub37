@@ -164,6 +164,11 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					if (isLayoutClassElement(token.content) && !token.attributes["xml:id"]) {
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+						continue;
+					}
+
 					/**
 					 * Checking if there's a region collision between a parent and a children.
 					 * Regions will be evaluated when its end tag is received.
@@ -294,11 +299,6 @@ export default class TTMLAdapter extends BaseAdapter {
 									}),
 								);
 							}
-						}
-					} else if (isLayoutClassElement(token.content)) {
-						if (!token.attributes["xml:id"]) {
-							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
-							continue;
 						}
 					}
 
