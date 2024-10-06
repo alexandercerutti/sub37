@@ -164,6 +164,34 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					/**
+					 * **LITTLE IMPLEMENTATION NOTE**
+					 *
+					 * In the context of building the ISD (Intermediary Synchronic Document),
+					 * thing that we don't strictly do, by not following the provided algorithm,
+					 * [associate region] procedure at 11.3.1.3, specifies a series of
+					 * conditions for which a content element can flow in a out-of-line region.
+					 *
+					 * Third point states what follows:
+					 *
+					 * A content element is associated with a region "if the element contains
+					 * a descendant element that specifies a region attribute [...], then the
+					 * element is associated with the region referenced by that attribute;"
+					 *
+					 * By saying that we have a deep span with a region attribute with no
+					 * parent above it with a region attribute, we would end up with it to get
+					 * pruned because parent doesn't have a region and would therefore get
+					 * pruned itself.
+					 *
+					 * Region completion will happen in the END_TAG, if not ignored.
+					 */
+
+					const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
+
+					/**
+					 * We cannot use an out-of-line region element if
+					 * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
+					 */
 					if (isLayoutClassElement(token.content) && !token.attributes["xml:id"]) {
 						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 						continue;
@@ -174,54 +202,14 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * Regions will be evaluated when its end tag is received.
 					 */
 
-					if (
-						isBlockClassElement(nodeTree.currentNode.content.content) ||
-						(isInlineClassElement(nodeTree.currentNode.content.content) &&
-							nodeTree.currentNode.content.content !== "br")
-					) {
-						/**
-						 * [associate region] procedure at 11.3.1.3, defines that for
-						 * any [out-of-line region](https://w3c.github.io/ttml2/#terms-out-of-line-region),
-						 * a content element should be associated to the region by the first satisfied
-						 * condition among these:
-						 *
-						 *	- if the element specifies a region attribute [...] then the element is associated
-						 *			with the region referenced by that attribute;
-						 *	- if some ancestor of that element specifies a region attribute [...], then the
-						 *			element is associated with the region referenced by the most immediate ancestor
-						 *			that specifies this attribute;
-						 *	- if the element contains a descendant element that specifies a region attribute [...],
-						 *			then the element is associated with the region referenced by that attribute;
-						 *	- if a default region was implied (due to the absence of any region element),
-						 *			then the element is associated with the default region;
-						 * 	-	(otherwise) the element is not associated with any region.
-						 *
-						 * So some notes after reading this:
-						 *
-						 *  - If the third point is not applied, if e.g. we had a deep span with a region attribute, we
-						 * 			would end up with it to get pruned because parent wouldn't have a region and would
-						 * 			therefore get pruned itself.
-						 *  - As the [associate region] is executed for any out-of-line region, if any out-of-line
-						 *			region is defined, associating a content element to the default region is not
-						 *			possible. Firth rule will apply. Whenever fifth rule will apply, a content element
-						 *			is not associated with any region and then the element ignored / pruned.
-						 *
-						 * However, [associate region] is executed in a context of generating an ISD
-						 * (Intermediate Synchronic Document)
-						 * which is a thing we do not strictly do. As long as we obtain the same result of it,
-						 * we can skip parts and still be defined as compliant.
-						 *
-						 * Region completion will happen in the END_TAG, if not ignored.
-						 */
-
-						/** Region attribute could be in any of the parents */
-						const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
-
-						if (temporalActiveContext?.region) {
-							const regionIdentifier: string | undefined = token.attributes["region"];
-
+					if (token.attributes["region"]) {
+						if (
+							temporalActiveContext?.region &&
+							temporalActiveContext.region.id !== token.attributes["region"]
+						) {
 							/**
 							 * @example (out-of-line regions definitions in head omitted)
+							 * Inspecting <p region="r2">, but
 							 *
 							 * ```
 							 * <div region="r1">
@@ -231,75 +219,73 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * </div>
 							 *
 							 * <!-- next div will get pruned as previous sibling
-							 * 		 has a region but default region is not active. -->
+							 * 		 has a region but default region is not active (implict in code). -->
 							 * <div>...</div>
 							 * ```
 							 */
-							if (temporalActiveContext.region.id !== regionIdentifier) {
-								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
-								continue;
-							}
 
-							/**
-							 * If there's any [temporally active region], we have to
-							 * ignore the parent element if we find an inline region
-							 * element. The first step of _[construct intermediate document]_
-							 * at _11.3.1.3 Intermediate Synchronic Document Construction_,
-							 * defines that inline regions should be first resolved and
-							 * converted to normal regions.
-							 */
-
-							/**
-							 * @example
-							 *
-							 * |--------------------------------|--------------------------------------------------------------|
-							 * | Before [process inline region]	|	 After [process inline region] 															 |
-							 * |--------------------------------|--------------------------------------------------------------|
-							 * | ```xml													| ```xml																											 |
-							 * | 	<tt>													|		<tt>																											 |
-							 * | 		<head>											|			<head>																									 |
-							 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
-							 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
-							 * | 		</head>											|			</head>															<!--      |   -->		 |
-							 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
-							 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
-							 * | 				<region ... />					|																					<!--   >--|   -->		 |
-							 * | 				<p>...</p>							|					<p>...</p>																					 |
-							 * | 			</div>										|				</div>																								 |
-							 * | 		</body>											|			</body>																									 |
-							 * | 	</tt>													|		</tt>																											 |
-							 * | ```														| ```																													 |
-							 * |________________________________|______________________________________________________________|
-							 *
-							 * Therefore the div will end up being pruned, because of a different region.
-							 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
-							 */
-							if (isLayoutClassElement(token.content)) {
-								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
-								nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
-								continue;
-							}
-						} else if (token.attributes["region"]) {
-							const regionContext = readScopeRegionContext(treeScope);
-
-							if (
-								regionContext.regions.some((region) => region.id === token.attributes["region"])
-							) {
-								treeScope = createScope(
-									treeScope,
-									createTimeContext({
-										begin: token.attributes["begin"],
-										dur: token.attributes["dur"],
-										end: token.attributes["end"],
-										timeContainer: token.attributes["timeContainer"],
-									}),
-									createTemporalActiveContext({
-										regionIDRef: token.attributes["region"],
-										stylesIDRefs: [],
-									}),
-								);
-							}
+							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+							continue;
 						}
+
+						const regionContext = readScopeRegionContext(treeScope);
+
+						if (regionContext.getRegionById(token.attributes["region"])) {
+							treeScope = createScope(
+								treeScope,
+								createTimeContext({
+									begin: token.attributes["begin"],
+									dur: token.attributes["dur"],
+									end: token.attributes["end"],
+									timeContainer: token.attributes["timeContainer"],
+								}),
+								createTemporalActiveContext({
+									regionIDRef: token.attributes["region"],
+									stylesIDRefs: [],
+								}),
+							);
+						}
+					}
+
+					/**
+					 * @example
+					 *
+					 * |--------------------------------|--------------------------------------------------------------|
+					 * | Before [process inline region]	|	 After [process inline region] 															 |
+					 * |--------------------------------|--------------------------------------------------------------|
+					 * | ```xml													| ```xml																											 |
+					 * | 	<tt>													|		<tt>																											 |
+					 * | 		<head>											|			<head>																									 |
+					 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
+					 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
+					 * | 		</head>											|			</head>															<!--      |   -->		 |
+					 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
+					 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
+					 * | 				<region ... />					|																					<!--   >--|   -->		 |
+					 * | 				<p>...</p>							|					<p>...</p>																					 |
+					 * | 			</div>										|				</div>																								 |
+					 * | 		</body>											|			</body>																									 |
+					 * | 	</tt>													|		</tt>																											 |
+					 * | ```														| ```																													 |
+					 * |________________________________|______________________________________________________________|
+					 *
+					 * Therefore, for the [associate region] procedure, the div will end up
+					 * being pruned, because of a different region.
+					 *
+					 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+					 */
+
+					const { currentNode } = nodeTree;
+					const currentTagName = currentNode.content.content;
+
+					const canCurrentNodeHaveInlineRegionsChildren =
+						isBlockClassElement(currentTagName) ||
+						(isInlineClassElement(currentTagName) && currentTagName !== "br");
+
+					if (canCurrentNodeHaveInlineRegionsChildren && temporalActiveContext?.region) {
+						appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+						continue;
 					}
 
 					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
