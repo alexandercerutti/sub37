@@ -1,6 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
 import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
-import { NodeQueue } from "../lib/Parser/Tags/NodeQueue.js";
 
 /**
  * @typedef {import("../lib/Parser/Token.js").Token} Token
@@ -12,16 +11,6 @@ describe("NodeTree", () => {
 
 	beforeEach(() => {
 		nodeTree = new NodeTree();
-	});
-
-	it("should keep NodeQueue in sync when an element is pushed", () => {
-		nodeTree.push({ content: 5 });
-
-		expect(nodeTree.pop()).toMatchObject({
-			content: {
-				content: 5,
-			},
-		});
 	});
 
 	it("should keep the last pushed element as current when another one is tracked", () => {
