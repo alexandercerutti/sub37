@@ -10,32 +10,11 @@ interface Memory<ContentType extends object> {
 }
 
 export class NodeTree<NodeContentType extends object> {
-	private root: NodeWithRelationship<NodeContentType> = NodeTree.createNodeWithRelationshipShell(
-		null,
-		null,
-	);
+	private root: NodeWithRelationship<NodeContentType> = createNodeWithRelationshipShell(null, null);
 	private current: NodeWithRelationship<NodeContentType>;
 
-	public static createNodeWithRelationshipShell<ContentType extends object>(
-		content: ContentType,
-		parent: NodeWithRelationship<ContentType> | null,
-	): NodeWithRelationship<ContentType> {
-		return Object.create(null, {
-			content: {
-				value: content,
-			},
-			parent: {
-				value: parent || null,
-			},
-			children: {
-				value: [],
-				enumerable: true,
-			},
-		} satisfies PropertyDescriptorMap);
-	}
-
 	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
-		const treeNode = NodeTree.createNodeWithRelationshipShell(value, this.current);
+		const treeNode = createNodeWithRelationshipShell(value, this.current);
 
 		if (!this.current) {
 			this.root.children.push(treeNode);
@@ -80,4 +59,22 @@ export class NodeTree<NodeContentType extends object> {
 	public get parentNode(): NodeWithRelationship<NodeContentType> | null {
 		return this.currentNode?.parent;
 	}
+}
+
+function createNodeWithRelationshipShell<ContentType extends object>(
+	content: ContentType,
+	parent: NodeWithRelationship<ContentType> | null,
+): NodeWithRelationship<ContentType> {
+	return Object.create(null, {
+		content: {
+			value: content,
+		},
+		parent: {
+			value: parent || null,
+		},
+		children: {
+			value: [],
+			enumerable: true,
+		},
+	} satisfies PropertyDescriptorMap);
 }
