@@ -58,24 +58,15 @@ export class NodeTree<NodeContentType extends object> {
 	 * @returns
 	 */
 
-	public pop(): NodeWithRelationship<NodeContentType> {
-		const out = this.current;
-
-		this.ascend();
-		return out;
-	}
-
-	/**
-	 * Changes the pointer to the current node without
-	 * removing the last child
-	 */
-
-	public ascend(): void {
+	public pop(): NodeWithRelationship<NodeContentType> | undefined {
 		if (!this.current) {
-			return;
+			return undefined;
 		}
 
+		const out = this.current;
 		this.current = this.current.parent;
+
+		return out;
 	}
 
 	public get currentNode(): NodeWithRelationship<NodeContentType> {
