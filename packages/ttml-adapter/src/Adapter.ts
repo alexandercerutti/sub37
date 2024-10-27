@@ -194,6 +194,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					 */
 
 					const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
+					const regionContext = readScopeRegionContext(treeScope);
 
 					/**
 					 * We cannot use an out-of-line region element if
@@ -235,8 +236,6 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						const regionContext = readScopeRegionContext(treeScope);
-
 						if (regionContext.getRegionById(token.attributes["region"])) {
 							treeScope = createScope(
 								treeScope,
@@ -252,6 +251,24 @@ export default class TTMLAdapter extends BaseAdapter {
 								}),
 							);
 						}
+					} else if (isInlineClassElement(token.content) && regionContext?.regions.length) {
+						/**
+						 * [construct intermediate document] procedure replicates the whole subtree
+						 * after <body> for each active region.
+						 *
+						 * ISD construction should be seen as a set of replicated documents for each
+						 * region.
+						 *
+						 * [associate region] defines on it's 3rd rule that a parent should get ignored
+						 * if no children have a region. Which can also be seen as "they get pruned if
+						 * they have no children (or if children have already been pruned)".
+						 *
+						 * Ofc, having the default region active (no region defined in the head) is fine
+						 * and allows all the elements.
+						 */
+
+						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+						continue;
 					}
 
 					/**
