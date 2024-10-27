@@ -228,6 +228,24 @@ export default class TTMLAdapter extends BaseAdapter {
 					 */
 
 					if (token.attributes["region"]) {
+						if (!regionContext?.regions.length) {
+							/**
+							 * "Furthermore, if no out-of-line region is specified,
+							 * then the region attribute must not be specified on
+							 * any content element in the document instance."
+							 */
+
+							/**
+							 * @TODO Stardard defines this as a "must", so it
+							 * could be marked as an error.
+							 *
+							 * Should we?
+							 */
+
+							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+							continue;
+						}
+
 						if (
 							temporalActiveContext?.region &&
 							temporalActiveContext.regionIdRef !== token.attributes["region"]
@@ -253,7 +271,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						if (regionContext?.getRegionById(token.attributes["region"])) {
+						if (regionContext.getRegionById(token.attributes["region"])) {
 							treeScope = createScope(
 								treeScope,
 								createTimeContext({
