@@ -3,6 +3,7 @@ import type { Token } from "./Token";
 import { createStyleParser, type TTMLStyle } from "./parseStyle";
 import { NodeWithRelationship } from "./Tags/NodeTree";
 import { memoizationFactory } from "./memoizationFactory";
+import { TimeContextData } from "./Scope/TimeContext";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
@@ -30,6 +31,12 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 
 	region.styles = nestedStyles;
 	region.id = attributes["xml:id"];
+	region.timingAttributes = {
+		begin: attributes["begin"],
+		dur: attributes["dur"],
+		end: attributes["end"],
+		timeContainer: attributes["timeContainer"],
+	};
 
 	regionStorage.set(region.id, region);
 	return region;
@@ -64,6 +71,7 @@ class TTMLRegion implements Region {
 	private origin: [number, number];
 
 	public id: string;
+	public timingAttributes: TimeContextData;
 	/**
 	 * Region width expressed in percentage
 	 */
@@ -72,7 +80,9 @@ class TTMLRegion implements Region {
 
 	public styles: TTMLStyle[] = [];
 
-	public constructor(origin?: string, extent?: string) {
+	public constructor(origin?: string, extent?: string, timingAttributes?: TimeContextData) {
+		this.timingAttributes = timingAttributes;
+
 		if (origin?.length) {
 			const [x, y] = origin.split("\x20") || ["0px", "0px"];
 

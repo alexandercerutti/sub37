@@ -12,7 +12,7 @@ const beginSymbol = Symbol("time.begin");
 const endSymbol = Symbol("time.end");
 const durSymbol = Symbol("time.dur");
 
-interface TimeContextData {
+export interface TimeContextData {
 	begin?: string | undefined;
 	end?: string | undefined;
 	dur?: string | undefined;
