@@ -271,14 +271,16 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						if (regionContext.getRegionById(token.attributes["region"])) {
+						const flowedRegion = regionContext.getRegionById(token.attributes["region"]);
+
+						if (flowedRegion) {
 							treeScope = createScope(
 								treeScope,
 								createTimeContext({
-									begin: token.attributes["begin"],
-									dur: token.attributes["dur"],
-									end: token.attributes["end"],
-									timeContainer: token.attributes["timeContainer"],
+									begin: flowedRegion.timingAttributes["begin"],
+									dur: flowedRegion.timingAttributes["dur"],
+									end: flowedRegion.timingAttributes["end"],
+									timeContainer: flowedRegion.timingAttributes["timeContainer"],
 								}),
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
