@@ -213,7 +213,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (token.attributes["region"]) {
 						if (
 							temporalActiveContext?.region &&
-							temporalActiveContext.region.id !== token.attributes["region"]
+							temporalActiveContext.regionIdRef !== token.attributes["region"]
 						) {
 							/**
 							 * @example (out-of-line regions definitions in head omitted)

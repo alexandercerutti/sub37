@@ -14,7 +14,9 @@ const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
 interface TemporalActiveContext extends Context<TemporalActiveContext> {
 	computedStyles: Record<string, string>;
-	region: TTMLRegion;
+	get region(): TTMLRegion;
+	get regionIdRef(): string;
+	get stylesIDRefs(): string[];
 }
 
 interface TemporalActiveInitParams {
@@ -86,6 +88,12 @@ export function createTemporalActiveContext(
 
 				computedStyleCache = finalStylesAttributes;
 				return finalStylesAttributes;
+			},
+			get regionIdRef(): string {
+				return store.regionIDRef;
+			},
+			get stylesIDRefs(): string[] {
+				return store.stylesIDRefs;
 			},
 			get region(): TTMLRegion | undefined {
 				if (!store.regionIDRef) {
