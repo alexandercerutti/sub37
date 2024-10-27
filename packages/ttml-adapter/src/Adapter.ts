@@ -205,6 +205,23 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					const { currentNode } = nodeTree;
+					const currentTagName = currentNode.content.content;
+
+					const canElementFlowInRegions =
+						isBlockClassElement(currentTagName) ||
+						(isInlineClassElement(currentTagName) && currentTagName !== "br");
+
+					if (!canElementFlowInRegions) {
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(token, treeScope),
+								NodeAttributes.NO_ATTRS,
+							),
+						);
+						break;
+					}
+
 					/**
 					 * Checking if there's a region collision between a parent and a children.
 					 * Regions will be evaluated when its end tag is received.
@@ -299,12 +316,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
 					 */
 
-					const { currentNode } = nodeTree;
-					const currentTagName = currentNode.content.content;
-
-					const canCurrentNodeHaveInlineRegionsChildren =
-						isBlockClassElement(currentTagName) ||
-						(isInlineClassElement(currentTagName) && currentTagName !== "br");
+					/** Aliasing for semantic purposes */
+					const canCurrentNodeHaveInlineRegionsChildren = canElementFlowInRegions;
 
 					if (canCurrentNodeHaveInlineRegionsChildren && temporalActiveContext?.region) {
 						appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
