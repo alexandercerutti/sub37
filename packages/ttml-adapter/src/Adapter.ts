@@ -236,7 +236,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
-						if (regionContext.getRegionById(token.attributes["region"])) {
+						if (regionContext?.getRegionById(token.attributes["region"])) {
 							treeScope = createScope(
 								treeScope,
 								createTimeContext({
