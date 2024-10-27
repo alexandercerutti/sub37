@@ -122,6 +122,13 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					// Treating strings as Anonymous spans
+					const destinationMatch = representationVisitor.match("span");
+
+					if (!destinationMatch) {
+						continue;
+					}
+
 					nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
 					break;
 				}
