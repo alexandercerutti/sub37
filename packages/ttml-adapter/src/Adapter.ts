@@ -19,8 +19,10 @@ import {
 } from "./Parser/Scope/TemporalActiveContext.js";
 import { createVisitor } from "./Parser/Tags/Representation/Visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
+import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
+const nodeMatchSymbol = Symbol("nodeMatchSymbol");
 
 enum NodeAttributes {
 	NO_ATTRS /***/ = 0b000,
@@ -29,6 +31,10 @@ enum NodeAttributes {
 
 interface NodeWithAttributes {
 	[nodeAttributesSymbol]: NodeAttributes;
+}
+
+interface NodeWithDestinationMatch {
+	[nodeMatchSymbol]?: NodeRepresentation<string>;
 }
 
 function isNodeIgnored(
@@ -59,6 +65,21 @@ function appendNodeAttributes<NodeType extends object>(
 
 	node[nodeAttributesSymbol] ^= attributes;
 	return node;
+}
+
+function createNodeWithDestinationMatch<NodeType extends object>(
+	node: NodeType,
+	destination: NodeRepresentation<string>,
+): NodeType & NodeWithDestinationMatch {
+	return Object.create(node, {
+		[nodeMatchSymbol]: {
+			value: destination,
+		},
+	});
+}
+
+function isNodeMatched(node: object): boolean {
+	return nodeMatchSymbol in node;
 }
 
 /**
@@ -105,7 +126,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		let cues: CueNode[] = [];
 		let treeScope: Scope = createScope(undefined);
 
-		const nodeTree = new NodeTree<Token & NodeWithAttributes>();
+		const nodeTree = new NodeTree<Token & NodeWithAttributes & NodeWithDestinationMatch>();
 		const representationVisitor = createVisitor(RepresentationTree);
 		const tokenizer = new Tokenizer(rawContent);
 
@@ -163,7 +184,12 @@ export default class TTMLAdapter extends BaseAdapter {
 							throw new Error("Malformed TTML track: multiple <tt> were found.");
 						}
 
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithDestinationMatch(token, destinationMatch),
+								NodeAttributes.NO_ATTRS,
+							),
+						);
 
 						treeScope.addContext(
 							createDocumentContext(nodeTree.currentNode.content.attributes || {}),
@@ -196,17 +222,80 @@ export default class TTMLAdapter extends BaseAdapter {
 					const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
 					const regionContext = readScopeRegionContext(treeScope);
 
-					/**
-					 * We cannot use an out-of-line region element if
-					 * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
-					 */
-					if (isLayoutClassElement(token.content) && !token.attributes["xml:id"]) {
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
-						continue;
-					}
-
 					const { currentNode } = nodeTree;
 					const currentTagName = currentNode.content.content;
+
+					if (isLayoutClassElement(token.content)) {
+						const isParentLayout = currentTagName === "layout";
+
+						if (isParentLayout) {
+							/**
+							 * We cannot use an out-of-line region element if
+							 * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
+							 */
+
+							if (!token.attributes["xml:id"]) {
+								nodeTree.push(
+									createNodeWithAttributes(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										NodeAttributes.IGNORED,
+									),
+								);
+								continue;
+							}
+						} else {
+							const parentRegionId = currentNode.content.attributes["region"];
+							const regionExists = Boolean(regionContext?.getRegionById(parentRegionId));
+							const tacRegionIDRef = Boolean(temporalActiveContext.regionIdRef);
+
+							if (tacRegionIDRef && !parentRegionId) {
+								/**
+								 * @example
+								 *
+								 * |--------------------------------|--------------------------------------------------------------|
+								 * | Before [process inline region]	|	 After [process inline region] 															 |
+								 * |--------------------------------|--------------------------------------------------------------|
+								 * | ```xml													| ```xml																											 |
+								 * | 	<tt>													|		<tt>																											 |
+								 * | 		<head>											|			<head>																									 |
+								 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
+								 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
+								 * | 		</head>											|			</head>															<!--      |   -->		 |
+								 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
+								 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
+								 * | 				<region ... />					|																					<!--   >--|   -->		 |
+								 * | 				<p>...</p>							|					<p>...</p>																					 |
+								 * | 			</div>										|				</div>																								 |
+								 * | 		</body>											|			</body>																									 |
+								 * | 	</tt>													|		</tt>																											 |
+								 * | ```														| ```																													 |
+								 * |________________________________|______________________________________________________________|
+								 *
+								 * Therefore, for the [associate region] procedure, the div will end up
+								 * being pruned, because of a different region.
+								 *
+								 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+								 */
+
+								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
+								nodeTree.push(
+									createNodeWithAttributes(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										NodeAttributes.IGNORED,
+									),
+								);
+								continue;
+							} else if (parentRegionId && regionExists) {
+								nodeTree.push(
+									createNodeWithAttributes(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										NodeAttributes.IGNORED,
+									),
+								);
+								continue;
+							}
+						}
+					}
 
 					const canElementFlowInRegions =
 						isBlockClassElement(currentTagName) ||
@@ -215,7 +304,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (!canElementFlowInRegions) {
 						nodeTree.push(
 							createNodeWithAttributes(
-								createNodeWithScope(token, treeScope),
+								createNodeWithDestinationMatch(token, destinationMatch),
 								NodeAttributes.NO_ATTRS,
 							),
 						);
@@ -242,7 +331,12 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * Should we?
 							 */
 
-							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+							nodeTree.push(
+								createNodeWithAttributes(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									NodeAttributes.IGNORED,
+								),
+							);
 							continue;
 						}
 
@@ -267,7 +361,12 @@ export default class TTMLAdapter extends BaseAdapter {
 							 * ```
 							 */
 
-							nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+							nodeTree.push(
+								createNodeWithAttributes(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									NodeAttributes.IGNORED,
+								),
+							);
 							continue;
 						}
 
@@ -304,48 +403,21 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * and allows all the elements.
 						 */
 
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithDestinationMatch(token, destinationMatch),
+								NodeAttributes.IGNORED,
+							),
+						);
 						continue;
 					}
 
-					/**
-					 * @example
-					 *
-					 * |--------------------------------|--------------------------------------------------------------|
-					 * | Before [process inline region]	|	 After [process inline region] 															 |
-					 * |--------------------------------|--------------------------------------------------------------|
-					 * | ```xml													| ```xml																											 |
-					 * | 	<tt>													|		<tt>																											 |
-					 * | 		<head>											|			<head>																									 |
-					 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
-					 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
-					 * | 		</head>											|			</head>															<!--      |   -->		 |
-					 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
-					 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
-					 * | 				<region ... />					|																					<!--   >--|   -->		 |
-					 * | 				<p>...</p>							|					<p>...</p>																					 |
-					 * | 			</div>										|				</div>																								 |
-					 * | 		</body>											|			</body>																									 |
-					 * | 	</tt>													|		</tt>																											 |
-					 * | ```														| ```																													 |
-					 * |________________________________|______________________________________________________________|
-					 *
-					 * Therefore, for the [associate region] procedure, the div will end up
-					 * being pruned, because of a different region.
-					 *
-					 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
-					 */
-
-					/** Aliasing for semantic purposes */
-					const canCurrentNodeHaveInlineRegionsChildren = canElementFlowInRegions;
-
-					if (canCurrentNodeHaveInlineRegionsChildren && temporalActiveContext?.region) {
-						appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
-						continue;
-					}
-
-					nodeTree.push(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+					nodeTree.push(
+						createNodeWithAttributes(
+							createNodeWithDestinationMatch(token, destinationMatch),
+							NodeAttributes.NO_ATTRS,
+						),
+					);
 					break;
 				}
 
@@ -358,12 +430,15 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
+					if (isNodeMatched(nodeTree.currentNode.content)) {
+						// Pruned by rules, not by destination mismatching
+						representationVisitor.back();
+					}
+
 					if (isNodeIgnored(nodeTree.currentNode.content)) {
 						nodeTree.pop();
 						break;
 					}
-
-					representationVisitor.back();
 
 					if (token.content === "tt") {
 						nodeTree.pop();
