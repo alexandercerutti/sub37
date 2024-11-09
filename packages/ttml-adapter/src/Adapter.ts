@@ -487,7 +487,9 @@ export default class TTMLAdapter extends BaseAdapter {
 					const parentNode = nodeTree.currentNode.parent.content.content;
 
 					/**
-					 * Processing inline regions to be saved
+					 * Processing inline regions to be saved.
+					 * Remember: inline regions end before we
+					 * can process a cue (paragraph) content
 					 */
 
 					if (
