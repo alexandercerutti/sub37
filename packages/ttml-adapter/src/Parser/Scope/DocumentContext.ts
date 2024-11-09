@@ -123,6 +123,7 @@ function parseDocumentSupportedAttributes(
 		),
 		"ttp:tickRate": tickRate,
 		"ttp:timeBase": getTimeBaseResolvedValue(attributes["ttp:timeBase"]),
+		"ttp:markerMode": getMarkerModeResolvedValue(attributes["ttp:markerMode"]),
 
 		/**
 		 * Container attributes
@@ -280,4 +281,12 @@ function getCellResolutionComputedValue(
 	}
 
 	return splittedValues;
+}
+
+function getMarkerModeResolvedValue(markerMode: string): DocumentAttributes["ttp:markerMode"] {
+	if (markerMode === "continuous" || markerMode === "discontinuous") {
+		return markerMode;
+	}	
+	
+	return "discontinuous";
 }
