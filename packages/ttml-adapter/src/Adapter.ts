@@ -589,9 +589,14 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					if (currentTag === "p" || currentTag === "span") {
-						const node = currentElement;
-						cues.push(...parseCue(node, treeScope));
+					if (
+						isBlockClassElement(currentTag) ||
+						(isInlineClassElement(currentTag) && currentTag !== "br")
+					) {
+						if (currentTag === "p") {
+							const node = currentElement;
+							cues.push(...parseCue(node, currentElement.content[nodeScopeSymbol]));
+						}
 
 						break;
 					}
