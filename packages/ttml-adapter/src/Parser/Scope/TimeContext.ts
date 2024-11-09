@@ -60,6 +60,17 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 
 		const { attributes: documentAttributes } = readScopeDocumentContext(scope);
 
+		const isDurAttributeForbidden =
+			typeof contextInput.dur !== "undefined" &&
+			documentAttributes["ttp:timeBase"] === "smpte" &&
+			documentAttributes["ttp:markerMode"] === "discontinuous";
+
+		if (isDurAttributeForbidden) {
+			throw new Error(
+				"Dur attribute cannot be specified when timeBase is set to 'smpte' and marker mode is 'discontinuous' (default).",
+			);
+		}
+
 		const timeContainer = isTimeContainerStardardString(contextInput["timeContainer"])
 			? contextInput["timeContainer"]
 			: undefined;
