@@ -244,11 +244,9 @@ export default class TTMLAdapter extends BaseAdapter {
 								continue;
 							}
 						} else {
-							const parentRegionId = currentNode.content.attributes["region"];
-							const regionExists = Boolean(regionContext?.getRegionById(parentRegionId));
-							const tacRegionIDRef = Boolean(temporalActiveContext.regionIdRef);
+							const temporalActiveRegionId = temporalActiveContext.regionIdRef;
 
-							if (tacRegionIDRef && !parentRegionId) {
+							if (temporalActiveRegionId) {
 								/**
 								 * @example
 								 *
@@ -278,14 +276,6 @@ export default class TTMLAdapter extends BaseAdapter {
 								 */
 
 								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
-								nodeTree.push(
-									createNodeWithAttributes(
-										createNodeWithDestinationMatch(token, destinationMatch),
-										NodeAttributes.IGNORED,
-									),
-								);
-								continue;
-							} else if (parentRegionId && regionExists) {
 								nodeTree.push(
 									createNodeWithAttributes(
 										createNodeWithDestinationMatch(token, destinationMatch),
