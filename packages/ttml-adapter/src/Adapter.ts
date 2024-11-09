@@ -312,8 +312,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					const canElementFlowInRegions =
-						isBlockClassElement(currentTagName) ||
-						(isInlineClassElement(currentTagName) && currentTagName !== "br");
+						isBlockClassElement(token.content) ||
+						(isInlineClassElement(token.content) && token.content !== "br");
 
 					if (!canElementFlowInRegions) {
 						nodeTree.push(
