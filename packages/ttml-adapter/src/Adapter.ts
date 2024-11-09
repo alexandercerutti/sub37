@@ -22,6 +22,7 @@ import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationT
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
+const nodeScopeSymbol = Symbol("nodeScopeSymbol");
 const nodeMatchSymbol = Symbol("nodeMatchSymbol");
 
 enum NodeAttributes {
@@ -31,6 +32,10 @@ enum NodeAttributes {
 
 interface NodeWithAttributes {
 	[nodeAttributesSymbol]: NodeAttributes;
+}
+
+interface NodeWithScope {
+	[nodeScopeSymbol]?: Scope;
 }
 
 interface NodeWithDestinationMatch {
@@ -65,6 +70,17 @@ function appendNodeAttributes<NodeType extends object>(
 
 	node[nodeAttributesSymbol] ^= attributes;
 	return node;
+}
+
+function createNodeWithScope<NodeType extends object>(
+	node: NodeType,
+	scope: Scope,
+): NodeType & NodeWithScope {
+	return Object.create(node, {
+		[nodeScopeSymbol]: {
+			value: scope,
+		},
+	});
 }
 
 function createNodeWithDestinationMatch<NodeType extends object>(
@@ -126,7 +142,9 @@ export default class TTMLAdapter extends BaseAdapter {
 		let cues: CueNode[] = [];
 		let treeScope: Scope = createScope(undefined);
 
-		const nodeTree = new NodeTree<Token & NodeWithAttributes & NodeWithDestinationMatch>();
+		const nodeTree = new NodeTree<
+			Token & NodeWithAttributes & NodeWithScope & NodeWithDestinationMatch
+		>();
 		const representationVisitor = createVisitor(RepresentationTree);
 		const tokenizer = new Tokenizer(rawContent);
 
@@ -186,7 +204,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						nodeTree.push(
 							createNodeWithAttributes(
-								createNodeWithDestinationMatch(token, destinationMatch),
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
 								NodeAttributes.NO_ATTRS,
 							),
 						);
@@ -237,7 +258,10 @@ export default class TTMLAdapter extends BaseAdapter {
 							if (!token.attributes["xml:id"]) {
 								nodeTree.push(
 									createNodeWithAttributes(
-										createNodeWithDestinationMatch(token, destinationMatch),
+										createNodeWithScope(
+											createNodeWithDestinationMatch(token, destinationMatch),
+											treeScope,
+										),
 										NodeAttributes.IGNORED,
 									),
 								);
@@ -294,7 +318,10 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (!canElementFlowInRegions) {
 						nodeTree.push(
 							createNodeWithAttributes(
-								createNodeWithDestinationMatch(token, destinationMatch),
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
 								NodeAttributes.NO_ATTRS,
 							),
 						);
@@ -323,7 +350,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 							nodeTree.push(
 								createNodeWithAttributes(
-									createNodeWithDestinationMatch(token, destinationMatch),
+									createNodeWithScope(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										treeScope,
+									),
 									NodeAttributes.IGNORED,
 								),
 							);
@@ -353,7 +383,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 							nodeTree.push(
 								createNodeWithAttributes(
-									createNodeWithDestinationMatch(token, destinationMatch),
+									createNodeWithScope(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										treeScope,
+									),
 									NodeAttributes.IGNORED,
 								),
 							);
@@ -395,7 +428,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						nodeTree.push(
 							createNodeWithAttributes(
-								createNodeWithDestinationMatch(token, destinationMatch),
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
 								NodeAttributes.IGNORED,
 							),
 						);
@@ -404,7 +440,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					nodeTree.push(
 						createNodeWithAttributes(
-							createNodeWithDestinationMatch(token, destinationMatch),
+							createNodeWithScope(
+								createNodeWithDestinationMatch(token, destinationMatch),
+								treeScope,
+							),
 							NodeAttributes.NO_ATTRS,
 						),
 					);
@@ -423,6 +462,16 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (isNodeMatched(nodeTree.currentNode.content)) {
 						// Pruned by rules, not by destination mismatching
 						representationVisitor.back();
+
+						const currentNode = nodeTree.currentNode.content;
+						const parentNode = nodeTree.currentNode.parent?.content;
+						const didScopeUpgrade = parentNode
+							? currentNode[nodeScopeSymbol] !== parentNode[nodeScopeSymbol]
+							: true;
+
+						if (didScopeUpgrade && treeScope.parent) {
+							treeScope = treeScope.parent;
+						}
 					}
 
 					if (isNodeIgnored(nodeTree.currentNode.content)) {
