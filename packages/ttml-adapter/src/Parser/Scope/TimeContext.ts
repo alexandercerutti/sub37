@@ -138,7 +138,12 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 					 *
 					 * @see https://w3c.github.io/ttml2/#semantics-timing
 					 */
-					return dur || (timeContainer === "par" ? Infinity : 0);
+
+					if (typeof dur !== "undefined") {
+						return this.startTime + dur;
+					}
+
+					return timeContainer === "par" ? Infinity : 0;
 				}
 
 				if (typeof dur !== "undefined") {
