@@ -118,10 +118,34 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 				const timeContainer = this.timeContainer;
 
 				if (typeof end === "undefined") {
-					return dur || timeContainer === "par" ? Infinity : 0;
+					/**
+					 * If duration is missing, then we need to obtain the
+					 * what-so-called "implicit duration". TTML States this:
+					 *
+					 * "The implicit duration of an anonymous span is defined as follows:
+					 * if the anonymous span's parent time container is a parallel time
+					 * container, then the implicit duration is equivalent to the indefinite
+					 * duration value as defined by [SMIL 3.0];
+					 *
+					 * if the anonymous span's parent time container is a sequential time
+					 * container, then the implicit duration is equivalent to zero."
+					 *
+					 * @see https://w3c.github.io/ttml2/#semantics-timing
+					 */
+					return dur || (timeContainer === "par" ? Infinity : 0);
 				}
 
 				if (typeof dur !== "undefined") {
+					/**
+					 * "In the context of the subset of [SMIL 3.0]
+					 * semantics supported by this specification,
+					 * the active duration of an element that
+					 * specifies both end and dur attributes is
+					 * equal to the lesser of the value of the dur
+					 * attribute and the difference between the
+					 * value of the end attribute and
+					 * the element's begin time.
+					 */
 					const startTime = this.startTime;
 					const computedDuration = Math.min(dur, end - startTime);
 
