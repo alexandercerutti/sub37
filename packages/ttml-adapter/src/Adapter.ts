@@ -431,17 +431,28 @@ export default class TTMLAdapter extends BaseAdapter {
 								}),
 							);
 						}
-					} else if (isInlineClassElement(token.content) && regionContext?.regions.length) {
+					} else if (
+						!temporalActiveContext?.regionIdRef &&
+						regionContext?.regions.length &&
+						isInlineClassElement(token.content)
+					) {
 						/**
 						 * [construct intermediate document] procedure replicates the whole subtree
 						 * after <body> for each active region.
 						 *
 						 * ISD construction should be seen as a set of replicated documents for each
-						 * region.
+						 * region. This means that some elements are always shared.
 						 *
-						 * [associate region] defines on it's 3rd rule that a parent should get ignored
-						 * if no children have a region. Which can also be seen as "they get pruned if
-						 * they have no children (or if children have already been pruned)".
+						 * [associate region] defines on it's 3rd rule, that an element (e.g. <p>) should
+						 * get ignored if none of its children have a region.
+						 *
+						 * However, a parent can get ignored as well if it has no children because all
+						 * of them have been already pruned. And this is where we go to act.
+						 *
+						 * Due to the fact that we parse the tree linearly, without doing multiple steps
+						 * and without building an actual ISD, we cannot know if any element but inline
+						 * elements (`span`s and `br`s) will get pruned or replicated under a certain
+						 * region.
 						 *
 						 * Ofc, having the default region active (no region defined in the head) is fine
 						 * and allows all the elements.
