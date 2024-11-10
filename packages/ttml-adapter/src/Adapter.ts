@@ -328,6 +328,27 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
+					// p and spans get elaborated in a different place
+					const canElementOwnTimingAttributes = token.content === "div" || token.content === "body";
+					const hasTimingAttributes =
+						canElementOwnTimingAttributes &&
+						("begin" in token.attributes ||
+							"end" in token.attributes ||
+							"dur" in token.attributes ||
+							"timeContainer" in token.attributes);
+
+					if (hasTimingAttributes) {
+						treeScope = createScope(
+							treeScope,
+							createTimeContext({
+								begin: token.attributes["begin"],
+								end: token.attributes["end"],
+								dur: token.attributes["dur"],
+								timeContainer: token.attributes["timeContainer"],
+							}),
+						);
+					}
+
 					/**
 					 * Checking if there's a region collision between a parent and a children.
 					 * Regions will be evaluated when its end tag is received.
