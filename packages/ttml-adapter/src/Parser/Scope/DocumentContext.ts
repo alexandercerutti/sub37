@@ -286,7 +286,7 @@ function getCellResolutionComputedValue(
 function getMarkerModeResolvedValue(markerMode: string): DocumentAttributes["ttp:markerMode"] {
 	if (markerMode === "continuous" || markerMode === "discontinuous") {
 		return markerMode;
-	}	
-	
+	}
+
 	return "discontinuous";
 }
