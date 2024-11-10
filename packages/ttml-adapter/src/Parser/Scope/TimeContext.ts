@@ -218,30 +218,7 @@ export function readScopeTimeContext(scope: Scope): TimeContext | undefined {
 		return undefined;
 	}
 
-	return createTimeContextProxy(context as TimeContext);
-}
-
-/**
- * A TimeContext Proxy is needed to allow reading a context
- * like you were reading from a children of the associated
- * scope.
- *
- * This is for the special case of `timeContainer` getter,
- * which should read only its parent, and not its own property,
- * as when reading a scope, we are reading it as a child.
- *
- * @param context
- * @returns
- */
-
-function createTimeContextProxy(context: TimeContext): TimeContext {
-	return Object.create(context, {
-		parent: {
-			get() {
-				return context;
-			},
-		},
-	});
+	return context as TimeContext;
 }
 
 function isTimeContainerStardardString(timeContainer: string): timeContainer is "par" | "seq" {
