@@ -52,6 +52,12 @@ interface TimeContext extends Context<TimeContext> {
 	[currentStateSymbol]: TimeContextState;
 }
 
+declare module "./Scope" {
+	interface ContextDictionary {
+		[timeContextSymbol]: TimeContext;
+	}
+}
+
 export function createTimeContext(contextInput: TimeContextData = {}): ContextFactory<TimeContext> {
 	return function (scope: Scope) {
 		if (!Object.keys(contextInput).length) {
@@ -212,13 +218,7 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 }
 
 export function readScopeTimeContext(scope: Scope): TimeContext | undefined {
-	let context: Context | undefined;
-
-	if (!(context = scope.getContextByIdentifier(timeContextSymbol))) {
-		return undefined;
-	}
-
-	return context as TimeContext;
+	return scope.getContextByIdentifier(timeContextSymbol);
 }
 
 function isTimeContainerStardardString(timeContainer: string): timeContainer is "par" | "seq" {

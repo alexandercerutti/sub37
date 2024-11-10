@@ -16,6 +16,12 @@ interface DocumentContext extends Context<DocumentContext> {
 	attributes: DocumentAttributes;
 }
 
+declare module "./Scope" {
+	interface ContextDictionary {
+		[documentContextSymbol]: DocumentContext;
+	}
+}
+
 export function createDocumentContext(
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
@@ -68,13 +74,7 @@ export function createDocumentContext(
 }
 
 export function readScopeDocumentContext(scope: Scope): DocumentContext | undefined {
-	let context: Context | undefined;
-
-	if (!(context = scope.getContextByIdentifier(documentContextSymbol))) {
-		return undefined;
-	}
-
-	return context as DocumentContext;
+	return scope.getContextByIdentifier(documentContextSymbol);
 }
 
 function parseDocumentSupportedAttributes(

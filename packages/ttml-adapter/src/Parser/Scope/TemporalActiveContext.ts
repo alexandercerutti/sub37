@@ -19,6 +19,12 @@ interface TemporalActiveContext extends Context<TemporalActiveContext> {
 	get stylesIDRefs(): string[];
 }
 
+declare module "./Scope" {
+	interface ContextDictionary {
+		[temporalActiveContextSymbol]: TemporalActiveContext;
+	}
+}
+
 interface TemporalActiveInitParams {
 	regionIDRef?: string;
 	stylesIDRefs?: string[];
@@ -108,11 +114,5 @@ export function createTemporalActiveContext(
 }
 
 export function readScopeTemporalActiveContext(scope: Scope): TemporalActiveContext | undefined {
-	let context: Context | undefined;
-
-	if (!(context = scope.getContextByIdentifier(temporalActiveContextSymbol))) {
-		return undefined;
-	}
-
-	return context as TemporalActiveContext;
+	return scope.getContextByIdentifier(temporalActiveContextSymbol);
 }

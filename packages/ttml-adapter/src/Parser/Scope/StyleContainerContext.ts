@@ -15,6 +15,12 @@ interface StyleContainerContext extends Context<StyleContainerContext> {
 	[styleParserGetterSymbol]: StyleParser;
 }
 
+declare module "./Scope" {
+	interface ContextDictionary {
+		[styleContextSymbol]: StyleContainerContext;
+	}
+}
+
 export function createStyleContainerContext(
 	registeredStyles: StyleIndex,
 ): ContextFactory<StyleContainerContext> | null {
@@ -84,11 +90,5 @@ export function createStyleContainerContext(
 }
 
 export function readScopeStyleContainerContext(scope: Scope): StyleContainerContext | undefined {
-	let context: Context | undefined;
-
-	if (!(context = scope.getContextByIdentifier(styleContextSymbol))) {
-		return undefined;
-	}
-
-	return context as StyleContainerContext;
+	return scope.getContextByIdentifier(styleContextSymbol);
 }

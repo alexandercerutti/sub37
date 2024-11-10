@@ -22,6 +22,12 @@ interface RegionContainerContext extends Context<RegionContainerContext> {
 	[regionParserGetterSymbol]: RegionParser;
 }
 
+declare module "./Scope" {
+	interface ContextDictionary {
+		[regionContextSymbol]: RegionContainerContext;
+	}
+}
+
 export function createRegionContainerContext(
 	contextState: RegionContainerContextState[],
 ): ContextFactory<RegionContainerContext> {
@@ -85,11 +91,5 @@ export function createRegionContainerContext(
 }
 
 export function readScopeRegionContext(scope: Scope): RegionContainerContext | undefined {
-	let context: Context | undefined;
-
-	if (!(context = scope.getContextByIdentifier(regionContextSymbol))) {
-		return undefined;
-	}
-
-	return context as RegionContainerContext;
+	return scope.getContextByIdentifier(regionContextSymbol);
 }

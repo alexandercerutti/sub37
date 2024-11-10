@@ -1,7 +1,14 @@
+// Made to be extended by the contexts
+export interface ContextDictionary {
+	[K: symbol]: Context<object>;
+}
+
 export interface Scope {
 	parent: Scope | undefined;
 	getAllContexts(): Context[];
-	getContextByIdentifier(identifier: symbol): Context | undefined;
+	getContextByIdentifier<const ID extends keyof ContextDictionary>(
+		identifier: ID,
+	): ContextDictionary[ID] | undefined;
 	addContext(context: ContextFactory): void;
 }
 
@@ -76,7 +83,9 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 		getAllContexts(): Context[] {
 			return Array.from(contextsMap, ([, context]) => context);
 		},
-		getContextByIdentifier(identifier: symbol): Context {
+		getContextByIdentifier<const ID extends keyof ContextDictionary>(
+			identifier: ID,
+		): ContextDictionary[ID] | undefined {
 			return contextsMap.get(identifier) || undefined;
 		},
 		addContext(contextFactory: ContextFactory): void {
