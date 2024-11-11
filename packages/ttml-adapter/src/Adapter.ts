@@ -419,6 +419,18 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (flowedRegion) {
 							treeScope = createScope(
 								treeScope,
+								/**
+								 * @TODO timing attributes on a region are temporal details
+								 * for which "the region is eligible for activation".
+								 *
+								 * This means that we could have an element E with both
+								 * region R and longer timing range [ET1, ET2]. Such
+								 * element could technically overflow the time span of
+								 * region in both -x and +x like ET1 ≤ RT1 ≤ RT2 ≤ ET2.
+								 *
+								 * However, right now we don't have a mean to split the
+								 * cues in this sense.
+								 */
 								createTimeContext({
 									begin: flowedRegion.timingAttributes["begin"],
 									dur: flowedRegion.timingAttributes["dur"],
