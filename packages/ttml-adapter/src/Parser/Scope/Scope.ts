@@ -95,6 +95,10 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 
 			const context = contextFactory(this);
 
+			if (!context) {
+				return;
+			}
+
 			if (contextsMap.has(context.identifier)) {
 				contextsMap.get(context.identifier).mergeWith(context);
 				return;
