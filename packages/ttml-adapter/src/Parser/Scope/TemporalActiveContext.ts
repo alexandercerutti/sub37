@@ -48,9 +48,15 @@ export function createTemporalActiveContext(
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
 			mergeWith(context: TemporalActiveContext): void {
-				/**
-				 * @TODO add merging logic
-				 */
+				if (context.regionIdRef && !store.regionIDRef) {
+					store.regionIDRef = context.regionIdRef;
+				}
+
+				if (context.stylesIDRefs.length) {
+					store.stylesIDRefs = Array.from(
+						new Set([...store.stylesIDRefs, ...context.stylesIDRefs]),
+					);
+				}
 			},
 			get computedStyles(): TTMLStyle["attributes"] {
 				if (computedStyleCache) {
