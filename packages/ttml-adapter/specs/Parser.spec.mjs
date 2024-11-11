@@ -6,6 +6,7 @@ import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import { TokenType } from "../lib/Parser/Token.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
+import { createTemporalActiveContext } from "../lib/Parser/Scope/TemporalActiveContext.js";
 
 describe("parseCue", () => {
 	it("should be coherent with anonymous span", () => {
@@ -82,7 +83,25 @@ describe("parseCue", () => {
 		Guten.parent = NamedSpan1;
 		Tag.parent = NamedSpan1.children[0];
 
-		const scope = createScope(undefined, createDocumentContext({}));
+		/**
+		 * <p timeContainer="seq" xml:id="par-01">
+		 * 	Hello <!-- This will be hidden: implicit duration of element in a sequential parent is 0 -->
+		 * 	<span> <!-- parallel container (default) -->
+		 * 		Guten <!-- This will be shown: implicit duration of element in a parallel parent is indefinite -->
+		 * 		<span> <!-- parallel container (default) -->
+		 * 			Tag <!-- This will be shown: implicit duration of element in a parallel parent is indefinite -->
+		 * 		</span>
+		 * 	</span>
+		 * 	Allo <!-- This will be hidden: implicit duration of element in a sequential parent is 0 -->
+		 * </p>
+		 */
+
+		const scope = createScope(
+			undefined,
+			createDocumentContext({}),
+			createTemporalActiveContext({}),
+		);
+
 		const parsed = parseCue(Paragraph, scope);
 
 		expect(parsed).toBeInstanceOf(Array);

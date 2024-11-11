@@ -167,9 +167,25 @@ function createCueFromAnonymousSpan(
 	scope: Scope,
 ): CueNode {
 	const {
-		content: { content },
+		content: { content, attributes },
 	} = node;
-	const timeContext = readScopeTimeContext(scope);
+
+	/**
+	 * A new scope is requires here otherwise anonymous
+	 * span are not able to inherit the `timeContainer`
+	 */
+
+	const localScope = createScope(
+		scope,
+		createTimeContext({
+			begin: attributes["begin"],
+			dur: attributes["dur"],
+			end: attributes["end"],
+			timeContainer: attributes["timeContainer"],
+		}),
+	);
+
+	const timeContext = readScopeTimeContext(localScope);
 
 	return new CueNode({
 		id: parentId,
