@@ -27,7 +27,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	}
 
 	const region = new TTMLRegion();
-	const nestedStyles = extractStylesChildren(children, styleParser);
+	const nestedStyles = processStylesChildren(children, styleParser);
 
 	region.styles = nestedStyles;
 	region.id = attributes["xml:id"];
@@ -42,7 +42,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	return region;
 });
 
-function extractStylesChildren(
+function processStylesChildren(
 	regionChildren: NodeWithRelationship<Token>[],
 	styleParser: StyleParser = createStyleParser(),
 ): TTMLStyle[] {
