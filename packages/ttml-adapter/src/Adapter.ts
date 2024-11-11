@@ -268,7 +268,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								continue;
 							}
 						} else {
-							const temporalActiveRegionId = temporalActiveContext.regionIdRef;
+							const temporalActiveRegionId = temporalActiveContext?.regionIdRef;
 
 							if (temporalActiveRegionId) {
 								/**
