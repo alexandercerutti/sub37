@@ -10,6 +10,10 @@ import {
 } from "./Scope/TemporalActiveContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
+	if (!node.children.length) {
+		return [];
+	}
+
 	const { attributes } = node.content;
 
 	/**
@@ -38,102 +42,146 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < node.children.length; i++) {
-		cues.push(...parseCueContents(attributes["xml:id"] || "unkpar", node.children, localScope));
-	}
+		const children = node.children[i];
 
-	return cues;
+		if (children.content.content === "span") {
+			cues.push(...getCuesFromSpan(children, localScope, attributes["xml:id"] || `unk-par-${i}`));
+			continue;
+		}
 
-	// return parseCueContents(attributes["xml:id"] || "unkpar", attributes, node.children, localScope);
-}
+		if (children.content.content === "br" && cues.length) {
+			processLineBreak(cues[cues.length - 1]);
+			continue;
+		}
 
-function parseCueContents(
-	parentId: string,
-	rootChildren: NodeWithRelationship<Token>[],
-	scope: Scope,
-	previousCues: CueNode[] = [],
-): CueNode[] {
-	let cues: CueNode[] = previousCues;
-	// const cues: CueNode[] = [];
-
-	const temporalActiveContext = readScopeTemporalActiveContext(scope);
-	const timeContext = readScopeTimeContext(scope);
-
-	for (let i = 0; i < rootChildren.length; i++) {
-		const { content, children } = rootChildren[i];
-
-		if (content.type === TokenType.STRING) {
-			/**
-			 * Handling Anonymous spans
-			 */
-
+		if (children.content.type === TokenType.STRING) {
 			if (!cues.length) {
 				cues.push(
-					new CueNode({
-						id: `${parentId}-anonymous-${i}`,
-						content: "",
-						startTime: timeContext.startTime,
-						endTime: timeContext.endTime,
-
-						/** @TODO Fix region association */
-						region: undefined,
-						// entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
-					}),
+					createCueFromAnonymousSpan(
+						children,
+						node.content.attributes["xml:id"] || `unk-span-${i}`,
+						localScope,
+					),
 				);
+
+				continue;
 			}
 
-			cues[cues.length - 1].content += content.content;
-
-			continue;
-		}
-
-		if (content.content === "br") {
-			if (cues.length) {
-				cues[cues.length - 1].content += "\n";
-			}
-
-			continue;
-		}
-
-		if (content.content === "span") {
-			const { attributes } = content;
-
-			const localScope = createScope(
-				scope,
-				createTimeContext({
-					begin: attributes["begin"],
-					dur: attributes["dur"],
-					end: attributes["end"],
-					timeContainer: attributes["timeContainer"],
-				}),
-			);
-
-			const timeContext = readScopeTimeContext(localScope);
-
-			let nextCueID = attributes["xml:id"] || `${parentId}-${i}`;
-
-			if (isTimestamp(attributes)) {
-				cues.push(
-					new CueNode({
-						id: nextCueID,
-						content: "",
-						startTime: timeContext.startTime,
-						endTime: timeContext.endTime,
-						/** @TODO Fix region association */
-						// region: matchingRegion,
-						entities: cues[cues.length - 1]?.entities,
-					}),
-				);
-			}
-
-			if (children.length) {
-				cues.push(...parseCue(rootChildren[i], localScope));
-			}
+			cues[cues.length - 1].content += children.content.content;
 
 			continue;
 		}
 	}
 
 	return cues;
+}
+
+function getCuesFromSpan(
+	node: NodeWithRelationship<Token>,
+	scope: Scope,
+	parentId: string,
+): CueNode[] {
+	if (!node.children.length) {
+		return [];
+	}
+
+	const cues: CueNode[] = [];
+	const { attributes } = node.content;
+	const localScope = createScope(
+		scope,
+		createTimeContext({
+			begin: attributes["begin"],
+			dur: attributes["dur"],
+			end: attributes["end"],
+			timeContainer: attributes["timeContainer"],
+		}),
+		createTemporalActiveContext({
+			regionIDRef: attributes["region"],
+			stylesIDRefs: [],
+		}),
+	);
+
+	const nextCueID = attributes["xml:id"] || parentId;
+
+	if (isTimestamp(attributes)) {
+		const timeContext = readScopeTimeContext(localScope);
+
+		cues.push(
+			new CueNode({
+				id: nextCueID,
+				content: "",
+				startTime: timeContext.startTime,
+				endTime: timeContext.endTime,
+				/** @TODO Fix region association */
+				// region: matchingRegion,
+				entities: cues[cues.length - 1]?.entities,
+			}),
+		);
+	}
+
+	for (let i = 0; i < node.children.length; i++) {
+		const children = node.children[i];
+
+		if (children.content.content === "span") {
+			cues.push(...getCuesFromSpan(children, localScope, parentId));
+			continue;
+		}
+
+		if (children.content.content === "br") {
+			processLineBreak(cues[cues.length - 1]);
+			continue;
+		}
+
+		if (children.content.type === TokenType.STRING) {
+			if (!cues.length) {
+				cues.push(
+					createCueFromAnonymousSpan(
+						children,
+						node.content.attributes["xml:id"] || `unk-span-${i}`,
+						localScope,
+					),
+				);
+
+				continue;
+			}
+
+			cues[cues.length - 1].content += children.content.content;
+
+			continue;
+		}
+	}
+
+	return cues;
+}
+
+function processLineBreak(cue: CueNode | undefined): void {
+	if (!cue) {
+		return;
+	}
+
+	cue.content += "\n";
+}
+
+function createCueFromAnonymousSpan(
+	node: NodeWithRelationship<Token>,
+	parentId: string,
+	scope: Scope,
+): CueNode {
+	const {
+		content: { content },
+	} = node;
+	const timeContext = readScopeTimeContext(scope);
+
+	return new CueNode({
+		id: parentId,
+		content,
+		startTime: timeContext.startTime,
+		endTime: timeContext.endTime,
+
+		/** @TODO Fix region association */
+		region: undefined,
+		// entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
+	});
 }
 
 function isTimestamp(attributes: Record<string, string>): boolean {
