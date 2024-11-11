@@ -64,7 +64,7 @@ export function createRegionContainerContext(
 				}
 
 				const regions = this.regions as TTMLRegion[];
-				return regions.filter((region) => region.id === id)[0];
+				return regions.find((region) => region.id === id);
 			},
 			getStylesByRegionId(id: string | undefined): Record<string, string> {
 				/**
