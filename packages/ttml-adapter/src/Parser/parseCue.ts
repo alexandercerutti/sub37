@@ -55,19 +55,18 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 		}
 
 		if (children.content.type === TokenType.STRING) {
-			if (!cues.length) {
-				cues.push(
-					createCueFromAnonymousSpan(
-						children,
-						node.content.attributes["xml:id"] || `unk-span-${i}`,
-						localScope,
-					),
-				);
-
+			if (cues.length && cues[cues.length - 1].content === "") {
+				cues[cues.length - 1].content += children.content.content;
 				continue;
 			}
 
-			cues[cues.length - 1].content += children.content.content;
+			cues.push(
+				createCueFromAnonymousSpan(
+					children,
+					node.content.attributes["xml:id"] || `unk-span-${i}`,
+					localScope,
+				),
+			);
 
 			continue;
 		}
