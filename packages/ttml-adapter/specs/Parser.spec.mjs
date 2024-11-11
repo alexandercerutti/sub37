@@ -252,43 +252,6 @@ describe("parseCue", () => {
 	});
 });
 
-describe("Regions parsing", () => {
-	it("should ignore a region if it's IDREF is not unique in the scope of document instance", () => {
-		/**
-		 * @TODO
-		 */
-	});
-
-	/**
-	 * Add tests for createRegionParser: tts attributes should
-	 * belong to styles property
-	 */
-
-	it("should use only one inline region", () => {
-		/**
-		 * @TODO
-		 */
-	});
-
-	it("should use only attribute one if both attribute and inline region are available", () => {
-		/**
-		 * @TODO
-		 */
-	});
-
-	it("should ignore children with a different region attribute from the parent", () => {
-		/**
-		 * @TODO
-		 */
-	});
-
-	it("should ignore children with an inline region while parent has region attribute", () => {
-		/**
-		 * @TODO
-		 */
-	});
-});
-
 describe("Cell Resolution", () => {
 	it("should default if not available", () => {
 		/**
