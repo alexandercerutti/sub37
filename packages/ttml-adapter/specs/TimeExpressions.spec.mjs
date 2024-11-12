@@ -93,7 +93,7 @@ describe("Clock Time conversion to time matcher", () => {
 			metric: "frames",
 		});
 		expect(subFramesUnit).toMatchObject({
-			value: 0.2,
+			value: 20,
 			metric: "subframes",
 		});
 	});
