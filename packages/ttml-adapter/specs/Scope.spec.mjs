@@ -178,11 +178,15 @@ describe("Scope and contexts", () => {
 
 		it("should return 0 if neither dur and end are specified but cues are sequential", () => {
 			const scope1 = createScope(
-				undefined,
-				createDocumentContext({}),
+				createScope(
+					undefined,
+					createDocumentContext({}),
+					createTimeContext({
+						timeContainer: "seq",
+					}),
+				),
 				createTimeContext({
-					timeContainer: "seq",
-					begin: 0,
+					begin: "0s",
 				}),
 			);
 
