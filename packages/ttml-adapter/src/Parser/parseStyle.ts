@@ -344,13 +344,12 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		new Set(["before", "center", "after", "justify"]),
 		createPassThroughMapper("justify-content", displayAlignValueMapper),
 	),
-	// Maps to two CSS. We handle this in a different way yet
-	"tts:extent": createAttributeDefinition(
+	"tts:extent": createAttributeDefinition<["width", "height"], string>(
 		"tts:extent",
 		["tt", "region", "image", "div", "p"],
 		"auto",
 		undefined,
-		nullMapper,
+		extentMapper,
 	),
 	"tts:fontFamily": inheritable(
 		createAttributeDefinition(
@@ -894,4 +893,69 @@ function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: 
 		getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c")),
 		"px",
 	);
+}
+
+function isExtentSupportedKeyword(value: string): value is "auto" | "contain" | "cover" {
+	return ["auto", "contain", "cover"].includes(value);
+}
+
+function extentMapper(
+	_scope: Scope,
+	value: "auto" | "contain" | "cover" | string,
+): PropertiesCollection<["width", "height"]> {
+	if (isExtentSupportedKeyword(value)) {
+		switch (value) {
+			case "auto": {
+				return [
+					["width", "100%"],
+					["height", "100%"],
+				];
+			}
+
+			case "contain": {
+				console.warn("Region extent 'contain' is not yet supported. Will be treated as 'auto'");
+				return [
+					["width", "100%"],
+					["height", "100%"],
+				];
+			}
+
+			case "cover": {
+				console.warn("Region extent 'cover' is not yet supported. Will be treated as 'auto'");
+				return [
+					["width", "100%"],
+					["height", "100%"],
+				];
+			}
+		}
+	}
+
+	let [width, height] = value.split("\x20") || ["0%", "0%"];
+
+	if (width === "auto") {
+		console.warn(
+			"Region extent width set to auto with a parametrized height is not yet supported. Will be treated as 100%",
+		);
+
+		width = "100%";
+	}
+
+	if (height === "auto") {
+		console.warn(
+			"Region extent height set to auto with a parametrized width is not yet supported. Will be treated as 100%",
+		);
+
+		height = "100%";
+	}
+
+	const widthLength = toLength(width);
+	const heightLength = toLength(height);
+
+	const clampedWidth = Math.max(0, Math.min(widthLength.value, 100));
+	const clampedHeight = Math.max(0, Math.min(heightLength.value, 100));
+
+	return [
+		["width", `${clampedWidth}${widthLength.metric}`],
+		["height", `${clampedHeight}${heightLength.metric}`],
+	];
 }
