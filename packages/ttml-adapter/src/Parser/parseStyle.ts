@@ -1,6 +1,7 @@
 import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { getCellScalarPixelConversion, isCellScalar } from "./Units/cell.js";
+import { toClamped } from "./Units/clamp.js";
 import type { Length } from "./Units/length.js";
 import { toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
@@ -1199,7 +1200,7 @@ function extentMapper(
 		}
 	}
 
-	let [width, height] = value.split("\x20") || ["0%", "0%"];
+	let [width, height] = getSplittedLinearWhitespaceValues(value) || ["0%", "0%"];
 
 	if (width === "auto") {
 		console.warn(
@@ -1217,14 +1218,11 @@ function extentMapper(
 		height = "100%";
 	}
 
-	const widthLength = toLength(width);
-	const heightLength = toLength(height);
-
-	const clampedWidth = Math.max(0, Math.min(widthLength.value, 100));
-	const clampedHeight = Math.max(0, Math.min(heightLength.value, 100));
+	const widthLength = toClamped(toLength(width), 0, 100) || createUnit(0, "%");
+	const heightLength = toClamped(toLength(height), 0, 100) || createUnit(0, "%");
 
 	return [
-		["width", `${clampedWidth}${widthLength.metric}`],
-		["height", `${clampedHeight}${heightLength.metric}`],
+		["width", widthLength.toString()],
+		["height", heightLength.toString()],
 	];
 }
