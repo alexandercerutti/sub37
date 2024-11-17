@@ -2,7 +2,7 @@
  * Base Unit for all the other usages
  */
 
-export interface Unit<Metric extends string | number | undefined> {
+export interface Unit<Metric extends string | undefined> {
 	value: number;
 	metric: Metric;
 	toString(): string;
