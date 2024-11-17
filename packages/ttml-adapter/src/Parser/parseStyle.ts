@@ -614,6 +614,13 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * This attribute doesn't have a CSS property.
+	 * However, it is used to determine the origin of
+	 * a region.
+	 *
+	 * Having it to be a string: string as type is
+	 * completely fine
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-origin
 	 * @see https://w3c.github.io/ttml2/#derivation-origin
 	 */
@@ -622,7 +629,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		["region", "div", "p"],
 		"auto",
 		undefined,
-		nullMapper, // no css
+		originMapper,
 	),
 
 	/**
@@ -1224,5 +1231,36 @@ function extentMapper(
 	return [
 		["width", widthLength.toString()],
 		["height", heightLength.toString()],
+	];
+}
+
+function originMapper(_scope: Scope, value: "auto" | string): PropertiesCollection<["x", "y"]> {
+	if (value === "auto") {
+		/**
+		 * @TODO might be wrong
+		 *
+		 * "If the value of this attribute is auto,
+		 * then the computed value of the style
+		 * property must be considered to be the
+		 * same as the origin of the root container
+		 * region."
+		 *
+		 * But we don't have this detail. So this should
+		 * be calculated by the region it self in renderer?
+		 */
+		return [
+			["x", "0px"],
+			["y", "0px"],
+		];
+	}
+
+	const [x, y] = getSplittedLinearWhitespaceValues(value);
+
+	const xLength = toLength(x) || createUnit(0, "px");
+	const yLength = toLength(y) || createUnit(0, "px");
+
+	return [
+		["x", xLength.toString()],
+		["y", yLength.toString()],
 	];
 }
