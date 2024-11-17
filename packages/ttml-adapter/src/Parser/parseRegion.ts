@@ -1,8 +1,9 @@
 import type { Region } from "@sub37/server";
-import type { Token } from "./Token";
+import { TokenType, type Token } from "./Token";
 import { createStyleParser, type TTMLStyle } from "./parseStyle";
 import { NodeWithRelationship } from "./Tags/NodeTree";
 import { memoizationFactory } from "./memoizationFactory";
+import { Scope } from "./Scope/Scope";
 import { TimeContextData } from "./Scope/TimeContext";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
@@ -26,17 +27,27 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 		return undefined;
 	}
 
-	const region = new TTMLRegion();
-	const nestedStyles = processStylesChildren(children, styleParser);
+	const nestedStyles = processStylesChildren(
+		[
+			...children,
+			{
+				content: {
+					content: "style",
+					attributes,
+					type: TokenType.START_TAG,
+				},
+				children: [],
+			},
+		],
+		styleParser,
+	);
 
-	region.styles = nestedStyles;
-	region.id = attributes["xml:id"];
-	region.timingAttributes = {
+	const region = new TTMLRegion(attributes["xml:id"], nestedStyles, {
 		begin: attributes["begin"],
 		dur: attributes["dur"],
 		end: attributes["end"],
 		timeContainer: attributes["timeContainer"],
-	};
+	});
 
 	regionStorage.set(region.id, region);
 	return region;
@@ -67,58 +78,23 @@ function processStylesChildren(
 }
 
 class TTMLRegion implements Region {
-	private extent: [number, number];
-	private origin: [number, number];
-
 	public id: string;
-	public timingAttributes: TimeContextData;
-	/**
-	 * Region width expressed in percentage
-	 */
-	public width: number = 100;
+	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
 
 	public styles: TTMLStyle[] = [];
 
-	public constructor(origin?: string, extent?: string, timingAttributes?: TimeContextData) {
+	public constructor(id: string, styles: TTMLStyle[] = [], timingAttributes?: TimeContextData) {
 		this.timingAttributes = timingAttributes;
-
-		if (origin?.length) {
-			const [x, y] = origin.split("\x20") || ["0px", "0px"];
-
-			if (typeof x !== "undefined" && typeof y !== "undefined") {
-				this.origin = [parseInt(x), parseInt(y)];
-			}
-		}
-
-		if (extent?.length) {
-			if (extent === "auto") {
-				/**
-				 * @TODO numbers probably should not be used, but we have
-				 * to due to renderer forcing percentage. Not correct, but fine
-				 * right now.
-				 */
-				this.extent = [100, 100];
-			} else {
-				const [x, y] = extent.split("\x20") || ["0px", "0px"];
-
-				if (typeof x !== "undefined" && typeof y !== "undefined") {
-					/**
-					 * @TODO parseInt should probably not be used, but we have
-					 * to due to renderer forcing percentage. Not correct, but fine
-					 * right now.
-					 */
-					this.extent = [parseInt(x), parseInt(y)];
-				}
-			}
-		}
+		this.id = id;
+		this.styles = styles;
 	}
 
 	public getOrigin(): [x: number, y: number] {
-		/**
-		 * @TODO implement. What will be the coordinates in TTML?
-		 */
-
 		return [0, 0];
+	}
+
+	public get width(): number {
+		return 100;
 	}
 }
