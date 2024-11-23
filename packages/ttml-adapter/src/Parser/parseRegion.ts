@@ -77,7 +77,7 @@ function processStylesChildren(
 	return nestedStyles;
 }
 
-class TTMLRegion implements Region {
+export class TTMLRegion implements Region {
 	public id: string;
 	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
