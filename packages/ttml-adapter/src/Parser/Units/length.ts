@@ -39,7 +39,7 @@ function isPercentageUnit(metric: string): metric is "%" {
 	return metric === "%";
 }
 
-export function toLength(value: string): Scalar | Percentage | null {
+export function toLength(value: string): Length | null {
 	if (!value) {
 		return null;
 	}
