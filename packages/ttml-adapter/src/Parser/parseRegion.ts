@@ -14,7 +14,7 @@ type StyleParser = ReturnType<typeof createStyleParser>;
 
 export const createRegionParser = memoizationFactory(function regionParserExecutor(
 	regionStorage: Map<string, TTMLRegion>,
-	_scope: Scope | undefined,
+	scope: Scope | undefined,
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 	styleParser: StyleParser = createStyleParser(),
@@ -27,27 +27,52 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 		return undefined;
 	}
 
-	const nestedStyles = processStylesChildren(
-		[
-			...children,
-			{
-				content: {
-					content: "style",
-					attributes,
-					type: TokenType.START_TAG,
-				},
-				children: [],
-			},
-		],
-		styleParser,
-	);
+	let regionStylesCache: TTMLStyle[] = [];
 
-	const region = new TTMLRegion(attributes["xml:id"], nestedStyles, {
-		begin: attributes["begin"],
-		dur: attributes["dur"],
-		end: attributes["end"],
-		timeContainer: attributes["timeContainer"],
-	});
+	function stylesRetriever(): TTMLStyle[] {
+		if (regionStylesCache.length) {
+			return regionStylesCache;
+		}
+
+		const nestedStyles = processStylesChildren(
+			[
+				...children,
+				{
+					content: {
+						content: "style",
+						attributes,
+						type: TokenType.START_TAG,
+					},
+					children: [],
+				},
+			],
+			styleParser,
+		);
+
+		regionStylesCache = regionStylesCache.concat(nestedStyles);
+
+		if (attributes["style"]) {
+			const styleContext = readScopeStyleContainerContext(scope);
+
+			if (styleContext) {
+				const style = styleContext.getStyleByIDRef(attributes["style"]);
+				regionStylesCache = regionStylesCache.concat(style);
+			}
+		}
+
+		return regionStylesCache;
+	}
+
+	const region = new TTMLRegion(
+		attributes["xml:id"],
+		{
+			begin: attributes["begin"],
+			dur: attributes["dur"],
+			end: attributes["end"],
+			timeContainer: attributes["timeContainer"],
+		},
+		stylesRetriever,
+	);
 
 	regionStorage.set(region.id, region);
 	return region;
@@ -82,12 +107,16 @@ export class TTMLRegion implements Region {
 	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
 
-	public styles: TTMLStyle[] = [];
+	public stylesRetriever: () => TTMLStyle[];
 
-	public constructor(id: string, styles: TTMLStyle[] = [], timingAttributes?: TimeContextData) {
-		this.timingAttributes = timingAttributes;
+	public constructor(
+		id: string,
+		timingAttributes: TimeContextData,
+		stylesRetriever: TTMLRegion["stylesRetriever"],
+	) {
 		this.id = id;
-		this.styles = styles;
+		this.timingAttributes = timingAttributes;
+		this.stylesRetriever = stylesRetriever;
 	}
 
 	public getOrigin(): [x: number, y: number] {
@@ -96,5 +125,9 @@ export class TTMLRegion implements Region {
 
 	public get width(): number {
 		return 100;
+	}
+
+	public get styles(): TTMLStyle[] {
+		return this.stylesRetriever() || [];
 	}
 }

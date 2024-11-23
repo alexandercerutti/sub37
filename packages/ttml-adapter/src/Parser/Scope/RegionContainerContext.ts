@@ -66,14 +66,18 @@ export function createRegionContainerContext(
 				const regions = this.regions as TTMLRegion[];
 				return regions.find((region) => region.id === id);
 			},
-			getStylesByRegionId(id: string | undefined): Record<string, string> {
-				/**
-				 * Note: if no processing happened before by invoking `.regions`,
-				 * this will return empty. Might want to force processing
-				 * when invoking this, but I want to be sure.
-				 */
+			getStylesByRegionId(id: string): Record<string, string> {
+				if (!id?.length) {
+					throw new Error("Cannot retrieve styles for a region with an unknown name.");
+				}
+
+				/** Pre-heating regions processing - if regions are not processed, we might get screwed */
+				if (!this.regions.some((r) => r.id === id)) {
+					return {};
+				}
+
 				const region = regionParser.get(id);
-				return region.styles;
+				return region.styles.reduce((acc, current) => Object.assign(acc, current.attributes), {});
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
