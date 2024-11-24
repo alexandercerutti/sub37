@@ -1,13 +1,10 @@
-import { CueNode, Entities } from "@sub37/server";
+import { CueNode } from "@sub37/server";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import { createStyleContainerContext } from "./Scope/StyleContainerContext.js";
-import {
-	createTemporalActiveContext,
-	readScopeTemporalActiveContext,
-} from "./Scope/TemporalActiveContext.js";
+import { createTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	if (!node.children.length) {
