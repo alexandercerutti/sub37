@@ -15,10 +15,6 @@ type Percentage = Unit<"%">;
 
 export type Length = Scalar | Percentage;
 
-function isScalarUnit(metric: string): metric is Scalar["metric"] {
-	return ALLOWED_SCALAR_UNITS.includes(metric as Scalar["metric"]);
-}
-
 export function isLength(maybeLength: unknown): maybeLength is Length {
 	return (
 		Boolean(maybeLength) &&
@@ -28,11 +24,15 @@ export function isLength(maybeLength: unknown): maybeLength is Length {
 }
 
 export function isScalar(maybeScalar: unknown): maybeScalar is Scalar {
-	return isLength(maybeScalar) && isScalarUnit((maybeScalar as Scalar).metric);
+	return isLength(maybeScalar) && isScalarUnit(maybeScalar.metric);
+}
+
+function isScalarUnit(metric: string): metric is Scalar["metric"] {
+	return ALLOWED_SCALAR_UNITS.includes(metric as Scalar["metric"]);
 }
 
 export function isPercentage(maybeScalar: unknown): maybeScalar is Percentage {
-	return isLength(maybeScalar) && isPercentageUnit((maybeScalar as Percentage).metric);
+	return isLength(maybeScalar) && isPercentageUnit(maybeScalar.metric);
 }
 
 function isPercentageUnit(metric: string): metric is "%" {
