@@ -5,6 +5,7 @@ import { NodeWithRelationship } from "./Tags/NodeTree";
 import { memoizationFactory } from "./memoizationFactory";
 import { Scope } from "./Scope/Scope";
 import { TimeContextData } from "./Scope/TimeContext";
+import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
