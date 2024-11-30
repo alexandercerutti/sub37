@@ -1,4 +1,5 @@
 import type { Context, ContextFactory, Scope } from "./Scope";
+import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
 import { asNumbers, preventZeros } from "../Units/number.js";
@@ -63,7 +64,7 @@ export function createDocumentContext(
 		return {
 			parent: undefined,
 			identifier: documentContextSymbol,
-			mergeWith(context) {
+			[onMergeSymbol](context) {
 				throw new Error(
 					"Document context merge is not allowed. Only one document context can exists at the same time.",
 				);

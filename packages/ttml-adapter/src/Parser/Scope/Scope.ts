@@ -19,8 +19,10 @@ export type ContextFactory<ContextObject extends Context = Context> = (
 export interface Context<ParentType extends object = object> {
 	readonly identifier: symbol;
 	parent?: ParentType | undefined;
-	mergeWith(context: Context): void;
+	[onMergeSymbol]?(context: Context): void;
 }
+
+export const onMergeSymbol = Symbol("context.on.merge");
 
 /**
  * A scope is associated to an element inside the
@@ -70,7 +72,11 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 				continue;
 			}
 
-			contextsMap.get(context.identifier).mergeWith(context);
+			const targetContext = contextsMap.get(context.identifier);
+
+			if (typeof targetContext[onMergeSymbol] === "function") {
+				targetContext[onMergeSymbol](context);
+			}
 		}
 
 		return scope;
@@ -100,7 +106,7 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			}
 
 			if (contextsMap.has(context.identifier)) {
-				contextsMap.get(context.identifier).mergeWith(context);
+				contextsMap.get(context.identifier)[onMergeSymbol]?.(context);
 				return;
 			}
 

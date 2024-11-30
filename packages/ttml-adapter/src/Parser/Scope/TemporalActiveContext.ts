@@ -6,6 +6,7 @@
 
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
+import { onMergeSymbol } from "./Scope.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import { TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
@@ -47,7 +48,7 @@ export function createTemporalActiveContext(
 		return {
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
-			mergeWith(context: TemporalActiveContext): void {
+			[onMergeSymbol](context: TemporalActiveContext): void {
 				if (context.regionIdRef && !store.regionIDRef) {
 					store.regionIDRef = context.regionIdRef;
 				}

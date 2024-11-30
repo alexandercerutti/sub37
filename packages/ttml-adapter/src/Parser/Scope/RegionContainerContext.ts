@@ -4,6 +4,7 @@ import type { Token } from "../Token";
 import { createRegionParser } from "../parseRegion.js";
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
+import { onMergeSymbol } from "./Scope.js";
 
 const regionContextSymbol = Symbol("region");
 const regionParserGetterSymbol = Symbol("region.parser");
@@ -41,7 +42,7 @@ export function createRegionContainerContext(
 		return {
 			parent: undefined,
 			identifier: regionContextSymbol,
-			mergeWith(context: RegionContainerContext) {
+			[onMergeSymbol](context: RegionContainerContext) {
 				// Processing the actual regions first
 				if (!regionParser.size) {
 					for (let i = 0; i < contextState.length; i++) {

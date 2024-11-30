@@ -5,6 +5,7 @@ import { matchOffsetTimeExpression } from "../TimeExpressions/matchers/offsetTim
 import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallclockTime.js";
 import { readScopeDocumentContext } from "./DocumentContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
+import { onMergeSymbol } from "./Scope.js";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
@@ -91,7 +92,7 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 		return {
 			parent: undefined,
 			identifier: timeContextSymbol,
-			mergeWith(context: TimeContext): void {
+			[onMergeSymbol](context: TimeContext): void {
 				Object.assign(state, context[currentStateSymbol] || {});
 			},
 			/**

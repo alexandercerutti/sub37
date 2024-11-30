@@ -1,5 +1,6 @@
 import { TTMLStyle, createStyleParser } from "../parseStyle";
 import type { Context, ContextFactory, Scope } from "./Scope";
+import { onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");
 const styleParserGetterSymbol = Symbol("style.parser.getter");
@@ -31,7 +32,7 @@ export function createStyleContainerContext(
 		return {
 			parent: undefined,
 			identifier: styleContextSymbol,
-			mergeWith(context: StyleContainerContext): void {
+			[onMergeSymbol](context: StyleContainerContext): void {
 				if (stylesParser.size) {
 					/**
 					 * Styles have been already processed, so we
