@@ -1,12 +1,14 @@
+export type DestinationFactory = () => NodeRepresentation<string>[];
+
 export interface NodeRepresentation<T extends string> {
 	nodeName: T;
-	destinationFactory(): NodeRepresentation<string>[];
+	destinationFactory: DestinationFactory;
 	matches(nodeName: string): boolean;
 }
 
 export function createNode<const T extends string>(
 	nodeName: T,
-	destinationFactory: NodeRepresentation<string>["destinationFactory"] = () => [],
+	destinationFactory: DestinationFactory = () => [],
 ): NodeRepresentation<T> {
 	return {
 		nodeName: nodeName,
