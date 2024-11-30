@@ -90,8 +90,7 @@ function processStylesChildren(
 			continue;
 		}
 
-		const id = styleToken.content.attributes["xml:id"] || "";
-		const style = styleParser.process(id, styleToken.content.attributes);
+		const style = styleParser.process(styleToken.content.attributes);
 
 		if (!style) {
 			continue;

@@ -42,7 +42,7 @@ export function createStyleContainerContext(
 					for (const idref in context.registeredStyles) {
 						const style = context.registeredStyles[idref];
 
-						stylesParser.process(idref, style);
+						stylesParser.process(style);
 					}
 
 					return;
@@ -65,7 +65,7 @@ export function createStyleContainerContext(
 				const preprocessedStyle = stylesParser.get(idref);
 
 				if (!preprocessedStyle) {
-					return stylesParser.process(idref, stylesIndex[idref]);
+					return stylesParser.process(stylesIndex[idref]);
 				}
 
 				return preprocessedStyle;

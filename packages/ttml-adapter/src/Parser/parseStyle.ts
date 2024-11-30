@@ -22,16 +22,11 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	 */
 	stylesIDREFSStorage: Map<string, TTMLStyle>,
 	scope: Scope,
-	/**
-	 * All the attributes belonging to a tag.
-	 * They'll be filtered out
-	 */
-	styleId: string,
 	attributes: Record<string, string>,
 ): TTMLStyle | undefined {
 	let styleCache: SupportedCSSProperties | undefined = undefined;
 
-	const id = styleId || attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
+	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
 	const attrs = extractStyleAttributes(attributes);
 
 	if (!Object.keys(attrs).length) {
