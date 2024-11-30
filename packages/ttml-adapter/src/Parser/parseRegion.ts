@@ -18,7 +18,6 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	scope: Scope | undefined,
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
-	styleParser: StyleParser = createStyleParser(),
 ): TTMLRegion | undefined {
 	if (regionStorage.has(attributes["xml:id"])) {
 		/**
@@ -28,6 +27,8 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 		return undefined;
 	}
 
+	const styleParser = createStyleParser(scope);
+
 	let regionStylesCache: TTMLStyle[] = [];
 
 	function stylesRetriever(): TTMLStyle[] {
@@ -35,20 +36,17 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 			return regionStylesCache;
 		}
 
-		const nestedStyles = processStylesChildren(
-			[
-				...children,
-				{
-					content: {
-						content: "style",
-						attributes,
-						type: TokenType.START_TAG,
-					},
-					children: [],
+		const nestedStyles = processStylesChildren(styleParser, [
+			...children,
+			{
+				content: {
+					content: "style",
+					attributes,
+					type: TokenType.START_TAG,
 				},
-			],
-			styleParser,
-		);
+				children: [],
+			},
+		]);
 
 		regionStylesCache = regionStylesCache.concat(nestedStyles);
 
@@ -80,8 +78,8 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 });
 
 function processStylesChildren(
+	styleParser: StyleParser,
 	regionChildren: NodeWithRelationship<Token>[],
-	styleParser: StyleParser = createStyleParser(),
 ): TTMLStyle[] {
 	const nestedStyles: TTMLStyle[] = [];
 
