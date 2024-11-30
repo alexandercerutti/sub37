@@ -14,13 +14,27 @@ export const RepresentationTree = createNode(null, () => [
 			createNode("head", () => [
 				Kleene.zeroOrOne(
 					createNode("styling", () => [
-						Kleene.zeroOrMore(createNode("initial")),
-						Kleene.zeroOrMore(createNode("style")),
+						Kleene.zeroOrMore(
+							//
+							createNode("initial"),
+						),
+						Kleene.zeroOrMore(
+							//
+							createNode("style"),
+						),
 					]),
 				),
 				Kleene.zeroOrOne(
 					createNode("layout", () => [
-						Kleene.zeroOrMore(createNode("region", () => [Kleene.zeroOrMore(createNode("style"))])),
+						Kleene.zeroOrMore(
+							createNode("region", () => [
+								//
+								Kleene.zeroOrMore(
+									//
+									createNode("style"),
+								),
+							]),
+						),
 					]),
 				),
 			]),
@@ -31,17 +45,35 @@ export const RepresentationTree = createNode(null, () => [
 					withSelfReference(
 						createNode("div", () => [
 							Kleene.zeroOrOne(
-								createNode("region", () => [Kleene.zeroOrMore(createNode("style"))]),
+								createNode("region", () => [
+									//
+									Kleene.zeroOrMore(
+										//
+										createNode("style"),
+									),
+								]),
 							),
 							Kleene.zeroOrMore(
 								createNode("p", () => [
 									Kleene.zeroOrOne(
-										createNode("region", () => [Kleene.zeroOrMore(createNode("style"))]),
+										createNode("region", () => [
+											//
+											Kleene.zeroOrMore(
+												//
+												createNode("style"),
+											),
+										]),
 									),
 									Kleene.zeroOrMore(
 										Kleene.or(
-											withSelfReference(createNode("span")),
-											withSelfReference(createNode("br")),
+											withSelfReference(
+												//
+												createNode("span"),
+											),
+											withSelfReference(
+												//
+												createNode("br"),
+											),
 										),
 									),
 								]),
