@@ -13,9 +13,10 @@ export function memoizationFactory<
 	ProcessArgv extends unknown[],
 	StorageKeySource extends string = string,
 >(executor: MemoizationProtocol<MemoizedData, ProcessArgv, StorageKeySource>) {
-	return function memoizationCreator(scope?: Scope) {
-		const storage = new Map<StorageKeySource, MemoizedData>();
-
+	return function memoizationCreator(
+		scope: Scope,
+		storage: Map<StorageKeySource, MemoizedData> = new Map(),
+	) {
 		return {
 			push(...args: [id: StorageKeySource, data: MemoizedData][]) {
 				for (const [id, data] of args) {
