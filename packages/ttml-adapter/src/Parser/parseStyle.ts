@@ -853,14 +853,13 @@ export function convertAttributesToCSS(
 	 * able to detect enumerable keys in prototype chain, and we
 	 * are using them
 	 */
-	for (const attribute in attributes) {
-		const [key, value] = attribute;
-
-		if (!isMappedKey(key)) {
+	for (const attributeKey in attributes) {
+		if (!isMappedKey(attributeKey)) {
 			continue;
 		}
 
-		const mapped = TTML_CSS_ATTRIBUTES_MAP[key].toCSS(scope, value);
+		const value = attributes[attributeKey];
+		const mapped = TTML_CSS_ATTRIBUTES_MAP[attributeKey].toCSS(scope, value);
 
 		for (const [mappedKey, mappedValue] of mapped) {
 			convertedAttributes[mappedKey] = mappedValue;
