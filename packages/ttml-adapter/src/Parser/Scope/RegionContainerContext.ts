@@ -5,6 +5,7 @@ import { createRegionParser } from "../parseRegion.js";
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { onMergeSymbol } from "./Scope.js";
+import type { TTMLStyle } from "../parseStyle";
 
 const regionContextSymbol = Symbol("region");
 const regionParserGetterSymbol = Symbol("region.parser");
@@ -20,7 +21,7 @@ interface RegionContainerContext
 	extends Context<RegionContainerContext, RegionContainerContextState[]> {
 	regions: Region[];
 	getRegionById(id: string | undefined): TTMLRegion | undefined;
-	getStylesByRegionId(id: string | undefined): Record<string, string>;
+	getStylesByRegionId(id: string | undefined): TTMLStyle[];
 	[regionParserGetterSymbol]: RegionParser;
 }
 
@@ -71,18 +72,17 @@ export function createRegionContainerContext(
 				const regions = this.regions as TTMLRegion[];
 				return regions.find((region) => region.id === id);
 			},
-			getStylesByRegionId(id: string): Record<string, string> {
+			getStylesByRegionId(id: string): TTMLStyle[] {
 				if (!id?.length) {
 					throw new Error("Cannot retrieve styles for a region with an unknown name.");
 				}
 
 				/** Pre-heating regions processing - if regions are not processed, we might get screwed */
 				if (!this.regions.some((r) => r.id === id)) {
-					return {};
+					return [];
 				}
 
-				const region = regionParser.get(id);
-				return region.styles.reduce((acc, current) => Object.assign(acc, current.attributes), {});
+				return regionParser.get(id).styles;
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
