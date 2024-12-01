@@ -52,18 +52,11 @@ export function createRegionContainerContext(
 					regionParser.process(attributes, children);
 				}
 			},
-			[onMergeSymbol](context: RegionContainerContext) {
-				// Processing the actual regions first
-				if (!regionParser.size) {
-					for (let i = 0; i < contextState.length; i++) {
-						regionParser.process(contextState[i].attributes, contextState[i].children);
-					}
-				}
+			[onMergeSymbol](context: RegionContainerContext): void {
+				const { args } = context;
 
-				const contextRegions = context[regionParserGetterSymbol].getAll();
-
-				for (const [id, data] of Object.entries(contextRegions)) {
-					regionParser.push([id, data]);
+				for (const { attributes, children } of args) {
+					regionParser.process(attributes, children);
 				}
 			},
 			get [regionParserGetterSymbol]() {
