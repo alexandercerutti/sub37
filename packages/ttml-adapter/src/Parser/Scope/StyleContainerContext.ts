@@ -10,7 +10,6 @@ type StyleIDRef = string;
 type StyleIndex = Record<StyleIDRef, Record<string, string>>;
 
 interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
-	styles: Map<string, TTMLStyle>;
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
 	[styleParserGetterSymbol]: StyleParser;
 }
@@ -116,21 +115,6 @@ export function createStyleContainerContext(
 				}
 
 				return stylesParser.get(idref);
-			},
-			get styles(): Map<string, TTMLStyle> {
-				const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();
-
-				if (!stylesParser.size) {
-					/**
-					 * Processing the actual styles first
-					 */
-					stylesParser.process(styles);
-				}
-
-				return new Map<string, TTMLStyle>([
-					...parentStyles,
-					...Object.entries(stylesParser.getAll()),
-				]);
 			},
 		};
 	};
