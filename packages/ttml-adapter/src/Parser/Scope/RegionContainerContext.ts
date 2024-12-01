@@ -16,7 +16,8 @@ export interface RegionContainerContextState {
 	children: NodeWithRelationship<Token>[];
 }
 
-interface RegionContainerContext extends Context<RegionContainerContext> {
+interface RegionContainerContext
+	extends Context<RegionContainerContext, RegionContainerContextState[]> {
 	regions: Region[];
 	getRegionById(id: string | undefined): TTMLRegion | undefined;
 	getStylesByRegionId(id: string | undefined): Record<string, string>;
@@ -42,6 +43,9 @@ export function createRegionContainerContext(
 		return {
 			parent: undefined,
 			identifier: regionContextSymbol,
+			get args() {
+				return contextState;
+			},
 			[onMergeSymbol](context: RegionContainerContext) {
 				// Processing the actual regions first
 				if (!regionParser.size) {

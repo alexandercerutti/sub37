@@ -16,12 +16,15 @@ export type ContextFactory<ContextObject extends Context = Context> = (
 	scope: Scope,
 ) => ContextObject | null;
 
-export interface Context<ParentType extends object = object> {
+export interface Context<ParentType extends object = object, ArgsType = unknown> {
 	readonly identifier: symbol;
 	parent?: ParentType | undefined;
+	get args(): ArgsType;
 	[onMergeSymbol]?(context: Context): void;
+	[onAttachedSymbol]?(): void;
 }
 
+export const onAttachedSymbol = Symbol("context.on.attached");
 export const onMergeSymbol = Symbol("context.on.merge");
 
 /**
@@ -61,6 +64,11 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 
 			if (!contextsMap.has(context.identifier)) {
 				contextsMap.set(context.identifier, context);
+
+				if (typeof context[onAttachedSymbol] === "function") {
+					context[onAttachedSymbol]();
+				}
+
 				continue;
 			}
 

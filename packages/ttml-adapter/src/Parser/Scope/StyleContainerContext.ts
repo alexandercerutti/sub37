@@ -9,7 +9,7 @@ type StyleParser = ReturnType<typeof createStyleParser>;
 type StyleIDRef = string;
 type StyleIndex = Record<StyleIDRef, Record<string, string>>;
 
-interface StyleContainerContext extends Context<StyleContainerContext> {
+interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
 	styles: Map<string, TTMLStyle>;
 	registeredStyles: StyleIndex;
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
@@ -32,6 +32,9 @@ export function createStyleContainerContext(
 		return {
 			parent: undefined,
 			identifier: styleContextSymbol,
+			get args() {
+				return registeredStyles;
+			},
 			[onMergeSymbol](context: StyleContainerContext): void {
 				if (stylesParser.size) {
 					/**

@@ -13,7 +13,7 @@ export interface DocumentAttributes extends TimeDetails {
 	"tts:extent"?: number[];
 }
 
-interface DocumentContext extends Context<DocumentContext> {
+interface DocumentContext extends Context<DocumentContext, Record<string, string>> {
 	attributes: DocumentAttributes;
 }
 
@@ -64,6 +64,9 @@ export function createDocumentContext(
 		return {
 			parent: undefined,
 			identifier: documentContextSymbol,
+			get args() {
+				return rawAttributes;
+			},
 			[onMergeSymbol](context) {
 				throw new Error(
 					"Document context merge is not allowed. Only one document context can exists at the same time.",

@@ -27,7 +27,7 @@ interface TimeContextState {
 	timeContainer?: "par" | "seq";
 }
 
-interface TimeContext extends Context<TimeContext> {
+interface TimeContext extends Context<TimeContext, TimeContextData> {
 	readonly startTime: number;
 	readonly endTime: number;
 	readonly timeContainer: "par" | "seq";
@@ -92,6 +92,9 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 		return {
 			parent: undefined,
 			identifier: timeContextSymbol,
+			get args() {
+				return contextInput;
+			},
 			[onMergeSymbol](context: TimeContext): void {
 				Object.assign(state, context[currentStateSymbol] || {});
 			},

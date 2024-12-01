@@ -13,7 +13,7 @@ import { readScopeRegionContext } from "./RegionContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
-interface TemporalActiveContext extends Context<TemporalActiveContext> {
+interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
 	computedStyles: Record<string, string>;
 	get region(): TTMLRegion;
 	get regionIdRef(): string;
@@ -48,6 +48,9 @@ export function createTemporalActiveContext(
 		return {
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
+			get args() {
+				return initParams;
+			},
 			[onMergeSymbol](context: TemporalActiveContext): void {
 				if (context.regionIdRef && !store.regionIDRef) {
 					store.regionIDRef = context.regionIdRef;
