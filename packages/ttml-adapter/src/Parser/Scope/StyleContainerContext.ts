@@ -62,18 +62,20 @@ export function createStyleContainerContext(
 							 * already used styles. Right now we save ourselves by blocking current
 							 */
 
-							if (!stylesIDREFSStorage.has(idref)) {
+							/**
+							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
+							 */
+							const chainedReferentialStyle =
+								stylesIDREFSStorage.get(idref) || this.parent?.getStyleByIDRef(idref) || undefined;
+
+							if (!chainedReferentialStyle) {
 								console.warn(
 									`Chained Style Referential: style '${idref}' not found or not yet defined. Will be ignored.`,
 								);
 								continue;
 							}
 
-							/**
-							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
-							 */
-							const chainedReferentialStyles = stylesIDREFSStorage.get(idref);
-							Object.assign(finalAttributes, chainedReferentialStyles);
+							Object.assign(finalAttributes, chainedReferentialStyle);
 						}
 					}
 
