@@ -26,29 +26,20 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 ): TTMLStyle | undefined {
 	let styleCache: SupportedCSSProperties | undefined = undefined;
 
-	const id = attributes["xml:id"] || `style-rdm:${Math.floor(Math.random() * 1000)}`;
-	const attrs = extractStyleAttributes(attributes);
-
-	if (!Object.keys(attrs).length) {
-		return undefined;
-	}
-
-	if (!attributes["style"]) {
-		styleCache = convertAttributesToCSS(attrs, scope);
-	}
-
 	const style = {
-		id: resolveIDREFConflict(stylesIDREFSStorage, id),
+		id: attributes["xml:id"],
 		get attributes(): TTMLStyle["attributes"] {
 			if (typeof styleCache !== "undefined") {
 				return styleCache;
 			}
 
+			const attrs = extractStyleAttributes(attributes);
+
 			/**
 			 * @see https://www.w3.org/TR/2004/REC-xmlschema-2-20041028/#IDREFS
 			 */
 
-			const styleIDREFSSet = new Set(attributes["style"].split("\x20"));
+			const styleIDREFSSet = new Set((attributes["style"] || "").split("\x20"));
 
 			for (const idref of styleIDREFSSet) {
 				/**
@@ -91,7 +82,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	};
 
 	/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
-	stylesIDREFSStorage.set(id, style);
+	stylesIDREFSStorage.set(style.id, style);
 
 	return style;
 });
@@ -114,27 +105,6 @@ function extractStyleAttributes(
 
 function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
 	return attribute.startsWith("tts:");
-}
-
-function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
-	if (!idrefsMap.has(id)) {
-		return id;
-	}
-
-	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1]);
-
-	if (Number.isNaN(styleConflictOverrideIdentifier)) {
-		return id;
-	}
-
-	while (idrefsMap.has(`${id}--${styleConflictOverrideIdentifier}`)) {
-		styleConflictOverrideIdentifier++;
-	}
-
-	return id.replace(
-		`--${styleConflictOverrideIdentifier}`,
-		`--${styleConflictOverrideIdentifier + 1}`,
-	);
 }
 
 /**
@@ -920,7 +890,14 @@ export function convertAttributesToCSS(
 ): SupportedCSSProperties {
 	const convertedAttributes: SupportedCSSProperties = {};
 
-	for (const [key, value] of Object.entries(attributes)) {
+	/**
+	 * Not using Object.entries or "for..of" because they are not
+	 * able to detect enumerable keys in prototype chain, and we
+	 * are using them
+	 */
+	for (const attribute in attributes) {
+		const [key, value] = attribute;
+
 		if (!isMappedKey(key)) {
 			continue;
 		}
