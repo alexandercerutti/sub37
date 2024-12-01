@@ -48,11 +48,43 @@ export function createStyleContainerContext(
 						continue;
 					}
 
+					const finalAttributes = Object.assign({}, styleAttributes);
+
+					const chainedReferentialStylesIDRefs = new Set(
+						(styleAttributes["style"] || "").split("\x20"),
+					);
+
+					if (chainedReferentialStylesIDRefs.size) {
+						for (const idref of chainedReferentialStylesIDRefs) {
+							/**
+							 * A loop in a sequence of chained style references must be considered an error.
+							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
+							 *
+							 * However, if this check of checking if an idref already exists will
+							 * get removed, we'll have to find out a different way to track
+							 * already used styles. Right now we save ourselves by blocking current
+							 */
+
+							if (!stylesIDREFSStorage.has(idref)) {
+								console.warn(
+									`Chained Style Referential: style '${idref}' not found or not yet defined. Will be ignored.`,
+								);
+								continue;
+							}
+
+							/**
+							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
+							 */
+							const chainedReferentialStyles = stylesIDREFSStorage.get(idref);
+							Object.assign(finalAttributes, chainedReferentialStyles);
+						}
+					}
+
 					const currentStyleId = styleAttributes["xml:id"];
 					const resolvedStyleId = resolveIDREFConflict(stylesIDREFSStorage, currentStyleId);
 
 					stylesParser.process(
-						Object.create(styleAttributes, {
+						Object.create(finalAttributes, {
 							"xml:id": {
 								value: resolvedStyleId,
 								enumerable: true,
