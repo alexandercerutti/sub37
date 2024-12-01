@@ -1,6 +1,6 @@
 import { TTMLStyle, createStyleParser } from "../parseStyle";
 import type { Context, ContextFactory, Scope } from "./Scope";
-import { onMergeSymbol } from "./Scope.js";
+import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");
 const styleParserGetterSymbol = Symbol("style.parser.getter");
@@ -11,7 +11,6 @@ type StyleIndex = Record<StyleIDRef, Record<string, string>>;
 
 interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
 	styles: Map<string, TTMLStyle>;
-	registeredStyles: StyleIndex;
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
 	[styleParserGetterSymbol]: StyleParser;
 }
@@ -26,8 +25,8 @@ export function createStyleContainerContext(
 	registeredStyles: StyleIndex,
 ): ContextFactory<StyleContainerContext> | null {
 	return function (scope: Scope) {
-		const stylesIndex = Object.assign({}, registeredStyles);
-		const stylesParser: StyleParser = createStyleParser(scope);
+		const stylesIDREFSStorage = new Map<string, TTMLStyle>();
+		const stylesParser: StyleParser = createStyleParser(scope, stylesIDREFSStorage);
 
 		return {
 			parent: undefined,
@@ -35,44 +34,53 @@ export function createStyleContainerContext(
 			get args() {
 				return registeredStyles;
 			},
-			[onMergeSymbol](context: StyleContainerContext): void {
-				if (stylesParser.size) {
-					/**
-					 * Styles have been already processed, so we
-					 * must process context's too, if they
-					 * haven't been already.
-					 */
+			[onAttachedSymbol]() {
+				const { args } = this;
 
-					for (const idref in context.registeredStyles) {
-						const style = context.registeredStyles[idref];
+				for (const registeredStyle in args) {
+					const styleAttributes = args[registeredStyle];
 
-						stylesParser.process(style);
+					if (!styleAttributes["xml:id"]) {
+						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+						continue;
 					}
 
-					return;
-				}
+					const currentStyleId = styleAttributes["xml:id"];
+					const resolvedStyleId = resolveIDREFConflict(stylesIDREFSStorage, currentStyleId);
 
-				Object.assign(stylesIndex, context.registeredStyles);
+					stylesParser.process(
+						Object.create(styleAttributes, {
+							"xml:id": {
+								value: resolvedStyleId,
+								enumerable: true,
+							},
+						}),
+					);
+				}
+			},
+			[onMergeSymbol](context: StyleContainerContext): void {
+				const { args } = context;
+
+				for (const styleIDRef in args) {
+					stylesParser.process(args[styleIDRef]);
+				}
 			},
 			get [styleParserGetterSymbol]() {
 				return stylesParser;
 			},
-			get registeredStyles(): StyleIndex {
-				return registeredStyles;
-			},
 			getStyleByIDRef(idref: string): TTMLStyle | undefined {
-				if (!registeredStyles[idref]) {
-					console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
-					return this.parent?.getStyleByIDRef(idref);
+				if (!stylesIDREFSStorage.has(idref)) {
+					const styleFromParent = this.parent?.getStyleByIDRef(idref);
+
+					if (!styleFromParent) {
+						console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
+						return undefined;
+					}
+
+					return styleFromParent;
 				}
 
-				const preprocessedStyle = stylesParser.get(idref);
-
-				if (!preprocessedStyle) {
-					return stylesParser.process(stylesIndex[idref]);
-				}
-
-				return preprocessedStyle;
+				return stylesParser.get(idref);
 			},
 			get styles(): Map<string, TTMLStyle> {
 				const parentStyles = this.parent ? this.parent.styles : new Map<string, TTMLStyle>();
@@ -95,4 +103,25 @@ export function createStyleContainerContext(
 
 export function readScopeStyleContainerContext(scope: Scope): StyleContainerContext | undefined {
 	return scope.getContextByIdentifier(styleContextSymbol);
+}
+
+function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
+	if (!idrefsMap.has(id)) {
+		return id;
+	}
+
+	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1]);
+
+	if (Number.isNaN(styleConflictOverrideIdentifier)) {
+		return id;
+	}
+
+	while (idrefsMap.has(`${id}--${styleConflictOverrideIdentifier}`)) {
+		styleConflictOverrideIdentifier++;
+	}
+
+	return id.replace(
+		`--${styleConflictOverrideIdentifier}`,
+		`--${styleConflictOverrideIdentifier + 1}`,
+	);
 }
