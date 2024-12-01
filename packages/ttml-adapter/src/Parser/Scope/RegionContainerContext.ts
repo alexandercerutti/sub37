@@ -38,7 +38,7 @@ export function createRegionContainerContext(
 			return null;
 		}
 
-		const regionParser: RegionParser = createRegionParser();
+		const regionParser: RegionParser = createRegionParser(scope);
 
 		return {
 			parent: undefined,
