@@ -6,7 +6,7 @@ import type { Length } from "./Units/length.js";
 import { toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
 import { createUnit } from "./Units/unit.js";
-import { memoizationFactory } from "./memoizationFactory";
+import { memoizationFactory } from "./memoizationFactory.js";
 
 type StyleAttributeString = `tts:${string}`;
 

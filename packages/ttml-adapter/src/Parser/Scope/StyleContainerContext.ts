@@ -1,4 +1,4 @@
-import { TTMLStyle, createStyleParser } from "../parseStyle";
+import { TTMLStyle, createStyleParser } from "../parseStyle.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 

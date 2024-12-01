@@ -1,11 +1,13 @@
 import type { Region } from "@sub37/server";
-import { TokenType, type Token } from "./Token";
-import { createStyleParser, type TTMLStyle } from "./parseStyle";
-import { NodeWithRelationship } from "./Tags/NodeTree";
-import { memoizationFactory } from "./memoizationFactory";
-import { Scope } from "./Scope/Scope";
-import { TimeContextData } from "./Scope/TimeContext";
-import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext";
+import { TokenType } from "./Token.js";
+import type { Token } from "./Token";
+import type { TTMLStyle } from "./parseStyle";
+import { createStyleParser } from "./parseStyle.js";
+import type { NodeWithRelationship } from "./Tags/NodeTree";
+import { memoizationFactory } from "./memoizationFactory.js";
+import type { Scope } from "./Scope/Scope";
+import type { TimeContextData } from "./Scope/TimeContext";
+import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext.js";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
