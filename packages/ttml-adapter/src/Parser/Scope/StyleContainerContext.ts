@@ -25,6 +25,9 @@ export function createStyleContainerContext(
 	registeredStyles: StyleIndex,
 ): ContextFactory<StyleContainerContext> | null {
 	return function (scope: Scope) {
+		/**
+		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
+		 */
 		const stylesIDREFSStorage = new Map<string, TTMLStyle>();
 		const stylesParser: StyleParser = createStyleParser(scope, stylesIDREFSStorage);
 
