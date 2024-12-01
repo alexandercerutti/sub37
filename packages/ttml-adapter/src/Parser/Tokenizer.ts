@@ -551,13 +551,13 @@ export class Tokenizer {
 	}
 }
 
-function isValidNameStartChar(content: string): boolean {
-	return NAME_START_CHAR_REGEX.test(content);
-}
+// function isValidNameStartChar(content: string): boolean {
+// 	return NAME_START_CHAR_REGEX.test(content);
+// }
 
-function isValidNameChar(content: string): boolean {
-	return NAME_CHAR_REGEX.test(content);
-}
+// function isValidNameChar(content: string): boolean {
+// 	return NAME_CHAR_REGEX.test(content);
+// }
 
 function isValidName(content: string): boolean {
 	return NAME_REGEX.test(content);
