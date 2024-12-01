@@ -121,6 +121,10 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			contextsMap.set(context.identifier, context);
 
 			if (!parent) {
+				if (typeof context[onAttachedSymbol] === "function") {
+					context[onAttachedSymbol]();
+				}
+
 				return;
 			}
 
@@ -131,6 +135,10 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			}
 
 			context.parent = parentContext;
+
+			if (typeof context[onAttachedSymbol] === "function") {
+				context[onAttachedSymbol]();
+			}
 		},
 	});
 }
