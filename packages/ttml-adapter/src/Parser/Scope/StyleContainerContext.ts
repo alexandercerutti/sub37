@@ -47,11 +47,9 @@ export function createStyleContainerContext(
 
 					const finalAttributes = Object.assign({}, styleAttributes);
 
-					const chainedReferentialStylesIDRefs = new Set(
-						(styleAttributes["style"] || "").split("\x20"),
-					);
+					if (styleAttributes["style"]?.length) {
+						const chainedReferentialStylesIDRefs = new Set(styleAttributes["style"].split("\x20"));
 
-					if (chainedReferentialStylesIDRefs.size) {
 						for (const idref of chainedReferentialStylesIDRefs) {
 							/**
 							 * A loop in a sequence of chained style references must be considered an error.
