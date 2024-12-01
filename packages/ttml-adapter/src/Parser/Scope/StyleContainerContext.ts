@@ -3,7 +3,6 @@ import type { Context, ContextFactory, Scope } from "./Scope";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");
-const styleParserGetterSymbol = Symbol("style.parser.getter");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 type StyleIDRef = string;
@@ -11,7 +10,6 @@ type StyleIndex = Record<StyleIDRef, Record<string, string>>;
 
 interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
-	[styleParserGetterSymbol]: StyleParser;
 }
 
 declare module "./Scope" {
@@ -98,9 +96,6 @@ export function createStyleContainerContext(
 				for (const styleIDRef in args) {
 					stylesParser.process(args[styleIDRef]);
 				}
-			},
-			get [styleParserGetterSymbol]() {
-				return stylesParser;
 			},
 			getStyleByIDRef(idref: string): TTMLStyle | undefined {
 				if (!stylesIDREFSStorage.has(idref)) {
