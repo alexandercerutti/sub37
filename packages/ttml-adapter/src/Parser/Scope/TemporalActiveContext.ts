@@ -82,13 +82,13 @@ export function createTemporalActiveContext(
 						const inlineStyles = regionStyles.find(({ id }) => id === "inline");
 
 						if (inlineStyles) {
-							stylesContainer.inline.concat(inlineStyles);
+							stylesContainer.inline.push(inlineStyles);
 						}
 
 						const nestedStyles = regionStyles.find(({ id }) => id === "nested");
 
 						if (nestedStyles) {
-							stylesContainer.nested.concat(regionStyles);
+							stylesContainer.nested.push(nestedStyles);
 						}
 					}
 				}
