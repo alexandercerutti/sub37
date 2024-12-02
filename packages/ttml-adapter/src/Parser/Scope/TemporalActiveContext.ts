@@ -55,13 +55,20 @@ export function createTemporalActiveContext(
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
 			get args() {
-				return initParams;
+				return Object.assign(
+					{
+						stylesIDRefs: [],
+						regionIdRef: undefined,
+					},
+					initParams,
+				);
 			},
 			[onAttachedSymbol](): void {
+				const { regionIDRef, stylesIDRefs } = this.args;
 				const styleContext = readScopeStyleContainerContext(scope);
 
 				if (styleContext) {
-					for (const idref of this.args.stylesIDRefs) {
+					for (const idref of stylesIDRefs) {
 						const style = styleContext.getStyleByIDRef(idref);
 
 						if (!style) {
@@ -73,10 +80,9 @@ export function createTemporalActiveContext(
 				}
 
 				const regionContext = readScopeRegionContext(scope);
-				const regionIdref = this.args.regionIDRef;
 
-				if (regionContext && regionIdref) {
-					const regionStyles = regionContext.getStylesByRegionId(regionIdref);
+				if (regionContext && regionIDRef) {
+					const regionStyles = regionContext.getStylesByRegionId(regionIDRef);
 
 					if (regionStyles.length) {
 						const inlineStyles = regionStyles.find(({ id }) => id === "inline");
