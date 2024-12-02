@@ -6,7 +6,7 @@
 
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
-import { onMergeSymbol } from "./Scope.js";
+import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import { TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
@@ -31,25 +31,67 @@ interface TemporalActiveInitParams {
 	stylesIDRefs?: string[];
 }
 
+type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
+
 export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
-	const store = Object.assign(
-		{
-			stylesIDRefs: [],
-			regionIDRef: undefined,
-		} satisfies TemporalActiveInitParams,
-		initParams,
-	);
-
-	let computedStyleCache: TTMLStyle["attributes"] | null = null;
-
 	return function (scope: Scope) {
+		const store = Object.assign(
+			{
+				stylesIDRefs: [],
+				regionIDRef: undefined,
+			} satisfies TemporalActiveInitParams,
+			initParams,
+		);
+
+		const stylesContainer: StylesContainer = {
+			inline: [],
+			nested: [],
+			referential: [],
+		};
+
 		return {
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
 			get args() {
 				return initParams;
+			},
+			[onAttachedSymbol](): void {
+				const styleContext = readScopeStyleContainerContext(scope);
+
+				if (styleContext) {
+					for (const idref of this.args.stylesIDRefs) {
+						const style = styleContext.getStyleByIDRef(idref);
+
+						if (!style) {
+							continue;
+						}
+
+						stylesContainer.referential.push(style);
+					}
+				}
+
+				const regionContext = readScopeRegionContext(scope);
+				const regionIdref = this.args.regionIDRef;
+
+				if (regionContext && regionIdref) {
+					const regionStyles = regionContext.getStylesByRegionId(regionIdref);
+
+					if (regionStyles.length) {
+						const inlineStyles = regionStyles.find(({ id }) => id === "inline");
+
+						if (inlineStyles) {
+							stylesContainer.inline.concat(inlineStyles);
+						}
+
+						const nestedStyles = regionStyles.find(({ id }) => id === "nested");
+
+						if (nestedStyles) {
+							stylesContainer.nested.concat(regionStyles);
+						}
+					}
+				}
 			},
 			[onMergeSymbol](context: TemporalActiveContext): void {
 				if (context.regionIdRef && !store.regionIDRef) {
@@ -63,10 +105,6 @@ export function createTemporalActiveContext(
 				}
 			},
 			get computedStyles(): TTMLStyle["attributes"] {
-				if (computedStyleCache) {
-					return computedStyleCache;
-				}
-
 				const idrefs = store.stylesIDRefs;
 
 				const styleContext = readScopeStyleContainerContext(scope);
@@ -102,7 +140,6 @@ export function createTemporalActiveContext(
 					Object.assign(finalStylesAttributes, style.attributes);
 				}
 
-				computedStyleCache = finalStylesAttributes;
 				return finalStylesAttributes;
 			},
 			get regionIdRef(): string {
