@@ -14,7 +14,7 @@ import { readScopeRegionContext } from "./RegionContainerContext.js";
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
 interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
-	computedStyles: Record<string, string>;
+	get computedStyles(): TTMLStyle["attributes"];
 	get region(): TTMLRegion;
 	get regionIdRef(): string;
 	get stylesIDRefs(): string[];
@@ -105,42 +105,32 @@ export function createTemporalActiveContext(
 				}
 			},
 			get computedStyles(): TTMLStyle["attributes"] {
-				const idrefs = store.stylesIDRefs;
+				/**
+				 * @see https://w3c.github.io/ttml2/#semantics-style-association
+				 */
 
-				const styleContext = readScopeStyleContainerContext(scope);
-				const regionContext = readScopeRegionContext(scope);
+				const parentComputedStyles = this.parent?.computedStyles || {};
 
-				if (!idrefs.length) {
-					const styles: Record<string, string> = {};
+				const {
+					referential: referentialStyles = [],
+					nested: nestedStyles = [],
+					inline: inlineStyles = [],
+				} = stylesContainer;
 
-					if (regionContext && store.regionIDRef) {
-						Object.assign(styles, regionContext.getStylesByRegionId(store.regionIDRef));
-					}
+				/**
+				 * Processing in the order defined by the standard
+				 * @see https://w3c.github.io/ttml2/#semantics-style-resolution-processing-sss
+				 */
 
-					return Object.assign(styles, this.parent?.computedStyles);
-				}
+				const computedStyles = referentialStyles
+					.concat(nestedStyles)
+					.concat(inlineStyles)
+					.reduce<TTMLStyle["attributes"]>(
+						(acc, { attributes }) => Object.assign(acc, attributes),
+						{},
+					);
 
-				const finalStylesAttributes: TTMLStyle["attributes"] = {};
-
-				if (store.regionIDRef) {
-					const region = regionContext.getRegionById(store.regionIDRef);
-
-					if (region?.styles) {
-						Object.assign(finalStylesAttributes, region.styles);
-					}
-				}
-
-				for (const styleIdref of idrefs) {
-					const style = styleContext.getStyleByIDRef(styleIdref);
-
-					if (!style) {
-						continue;
-					}
-
-					Object.assign(finalStylesAttributes, style.attributes);
-				}
-
-				return finalStylesAttributes;
+				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
 			get regionIdRef(): string {
 				return store.regionIDRef;
