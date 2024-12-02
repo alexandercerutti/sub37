@@ -77,6 +77,11 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			if (parentContext) {
 				context.parent = parentContext;
 				contextsMap.set(context.identifier, context);
+
+				if (typeof context[onAttachedSymbol] === "function") {
+					context[onAttachedSymbol]();
+				}
+
 				continue;
 			}
 
