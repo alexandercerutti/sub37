@@ -1,5 +1,4 @@
 import type { Region } from "@sub37/server";
-import { TokenType } from "./Token.js";
 import type { Token } from "./Token";
 import type { TTMLStyle } from "./parseStyle";
 import { createStyleParser } from "./parseStyle.js";
@@ -7,9 +6,6 @@ import type { NodeWithRelationship } from "./Tags/NodeTree";
 import { memoizationFactory } from "./memoizationFactory.js";
 import type { Scope } from "./Scope/Scope";
 import type { TimeContextData } from "./Scope/TimeContext";
-import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext.js";
-
-type StyleParser = ReturnType<typeof createStyleParser>;
 
 /**
  * @param rawRegionData
@@ -21,7 +17,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 ): TTMLRegion | undefined {
-	if (regionStorage.has(attributes["xml:id"])) {
+	if (attributes["xml:id"] && regionStorage.has(attributes["xml:id"])) {
 		/**
 		 * Region is ignored if the id is not unique in the document
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-inline-regions
@@ -31,41 +27,37 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 
 	const styleParser = createStyleParser(scope);
 
-	let regionStylesCache: TTMLStyle[] = [];
+	styleParser.process(
+		Object.create(attributes, {
+			/**
+			 * If attributes contains an xml:id, it is the region id.
+			 * However, we want to define the id for the styles.
+			 *
+			 * The attributes will be filtered once the style will be
+			 * processed when attributes getter in styleParser is accessed.
+			 */
+			"xml:id": {
+				value: "inline",
+				enumerable: true,
+			},
+		}),
+	);
+
+	styleParser.process(
+		Object.create(extractNestedStylesChildren(children), {
+			"xml:id": {
+				value: "nested",
+				enumerable: true,
+			},
+		}),
+	);
 
 	function stylesRetriever(): TTMLStyle[] {
-		if (regionStylesCache.length) {
-			return regionStylesCache;
-		}
-
-		const nestedStyles = processStylesChildren(styleParser, [
-			...children,
-			{
-				content: {
-					content: "style",
-					attributes,
-					type: TokenType.START_TAG,
-				},
-				children: [],
-			},
-		]);
-
-		regionStylesCache = regionStylesCache.concat(nestedStyles);
-
-		if (attributes["style"]) {
-			const styleContext = readScopeStyleContainerContext(scope);
-
-			if (styleContext) {
-				const style = styleContext.getStyleByIDRef(attributes["style"]);
-				regionStylesCache = regionStylesCache.concat(style);
-			}
-		}
-
-		return regionStylesCache;
+		return [styleParser.get("inline"), styleParser.get("nested")];
 	}
 
 	const region = new TTMLRegion(
-		attributes["xml:id"],
+		attributes["xml:id"] || "inline",
 		{
 			begin: attributes["begin"],
 			dur: attributes["dur"],
@@ -79,24 +71,19 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	return region;
 });
 
-function processStylesChildren(
-	styleParser: StyleParser,
+function extractNestedStylesChildren(
 	regionChildren: NodeWithRelationship<Token>[],
-): TTMLStyle[] {
-	const nestedStyles: TTMLStyle[] = [];
+): Record<string, string> {
+	const nestedStyles: Record<string, string> = {};
 
 	for (const styleToken of regionChildren) {
 		if (styleToken.content.content !== "style") {
 			continue;
 		}
 
-		const style = styleParser.process(styleToken.content.attributes);
+		const { "xml:id": id, ...attributes } = styleToken.content.attributes;
 
-		if (!style) {
-			continue;
-		}
-
-		nestedStyles.push(style);
+		Object.assign(nestedStyles, attributes);
 	}
 
 	return nestedStyles;
