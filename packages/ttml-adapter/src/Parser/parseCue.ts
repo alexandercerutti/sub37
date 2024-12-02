@@ -3,8 +3,12 @@ import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
-import { createStyleContainerContext } from "./Scope/StyleContainerContext.js";
-import { createTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Scope/TemporalActiveContext.js";
+import type { AdditionalStyle } from "./Scope/TemporalActiveContext.js";
+import { createStyleParser } from "./parseStyle.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	if (!node.children.length) {
@@ -12,6 +16,22 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	}
 
 	const { attributes } = node.content;
+	const styleParser = createStyleParser(scope);
+
+	styleParser.process(
+		Object.create(attributes, {
+			"xml:id": {
+				value: "inline",
+				enumerable: true,
+			},
+		}),
+	);
+
+	const inlineStyle = Object.create(styleParser.get("inline"), {
+		kind: {
+			value: "inline",
+		},
+	}) as AdditionalStyle;
 
 	/**
 	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
@@ -29,10 +49,9 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
 		}),
-		createStyleContainerContext({ localStyles: attributes }),
 		createTemporalActiveContext({
-			stylesIDRefs: ["localStyles"],
 			regionIDRef: attributes["region"],
+			additionalStyles: [inlineStyle],
 		}),
 	);
 
@@ -83,6 +102,23 @@ function getCuesFromSpan(
 
 	const cues: CueNode[] = [];
 	const { attributes } = node.content;
+	const styleParser = createStyleParser(scope);
+
+	styleParser.process(
+		Object.create(attributes, {
+			"xml:id": {
+				value: "inline",
+				enumerable: true,
+			},
+		}),
+	);
+
+	const inlineStyle = Object.create(styleParser.get("inline"), {
+		kind: {
+			value: "inline",
+		},
+	}) as AdditionalStyle;
+
 	const localScope = createScope(
 		scope,
 		createTimeContext({
@@ -93,7 +129,7 @@ function getCuesFromSpan(
 		}),
 		createTemporalActiveContext({
 			regionIDRef: attributes["region"],
-			stylesIDRefs: [],
+			additionalStyles: [inlineStyle],
 		}),
 	);
 

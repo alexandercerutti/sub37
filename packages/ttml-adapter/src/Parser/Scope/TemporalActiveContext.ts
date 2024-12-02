@@ -26,9 +26,14 @@ declare module "./Scope" {
 	}
 }
 
+export type AdditionalStyle = TTMLStyle & {
+	kind: "inline" | "referential" | "nested";
+};
+
 interface TemporalActiveInitParams {
 	regionIDRef?: string;
 	stylesIDRefs?: string[];
+	additionalStyles?: AdditionalStyle[];
 }
 
 type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
@@ -58,13 +63,14 @@ export function createTemporalActiveContext(
 				return Object.assign(
 					{
 						stylesIDRefs: [],
+						additionalStyles: [],
 						regionIdRef: undefined,
 					},
 					initParams,
 				);
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, stylesIDRefs } = this.args;
+				const { regionIDRef, stylesIDRefs, additionalStyles } = this.args;
 				const styleContext = readScopeStyleContainerContext(scope);
 
 				if (styleContext) {
@@ -96,6 +102,19 @@ export function createTemporalActiveContext(
 						if (nestedStyles) {
 							stylesContainer.nested.push(nestedStyles);
 						}
+					}
+				}
+
+				if (additionalStyles.length) {
+					for (const style of additionalStyles) {
+						if (!(style.kind in stylesContainer)) {
+							console.log(
+								`Unknown style kind (received '${style.kind}'). Additional style ignored.`,
+							);
+							continue;
+						}
+
+						stylesContainer[style.kind].push(style);
 					}
 				}
 			},
