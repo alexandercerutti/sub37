@@ -14,7 +14,7 @@ import { readScopeRegionContext } from "./RegionContainerContext.js";
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
 interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
-	get computedStyles(): TTMLStyle["attributes"];
+	computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]>;
 	get region(): TTMLRegion;
 	get regionIdRef(): string;
 	get stylesIDRefs(): string[];
@@ -119,22 +119,12 @@ export function createTemporalActiveContext(
 				}
 			},
 			[onMergeSymbol](context: TemporalActiveContext): void {
-				if (context.regionIdRef && !store.regionIDRef) {
-					store.regionIDRef = context.regionIdRef;
-				}
-
-				if (context.stylesIDRefs.length) {
-					store.stylesIDRefs = Array.from(
-						new Set([...store.stylesIDRefs, ...context.stylesIDRefs]),
-					);
-				}
-			},
-			get computedStyles(): TTMLStyle["attributes"] {
+			computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]> {
 				/**
 				 * @see https://w3c.github.io/ttml2/#semantics-style-association
 				 */
 
-				const parentComputedStyles = this.parent?.computedStyles || {};
+				const parentComputedStyles = this.parent?.computeStylesForElement(element) || {};
 
 				const {
 					referential: referentialStyles = [],
