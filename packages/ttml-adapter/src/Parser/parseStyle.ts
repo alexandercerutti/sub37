@@ -842,10 +842,18 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
 }
 
+function styleAppliesToElement(style: AttributeDefinition, element?: string | undefined): boolean {
+	if (!element || !style.appliesTo.length) {
+		return false;
+	}
+
+	return style.appliesTo.includes(element);
+}
+
 function convertAttributesToCSS(
 	attributes: Record<string, string>,
 	scope: Scope,
-	sourceElementName?: string,
+	sourceElementName: string,
 ): SupportedCSSProperties {
 	const convertedAttributes: SupportedCSSProperties = {};
 
@@ -860,7 +868,13 @@ function convertAttributesToCSS(
 		}
 
 		const value = attributes[attributeKey];
-		const mapped = TTML_CSS_ATTRIBUTES_MAP[attributeKey].toCSS(scope, value);
+		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
+
+		if (!definition || !styleAppliesToElement(definition)) {
+			continue;
+		}
+
+		const mapped = definition.toCSS(scope, value);
 
 		for (const [mappedKey, mappedValue] of mapped) {
 			convertedAttributes[mappedKey] = mappedValue;
