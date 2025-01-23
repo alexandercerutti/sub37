@@ -12,7 +12,13 @@ type StyleAttributeString = `tts:${string}`;
 
 export interface TTMLStyle {
 	id: string;
-	attributes: SupportedCSSProperties;
+
+	/**
+	 * Retrieves actualy styles for an element
+	 *
+	 * @param element
+	 */
+	apply(element: string): SupportedCSSProperties;
 }
 
 export const createStyleParser = memoizationFactory(function styleParserExecutor(
@@ -23,19 +29,13 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	stylesIDREFSStorage: Map<string, TTMLStyle>,
 	scope: Scope,
 	attributes: Record<string, string>,
-): TTMLStyle | undefined {
-	let styleCache: SupportedCSSProperties | undefined = undefined;
-
+): TTMLStyle {
 	const style = {
 		id: attributes["xml:id"],
-		get attributes(): TTMLStyle["attributes"] {
-			if (typeof styleCache !== "undefined") {
-				return styleCache;
-			}
-
-			styleCache = convertAttributesToCSS(extractStyleAttributes(attributes), scope);
-
-			return styleCache;
+		styleAttributes: extractStyleAttributes(attributes),
+		apply(element: string): SupportedCSSProperties {
+			const cssStyles = convertAttributesToCSS(this.styleAttributes, scope, element);
+			return cssStyles;
 		},
 	};
 
@@ -842,9 +842,10 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
 }
 
-export function convertAttributesToCSS(
+function convertAttributesToCSS(
 	attributes: Record<string, string>,
 	scope: Scope,
+	sourceElementName?: string,
 ): SupportedCSSProperties {
 	const convertedAttributes: SupportedCSSProperties = {};
 

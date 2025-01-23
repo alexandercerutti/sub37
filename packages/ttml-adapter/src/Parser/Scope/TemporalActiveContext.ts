@@ -140,10 +140,9 @@ export function createTemporalActiveContext(
 				const computedStyles = referentialStyles
 					.concat(nestedStyles)
 					.concat(inlineStyles)
-					.reduce<TTMLStyle["attributes"]>(
-						(acc, { attributes }) => Object.assign(acc, attributes),
-						{},
-					);
+					.reduce<ReturnType<TTMLStyle["apply"]>>((acc, style) => {
+						return Object.assign(acc, style.apply(element));
+					}, {});
 
 				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
