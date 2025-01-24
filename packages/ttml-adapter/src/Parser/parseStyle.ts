@@ -34,8 +34,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 		id: attributes["xml:id"],
 		styleAttributes: extractStyleAttributes(attributes),
 		apply(element: string): SupportedCSSProperties {
-			const cssStyles = convertAttributesToCSS(this.styleAttributes, scope, element);
-			return cssStyles;
+			return convertAttributesToCSS(this.styleAttributes, scope, element);
 		},
 	};
 
