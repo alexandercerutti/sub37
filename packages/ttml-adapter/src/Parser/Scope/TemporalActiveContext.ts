@@ -26,14 +26,13 @@ declare module "./Scope" {
 	}
 }
 
-export type AdditionalStyle = TTMLStyle & {
+export type ActiveStyle = TTMLStyle & {
 	kind: "inline" | "referential" | "nested";
 };
 
 interface TemporalActiveInitParams {
 	regionIDRef?: string;
-	stylesIDRefs?: string[];
-	additionalStyles?: AdditionalStyle[];
+	styles?: ActiveStyle[];
 }
 
 type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
@@ -44,7 +43,7 @@ export function createTemporalActiveContext(
 	return function (scope: Scope) {
 		const store = Object.assign(
 			{
-				stylesIDRefs: [],
+				styles: [],
 				regionIDRef: undefined,
 			} satisfies TemporalActiveInitParams,
 			initParams,
@@ -63,7 +62,6 @@ export function createTemporalActiveContext(
 				return Object.assign(
 					{
 						stylesIDRefs: [],
-						additionalStyles: [],
 						regionIdRef: undefined,
 					},
 					initParams,
@@ -105,8 +103,8 @@ export function createTemporalActiveContext(
 					}
 				}
 
-				if (additionalStyles.length) {
-					for (const style of additionalStyles) {
+				if (styles.length) {
+					for (const style of styles) {
 						if (!(style.kind in stylesContainer)) {
 							console.log(
 								`Unknown style kind (received '${style.kind}'). Additional style ignored.`,
@@ -150,7 +148,7 @@ export function createTemporalActiveContext(
 				return store.regionIDRef;
 			},
 			get stylesIDRefs(): string[] {
-				return store.stylesIDRefs;
+				return store.styles.map(({ id }) => id);
 			},
 			get region(): TTMLRegion | undefined {
 				if (!store.regionIDRef) {
