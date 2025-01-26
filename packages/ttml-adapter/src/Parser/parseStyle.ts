@@ -870,7 +870,7 @@ function convertAttributesToCSS(
 		const value = attributes[attributeKey];
 		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
 
-		if (!definition || !styleAppliesToElement(definition)) {
+		if (!definition || !styleAppliesToElement(definition, sourceElementName)) {
 			continue;
 		}
 
