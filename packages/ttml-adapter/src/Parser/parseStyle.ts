@@ -888,6 +888,8 @@ function convertAttributesToCSS(
 // *** CSS MAPPERS *** //
 // ******************* //
 
+// region tts:backgroundRepeat
+
 function backgroundRepeatValueMapper(
 	_scope: Scope,
 	value: "repeatX" | "repeatY" | "noRepeat" | "inherit",
@@ -914,6 +916,8 @@ function backgroundRepeatValueMapper(
 		}
 	}
 }
+
+// region tts:displayAlign
 
 function displayAlignValueMapper(
 	_scope: Scope,
@@ -942,6 +946,8 @@ function displayAlignValueMapper(
 	}
 }
 
+// region tts:padding
+
 function paddingValueMapper(_scope: Scope, value: string): string | undefined {
 	if (!value.length) {
 		return undefined;
@@ -967,6 +973,8 @@ function paddingValueMapper(_scope: Scope, value: string): string | undefined {
 
 	return value;
 }
+
+// region tts:textDecoration
 
 /**
  * @TODO TTML allows several values that CSS do not expect,
@@ -1012,6 +1020,8 @@ function textDecorationValueMapper(_scope: Scope, _value: string): string | unde
 	return undefined;
 }
 
+// region tts:textOrientation
+
 function isTextOrientationSupportedCSSValue(
 	value: string,
 ): value is "sideways" | "mixed" | "upright" {
@@ -1041,6 +1051,8 @@ function textOrientationValueMapper(
 
 	return undefined;
 }
+
+// region tts:fontSize
 
 /**
  * TTML supports providing two <length> for `tts:fontSize`.
@@ -1116,6 +1128,8 @@ function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: 
 	);
 }
 
+// region tts:extent
+
 function isExtentSupportedKeyword(value: string): value is "auto" | "contain" | "cover" {
 	return ["auto", "contain", "cover"].includes(value);
 }
@@ -1178,6 +1192,8 @@ function extentMapper(
 	];
 }
 
+// region tts:origin
+
 function originMapper(_scope: Scope, value: "auto" | string): PropertiesCollection<["x", "y"]> {
 	if (value === "auto") {
 		/**
@@ -1208,6 +1224,8 @@ function originMapper(_scope: Scope, value: "auto" | string): PropertiesCollecti
 		["y", yLength.toString()],
 	];
 }
+
+// region <border>
 
 function borderMapper(
 	_scope: Scope,
@@ -1240,6 +1258,7 @@ function borderMapper(
 			continue;
 		}
 
+		// region <border-color>
 		if (!border["border-color"] && isValidColor(component)) {
 			border["border-color"] = component;
 			continue;
@@ -1263,6 +1282,8 @@ function borderMapper(
 	];
 }
 
+// region <border-thickness>
+
 function getBorderThickness(component: string): string | undefined {
 	if (["thin", "medium", "thick"].includes(component)) {
 		/**
@@ -1280,6 +1301,8 @@ function getBorderThickness(component: string): string | undefined {
 
 	return borderThicknessLength.toString();
 }
+
+// region <border-style>
 
 /**
  * "At least one of the border style components must be present,
