@@ -2,8 +2,9 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { getCellScalarPixelConversion, isCellScalar } from "./Units/cell.js";
 import { toClamped } from "./Units/clamp.js";
+import { isValidColor } from "./Units/color.js";
 import type { Length } from "./Units/length.js";
-import { toLength } from "./Units/length.js";
+import { isPercentage, toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
 import { createUnit } from "./Units/unit.js";
 import { memoizationFactory } from "./memoizationFactory.js";
@@ -256,7 +257,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		["body", "div", "image", "p", "region", "span"],
 		"none",
 		undefined,
-		createPassThroughMapper("border"),
+		borderMapper,
 	),
 
 	/**
@@ -1206,4 +1207,127 @@ function originMapper(_scope: Scope, value: "auto" | string): PropertiesCollecti
 		["x", xLength.toString()],
 		["y", yLength.toString()],
 	];
+}
+
+function borderMapper(
+	_scope: Scope,
+	value: string,
+): PropertiesCollection<["border-width", "border-style", "border-color", "border-radius"]> {
+	const border = {
+		"border-width": "",
+		"border-style": "",
+		"border-color": "",
+		"border-radius": "",
+	};
+
+	const uncategorizedComponents = getSplittedLinearWhitespaceValues(value);
+
+	/**
+	 * "Note that component order is not significant."
+	 */
+	for (const component of uncategorizedComponents) {
+		if (!border["border-width"]) {
+			const thickness = getBorderThickness(component);
+
+			if (thickness) {
+				border["border-width"] = thickness;
+				continue;
+			}
+		}
+
+		if (!border["border-style"] && isSupportedBorderStyle(component)) {
+			border["border-style"] = component;
+			continue;
+		}
+
+		if (!border["border-color"] && isValidColor(component)) {
+			border["border-color"] = component;
+			continue;
+		}
+
+		if (!border["border-radius"]) {
+			const borderRadiusCSS = getBorderRadii(component);
+
+			if (borderRadiusCSS) {
+				border["border-radius"] = borderRadiusCSS;
+				continue;
+			}
+		}
+	}
+
+	return [
+		["border-width", border["border-width"]],
+		["border-style", border["border-style"] || "none"],
+		["border-color", border["border-color"]],
+		["border-radius", border["border-radius"]],
+	];
+}
+
+function getBorderThickness(component: string): string | undefined {
+	if (["thin", "medium", "thick"].includes(component)) {
+		/**
+		 * @TODO such keywords are implementation dependent
+		 * and we don't know yet how to remap them.
+		 */
+		return undefined;
+	}
+
+	const borderThicknessLength = toLength(component);
+
+	if (!borderThicknessLength || isPercentage(borderThicknessLength)) {
+		return undefined;
+	}
+
+	return borderThicknessLength.toString();
+}
+
+/**
+ * "At least one of the border style components must be present,
+ * for example, a <border-style> component of value none."
+ *
+ * For this reason
+ *
+ * @param component
+ */
+function isSupportedBorderStyle(
+	component: string,
+): component is "none" | "dotted" | "dashed" | "solid" | "double" {
+	return ["none", "dotted", "dashed", "solid", "double"].includes(component);
+}
+
+// region <border-radii>
+
+/**
+ * @structure `radii(" <lwsp>? <length> ( <lwsp>? "," <lwsp>? <length> )? <lwsp>? ")"`
+ * @param component
+ * @returns
+ */
+
+function getBorderRadii(component: string): string {
+	if (!component.startsWith("radii(")) {
+		return "";
+	}
+
+	const startParenthesisIndex = component.indexOf("(");
+	const endParenthesisIndex = component.lastIndexOf(")");
+	const splittedSections = component
+		.substring(startParenthesisIndex + 1, endParenthesisIndex)
+		.split(",");
+
+	if (!splittedSections.length) {
+		return "";
+	}
+
+	const firstQuarterEllipseRadius = splittedSections[0].trim();
+	const secondQuarterEllipseRadius = (splittedSections[1] || firstQuarterEllipseRadius).trim();
+
+	const fqerAsLength = toLength(firstQuarterEllipseRadius);
+
+	if (!fqerAsLength) {
+		return "";
+	}
+
+	const sqerAsLength = toLength(secondQuarterEllipseRadius) || createUnit(0, "px");
+
+	return `${fqerAsLength.toString()} ${sqerAsLength.toString()}`;
 }
