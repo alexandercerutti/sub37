@@ -843,7 +843,11 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 }
 
 function styleAppliesToElement(style: AttributeDefinition, element?: string | undefined): boolean {
-	if (!element || !style.appliesTo.length) {
+	if (!style.appliesTo.length) {
+		return true;
+	}
+
+	if (!element) {
 		return false;
 	}
 
