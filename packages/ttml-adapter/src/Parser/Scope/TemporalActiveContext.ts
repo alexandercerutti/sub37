@@ -68,20 +68,7 @@ export function createTemporalActiveContext(
 				);
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, stylesIDRefs, additionalStyles } = this.args;
-				const styleContext = readScopeStyleContainerContext(scope);
-
-				if (styleContext) {
-					for (const idref of stylesIDRefs) {
-						const style = styleContext.getStyleByIDRef(idref);
-
-						if (!style) {
-							continue;
-						}
-
-						stylesContainer.referential.push(style);
-					}
-				}
+				const { regionIDRef, styles } = this.args;
 
 				const regionContext = readScopeRegionContext(scope);
 
@@ -117,6 +104,51 @@ export function createTemporalActiveContext(
 				}
 			},
 			[onMergeSymbol](context: TemporalActiveContext): void {
+				const { regionIDRef, styles } = context.args;
+
+				if (regionIDRef && !store.regionIDRef) {
+					store.regionIDRef = regionIDRef;
+					const regionContext = readScopeRegionContext(scope);
+
+					if (regionContext) {
+						const regionStyles = regionContext.getStylesByRegionId(regionIDRef);
+
+						if (regionStyles.length) {
+							const inlineStyles = regionStyles.find(({ id }) => id === "inline");
+
+							if (inlineStyles) {
+								stylesContainer.inline.push(inlineStyles);
+							}
+
+							const nestedStyles = regionStyles.find(({ id }) => id === "nested");
+
+							if (nestedStyles) {
+								stylesContainer.nested.push(nestedStyles);
+							}
+						}
+					}
+				}
+
+				if (styles.length) {
+					if (!store.styles.length) {
+						store.styles.concat(styles);
+						return;
+					}
+
+					const currentStylesIds = new Set(store.styles.map(({ id }) => id));
+					const selectedStyles: ActiveStyle[] = [];
+
+					for (const style of styles) {
+						if (currentStylesIds.has(style.id)) {
+							continue;
+						}
+
+						selectedStyles.push(style);
+					}
+
+					store.styles.concat(selectedStyles);
+				}
+			},
 			computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]> {
 				/**
 				 * @see https://w3c.github.io/ttml2/#semantics-style-association
