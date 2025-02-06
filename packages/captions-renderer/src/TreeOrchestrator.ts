@@ -395,16 +395,16 @@ function getLineHeight(line: HTMLElement) {
 	return Math.floor(line.offsetHeight);
 }
 
-function getNodeAtDepth(index: number, node: Node) {
+function getNodeAtDepth(depth: number, node: Node): Node {
 	let latestNodePointer: Node = node;
 
-	while (index > 0 && latestNodePointer.lastChild) {
+	while (depth > 0 && latestNodePointer.lastChild) {
 		if (latestNodePointer.lastChild.nodeType !== Node.ELEMENT_NODE) {
 			break;
 		}
 
 		latestNodePointer = latestNodePointer.lastChild;
-		index--;
+		depth--;
 	}
 
 	return latestNodePointer;
