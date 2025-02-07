@@ -380,7 +380,8 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 
 function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
 	const root = rootNode || createLine();
-	addNode(getNodeAtDepth(diffDepth, root.lastChild), cueSubTreeRoot);
+
+	getNodeAtDepth(diffDepth, root.lastChild).appendChild(cueSubTreeRoot);
 	return root as HTMLElement;
 }
 
@@ -484,11 +485,6 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 	}
 
 	return element;
-}
-
-function addNode(node: Node, content: Node): Node {
-	node.appendChild(content);
-	return node;
 }
 
 function getSubtreeFromCueNodes(
