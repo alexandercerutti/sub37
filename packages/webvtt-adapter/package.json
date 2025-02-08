@@ -1,6 +1,6 @@
 {
 	"name": "@sub37/webvtt-adapter",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "A subtitles adapter for WebVTT subtitles",
 	"main": "lib/index.js",
 	"type": "module",
