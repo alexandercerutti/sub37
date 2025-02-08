@@ -178,7 +178,7 @@ export default class TreeOrchestrator {
 
 			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
 
-			if (!latestNode) {
+			if (!line.parentNode) {
 				this[rootElementSymbol].appendChild(line);
 			}
 
