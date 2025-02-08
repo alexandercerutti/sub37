@@ -9,10 +9,10 @@
 		"@sub37/server": "^1.0.0"
 	},
 	"scripts": {
-		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
-		"test": "npm run build && npm run test:e2e",
-		"test:e2e": "npx playwright test -c \"playwright.config.js\"",
-		"prepublishOnly": "npm run build"
+		"build": "rm -rf lib && pnpm tsc -p tsconfig.build.json",
+		"test": "pnpm build && pnpm test:e2e",
+		"test:e2e": "pnpm playwright test -c \"playwright.config.js\"",
+		"prepublishOnly": "pnpm run build"
 	},
 	"repository": {
 		"type": "git",
