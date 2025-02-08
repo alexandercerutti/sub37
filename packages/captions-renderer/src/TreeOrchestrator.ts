@@ -557,7 +557,8 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
  *
  * @param currentCue
  * @param entityDifferenceIndex
- * @returns
+ * @returns A tuple containing the whole fragment
+ * 					and the wrapped textNode
  */
 function getCueNodeFragmentSubtree(
 	currentCue: CueNode,
