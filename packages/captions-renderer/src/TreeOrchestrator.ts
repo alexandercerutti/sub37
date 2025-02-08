@@ -466,39 +466,37 @@ function getNodeFromEntity(entity: Entities.GenericEntity): Node | undefined {
 	return node;
 }
 
+function LangVoiceTagEntityProcessor(entity: Entities.Tag) {
+	const node = document.createElement("span");
+
+	for (let [key, value] of entity.attributes) {
+		node.setAttribute(key, value ? value : "");
+	}
+
+	return node;
+}
+
+function ClassTagEntityProcessor() {
+	return document.createElement("span");
+}
+
+const TAG_TYPE_ENTITY_DOM_MAP = {
+	[Entities.TagType.BOLD]: (_entity: Entities.Tag) => document.createElement("b"),
+	[Entities.TagType.ITALIC]: (_entity: Entities.Tag) => document.createElement("i"),
+	[Entities.TagType.UNDERLINE]: (_entity: Entities.Tag) => document.createElement("u"),
+	[Entities.TagType.RT]: (_entity: Entities.Tag) => document.createElement("rt"),
+	[Entities.TagType.RUBY]: (_entity: Entities.Tag) => document.createElement("ruby"),
+	[Entities.TagType.LANG]: LangVoiceTagEntityProcessor,
+	[Entities.TagType.VOICE]: LangVoiceTagEntityProcessor,
+	[Entities.TagType.CLASS]: ClassTagEntityProcessor,
+	[Entities.TagType.SPAN]: (_entity: Entities.Tag) => document.createElement("span"),
+} as const;
+
 function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
-	const element: HTMLElement = (() => {
-		switch (entity.tagType) {
-			case Entities.TagType.BOLD: {
-				return document.createElement("b");
-			}
-			case Entities.TagType.ITALIC: {
-				return document.createElement("i");
-			}
-			case Entities.TagType.UNDERLINE: {
-				return document.createElement("u");
-			}
-			case Entities.TagType.RT: {
-				return document.createElement("rt");
-			}
-			case Entities.TagType.RUBY: {
-				return document.createElement("ruby");
-			}
-			case Entities.TagType.LANG:
-			case Entities.TagType.VOICE: {
-				const node = document.createElement("span");
+	const elementProcessor =
+		TAG_TYPE_ENTITY_DOM_MAP[entity.tagType] || TAG_TYPE_ENTITY_DOM_MAP[Entities.TagType.SPAN];
 
-				for (let [key, value] of entity.attributes) {
-					node.setAttribute(key, value ? value : "");
-				}
-
-				return node;
-			}
-			default: {
-				return document.createElement("span");
-			}
-		}
-	})();
+	const element: HTMLElement = elementProcessor(entity);
 
 	for (const className of entity.classes) {
 		element.classList.add(className);
