@@ -195,7 +195,7 @@ export default class TreeOrchestrator {
 
 			if (latestHeight > 0 && nextHeight >= latestHeight * 2) {
 				let textParentNode = textNode.parentNode as HTMLElement;
-				const subTreeClone = entitiesToDOM(textNode, ...cue.entities);
+				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
 				line = commitDOMTree(undefined, subTreeClone, cue.entities.length);
 
@@ -411,7 +411,10 @@ function getNodeAtDepth(depth: number, node: Node): Node {
 	return latestNodePointer;
 }
 
-function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
+function wrapIntoEntitiesDocumentFragment(
+	rootNode: Node,
+	entities: Entities.GenericEntity[],
+): Node {
 	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
 
@@ -518,7 +521,11 @@ function getSubtreeFromCueNodes(
 	}
 
 	if (!previousCue?.entities.length) {
-		return [entitiesToDOM(textNode, ...currentCue.entities), currentCue.entities.length, textNode];
+		return [
+			wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities),
+			currentCue.entities.length,
+			textNode,
+		];
 	}
 
 	let firstDifferentEntityIndex = 0;
@@ -556,7 +563,10 @@ function getSubtreeFromCueNodes(
 	}
 
 	return [
-		entitiesToDOM(textNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
+		wrapIntoEntitiesDocumentFragment(
+			textNode,
+			currentCue.entities.slice(firstDifferentEntityIndex),
+		),
 		firstDifferentEntityIndex,
 		textNode,
 	];
