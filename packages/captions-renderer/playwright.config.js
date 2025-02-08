@@ -99,5 +99,10 @@ export default {
 		command: "pnpm --dir ../sample dev",
 		/** Sample serves on this port */
 		port: 3000,
+		reuseExistingServer: true,
+		gracefulShutdown: {
+			signal: "SIGTERM",
+			timeout: 5000,
+		},
 	},
 };
