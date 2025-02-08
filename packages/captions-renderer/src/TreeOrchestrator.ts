@@ -174,7 +174,8 @@ export default class TreeOrchestrator {
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
 			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
-			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
+			let line = latestNode || createLine();
+			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
 				this[rootElementSymbol].appendChild(line);
@@ -196,7 +197,8 @@ export default class TreeOrchestrator {
 				let textParentNode = textNode.parentNode as HTMLElement;
 				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
-				line = commitDOMTree(undefined, subTreeClone, cue.entities.length);
+				line = createLine();
+				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
 
 				while (!textParentNode.childNodes.length) {
 					/** Cleaning up empty parents */
@@ -377,11 +379,8 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
-	const root = rootNode || createLine();
-
-	getNodeAtDepth(diffDepth, root.lastChild).appendChild(cueSubTreeRoot);
-	return root as HTMLElement;
+function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDepth: number): void {
+	getNodeAtDepth(diffDepth, lineRootNode.lastChild).appendChild(cueSubTreeRoot);
 }
 
 function createLine() {
