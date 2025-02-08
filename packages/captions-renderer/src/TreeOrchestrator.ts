@@ -558,10 +558,8 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 }
 
 /**
- * Given a cue containing only one word
- * (if it doesn't, there must be a problem),
- * retrieves the DocumentFragment with entities
- * of its text content.
+ * Given a cue, retrieves the DocumentFragment
+ * with entities of its text content.
  *
  * @param currentCue
  * @param entityDifferenceIndex
