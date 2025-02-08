@@ -171,7 +171,7 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			const [cueRootDomNode, firstDifferentEntityIndex, textNode] = getSubtreeFromCueNodes(
+			const [cueRootDomNode, firstDifferentEntityIndex, textNode] = getCueNodeFragmentSubtree(
 				cue,
 				cues[i - 1],
 			);
@@ -508,7 +508,7 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 	return element;
 }
 
-function getSubtreeFromCueNodes(
+function getCueNodeFragmentSubtree(
 	currentCue: CueNode,
 	previousCue?: CueNode,
 ): [root: Node, diffIndex: number, textNode: Text] {
