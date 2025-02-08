@@ -520,6 +520,14 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 		return 0;
 	}
 
+	/**
+	 * We change the cue ID when we find
+	 * a new line
+	 */
+	if (currentCue.id !== previousCue.id) {
+		return 0;
+	}
+
 	let entityDifferenceIndex = 0;
 
 	const longestCueEntitiesLength = Math.max(
