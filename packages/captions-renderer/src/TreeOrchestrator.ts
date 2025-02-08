@@ -190,8 +190,9 @@ export default class TreeOrchestrator {
 			}
 
 			const nextHeight = getLineHeight(line);
+			const shouldCreateNewLine = latestHeight > 0 && nextHeight >= latestHeight * 2;
 
-			if (latestHeight > 0 && nextHeight >= latestHeight * 2) {
+			if (shouldCreateNewLine) {
 				let textParentNode = textNode.parentNode as HTMLElement;
 				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
