@@ -171,10 +171,8 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			const [cueRootDomNode, firstDifferentEntityIndex, textNode] = getCueNodeFragmentSubtree(
-				cue,
-				cues[i - 1],
-			);
+			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
+			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
 			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
 
@@ -508,44 +506,37 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 	return element;
 }
 
-function getCueNodeFragmentSubtree(
-	currentCue: CueNode,
-	previousCue?: CueNode,
-): [root: Node, diffIndex: number, textNode: Text] {
-	const textNode = document.createTextNode(currentCue.content);
-
-	if (!currentCue.entities.length) {
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, 0, textNode];
+/**
+ * Compares two cues and retrieves the index (which
+ * is the DOM line depth level) at which the first
+ * different entity should be inserted.
+ *
+ * @param currentCue
+ * @param previousCue
+ * @returns
+ */
+function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: CueNode): number {
+	if (!currentCue.entities.length || !previousCue?.entities.length) {
+		return 0;
 	}
 
-	if (!previousCue?.entities.length) {
-		return [
-			wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities),
-			currentCue.entities.length,
-			textNode,
-		];
-	}
-
-	let firstDifferentEntityIndex = 0;
+	let entityDifferenceIndex = 0;
 
 	const longestCueEntitiesLength = Math.max(
 		currentCue.entities.length,
 		previousCue.entities.length,
 	);
 
-	for (
-		let i = firstDifferentEntityIndex;
-		i < longestCueEntitiesLength;
-		i++, firstDifferentEntityIndex++
-	) {
-		if (!currentCue.entities[i] || !previousCue.entities[i]) {
+	const currentEntities = currentCue.entities;
+	const previousEntities = previousCue.entities;
+
+	for (let i = entityDifferenceIndex; i < longestCueEntitiesLength; i++, entityDifferenceIndex++) {
+		if (!currentEntities[i] || !previousEntities[i]) {
 			break;
 		}
 
-		const currentCueEntity = currentCue.entities[i];
-		const previousCueEntity = previousCue.entities[i];
+		const currentCueEntity = currentEntities[i];
+		const previousCueEntity = previousEntities[i];
 
 		if (
 			currentCueEntity.length !== previousCueEntity.length ||
@@ -555,19 +546,27 @@ function getCueNodeFragmentSubtree(
 		}
 	}
 
-	if (firstDifferentEntityIndex >= currentCue.entities.length) {
-		/** We already reached that depth */
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, firstDifferentEntityIndex, textNode];
-	}
+	return entityDifferenceIndex;
+}
+
+/**
+ * Given a cue containing only one word
+ * (if it doesn't, there must be a problem),
+ * retrieves the DocumentFragment with entities
+ * of its text content.
+ *
+ * @param currentCue
+ * @param entityDifferenceIndex
+ * @returns
+ */
+function getCueNodeFragmentSubtree(
+	currentCue: CueNode,
+	entityDifferenceIndex: number,
+): [root: Node, textNode: Text] {
+	const textNode = document.createTextNode(currentCue.content);
 
 	return [
-		wrapIntoEntitiesDocumentFragment(
-			textNode,
-			currentCue.entities.slice(firstDifferentEntityIndex),
-		),
-		firstDifferentEntityIndex,
+		wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities.slice(entityDifferenceIndex)),
 		textNode,
 	];
 }
