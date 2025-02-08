@@ -412,38 +412,58 @@ function getNodeAtDepth(depth: number, node: Node): Node {
 }
 
 function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
-	const subRoot = new DocumentFragment();
+	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
+
+	/**
+	 * Rebuilding the Document from the last entity
+	 * in order to encapsule one into another, and
+	 * wrap the final root node inside them all.
+	 */
 
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
 
-		if (entity instanceof Entities.Tag) {
-			const node = getHTMLElementByEntity(entity);
+		const node = getNodeFromEntity(entity);
 
-			if (entity.styles) {
-				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					switch (key) {
-						case "color": {
-							/** Otherwise user cannot override the default style and track style */
-							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-							break;
-						}
+		if (!node) {
+			continue;
+		}
 
-						default: {
-							node.style.cssText += `${key}:${value};`;
-						}
-					}
-				}
+		node.appendChild(latestNode);
+		latestNode = node;
+	}
+
+	fragment.appendChild(latestNode);
+	return fragment;
+}
+
+function getNodeFromEntity(entity: Entities.GenericEntity): Node | undefined {
+	if (!(entity instanceof Entities.Tag)) {
+		return undefined;
+	}
+
+	const node = getHTMLElementByEntity(entity);
+
+	if (!entity.styles) {
+		return node;
+	}
+
+	for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
+		switch (key) {
+			case "color": {
+				/** Otherwise user cannot override the default style and track style */
+				node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
+				break;
 			}
 
-			node.appendChild(latestNode);
-			latestNode = node;
+			default: {
+				node.style.cssText += `${key}:${value};`;
+			}
 		}
 	}
 
-	subRoot.appendChild(latestNode);
-	return subRoot;
+	return node;
 }
 
 function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
