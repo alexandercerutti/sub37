@@ -171,14 +171,13 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			const [cueRootDomNode, firstDifferentEntityIndex, textNode] = getSubtreeFromCueNodes(
-				cue,
-				cues[i - 1],
-			);
+			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
+			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
-			let line = commitDOMTree(latestNode, cueRootDomNode, firstDifferentEntityIndex);
+			let line = latestNode || createLine();
+			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
-			if (!latestNode) {
+			if (!line.parentNode) {
 				this[rootElementSymbol].appendChild(line);
 			}
 
@@ -192,12 +191,14 @@ export default class TreeOrchestrator {
 			}
 
 			const nextHeight = getLineHeight(line);
+			const shouldCreateNewLine = latestHeight > 0 && nextHeight >= latestHeight * 2;
 
-			if (latestHeight > 0 && nextHeight >= latestHeight * 2) {
+			if (shouldCreateNewLine) {
 				let textParentNode = textNode.parentNode as HTMLElement;
-				const subTreeClone = entitiesToDOM(textNode, ...cue.entities);
+				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
-				line = commitDOMTree(undefined, subTreeClone, cue.entities.length);
+				line = createLine();
+				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
 
 				while (!textParentNode.childNodes.length) {
 					/** Cleaning up empty parents */
@@ -378,10 +379,8 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 	return cueNodeContent.length - 1 === index;
 }
 
-function commitDOMTree(rootNode: Node, cueSubTreeRoot: Node, diffDepth: number): HTMLElement {
-	const root = rootNode || createLine();
-	addNode(getNodeAtDepth(diffDepth, root.lastChild), cueSubTreeRoot);
-	return root as HTMLElement;
+function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDepth: number): void {
+	getNodeAtDepth(diffDepth, lineRootNode.lastChild).appendChild(cueSubTreeRoot);
 }
 
 function createLine() {
@@ -395,89 +394,110 @@ function getLineHeight(line: HTMLElement) {
 	return Math.floor(line.offsetHeight);
 }
 
-function getNodeAtDepth(index: number, node: Node) {
+function getNodeAtDepth(depth: number, node: Node): Node {
 	let latestNodePointer: Node = node;
 
-	while (index > 0 && latestNodePointer.lastChild) {
+	while (depth > 0 && latestNodePointer.lastChild) {
 		if (latestNodePointer.lastChild.nodeType !== Node.ELEMENT_NODE) {
 			break;
 		}
 
 		latestNodePointer = latestNodePointer.lastChild;
-		index--;
+		depth--;
 	}
 
 	return latestNodePointer;
 }
 
-function entitiesToDOM(rootNode: Node, ...entities: Entities.GenericEntity[]): Node {
-	const subRoot = new DocumentFragment();
+function wrapIntoEntitiesDocumentFragment(
+	rootNode: Node,
+	entities: Entities.GenericEntity[],
+): Node {
+	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
+
+	/**
+	 * Rebuilding the Document from the last entity
+	 * in order to encapsule one into another, and
+	 * wrap the final root node inside them all.
+	 */
 
 	for (let i = entities.length - 1; i >= 0; i--) {
 		const entity = entities[i];
 
-		if (entity instanceof Entities.Tag) {
-			const node = getHTMLElementByEntity(entity);
+		const node = getNodeFromEntity(entity);
 
-			if (entity.styles) {
-				for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-					switch (key) {
-						case "color": {
-							/** Otherwise user cannot override the default style and track style */
-							node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-							break;
-						}
+		if (!node) {
+			continue;
+		}
 
-						default: {
-							node.style.cssText += `${key}:${value};`;
-						}
-					}
-				}
+		node.appendChild(latestNode);
+		latestNode = node;
+	}
+
+	fragment.appendChild(latestNode);
+	return fragment;
+}
+
+function getNodeFromEntity(entity: Entities.GenericEntity): Node | undefined {
+	if (!(entity instanceof Entities.Tag)) {
+		return undefined;
+	}
+
+	const node = getHTMLElementByEntity(entity);
+
+	if (!entity.styles) {
+		return node;
+	}
+
+	for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
+		switch (key) {
+			case "color": {
+				/** Otherwise user cannot override the default style and track style */
+				node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
+				break;
 			}
 
-			node.appendChild(latestNode);
-			latestNode = node;
+			default: {
+				node.style.cssText += `${key}:${value};`;
+			}
 		}
 	}
 
-	subRoot.appendChild(latestNode);
-	return subRoot;
+	return node;
 }
 
+function LangVoiceTagEntityProcessor(entity: Entities.Tag) {
+	const node = document.createElement("span");
+
+	for (let [key, value] of entity.attributes) {
+		node.setAttribute(key, value ? value : "");
+	}
+
+	return node;
+}
+
+function ClassTagEntityProcessor() {
+	return document.createElement("span");
+}
+
+const TAG_TYPE_ENTITY_DOM_MAP = {
+	[Entities.TagType.BOLD]: (_entity: Entities.Tag) => document.createElement("b"),
+	[Entities.TagType.ITALIC]: (_entity: Entities.Tag) => document.createElement("i"),
+	[Entities.TagType.UNDERLINE]: (_entity: Entities.Tag) => document.createElement("u"),
+	[Entities.TagType.RT]: (_entity: Entities.Tag) => document.createElement("rt"),
+	[Entities.TagType.RUBY]: (_entity: Entities.Tag) => document.createElement("ruby"),
+	[Entities.TagType.LANG]: LangVoiceTagEntityProcessor,
+	[Entities.TagType.VOICE]: LangVoiceTagEntityProcessor,
+	[Entities.TagType.CLASS]: ClassTagEntityProcessor,
+	[Entities.TagType.SPAN]: (_entity: Entities.Tag) => document.createElement("span"),
+} as const;
+
 function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
-	const element: HTMLElement = (() => {
-		switch (entity.tagType) {
-			case Entities.TagType.BOLD: {
-				return document.createElement("b");
-			}
-			case Entities.TagType.ITALIC: {
-				return document.createElement("i");
-			}
-			case Entities.TagType.UNDERLINE: {
-				return document.createElement("u");
-			}
-			case Entities.TagType.RT: {
-				return document.createElement("rt");
-			}
-			case Entities.TagType.RUBY: {
-				return document.createElement("ruby");
-			}
-			case Entities.TagType.LANG:
-			case Entities.TagType.VOICE: {
-				const node = document.createElement("span");
+	const elementProcessor =
+		TAG_TYPE_ENTITY_DOM_MAP[entity.tagType] || TAG_TYPE_ENTITY_DOM_MAP[Entities.TagType.SPAN];
 
-				for (let [key, value] of entity.attributes) {
-					node.setAttribute(key, value ? value : "");
-				}
-
-				return node;
-			}
-			default: {
-				return document.createElement("span");
-			}
-		}
-	})();
+	const element: HTMLElement = elementProcessor(entity);
 
 	for (const className of entity.classes) {
 		element.classList.add(className);
@@ -486,45 +506,45 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
 	return element;
 }
 
-function addNode(node: Node, content: Node): Node {
-	node.appendChild(content);
-	return node;
-}
-
-function getSubtreeFromCueNodes(
-	currentCue: CueNode,
-	previousCue?: CueNode,
-): [root: Node, diffIndex: number, textNode: Text] {
-	const textNode = document.createTextNode(currentCue.content);
-
-	if (!currentCue.entities.length) {
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, 0, textNode];
+/**
+ * Compares two cues and retrieves the index (which
+ * is the DOM line depth level) at which the first
+ * different entity should be inserted.
+ *
+ * @param currentCue
+ * @param previousCue
+ * @returns
+ */
+function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: CueNode): number {
+	if (!currentCue.entities.length || !previousCue?.entities.length) {
+		return 0;
 	}
 
-	if (!previousCue?.entities.length) {
-		return [entitiesToDOM(textNode, ...currentCue.entities), currentCue.entities.length, textNode];
+	/**
+	 * We change the cue ID when we find
+	 * a new line
+	 */
+	if (currentCue.id !== previousCue.id) {
+		return 0;
 	}
 
-	let firstDifferentEntityIndex = 0;
+	let entityDifferenceIndex = 0;
 
 	const longestCueEntitiesLength = Math.max(
 		currentCue.entities.length,
 		previousCue.entities.length,
 	);
 
-	for (
-		let i = firstDifferentEntityIndex;
-		i < longestCueEntitiesLength;
-		i++, firstDifferentEntityIndex++
-	) {
-		if (!currentCue.entities[i] || !previousCue.entities[i]) {
+	const currentEntities = currentCue.entities;
+	const previousEntities = previousCue.entities;
+
+	for (let i = entityDifferenceIndex; i < longestCueEntitiesLength; i++, entityDifferenceIndex++) {
+		if (!currentEntities[i] || !previousEntities[i]) {
 			break;
 		}
 
-		const currentCueEntity = currentCue.entities[i];
-		const previousCueEntity = previousCue.entities[i];
+		const currentCueEntity = currentEntities[i];
+		const previousCueEntity = previousEntities[i];
 
 		if (
 			currentCueEntity.length !== previousCueEntity.length ||
@@ -534,16 +554,26 @@ function getSubtreeFromCueNodes(
 		}
 	}
 
-	if (firstDifferentEntityIndex >= currentCue.entities.length) {
-		/** We already reached that depth */
-		const fragment = new DocumentFragment();
-		fragment.appendChild(textNode);
-		return [fragment, firstDifferentEntityIndex, textNode];
-	}
+	return entityDifferenceIndex;
+}
+
+/**
+ * Given a cue, retrieves the DocumentFragment
+ * with entities of its text content.
+ *
+ * @param currentCue
+ * @param entityDifferenceIndex
+ * @returns A tuple containing the whole fragment
+ * 					and the wrapped textNode
+ */
+function getCueNodeFragmentSubtree(
+	currentCue: CueNode,
+	entityDifferenceIndex: number,
+): [root: Node, textNode: Text] {
+	const textNode = document.createTextNode(currentCue.content);
 
 	return [
-		entitiesToDOM(textNode, ...currentCue.entities.slice(firstDifferentEntityIndex)),
-		firstDifferentEntityIndex,
+		wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities.slice(entityDifferenceIndex)),
 		textNode,
 	];
 }

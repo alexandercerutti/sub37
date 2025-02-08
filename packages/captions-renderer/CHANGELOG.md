@@ -1,5 +1,20 @@
 # @sub37/captions-renderer
 
+## **1.1.1** (08 Feb 2025)
+
+**Changes**:
+
+- Refactored entity difference calculation;
+- Refactored entity conversion to DOM elements;
+- Refactored line creation and entities association;
+-
+
+**Bug fix**:
+
+- Fixed [Issue #11](https://github.com/alexandercerutti/sub37/issues/11);
+
+---
+
 ## **1.1.0**
 
 **Changes**:

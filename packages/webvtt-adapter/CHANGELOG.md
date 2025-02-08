@@ -1,5 +1,13 @@
 # @sub37/webvtt-adapter
 
+## **1.0.4** (08 Feb 2024)
+
+**Changes**:
+
+- Generic improvements;
+
+---
+
 ## **1.0.3** (17 Feb 2024)
 
 **Changes**:
