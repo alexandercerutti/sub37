@@ -38,6 +38,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			]);
 		}
 
+		const cueIdsList: Set<string> = new Set();
 		const cues: CueNode[] = [];
 		const content = String(rawContent).replace(/\r?\n/g, "\n");
 		const block = {
@@ -127,6 +128,29 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
+							failures.push({
+								error: new Error("A cue cannot start after its end time"),
+								failedChunk: content.substring(block.start, block.cursor),
+								isCritical: false,
+							});
+
+							continue;
+						}
+
+						if (parsedCue.id && cueIdsList.has(parsedCue.id)) {
+							/**
+							 * "A WebVTT cue identifier must be unique amongst
+							 * all the WebVTT cue identifiers of all WebVTT
+							 * cues of a WebVTT file."
+							 * 
+							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
+							 */
+							failures.push({
+								error: new Error("A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file."),
+								failedChunk: content.substring(block.start, block.cursor),
+								isCritical: false,
+							});
+
 							continue;
 						}
 
@@ -233,6 +257,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 						cue.entities = entities;
 						cues.push(cue);
+						cueIdsList.add(cue.id);
 					}
 				}
 
