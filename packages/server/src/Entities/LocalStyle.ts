@@ -1,15 +1,15 @@
 import { type EntityProtocol, Type } from "./index.js";
 
-export interface StyleEntity extends EntityProtocol {
-	readonly type: Type.STYLE;
+export interface LocalStyleEntity extends EntityProtocol {
+	readonly type: Type.LOCAL_STYLE;
 	readonly styles: Record<string, string>;
 }
 
-export function createStyleEntity(stylesSource: string | Record<string, string>): StyleEntity {
+export function createLocalStyleEntity(stylesSource: string | Record<string, string>): LocalStyleEntity {
 	const styles = getKeyValueFromCSSRawDeclarations(stylesSource);
 
 	return {
-		type: Type.STYLE,
+		type: Type.LOCAL_STYLE,
 		styles,
 	};
 }
@@ -40,6 +40,6 @@ function getKeyValueFromCSSRawDeclarations(
 	return stylesObject;
 }
 
-export function isStyleEntity(entity: EntityProtocol): entity is StyleEntity {
-	return entity.type === Type.STYLE;
+export function isLocalStyleEntity(entity: EntityProtocol): entity is LocalStyleEntity {
+	return entity.type === Type.LOCAL_STYLE;
 }

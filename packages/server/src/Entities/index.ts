@@ -1,11 +1,11 @@
-import { type StyleEntity } from "./Style.js";
+import { type LocalStyleEntity } from "./LocalStyle.js";
 import { type TagEntity } from "./Tag.js";
 
 export * from "./Tag.js";
-export * from "./Style.js";
+export * from "./LocalStyle.js";
 
 export const enum Type {
-	STYLE,
+	LOCAL_STYLE,
 	TAG,
 }
 
@@ -13,4 +13,4 @@ export interface EntityProtocol {
 	type: Type;
 }
 
-export type AllEntities = StyleEntity | TagEntity;
+export type AllEntities = LocalStyleEntity | TagEntity;

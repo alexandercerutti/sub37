@@ -357,7 +357,7 @@ function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.All
 	let latestNode: Node = rootNode;
 
 	const styleEntities = entities
-		.filter(Entities.isStyleEntity)
+		.filter(Entities.isLocalStyleEntity)
 		.flatMap((entity) => Object.entries(entity.styles));
 	const tagEntities = entities.filter(Entities.isTagEntity);
 

@@ -397,7 +397,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -445,7 +445,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -488,7 +488,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "red",
 							}),
 						],
@@ -533,7 +533,7 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							Entities.createTagEntity(TagType.BOLD, new Map(), []),
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -596,11 +596,11 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "red",
 							}),
 							Entities.createTagEntity(Entities.TagType.BOLD, new Map(), []),
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -622,7 +622,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "red",
 							}),
 						],
@@ -671,7 +671,7 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							Entities.createTagEntity(TagType.SPAN, new Map(), []),
-							Entities.createStyleEntity("background-color: purple"),
+							Entities.createLocalStyleEntity("background-color: purple"),
 						],
 						id: "test",
 						/**
@@ -718,10 +718,10 @@ Alberto, come to look at Marcello!
 						endTime: 10000,
 						entities: [
 							Entities.createTagEntity(TagType.SPAN, new Map([["voice", "Fred"]]), []),
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "red",
 							}),
-							Entities.createStyleEntity({
+							Entities.createLocalStyleEntity({
 								"background-color": "pink",
 							}),
 						],
@@ -761,7 +761,7 @@ STYLE
 				for (let i = 0; i < parsingResult.data.length; i++) {
 					const entities = parsingResult.data[i].entities;
 
-					expect(entities.filter(Entities.isStyleEntity)).toEqual([]);
+					expect(entities.filter(Entities.isLocalStyleEntity)).toEqual([]);
 				}
 			});
 		});
