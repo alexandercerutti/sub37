@@ -96,8 +96,13 @@ export default {
 	],
 
 	webServer: {
-		command: "npm --prefix ../sample run dev",
+		command: "pnpm --dir ../sample dev",
 		/** Sample serves on this port */
 		port: 3000,
+		reuseExistingServer: true,
+		gracefulShutdown: {
+			signal: "SIGTERM",
+			timeout: 5000,
+		},
 	},
 };
