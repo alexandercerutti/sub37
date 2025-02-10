@@ -335,9 +335,11 @@ function evaluateBlock(
 		return new InvalidFormatError("UNKNOWN_BLOCK_ENTITY", contentSection);
 	}
 
-	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as {
-		[K in keyof Parser.CueRawData]: Parser.CueRawData[K];
+	type CueMatchGroups = {
+		[K in keyof Omit<Parser.CueRawData, "startCharPosition" | "endCharPosition">]: Parser.CueRawData[K];
 	};
+
+	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as CueMatchGroups;
 
 	const cueParsingResult = Parser.parseCue({
 		attributes,
