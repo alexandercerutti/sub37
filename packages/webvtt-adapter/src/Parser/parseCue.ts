@@ -23,6 +23,7 @@ export interface CueParsedData {
 	tags: Entities.Tag[];
 	text: string;
 	renderingModifiers: RenderingModifiers;
+	isTimestamp?: boolean;
 }
 
 export function parseCue(data: CueRawData): CueParsedData[] {
@@ -96,6 +97,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					 */
 
 					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
+					currentCue.isTimestamp = true;
 					hsCues.push(currentCue);
 				}
 
@@ -104,6 +106,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue.endTime,
 					currentCue.id,
 					currentCue.renderingModifiers,
+					currentCue.isTimestamp,
 				);
 
 				break;
@@ -143,6 +146,7 @@ function createCue(
 	endTime: number,
 	id?: string,
 	renderingModifiers?: RenderingModifiers,
+	isTimestamp: boolean = false,
 ): CueParsedData {
 	return {
 		startTime,
@@ -151,5 +155,6 @@ function createCue(
 		tags: [],
 		id,
 		renderingModifiers,
+		isTimestamp,
 	};
 }

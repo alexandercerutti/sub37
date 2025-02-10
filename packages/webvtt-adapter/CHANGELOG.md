@@ -1,5 +1,13 @@
 # @sub37/webvtt-adapter
 
+## **1.1.0** (10 Feb 2025)
+
+**Changes**:
+
+- Added missing exclusion of cues with the same ids, when available, with error emission;
+
+---
+
 ## **1.0.4** (08 Feb 2024)
 
 **Changes**:
