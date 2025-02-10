@@ -129,7 +129,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							failures.push({
-								error: new Error("A cue cannot start after its end time"),
+								error: new Error(`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`),
 								failedChunk: content.substring(block.start, block.cursor),
 								isCritical: false,
 							});
@@ -146,7 +146,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
 							 */
 							failures.push({
-								error: new Error("A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file."),
+								error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
 								failedChunk: content.substring(block.start, block.cursor),
 								isCritical: false,
 							});
