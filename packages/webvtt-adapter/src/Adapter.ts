@@ -137,7 +137,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 							continue;
 						}
 
-						if (parsedCue.id && cueIdsList.has(parsedCue.id)) {
+						if (parsedCue.id) {
 							/**
 							 * "A WebVTT cue identifier must be unique amongst
 							 * all the WebVTT cue identifiers of all WebVTT
@@ -145,17 +145,27 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 * 
 							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
 							 */
-							failures.push({
-								error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
-								failedChunk: content.substring(block.start, block.cursor),
-								isCritical: false,
-							});
 
-							continue;
+							if (!parsedCue.isTimestamp && cueIdsList.has(parsedCue.id)) {
+								failures.push({
+									error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
+									failedChunk: content.substring(block.start, block.cursor),
+									isCritical: false,
+								});
+
+								continue;
+							}
+
+							/**
+							 * ... however, when we generate a custom identifier
+							 * for the cue, we re-use the same for the timestamps
+							 * because they must appear on the same line.
+							 */
+							cueIdsList.add(parsedCue.id);
 						}
 
 						const cue = CueNode.from(latestRootCue, {
-							id: parsedCue.id,
+							id: parsedCue.id || `cue-${block.start}-${block.cursor}`,
 							startTime: parsedCue.startTime,
 							endTime: parsedCue.endTime,
 							content: parsedCue.text,
@@ -257,7 +267,6 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 						cue.entities = entities;
 						cues.push(cue);
-						cueIdsList.add(cue.id);
 					}
 				}
 
@@ -343,7 +352,7 @@ function evaluateBlock(
 
 	const cueParsingResult = Parser.parseCue({
 		attributes,
-		cueid: cueid || `cue-${start}-${end}`,
+		cueid: cueid,
 		endtime,
 		starttime,
 		text: text.replace(TABS_REGEX, ""),
