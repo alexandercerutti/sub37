@@ -129,6 +129,52 @@ This cue should never appear, right?
 			expect(result.data[1].endTime).toEqual(10000);
 		});
 
+		it("should exclude cues with the same ids except timestamps", () => {
+			const SAME_IDS_CONTENT = `
+WEBVTT
+
+id1
+00:00:06.000 --> 00:00:07.000
+...
+
+id1
+00:00:06.050 --> 00:00:07.050
+...
+
+123
+00:00:08.000 --> 00:00:10.000
+...Right?
+
+123
+00:00:08.050 --> 00:00:10.050
+...Right?
+
+456
+00:00:08.000 --> 00:00:10.000
+<00:00:08.250> Test t1
+<00:00:08.500> Test t2
+`;
+
+			const result = adapter.parse(SAME_IDS_CONTENT);
+			expect(result.data.length).toEqual(4);
+
+			expect(result.data[0].id).toEqual("id1");
+			expect(result.data[0].startTime).toEqual(6000);
+			expect(result.data[0].endTime).toEqual(7000);
+
+			expect(result.data[1].id).toEqual("123");
+			expect(result.data[1].startTime).toEqual(8000);
+			expect(result.data[1].endTime).toEqual(10000);
+
+			expect(result.data[2].id).toEqual("456");
+			expect(result.data[2].startTime).toEqual(8250);
+			expect(result.data[2].endTime).toEqual(10000);
+
+			expect(result.data[3].id).toEqual("456");
+			expect(result.data[3].startTime).toEqual(8500);
+			expect(result.data[3].endTime).toEqual(10000);
+		});
+
 		it("should return an array containing two cues", () => {
 			const CLASSIC_CONTENT = `
 WEBVTT
