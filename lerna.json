@@ -3,5 +3,10 @@
 	"workspaces": ["packages/*"],
 	"version": "independent",
 	"npmClient": "pnpm",
-	"includeMergedTags": true
+	"includeMergedTags": true,
+	"command": {
+		"version": {
+			"allowBranch": "master"
+		}
+	}
 }
