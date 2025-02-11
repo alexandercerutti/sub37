@@ -38,6 +38,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			]);
 		}
 
+		const cueIdsList: Set<string> = new Set();
 		const cues: CueNode[] = [];
 		const content = String(rawContent).replace(/\r?\n/g, "\n");
 		const block = {
@@ -135,11 +136,44 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
+							failures.push({
+								error: new Error(`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`),
+								failedChunk: content.substring(block.start, block.cursor),
+								isCritical: false,
+							});
+
 							continue;
 						}
 
+						if (parsedCue.id) {
+							/**
+							 * "A WebVTT cue identifier must be unique amongst
+							 * all the WebVTT cue identifiers of all WebVTT
+							 * cues of a WebVTT file."
+							 * 
+							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
+							 */
+
+							if (!parsedCue.isTimestamp && cueIdsList.has(parsedCue.id)) {
+								failures.push({
+									error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
+									failedChunk: content.substring(block.start, block.cursor),
+									isCritical: false,
+								});
+
+								continue;
+							}
+
+							/**
+							 * ... however, when we generate a custom identifier
+							 * for the cue, we re-use the same for the timestamps
+							 * because they must appear on the same line.
+							 */
+							cueIdsList.add(parsedCue.id);
+						}
+
 						const cue = CueNode.from(latestRootCue, {
-							id: parsedCue.id,
+							id: parsedCue.id || `cue-${block.start}-${block.cursor}`,
 							startTime: parsedCue.startTime,
 							endTime: parsedCue.endTime,
 							content: parsedCue.text,
@@ -304,13 +338,15 @@ function evaluateBlock(
 		return new InvalidFormatError("UNKNOWN_BLOCK_ENTITY", contentSection);
 	}
 
-	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as {
-		[K in keyof Parser.CueRawData]: Parser.CueRawData[K];
+	type CueMatchGroups = {
+		[K in keyof Omit<Parser.CueRawData, "startCharPosition" | "endCharPosition">]: Parser.CueRawData[K];
 	};
+
+	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as CueMatchGroups;
 
 	const cueParsingResult = Parser.parseCue({
 		attributes,
-		cueid: cueid || `cue-${start}-${end}`,
+		cueid: cueid,
 		endtime,
 		starttime,
 		text: text.replace(TABS_REGEX, ""),
