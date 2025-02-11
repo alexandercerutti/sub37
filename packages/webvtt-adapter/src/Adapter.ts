@@ -129,7 +129,9 @@ export default class WebVTTAdapter extends BaseAdapter {
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							failures.push({
-								error: new Error(`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`),
+								error: new Error(
+									`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
+								),
 								failedChunk: content.substring(block.start, block.cursor),
 								isCritical: false,
 							});
@@ -142,13 +144,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 * "A WebVTT cue identifier must be unique amongst
 							 * all the WebVTT cue identifiers of all WebVTT
 							 * cues of a WebVTT file."
-							 * 
+							 *
 							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
 							 */
 
 							if (!parsedCue.groupingIdentifier && cueIdsList.has(parsedCue.id)) {
 								failures.push({
-									error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
+									error: new Error(
+										`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
+									),
 									failedChunk: content.substring(block.start, block.cursor),
 									isCritical: false,
 								});
@@ -345,7 +349,10 @@ function evaluateBlock(
 	}
 
 	type CueMatchGroups = {
-		[K in keyof Omit<Parser.CueRawData, "startCharPosition" | "endCharPosition">]: Parser.CueRawData[K];
+		[K in keyof Omit<
+			Parser.CueRawData,
+			"startCharPosition" | "endCharPosition"
+		>]: Parser.CueRawData[K];
 	};
 
 	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as CueMatchGroups;
