@@ -23,7 +23,13 @@ export interface CueParsedData {
 	tags: Entities.Tag[];
 	text: string;
 	renderingModifiers: RenderingModifiers;
-	isTimestamp?: boolean;
+
+	/**
+	 * Grouping identifier allows us to skip
+	 * uniqueness checks for ids for cues nodes
+	 * coming from the same source cues
+	 */
+	groupingIdentifier?: string;
 }
 
 export function parseCue(data: CueRawData): CueParsedData[] {
@@ -97,7 +103,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					 */
 
 					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
-					currentCue.isTimestamp = true;
+					currentCue.groupingIdentifier = currentCue.id || "timestamp-group";
 					hsCues.push(currentCue);
 				}
 
@@ -106,7 +112,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue.endTime,
 					currentCue.id,
 					currentCue.renderingModifiers,
-					currentCue.isTimestamp,
+					currentCue.groupingIdentifier,
 				);
 
 				break;
@@ -146,7 +152,7 @@ function createCue(
 	endTime: number,
 	id?: string,
 	renderingModifiers?: RenderingModifiers,
-	isTimestamp: boolean = false,
+	groupingIdentifier?: string,
 ): CueParsedData {
 	return {
 		startTime,
@@ -155,6 +161,6 @@ function createCue(
 		tags: [],
 		id,
 		renderingModifiers,
-		isTimestamp,
+		groupingIdentifier,
 	};
 }

@@ -146,7 +146,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
 							 */
 
-							if (!parsedCue.isTimestamp && cueIdsList.has(parsedCue.id)) {
+							if (!parsedCue.groupingIdentifier && cueIdsList.has(parsedCue.id)) {
 								failures.push({
 									error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
 									failedChunk: content.substring(block.start, block.cursor),
