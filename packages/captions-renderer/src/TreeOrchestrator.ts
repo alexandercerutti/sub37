@@ -165,6 +165,13 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
+			/**
+			 * Checking first the difference between the
+			 * entities of two cues. Such index will be used
+			 * as insertion point of the structure inside
+			 * the line.
+			 */
+
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
 			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
