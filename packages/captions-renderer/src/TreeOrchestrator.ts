@@ -464,19 +464,30 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 		previousCue.entities.length,
 	);
 
-	const currentEntities = currentCue.entities;
-	const previousEntities = previousCue.entities;
+	const currentEntities = currentCue.entities.filter(
+		(e) => Entities.isTagEntity(e) || Entities.isLocalStyleEntity(e),
+	);
+	const previousEntities = previousCue.entities.filter(
+		(e) => Entities.isTagEntity(e) || Entities.isLocalStyleEntity(e),
+	);
 
 	for (let i = entityDifferenceIndex; i < longestCueEntitiesLength; i++, entityDifferenceIndex++) {
 		if (!currentEntities[i] || !previousEntities[i]) {
 			break;
 		}
 
-		const currentCueEntity = currentEntities[i] as Entities.TagEntity;
-		const previousCueEntity = previousEntities[i] as Entities.TagEntity;
+		const currentCueEntity = currentEntities[i];
+		const previousCueEntity = previousEntities[i];
+
+		if (currentCueEntity.type !== previousCueEntity.type) {
+			break;
+		}
 
 		if (
-			currentCueEntity.type !== previousCueEntity.type ||
+			Entities.isTagEntity(currentCueEntity) &&
+			// this is always true for the condition above
+			// but typescript doesn't know it and keeps throwing error
+			Entities.isTagEntity(previousCueEntity) &&
 			currentCueEntity.tagType !== previousCueEntity.tagType
 		) {
 			break;
