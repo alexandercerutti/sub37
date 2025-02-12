@@ -12,7 +12,7 @@ export function createNode<const T extends string>(
 ): NodeRepresentation<T> {
 	return {
 		nodeName: nodeName,
-		destinationFactory: destinationFactory,
+		destinationFactory,
 		matches(nodeNameMatch: string): boolean {
 			return this.nodeName === nodeNameMatch;
 		},
