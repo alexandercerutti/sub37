@@ -2,6 +2,8 @@
 import { describe, it, expect } from "@jest/globals";
 import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
 import { WebVTTRenderingModifiers } from "../lib/Parser/RenderingModifiers.js";
+import { InvalidStyleDeclarationError } from "../lib/InvalidStyleDeclarationError.js";
+import { MalformedStyleBlockError } from "../lib/MalformedStyleBlockError.js";
 
 describe("Parser", () => {
 	describe("parseCue", () => {
@@ -383,6 +385,43 @@ scroll:up
 		it("should return undefined if style block is invalid", () => {
 			const STYLE_INVALID = `/** ::cue { }`;
 			expect(parseStyle(STYLE_INVALID)).toBeUndefined();
+		});
+
+		it("should return undefined if the style block is empty", () => {
+			const EMPTY_STYLE_BLOCK_1 = `
+				::cue {
+				
+				}
+			`;
+
+			const EMPTY_STYLE_BLOCK_2 = `
+				::cue(#test) {
+				
+				}
+			`;
+
+			expect(parseStyle(EMPTY_STYLE_BLOCK_1)).toBeUndefined();
+			expect(parseStyle(EMPTY_STYLE_BLOCK_2)).toBeUndefined();
+		});
+
+		it("should throw if style block is malformed", () => {
+			const STYLE_INVALID = `::cue (te {
+			
+			}`;
+
+			expect(() => parseStyle(STYLE_INVALID)).toThrow(new InvalidStyleDeclarationError());
+		});
+
+		it("should throw if style block contains an empty line", () => {
+			const STYLE_INVALID = `::cue (#test) {
+			
+			}`;
+
+			expect(() => parseStyle(STYLE_INVALID)).toThrow(new InvalidStyleDeclarationError());
+		});
+
+		it("should throw if parsing failed", () => {
+			expect(() => parseStyle("")).toThrow(new MalformedStyleBlockError());
 		});
 
 		it("should safely ignore css comments", () => {
