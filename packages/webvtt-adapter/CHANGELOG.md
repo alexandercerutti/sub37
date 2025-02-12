@@ -1,5 +1,13 @@
 # @sub37/webvtt-adapter
 
+## **1.1.1** (12 Feb 2025)
+
+**Bug fix**:
+
+- Fixed subtle broken styles not being reported and making crash everything without a clear information. Now more cases are handled and, in case of style failure, a message is reported as warning. Crashing styles will be ignored in that case;
+
+---
+
 ## **1.1.0** (10 Feb 2025)
 
 **Changes**:
