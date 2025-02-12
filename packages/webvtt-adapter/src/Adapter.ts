@@ -1,5 +1,6 @@
 import type { Region } from "@sub37/server";
 import { BaseAdapter, CueNode, Entities } from "@sub37/server";
+import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";
@@ -110,7 +111,16 @@ export default class WebVTTAdapter extends BaseAdapter {
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
-					styles.push(parsedContent);
+
+					if (!parsedContent) {
+						failures.push({
+							error: new EmptyStyleDeclarationError(),
+							failedChunk: content.substring(block.start, block.cursor),
+							isCritical: false,
+						});
+					} else {
+						styles.push(parsedContent);
+					}
 				}
 
 				if (isCue(blockEvaluationResult)) {
@@ -129,7 +139,9 @@ export default class WebVTTAdapter extends BaseAdapter {
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
 							failures.push({
-								error: new Error(`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`),
+								error: new Error(
+									`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
+								),
 								failedChunk: content.substring(block.start, block.cursor),
 								isCritical: false,
 							});
@@ -142,13 +154,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 * "A WebVTT cue identifier must be unique amongst
 							 * all the WebVTT cue identifiers of all WebVTT
 							 * cues of a WebVTT file."
-							 * 
+							 *
 							 * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-identifier
 							 */
 
-							if (!parsedCue.isTimestamp && cueIdsList.has(parsedCue.id)) {
+							if (!parsedCue.groupingIdentifier && cueIdsList.has(parsedCue.id)) {
 								failures.push({
-									error: new Error(`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`),
+									error: new Error(
+										`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
+									),
 									failedChunk: content.substring(block.start, block.cursor),
 									isCritical: false,
 								});
@@ -303,11 +317,7 @@ type BlockTuple =
 	| StyleBlockTuple
 	| IgnoredBlockTuple;
 
-function evaluateBlock(
-	content: string,
-	start: number,
-	end: number,
-): BlockTuple | InvalidFormatError {
+function evaluateBlock(content: string, start: number, end: number): BlockTuple | Error {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -328,8 +338,13 @@ function evaluateBlock(
 			}
 
 			case "STYLE": {
-				const payload = Parser.parseStyle(blockMatch.groups["payload"]);
-				return [BlockType.STYLE, payload];
+				try {
+					const payload = Parser.parseStyle(blockMatch.groups["payload"]);
+					return [BlockType.STYLE, payload];
+				} catch (err) {
+					/** Failing gracefully, not critical */
+					return err as Error;
+				}
 			}
 
 			case "NOTE": {
@@ -341,11 +356,15 @@ function evaluateBlock(
 	const cueMatch = contentSection.match(CUE_MATCH_REGEX);
 
 	if (!cueMatch) {
+		/** Failing gracefully, not critical */
 		return new InvalidFormatError("UNKNOWN_BLOCK_ENTITY", contentSection);
 	}
 
 	type CueMatchGroups = {
-		[K in keyof Omit<Parser.CueRawData, "startCharPosition" | "endCharPosition">]: Parser.CueRawData[K];
+		[K in keyof Omit<
+			Parser.CueRawData,
+			"startCharPosition" | "endCharPosition"
+		>]: Parser.CueRawData[K];
 	};
 
 	const { attributes, cueid, endtime, starttime, text } = cueMatch.groups as CueMatchGroups;
