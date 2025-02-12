@@ -1,5 +1,6 @@
 import type { Region } from "@sub37/server";
 import { BaseAdapter, CueNode, Entities } from "@sub37/server";
+import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "./MissingContentError.js";
 import * as Parser from "./Parser/index.js";
@@ -110,7 +111,16 @@ export default class WebVTTAdapter extends BaseAdapter {
 				if (isStyle(blockEvaluationResult) && shouldProcessNonCues) {
 					const [blockType, parsedContent] = blockEvaluationResult;
 					latestBlockPhase = blockType;
-					styles.push(parsedContent);
+
+					if (!parsedContent) {
+						failures.push({
+							error: new EmptyStyleDeclarationError(),
+							failedChunk: content.substring(block.start, block.cursor),
+							isCritical: false,
+						});
+					} else {
+						styles.push(parsedContent);
+					}
 				}
 
 				if (isCue(blockEvaluationResult)) {
@@ -307,11 +317,7 @@ type BlockTuple =
 	| StyleBlockTuple
 	| IgnoredBlockTuple;
 
-function evaluateBlock(
-	content: string,
-	start: number,
-	end: number,
-): BlockTuple | InvalidFormatError {
+function evaluateBlock(content: string, start: number, end: number): BlockTuple | Error {
 	if (start === 0) {
 		/** Parsing Headers */
 		if (!WEBVTT_HEADER_SECTION.test(content)) {
@@ -332,8 +338,13 @@ function evaluateBlock(
 			}
 
 			case "STYLE": {
-				const payload = Parser.parseStyle(blockMatch.groups["payload"]);
-				return [BlockType.STYLE, payload];
+				try {
+					const payload = Parser.parseStyle(blockMatch.groups["payload"]);
+					return [BlockType.STYLE, payload];
+				} catch (err) {
+					/** Failing gracefully, not critical */
+					return err as Error;
+				}
 			}
 
 			case "NOTE": {
@@ -345,6 +356,7 @@ function evaluateBlock(
 	const cueMatch = contentSection.match(CUE_MATCH_REGEX);
 
 	if (!cueMatch) {
+		/** Failing gracefully, not critical */
 		return new InvalidFormatError("UNKNOWN_BLOCK_ENTITY", contentSection);
 	}
 
