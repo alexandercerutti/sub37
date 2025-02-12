@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "es2016",
+		"target": "es2018",
 		"module": "ES2015",
 		"declaration": true,
 		"esModuleInterop": true,
@@ -14,7 +14,7 @@
 		"noUncheckedIndexedAccess": true,
 		"noPropertyAccessFromIndexSignature": true,
 		"noImplicitOverride": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"noImplicitReturns": true,
 		"lib": ["DOM", "ES2018", "ES2020"]
 	},
