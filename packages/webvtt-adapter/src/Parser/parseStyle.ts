@@ -1,3 +1,6 @@
+import { MalformedStyleBlockError } from "../MalformedStyleBlockError.js";
+import { InvalidStyleDeclarationError } from "../InvalidStyleDeclarationError.js";
+
 const CSS_RULESET_REGEX = /::cue(?:\(([^.]*?)(?:\.(.+))*\))?\s*\{\s*([\s\S]+)\}/;
 
 /**
@@ -70,10 +73,14 @@ const WEBVTT_CSS_SUPPORTED_PROPERTIES = [
 ];
 
 export function parseStyle(rawStyleData: string): Style | undefined {
+	if (!rawStyleData) {
+		throw new MalformedStyleBlockError();
+	}
+
 	const styleBlockComponents = rawStyleData.match(CSS_RULESET_REGEX);
 
 	if (!styleBlockComponents) {
-		return undefined;
+		throw new InvalidStyleDeclarationError();
 	}
 
 	const [, selector, classesChain = "", cssData] = styleBlockComponents;
