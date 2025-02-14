@@ -175,7 +175,7 @@ export default class TreeOrchestrator {
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
 			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
-			let line = latestNode || createLine();
+			let line = latestNode || createLine(cue.entities.filter(Entities.isLineStyleEntity));
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
@@ -198,7 +198,7 @@ export default class TreeOrchestrator {
 				let textParentNode = textNode.parentNode as HTMLElement;
 				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
-				line = createLine();
+				line = createLine(cue.entities.filter(Entities.isLineStyleEntity));
 				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
 
 				while (!textParentNode.childNodes.length) {
@@ -333,11 +333,26 @@ function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDept
 	getNodeAtDepth(diffDepth, lineRootNode.lastChild).appendChild(cueSubTreeRoot);
 }
 
-function createLine() {
-	const node = document.createElement("p");
-	node.appendChild(document.createElement("span"));
+function createLine(lineEntities: Entities.LineStyleEntity[]) {
+	/**
+	 * LineNode is needed to have an precise place
+	 * where to put block styles.
+	 */
+	const lineNode = document.createElement("p");
+	lineNode.classList.add("line-block");
 
-	return node;
+	const lineStylesEntries = Object.assign({}, ...lineEntities.map((e) => e.styles));
+
+	for (const [key, value] of Object.entries(lineStylesEntries)) {
+		lineNode.style.cssText += `${key}:${value};`;
+
+		if (key === "background-color") {
+			lineNode.style.setProperty("--s37-int-bgcolor", "transparent");
+		}
+	}
+
+	lineNode.appendChild(document.createElement("span"));
+	return lineNode;
 }
 
 function getLineHeight(line: HTMLElement) {

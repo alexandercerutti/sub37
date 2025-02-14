@@ -93,17 +93,30 @@ div.region div > p {
 	box-sizing: border-box;
 }
 
-div.region div > p > span {
+div.region div > p.line-block {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
-	background-color: var(${CSSVAR_TEXT_BG_COLOR}, rgba(0,0,0,0.7));
-	padding: 0px 15px;
-	line-height: 1.5em;
-	word-wrap: break-word;
-	/**
-	 * Change this to display:block for pop-on captions
-	 * and whole background
-	 */
-	display: inline-block;
+	--s37-int-bgcolor: rgba(0, 0, 0, 0.7);
+}
+	
+div.region div > p.line-block > span {
+		/**
+		 * Giving priority to user customization, then to the internal color and
+		 * then to the default.
+		 * --sub37-int-bgcolor is defined on the p.line-block as the fallback
+		 * and will be replaced when the line is created when needed (so, if
+		 * the line has a specific background-color). By doing this way, this
+		 * variable cannot get overridden from outside.
+		 */
+		background-color: var(${CSSVAR_TEXT_BG_COLOR}, var(--s37-int-bgcolor));
+		padding: 0px 15px;
+		line-height: 1.5em;
+		word-wrap: break-word;
+		/**
+		 * Change this to display:block for pop-on captions
+		 * and whole background. Tho, this is not exposed.
+		 * Should we?
+		 */
+		display: inline-block;
 }
 `;
 
