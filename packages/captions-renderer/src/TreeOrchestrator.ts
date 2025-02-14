@@ -64,7 +64,7 @@ export default class TreeOrchestrator {
 		});
 
 		const regionScrollElement = document.createElement("div");
-		regionScrollElement.dataset["role"] = "scroll-root";
+		regionScrollElement.classList.add("scroll-root");
 
 		this[rootElementSymbol] = root.appendChild(regionScrollElement);
 
@@ -106,7 +106,7 @@ export default class TreeOrchestrator {
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
-			modifiersElement.dataset["role"] = "rendering-modifier";
+			modifiersElement.classList.add("rendering-modifier");
 
 			const styles: Partial<CSSStyleDeclaration> = {
 				position: "relative",

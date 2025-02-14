@@ -83,7 +83,7 @@ div.region {
 	background-color: var(${CSSVAR_REGION_AREA_BG_COLOR}, transparent);
 }
 
-div.region > div {
+div.region > div.scroll-root {
 	background-color: var(${CSSVAR_REGION_BG_COLOR}, rgba(0,0,0,0.4));
 	scroll-behavior: smooth;
 }
