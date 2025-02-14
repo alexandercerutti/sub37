@@ -60,9 +60,11 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 						currentCue.endTime,
 						currentCue.id,
 						currentCue.renderingModifiers,
+						currentCue.groupingIdentifier,
 					);
 				}
 
+				currentCue.groupingIdentifier = currentCue.id || "tag-group";
 				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
 				break;
 			}
@@ -95,6 +97,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 						currentCue.endTime,
 						currentCue.id,
 						currentCue.renderingModifiers,
+						currentCue.groupingIdentifier,
 					);
 
 					addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));

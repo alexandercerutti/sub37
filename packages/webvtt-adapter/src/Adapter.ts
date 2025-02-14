@@ -142,7 +142,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					const globalStylesEntities = styles
 						.filter((style) => style.type === Parser.StyleDomain.GLOBAL)
-						.map((style) => Entities.createLocalStyleEntity(style.styleString));
+						.map((style) => Entities.createLineStyleEntity(style.styleString));
 
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
@@ -206,7 +206,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 							.filter(
 								(style) => style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id,
 							)
-							.map((style) => Entities.createLocalStyleEntity(style.styleString));
+							.map((style) => Entities.createLineStyleEntity(style.styleString));
 
 						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
 
