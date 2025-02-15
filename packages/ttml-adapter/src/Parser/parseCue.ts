@@ -7,8 +7,9 @@ import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
 } from "./Scope/TemporalActiveContext.js";
-import type { AdditionalStyle } from "./Scope/TemporalActiveContext.js";
-import { createStyleParser } from "./parseStyle.js";
+import type { ActiveStyle } from "./Scope/TemporalActiveContext.js";
+import { TTMLStyle, createStyleParser, isStyleAttribute } from "./parseStyle.js";
+import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	if (!node.children.length) {
@@ -16,22 +17,49 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	}
 
 	const { attributes } = node.content;
-	const styleParser = createStyleParser(scope);
 
-	styleParser.process(
-		Object.create(attributes, {
-			"xml:id": {
-				value: "inline",
-				enumerable: true,
-			},
-		}),
-	);
+	const scopeStyles: ActiveStyle[] = [];
 
-	const inlineStyle = Object.create(styleParser.get("inline"), {
-		kind: {
-			value: "inline",
-		},
-	}) as AdditionalStyle;
+	if (Object.keys(attributes).some(isStyleAttribute)) {
+		const styleParser = createStyleParser(scope);
+
+		styleParser.process(
+			Object.create(attributes, {
+				"xml:id": {
+					value: "inline",
+					enumerable: true,
+				},
+			}),
+		);
+
+		scopeStyles.push(
+			Object.create(styleParser.get("inline"), {
+				kind: {
+					value: "inline",
+				},
+			}) as ActiveStyle,
+		);
+	}
+
+	if (attributes["style"]) {
+		const styleContext = readScopeStyleContainerContext(scope);
+
+		let style: TTMLStyle;
+
+		if (styleContext && (style = styleContext.getStyleByIDRef(attributes["style"]))) {
+			scopeStyles.push(
+				Object.create(style, {
+					kind: {
+						value: "referential",
+					},
+				}),
+			);
+		} else {
+			console.warn(
+				`A referenced style '${attributes["style"]}' has been applied to '${node.content.content}#${attributes["xml:id"] || "unknown-id"}' but it wasn't defined before. Ignored.`,
+			);
+		}
+	}
 
 	/**
 	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
@@ -51,7 +79,7 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 		}),
 		createTemporalActiveContext({
 			regionIDRef: attributes["region"],
-			additionalStyles: [inlineStyle],
+			styles: scopeStyles,
 		}),
 	);
 
@@ -102,22 +130,29 @@ function getCuesFromSpan(
 
 	const cues: CueNode[] = [];
 	const { attributes } = node.content;
-	const styleParser = createStyleParser(scope);
 
-	styleParser.process(
-		Object.create(attributes, {
-			"xml:id": {
-				value: "inline",
-				enumerable: true,
-			},
-		}),
-	);
+	const scopeStyles: ActiveStyle[] = [];
 
-	const inlineStyle = Object.create(styleParser.get("inline"), {
-		kind: {
-			value: "inline",
-		},
-	}) as AdditionalStyle;
+	if (Object.keys(attributes).some(isStyleAttribute)) {
+		const styleParser = createStyleParser(scope);
+
+		styleParser.process(
+			Object.create(attributes, {
+				"xml:id": {
+					value: "inline",
+					enumerable: true,
+				},
+			}),
+		);
+
+		scopeStyles.push(
+			Object.create(styleParser.get("inline"), {
+				kind: {
+					value: "inline",
+				},
+			}) as ActiveStyle,
+		);
+	}
 
 	const localScope = createScope(
 		scope,
@@ -129,7 +164,7 @@ function getCuesFromSpan(
 		}),
 		createTemporalActiveContext({
 			regionIDRef: attributes["region"],
-			additionalStyles: [inlineStyle],
+			styles: scopeStyles,
 		}),
 	);
 

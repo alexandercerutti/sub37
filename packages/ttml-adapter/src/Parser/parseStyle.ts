@@ -61,7 +61,7 @@ function extractStyleAttributes(
 	return attrs;
 }
 
-function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
+export function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
 	return attribute.startsWith("tts:");
 }
 
