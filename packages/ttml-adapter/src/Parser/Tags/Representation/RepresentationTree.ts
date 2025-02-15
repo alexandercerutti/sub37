@@ -89,5 +89,9 @@ function LayoutClass() {
  * @see https://w3c.github.io/ttml2/#element-vocab-group-block
  */
 function AnimationClass() {
-	return Kleene.or(createNode("animate"), createNode("set"));
+	return Kleene.or(
+		//
+		createNode("animate"),
+		createNode("set"),
+	);
 }
