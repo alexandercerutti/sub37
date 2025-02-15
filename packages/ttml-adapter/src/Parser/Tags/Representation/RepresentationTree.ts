@@ -26,15 +26,8 @@ export const RepresentationTree = createNode(null, () => [
 				),
 				Kleene.zeroOrOne(
 					createNode("layout", () => [
-						Kleene.zeroOrMore(
-							createNode("region", () => [
-								//
-								Kleene.zeroOrMore(
-									//
-									createNode("style"),
-								),
-							]),
-						),
+						//
+						Kleene.zeroOrMore(LayoutClass()),
 					]),
 				),
 			]),
