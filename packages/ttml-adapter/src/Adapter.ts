@@ -212,9 +212,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							),
 						);
 
-						treeScope.addContext(
-							createDocumentContext(nodeTree.currentNode.content.attributes || {}),
-						);
+						treeScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
 						continue;
 					}
 

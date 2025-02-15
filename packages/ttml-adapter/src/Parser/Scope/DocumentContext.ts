@@ -3,6 +3,8 @@ import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
 import { asNumbers, preventZeros } from "../Units/number.js";
+import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree";
+import type { Token } from "../Token";
 
 const documentContextSymbol = Symbol("document");
 
@@ -15,6 +17,7 @@ export interface DocumentAttributes extends TimeDetails {
 
 interface DocumentContext extends Context<DocumentContext, Record<string, string>> {
 	attributes: DocumentAttributes;
+	get currentNode(): NodeWithRelationship<Token>;
 }
 
 declare module "./Scope" {
@@ -23,7 +26,15 @@ declare module "./Scope" {
 	}
 }
 
+/**
+ * "For the purpose of determining inherited styles, the element
+ * hierarchy of an intermediate synchronic document form of a
+ * document instance must" be used, where such intermediate forms
+ * are defined by 11.3.1.3 Intermediate Synchronic Document Construction."
+ */
+
 export function createDocumentContext(
+	nodeTree: NodeTree<Token>,
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
 	return function (scope: Scope) {
@@ -67,12 +78,15 @@ export function createDocumentContext(
 			get args() {
 				return rawAttributes;
 			},
-			[onMergeSymbol](context) {
+			[onMergeSymbol](_context) {
 				throw new Error(
 					"Document context merge is not allowed. Only one document context can exists at the same time.",
 				);
 			},
 			attributes,
+			get currentNode(): NodeWithRelationship<Token> {
+				return nodeTree.currentNode;
+			},
 		};
 	};
 }
