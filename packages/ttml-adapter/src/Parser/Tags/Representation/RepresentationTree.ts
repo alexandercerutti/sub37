@@ -30,6 +30,12 @@ export const RepresentationTree = createNode(null, () => [
 						Kleene.zeroOrMore(LayoutClass()),
 					]),
 				),
+				Kleene.zeroOrOne(
+					createNode("animation", () => [
+						//
+						Kleene.zeroOrMore(AnimationClass()),
+					]),
+				),
 			]),
 		),
 		Kleene.zeroOrOne(
