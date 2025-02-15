@@ -42,7 +42,7 @@ WEBVTT
 					text: "Would you like to get < coffee?",
 					tags: [
 						{
-							type: 1,
+							type: 2,
 							attributes: new Map([["voice", "Fred>"]]),
 							tagType: "v",
 						},
@@ -284,7 +284,7 @@ WEBVTT
 
 			expect(parsingResult[0].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
@@ -292,7 +292,7 @@ WEBVTT
 
 			expect(parsingResult[1].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
@@ -300,7 +300,7 @@ WEBVTT
 
 			expect(parsingResult[2].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
@@ -308,7 +308,7 @@ WEBVTT
 
 			expect(parsingResult[3].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
@@ -316,7 +316,7 @@ WEBVTT
 
 			expect(parsingResult[4].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
@@ -324,7 +324,7 @@ WEBVTT
 
 			expect(parsingResult[5].tags).toMatchObject([
 				{
-					type: 1,
+					type: 2,
 					tagType: "v",
 					attributes: new Map([["voice", "Announcer3"]]),
 				},

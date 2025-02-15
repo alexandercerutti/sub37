@@ -443,7 +443,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createLocalStyleEntity({
+							Entities.createLineStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -491,7 +491,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createLocalStyleEntity({
+							Entities.createLineStyleEntity({
 								"background-color": "purple",
 							}),
 						],
@@ -534,7 +534,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createLocalStyleEntity({
+							Entities.createLineStyleEntity({
 								"background-color": "red",
 							}),
 						],
@@ -642,7 +642,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createLocalStyleEntity({
+							Entities.createLineStyleEntity({
 								"background-color": "red",
 							}),
 							Entities.createTagEntity(Entities.TagType.BOLD, new Map(), []),
@@ -668,7 +668,7 @@ Alberto, come to look at Marcello!
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							Entities.createLocalStyleEntity({
+							Entities.createLineStyleEntity({
 								"background-color": "red",
 							}),
 						],
