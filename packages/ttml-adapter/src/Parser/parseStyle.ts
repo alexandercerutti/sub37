@@ -842,7 +842,11 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
 }
 
-function styleAppliesToElement(style: AttributeDefinition, element?: string | undefined): boolean {
+function styleAppliesToElement(
+	style: AttributeDefinition,
+	scope: Scope,
+	element?: string | undefined,
+): boolean {
 	if (!style.appliesTo.length) {
 		return true;
 	}
@@ -851,7 +855,46 @@ function styleAppliesToElement(style: AttributeDefinition, element?: string | un
 		return false;
 	}
 
-	return style.appliesTo.includes(element);
+	return style.appliesTo.includes(element) || styleAppliesByInheritance(style, scope);
+}
+
+function styleAppliesByInheritance(styleDef: AttributeDefinition, scope: Scope): boolean {
+	if (!(styleDef.flags & AttributeFlags.INHERITABLE)) {
+		return false;
+	}
+
+	/**
+	 * "For the purpose of determining inherited styles, the element
+	 * hierarchy of an intermediate synchronic document form of a
+	 * document instance must" be used, where such intermediate forms
+	 * are defined by 11.3.1.3 Intermediate Synchronic Document Construction."
+	 */
+
+	const hierarchy = getElementsHierarchyFromScope(scope);
+
+	for (let i = 0; i < hierarchy.length; i++) {
+		if (!styleDef.appliesTo.includes(hierarchy[i])) {
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+function getElementsHierarchyFromScope(scope: Scope): string[] {
+	const documentContext = readScopeDocumentContext(scope);
+	const hierarchy: string[] = [];
+
+	let currentNode = documentContext.currentNode;
+
+	while (currentNode !== null) {
+		hierarchy.push(currentNode.content.content);
+		currentNode = currentNode.parent;
+	}
+
+	return hierarchy;
 }
 
 function convertAttributesToCSS(
@@ -874,7 +917,7 @@ function convertAttributesToCSS(
 		const value = attributes[attributeKey];
 		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
 
-		if (!definition || !styleAppliesToElement(definition, sourceElementName)) {
+		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
 			continue;
 		}
 
