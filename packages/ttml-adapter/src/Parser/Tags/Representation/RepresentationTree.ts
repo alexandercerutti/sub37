@@ -44,26 +44,10 @@ export const RepresentationTree = createNode(null, () => [
 				Kleene.zeroOrMore(
 					withSelfReference(
 						createNode("div", () => [
-							Kleene.zeroOrOne(
-								createNode("region", () => [
-									//
-									Kleene.zeroOrMore(
-										//
-										createNode("style"),
-									),
-								]),
-							),
+							Kleene.zeroOrOne(LayoutClass()),
 							Kleene.zeroOrMore(
 								createNode("p", () => [
-									Kleene.zeroOrOne(
-										createNode("region", () => [
-											//
-											Kleene.zeroOrMore(
-												//
-												createNode("style"),
-											),
-										]),
-									),
+									Kleene.zeroOrOne(LayoutClass()),
 									Kleene.zeroOrMore(
 										Kleene.or(
 											withSelfReference(
@@ -85,3 +69,17 @@ export const RepresentationTree = createNode(null, () => [
 		),
 	]),
 ]);
+
+/**
+ * Layout.class
+ * @see https://w3c.github.io/ttml2/#element-vocab-group-block
+ */
+function LayoutClass() {
+	return createNode("region", () => [
+		//
+		Kleene.zeroOrMore(
+			//
+			createNode("style"),
+		),
+	]);
+}
