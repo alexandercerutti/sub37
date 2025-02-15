@@ -1,4 +1,4 @@
-import { CueNode } from "@sub37/server";
+import { CueNode, Entities } from "@sub37/server";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope } from "./Scope/Scope.js";
@@ -254,6 +254,7 @@ function createCueFromAnonymousSpan(
 	);
 
 	const timeContext = readScopeTimeContext(localScope);
+	const temporalActiveContext = readScopeTemporalActiveContext(localScope);
 
 	return new CueNode({
 		id: parentId,
@@ -263,7 +264,20 @@ function createCueFromAnonymousSpan(
 
 		/** @TODO Fix region association */
 		region: undefined,
-		// entities: styles.map((style) => Entities.createStyleEntity(style.attributes)),
+		entities: [
+			/**
+			 * @TODO some styles might get repeated between p and span
+			 */
+			Entities.createLineStyleEntity(temporalActiveContext.computeStylesForElement("p")),
+			Entities.createLocalStyleEntity(
+				/**
+				 * "For the purpose of determining the applicability of a style property,
+				 * if the style property is defined so as to apply to a span element,
+				 * then it also applies to anonymous span elements."
+				 */
+				temporalActiveContext.computeStylesForElement("span"),
+			),
+		],
 	});
 }
 
