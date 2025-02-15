@@ -174,7 +174,9 @@ export function createTemporalActiveContext(
 						return Object.assign(acc, style.apply(element));
 					}, {});
 
-				return Object.assign({}, parentComputedStyles, computedStyles);
+				return Object.assign({}, parentComputedStyles, computedStyles) as ReturnType<
+					TTMLStyle["apply"]
+				>;
 			},
 			get regionIdRef(): string {
 				return store.regionIDRef;
