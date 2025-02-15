@@ -439,7 +439,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								}),
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
-									stylesIDRefs: [],
+									styles: [],
 								}),
 							);
 						}
