@@ -7,7 +7,6 @@
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import { TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 
