@@ -461,30 +461,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					/**
-					 * Processing out-of-line styles
-					 */
-
-					if (currentTag === "styling") {
-						const { children } = currentElement;
-
-						const styleTags = children.reduce<Record<string, Record<string, string>>>(
-							(acc, { content: token }) => {
-								if (token.content !== "style") {
-									return acc;
-								}
-
-								if (!token.attributes["xml:id"]) {
-									return acc;
-								}
-
-								acc[token.attributes["xml:id"]] = token.attributes;
-								return acc;
-							},
-							{},
-						);
-
-						treeScope.addContext(createStyleContainerContext(styleTags));
+					if (isStylingElement(currentElement)) {
+						const styles = extractOutOfLineStyles(currentElement);
+						treeScope.addContext(createStyleContainerContext(styles));
 
 						break;
 					}
@@ -725,4 +704,29 @@ function extractOutOfLineRegions(
 	}
 
 	return regions;
+}
+
+function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "styling";
+}
+
+function extractOutOfLineStyles(currentNode: NodeWithRelationship<Token>) {
+	const { children } = currentNode;
+
+	const styles: Record<string, Record<string, string>> = {};
+
+	for (const { content } of children) {
+		if (content.content !== "style") {
+			continue;
+		}
+
+		if (!content.attributes["xml:id"]) {
+			continue;
+		}
+
+		const id = content.attributes["xml:id"];
+		styles[id] = content.attributes;
+	}
+
+	return styles;
 }
