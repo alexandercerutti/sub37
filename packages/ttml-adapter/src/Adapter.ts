@@ -13,6 +13,7 @@ import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
+import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
@@ -411,57 +412,34 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					const parentNode = nodeTree.currentNode.parent.content.content;
-
 					/**
 					 * Processing inline regions to be saved.
 					 * Remember: inline regions end before we
 					 * can process a cue (paragraph) content
 					 */
 
-					if (
-						isBlockClassElement(parentNode) ||
-						(isInlineClassElement(parentNode) && parentNode !== "br")
-					) {
-						if (token.content === "region") {
-							/**
-							 * if the `[attributes]` information item property of R does not include
-							 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
-							 * generated value _ID_ that is unique within the scope of the TTML
-							 * document instance;
-							 *
-							 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;
-							 */
+					if (isInlineRegion(nodeTree.currentNode)) {
+						const inlineRegion = getInlineRegionFromCloseTag(nodeTree.currentNode);
 
-							const regionId =
-								token.attributes["xml:id"] ||
-								`i_region-${
-									nodeTree.currentNode.content.attributes["xml:id"] ||
-									nodeTree.currentNode.parent.content.attributes["xml:id"]
-								}`;
+						/**
+						 * if the `[attributes]` information item property of R does not include
+						 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
+						 * generated value _ID_ that is unique within the scope of the TTML
+						 * document instance;
+						 *
+						 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;
+						 */
 
-							const { children } = nodeTree.currentNode;
+						treeScope = createScope(
+							treeScope,
+							createRegionContainerContext([inlineRegion]),
+							createTemporalActiveContext({
+								regionIDRef: inlineRegion.attributes["xml:id"],
+								styles: [],
+							}),
+						);
 
-							const inlineRegion: RegionContainerContextState = {
-								attributes: Object.create(token.attributes, {
-									"xml:id": {
-										value: regionId,
-									},
-								}),
-								children,
-							};
-
-							treeScope = createScope(
-								treeScope,
-								createRegionContainerContext([inlineRegion]),
-								createTemporalActiveContext({
-									regionIDRef: regionId,
-									styles: [],
-								}),
-							);
-
-							break;
-						}
+						break;
 					}
 
 					const currentTag = nodeTree.currentNode.content.content;
@@ -687,4 +665,46 @@ function shouldCreateTimeContext(token: Token) {
 		"dur" in attributes ||
 		"timeContainer" in attributes
 	);
+}
+
+function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
+	const { parent, content } = currentNode;
+	const parentNode = parent.content.content;
+	return isBlockClassElement(parentNode) && content.content === "region";
+}
+
+function getInlineRegionFromCloseTag(
+	currentNode: NodeWithRelationship<Token>,
+): RegionContainerContextState {
+	/**
+	 * "if the `[attributes]` information item property of R does not include
+	 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
+	 * generated value _ID_ that is unique within the scope of the TTML
+	 * document instance;
+	 *
+	 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;"
+	 */
+
+	const {
+		content: { attributes: regionAttributes },
+		parent: {
+			content: { attributes: parentAttributes },
+		},
+		children,
+	} = currentNode;
+
+	const INLINE_REGION_PREFIX = "in:region";
+	const regionId =
+		regionAttributes["xml:id"] ||
+		parentAttributes["xml:id"] ||
+		Math.floor(Math.random() * (500 - 100) + 100);
+
+	return {
+		attributes: Object.create(regionAttributes, {
+			"xml:id": {
+				value: `${INLINE_REGION_PREFIX}-${regionId}`,
+			},
+		}),
+		children,
+	};
 }
