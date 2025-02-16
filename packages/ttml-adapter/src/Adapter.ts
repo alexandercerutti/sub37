@@ -451,20 +451,12 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					const currentElement = nodeTree.pop();
 
-					if (currentTag === "layout") {
-						const { children } = currentElement;
+					if (isLayoutElement(currentElement)) {
+						const outOfLineRegions = extractOutOfLineRegions(currentElement);
 
-						const localRegions: RegionContainerContextState[] = [];
-
-						for (const { content: tokenContent, children: regionChildren } of children) {
-							if (tokenContent.content !== "region") {
-								continue;
-							}
-
-							localRegions.push({ attributes: tokenContent.attributes, children: regionChildren });
+						if (outOfLineRegions.length) {
+							treeScope.addContext(createRegionContainerContext(outOfLineRegions));
 						}
-
-						treeScope.addContext(createRegionContainerContext(localRegions));
 
 						break;
 					}
@@ -707,4 +699,30 @@ function getInlineRegionFromCloseTag(
 		}),
 		children,
 	};
+}
+
+function isLayoutElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "layout";
+}
+
+function extractOutOfLineRegions(
+	currentNode: NodeWithRelationship<Token>,
+): RegionContainerContextState[] {
+	const { children } = currentNode;
+
+	if (!children.length) {
+		return [];
+	}
+
+	const regions: RegionContainerContextState[] = [];
+
+	for (const { content: tokenContent, children: regionChildren } of children) {
+		if (tokenContent.content !== "region") {
+			continue;
+		}
+
+		regions.push({ attributes: tokenContent.attributes, children: regionChildren });
+	}
+
+	return regions;
 }
