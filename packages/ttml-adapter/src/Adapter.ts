@@ -219,41 +219,33 @@ export default class TTMLAdapter extends BaseAdapter {
 					/**
 					 * **LITTLE IMPLEMENTATION NOTE**
 					 *
-					 * In the context of building the ISD (Intermediary Synchronic Document),
-					 * thing that we don't strictly do, by not following the provided algorithm,
-					 * [associate region] procedure at 11.3.1.3, specifies a series of
-					 * conditions for which a content element can flow in a out-of-line region.
+					 * In the context of building the ISD (Intermediary Synchronic Document)
+					 * (note: we don't strictly do that, by not following the provided algorithm),
+					 * _[associate region]_ procedure at 11.3.1.3, specifies a series of
+					 * conditions for which a content element can flow into an out-of-line region.
 					 *
-					 * Third point states what follows:
+					 * Its third point states what follows:
 					 *
 					 * A content element is associated with a region "if the element contains
 					 * a descendant element that specifies a region attribute [...], then the
 					 * element is associated with the region referenced by that attribute;"
 					 *
-					 * By saying that we have a deep span with a region attribute with no
-					 * parent above it with a region attribute, we would end up with it to get
-					 * pruned because parent doesn't have a region and would therefore get
-					 * pruned itself.
+					 * Imagining that we have a deep span, associated to a region through the
+					 * relative attribute, and no parent above associated/flowed into a region,
+					 * we would end up with the span to get pruned because parent doesn't have
+					 * a region and would therefore get pruned itself.
 					 *
 					 * Region completion will happen in the END_TAG, if not ignored.
 					 */
 
-					const temporalActiveContext = readScopeTemporalActiveContext(treeScope);
-					const regionContext = readScopeRegionContext(treeScope);
-
 					const { currentNode } = nodeTree;
-					const currentTagName = currentNode.content.content;
 
 					if (isLayoutClassElement(token.content)) {
+						const currentTagName = currentNode.content.content;
 						const isParentLayout = currentTagName === "layout";
 
 						if (isParentLayout) {
-							/**
-							 * We cannot use an out-of-line region element if
-							 * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
-							 */
-
-							if (!token.attributes["xml:id"]) {
+							if (shouldIgnoreOutOfLineRegion(token)) {
 								nodeTree.push(
 									createNodeWithAttributes(
 										createNodeWithScope(
@@ -266,38 +258,8 @@ export default class TTMLAdapter extends BaseAdapter {
 								continue;
 							}
 						} else {
-							const temporalActiveRegionId = temporalActiveContext?.regionIdRef;
-
-							if (temporalActiveRegionId) {
-								/**
-								 * @example
-								 *
-								 * |--------------------------------|--------------------------------------------------------------|
-								 * | Before [process inline region]	|	 After [process inline region] 															 |
-								 * |--------------------------------|--------------------------------------------------------------|
-								 * | ```xml													| ```xml																											 |
-								 * | 	<tt>													|		<tt>																											 |
-								 * | 		<head>											|			<head>																									 |
-								 * | 			<region xml:id="r1" />		|				<region xml:id="r1" />																 |
-								 * | 																|				<region xml:id="__custom_id__" />	<!--   <--|   -->		 |
-								 * | 		</head>											|			</head>															<!--      |   -->		 |
-								 * | 		<body region="r1">					|			<body region="r1">									<!--      |   -->		 |
-								 * | 			<div>											|				<div region="__custom_id__">			<!--      |   -->		 |
-								 * | 				<region ... />					|																					<!--   >--|   -->		 |
-								 * | 				<p>...</p>							|					<p>...</p>																					 |
-								 * | 			</div>										|				</div>																								 |
-								 * | 		</body>											|			</body>																									 |
-								 * | 	</tt>													|		</tt>																											 |
-								 * | ```														| ```																													 |
-								 * |________________________________|______________________________________________________________|
-								 *
-								 * Therefore, for the [associate region] procedure, the div will end up
-								 * being pruned, because of a different region.
-								 *
-								 * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
-								 */
-
-								appendNodeAttributes(nodeTree.currentNode.content, NodeAttributes.IGNORED);
+							if (isInlineRegionConflicting(treeScope)) {
+								appendNodeAttributes(currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(
 									createNodeWithAttributes(
 										createNodeWithDestinationMatch(token, destinationMatch),
@@ -326,16 +288,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					// p and spans get elaborated in a different place
-					const canElementOwnTimingAttributes = token.content === "div" || token.content === "body";
-					const hasTimingAttributes =
-						canElementOwnTimingAttributes &&
-						("begin" in token.attributes ||
-							"end" in token.attributes ||
-							"dur" in token.attributes ||
-							"timeContainer" in token.attributes);
-
-					if (hasTimingAttributes) {
+					if (shouldCreateTimeContext(token)) {
 						treeScope = createScope(
 							treeScope,
 							createTimeContext({
@@ -353,53 +306,10 @@ export default class TTMLAdapter extends BaseAdapter {
 					 */
 
 					if (token.attributes["region"]) {
-						if (!regionContext?.regions.length) {
-							/**
-							 * "Furthermore, if no out-of-line region is specified,
-							 * then the region attribute must not be specified on
-							 * any content element in the document instance."
-							 */
-
-							/**
-							 * @TODO Stardard defines this as a "must", so it
-							 * could be marked as an error.
-							 *
-							 * Should we?
-							 */
-
-							nodeTree.push(
-								createNodeWithAttributes(
-									createNodeWithScope(
-										createNodeWithDestinationMatch(token, destinationMatch),
-										treeScope,
-									),
-									NodeAttributes.IGNORED,
-								),
-							);
-							continue;
-						}
-
 						if (
-							temporalActiveContext?.region &&
-							temporalActiveContext.regionIdRef !== token.attributes["region"]
+							isDefaultRegionActive(treeScope) ||
+							isFlowingTargetRegionConflicting(token.attributes["region"], treeScope)
 						) {
-							/**
-							 * @example (out-of-line regions definitions in head omitted)
-							 * Inspecting <p region="r2">, but
-							 *
-							 * ```
-							 * <div region="r1">
-							 * 	<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
-							 * 	<!-- Same would be valid with a different region on a span inside the `p` -->
-							 * 	<p region="r2">...</p>
-							 * </div>
-							 *
-							 * <!-- next div will get pruned as previous sibling
-							 * 		 has a region but default region is not active (implict in code). -->
-							 * <div>...</div>
-							 * ```
-							 */
-
 							nodeTree.push(
 								createNodeWithAttributes(
 									createNodeWithScope(
@@ -412,6 +322,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 
+						const regionContext = readScopeRegionContext(treeScope);
 						const flowedRegion = regionContext.getRegionById(token.attributes["region"]);
 
 						if (flowedRegion) {
@@ -441,33 +352,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								}),
 							);
 						}
-					} else if (
-						!temporalActiveContext?.regionIdRef &&
-						regionContext?.regions.length &&
-						isInlineClassElement(token.content)
-					) {
-						/**
-						 * [construct intermediate document] procedure replicates the whole subtree
-						 * after <body> for each active region.
-						 *
-						 * ISD construction should be seen as a set of replicated documents for each
-						 * region. This means that some elements are always shared.
-						 *
-						 * [associate region] defines on it's 3rd rule, that an element (e.g. <p>) should
-						 * get ignored if none of its children have a region.
-						 *
-						 * However, a parent can get ignored as well if it has no children because all
-						 * of them have been already pruned. And this is where we go to act.
-						 *
-						 * Due to the fact that we parse the tree linearly, without doing multiple steps
-						 * and without building an actual ISD, we cannot know if any element but inline
-						 * elements (`span`s and `br`s) will get pruned or replicated under a certain
-						 * region.
-						 *
-						 * Ofc, having the default region active (no region defined in the head) is fine
-						 * and allows all the elements.
-						 */
-
+					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
 						nodeTree.push(
 							createNodeWithAttributes(
 								createNodeWithScope(
@@ -654,4 +539,151 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		return BaseAdapter.ParseResult(cues, []);
 	}
+}
+
+/**
+ * We cannot use an out-of-line region element if
+ * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
+ */
+function shouldIgnoreOutOfLineRegion(token: Token): boolean {
+	return !("xml:id" in token.attributes);
+}
+
+/**
+ * Having two nested elements that flow into different regions is forbidden.
+ * The same is valid if a parent flows inside a out-of-line region
+ * while a child flows inside a different (inline) region.
+ *
+ * @example
+ * |--------------------------------|----------------------------------------------------|
+ * | Before [process inline region]	|	 After [process inline region]										 |
+ * | 																|	 (inline region gets moved)												 |
+ * |--------------------------------|----------------------------------------------------|
+ * | <tt>														| <tt>																							 |
+ * | 	<head>												| 	<head>																					 |
+ * | 		<region xml:id="r1" />			| 		<region xml:id="r1" />												 |
+ * | 																| 		<region xml:id="__custom_id__" />		<----			 |
+ * | 	</head>												| 	</head>																		|			 |
+ * | 	<body region="r1">						| 	<body region="r1">										 		|			 |
+ * | 		<div>												| 		<div region="__custom_id__">						|			 |
+ * | 			<region ... />						| 																				>----			 |
+ * | 			<p>...</p>								| 			<p>...</p>																	 |
+ * | 		</div>											| 		</div>																				 |
+ * | 	</body>												| 	</body>																					 |
+ * | </tt>													| </tt>																							 |
+ * |________________________________|____________________________________________________|
+ *
+ * Therefore, for the [associate region] procedure, the whole
+ * div will end up being pruned, because of a different region.
+ *
+ * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+ */
+function isInlineRegionConflicting(scope: Scope): boolean {
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	if (!temporalActiveContext) {
+		return false;
+	}
+
+	return Boolean(temporalActiveContext.regionIdRef);
+}
+
+/**
+ * "Furthermore, if no out-of-line region is specified,
+ * then the region attribute must not be specified on
+ * any content element in the document instance."
+ *
+ * @TODO this is marked as a must, so should we throw an error?
+ */
+function isDefaultRegionActive(scope: Scope): boolean {
+	const regionContext = readScopeRegionContext(scope);
+
+	if (!regionContext) {
+		return true;
+	}
+
+	return !regionContext.regions.length;
+}
+
+/**
+ * @example (out-of-line regions definitions in head omitted)
+ * Inspecting <p region="r2">, but
+ *
+ * ```
+ * <div region="r1">
+ * 	<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
+ * 	<!-- Same would be valid with a different region on a span inside the `p` -->
+ * 	<p region="r2">...</p>
+ * </div>
+ *
+ * <!-- next div will get pruned as previous sibling
+ * 		 has a region but default region is not active (implict in code). -->
+ * <div>...</div>
+ * ```
+ */
+function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope): boolean {
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	if (!temporalActiveContext) {
+		return false;
+	}
+
+	return temporalActiveContext.regionIdRef !== targetRegionId;
+}
+
+/**
+ * [construct intermediate document] procedure replicates the whole subtree
+ * after <body> for each active region.
+ *
+ * ISD construction should be seen as a set of replicated documents for each
+ * region. This means that some elements are always shared.
+ *
+ * ========
+ *
+ * [associate region] defines on it's 3rd rule, that an element (e.g. <p>) should
+ * get ignored if none of its children have a region associated (if any defined in
+ * the document - default region is fine then).
+ *
+ * However, a parent can get ignored as well if it has no children because all
+ * of them have been already pruned. And **this** is where we act.
+ *
+ * Linear tree parsing, without doing multiple iterations back and forth through
+ * the elements hierarchy and without building an actualy ISD, prevents us to
+ * understand if any element outside inline elements (`span`s and `br`s) will get
+ * pruned or replicated under a certain region.
+ *
+ * So we can only reach the bottom of each cue to have such information.
+ * Pruning all the inline elements, will cause a parent to get pruned as well.
+ */
+function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean {
+	if (!isInlineClassElement(token.content)) {
+		return true;
+	}
+
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	return Boolean(temporalActiveContext?.regionIdRef || isDefaultRegionActive(scope));
+}
+
+/**
+ * Checks if the element is suitable for
+ * containing time attributes and if it
+ * actually have them
+ *
+ * @param token
+ * @returns
+ */
+function shouldCreateTimeContext(token: Token) {
+	if (token.content !== "div" && token.content !== "body") {
+		return false;
+	}
+
+	const { attributes } = token;
+
+	return (
+		"begin" in attributes ||
+		"end" in attributes ||
+		"dur" in attributes ||
+		"timeContainer" in attributes
+	);
 }
