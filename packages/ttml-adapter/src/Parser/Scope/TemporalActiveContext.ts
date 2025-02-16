@@ -89,7 +89,7 @@ export function createTemporalActiveContext(
 					}
 				}
 
-				if (styles.length) {
+				if (styles?.length) {
 					for (const style of styles) {
 						if (!(style.kind in stylesContainer)) {
 							console.log(
@@ -128,8 +128,8 @@ export function createTemporalActiveContext(
 					}
 				}
 
-				if (styles.length) {
-					if (!store.styles.length) {
+				if (styles?.length) {
+					if (!store.styles?.length) {
 						store.styles.concat(styles);
 						return;
 					}

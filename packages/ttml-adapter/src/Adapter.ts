@@ -456,6 +456,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								createRegionContainerContext([inlineRegion]),
 								createTemporalActiveContext({
 									regionIDRef: regionId,
+									styles: [],
 								}),
 							);
 
