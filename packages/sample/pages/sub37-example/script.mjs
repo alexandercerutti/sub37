@@ -152,8 +152,6 @@ videoTag.addEventListener("pause", () => {
 scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
 
-	const timeStart = performance.now();
-
 	try {
 		/**
 		 * Just a trick to not let the browser complaining
@@ -163,6 +161,7 @@ scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 		 */
 
 		await Promise.resolve();
+		const timeStart = performance.now();
 
 		const isWebVTTTrackSelected = contentMimeType === "text/vtt";
 		const isTTMLTrackSelected = contentMimeType === "application/ttml+xml";
