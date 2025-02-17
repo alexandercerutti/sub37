@@ -1,11 +1,12 @@
 import { describe, it, expect, jest } from "@jest/globals";
-import { createScope } from "../lib/Parser/Scope/Scope.js";
+import { createScope, onMergeSymbol } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
 } from "../lib/Parser/Scope/StyleContainerContext.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
+import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
 
 /**
  * @typedef {import("../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
@@ -26,10 +27,11 @@ import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 describe("Scope and contexts", () => {
 	describe("Scope", () => {
 		it("should accept several contexts as input", () => {
-			const mockedContext = /** @type {Context} */ () => {
+			const mockedContext = () => {
 				const mockedContextSymbol = Symbol("mockedContextSymbol");
 
 				const contextFactory = (_scope) => {
+					// @ts-ignore
 					contextFactory.exposedContext = {
 						identifier: mockedContextSymbol,
 						get content() {
@@ -40,6 +42,7 @@ describe("Scope and contexts", () => {
 						},
 					};
 
+					// @ts-ignore
 					return contextFactory.exposedContext;
 				};
 
@@ -53,15 +56,19 @@ describe("Scope and contexts", () => {
 
 			expect(scope.getAllContexts().length).toBe(4);
 			expect(scope.getContextByIdentifier(contexts[0].exposedSymbol)).toEqual(
+				// @ts-ignore
 				contexts[0].exposedContext,
 			);
 			expect(scope.getContextByIdentifier(contexts[1].exposedSymbol)).toEqual(
+				// @ts-ignore
 				contexts[1].exposedContext,
 			);
 			expect(scope.getContextByIdentifier(contexts[2].exposedSymbol)).toEqual(
+				// @ts-ignore
 				contexts[2].exposedContext,
 			);
 			expect(scope.getContextByIdentifier(contexts[3].exposedSymbol)).toEqual(
+				// @ts-ignore
 				contexts[3].exposedContext,
 			);
 		});
@@ -75,13 +82,16 @@ describe("Scope and contexts", () => {
 						get content() {
 							return contents;
 						},
+						get args() {
+							return [];
+						},
 
 						/**
 						 *
 						 * @param {MockedContextExtension<string[]>} context
 						 */
 
-						mergeWith(context) {
+						[onMergeSymbol](context) {
 							contents.push(...context.content);
 						},
 					};
@@ -94,16 +104,10 @@ describe("Scope and contexts", () => {
 			scope.addContext(contexts[1]);
 
 			expect(scope.getAllContexts().length).toBe(1);
-			expect(scope.getContextByIdentifier(mockedContextSymbol).content).toEqual([
-				"a",
-				"b",
-				"c",
-				"d",
-				"e",
-				"f",
-				"g",
-				"h",
-			]);
+			expect(
+				// @ts-ignore
+				scope.getContextByIdentifier(mockedContextSymbol).content,
+			).toEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
 		});
 	});
 
@@ -115,7 +119,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end and dur, on the same context", () => {
 			const scope = createScope(
 				undefined,
-				createDocumentContext({}),
+				createDocumentContext(new NodeTree(), {}),
 				createTimeContext({
 					end: "10s",
 					dur: "20s",
@@ -128,7 +132,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end and dur, on the different contexts", () => {
 			const scope1 = createScope(
 				undefined,
-				createDocumentContext({}),
+				createDocumentContext(new NodeTree(), {}),
 				createTimeContext({
 					end: "20s",
 				}),
@@ -147,7 +151,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end - begin and dur plus the startTime, when begin is specified", () => {
 			const scope1 = createScope(
 				undefined,
-				createDocumentContext({}),
+				createDocumentContext(new NodeTree(), {}),
 				createTimeContext({
 					begin: "5s",
 					end: "20s",
@@ -167,7 +171,7 @@ describe("Scope and contexts", () => {
 		it("should return infinity if neither dur and end are specified", () => {
 			const scope = createScope(
 				undefined,
-				createDocumentContext({}),
+				createDocumentContext(new NodeTree(), {}),
 				createTimeContext({
 					timeContainer: "par",
 				}),
@@ -180,7 +184,7 @@ describe("Scope and contexts", () => {
 			const scope1 = createScope(
 				createScope(
 					undefined,
-					createDocumentContext({}),
+					createDocumentContext(new NodeTree(), {}),
 					createTimeContext({
 						timeContainer: "seq",
 					}),
@@ -197,7 +201,7 @@ describe("Scope and contexts", () => {
 	describe("RegionContext", () => {});
 
 	describe("StyleContext", () => {
-		it("should merge multiple style contexts on the same scope, by giving priority to the last. Styles are merged", () => {
+		it("should merge multiple style contexts on the same scope", () => {
 			const scope = createScope(
 				undefined,
 				createStyleContainerContext({
@@ -215,49 +219,20 @@ describe("Scope and contexts", () => {
 				}),
 			);
 
-			// expect(readScopeStyleContainerContext(scope).styles).toMatchObject(
-			// 	new Map([
-			// 		[
-			// 			"t2",
-			// 			{
-			// 				attributes: {
-			// 					"tts:textColor": "blue",
-			// 					"tts:backgroundColor": "rose",
-			// 				},
-			// 			},
-			// 		],
-			// 	]),
-			// );
-		});
+			expect(readScopeStyleContainerContext(scope).getStyleByIDRef("t1")).toMatchObject({
+				id: "t1",
+				styleAttributes: {
+					"tts:textColor": "blue",
+					"tts:backgroundColor": "rose",
+				},
+			});
 
-		it("should be able to iterate all the parent styles", () => {
-			const scope1 = createScope(
-				undefined,
-				createStyleContainerContext({
-					t1: {
-						"xml:id": "t1",
-						"tts:textColor": "blue",
-					},
-				}),
-			);
-
-			const scope2 = createScope(
-				scope1,
-				createStyleContainerContext({
-					t2: {
-						"xml:id": "t2",
-						"tts:textColor": "rose",
-					},
-				}),
-			);
-
-			// expect(readScopeStyleContainerContext(scope2).styles).toBeInstanceOf(Map);
-			// expect(readScopeStyleContainerContext(scope2).styles).toMatchObject(
-			// 	new Map([
-			// 		["t1", { id: "t1", attributes: { "tts:textColor": "blue" } }],
-			// 		["t2", { id: "t2", attributes: { "tts:textColor": "rose" } }],
-			// 	]),
-			// );
+			expect(readScopeStyleContainerContext(scope).getStyleByIDRef("t2")).toMatchObject({
+				id: "t2",
+				styleAttributes: {
+					"tts:textColor": "blue",
+				},
+			});
 		});
 	});
 });

@@ -7,6 +7,7 @@ import { createTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import { TokenType } from "../lib/Parser/Token.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 import { createTemporalActiveContext } from "../lib/Parser/Scope/TemporalActiveContext.js";
+import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
 
 describe("parseCue", () => {
 	it("should be coherent with anonymous span", () => {
@@ -98,7 +99,7 @@ describe("parseCue", () => {
 
 		const scope = createScope(
 			undefined,
-			createDocumentContext({}),
+			createDocumentContext(new NodeTree(), {}),
 			createTemporalActiveContext({}),
 		);
 
@@ -219,7 +220,7 @@ describe("parseCue", () => {
 
 		const scope = createScope(
 			undefined,
-			createDocumentContext({}),
+			createDocumentContext(new NodeTree(), {}),
 			createTimeContext({
 				begin: "0s",
 				end: "25s",
