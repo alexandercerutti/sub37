@@ -50,21 +50,7 @@ export const RepresentationTree = createNode(null, () => [
 								createNode("p", () => [
 									Kleene.zeroOrMore(AnimationClass()),
 									Kleene.zeroOrOne(LayoutClass()),
-									Kleene.zeroOrMore(
-										Kleene.or(
-											withSelfReference(
-												//
-												createNode("span", () => [
-													//
-													Kleene.zeroOrMore(AnimationClass()),
-												]),
-											),
-											withSelfReference(
-												//
-												createNode("br"),
-											),
-										),
-									),
+									Kleene.zeroOrMore(InlineClass()),
 								]),
 							),
 						]),
@@ -99,5 +85,24 @@ function AnimationClass() {
 		//
 		createNode("animate"),
 		createNode("set"),
+	);
+}
+
+/**
+ * Inline.class
+ * @see https://w3c.github.io/ttml2/#element-vocab-group-inline
+ */
+function InlineClass() {
+	return Kleene.or(
+		withSelfReference(
+			createNode("span", () => [
+				//
+				Kleene.zeroOrMore(AnimationClass()),
+			]),
+		),
+		withSelfReference(
+			//
+			createNode("br"),
+		),
 	);
 }
