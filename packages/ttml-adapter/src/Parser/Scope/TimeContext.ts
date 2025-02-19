@@ -61,7 +61,7 @@ declare module "./Scope" {
 
 export function createTimeContext(contextInput: TimeContextData = {}): ContextFactory<TimeContext> {
 	return function (scope: Scope) {
-		if (!Object.keys(contextInput).length) {
+		if (!isContextDataAvailable(contextInput)) {
 			return null;
 		}
 
@@ -228,6 +228,10 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 
 export function readScopeTimeContext(scope: Scope): TimeContext | undefined {
 	return scope.getContextByIdentifier(timeContextSymbol);
+}
+
+function isContextDataAvailable(contextData: TimeContextData): boolean {
+	return Object.values(contextData).some(Boolean);
 }
 
 function isTimeContainerStardardString(timeContainer: string): timeContainer is "par" | "seq" {
