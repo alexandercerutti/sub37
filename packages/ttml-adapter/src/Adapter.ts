@@ -578,6 +578,10 @@ function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope):
 		return false;
 	}
 
+	if (!temporalActiveContext.regionIdRef) {
+		return false;
+	}
+
 	return temporalActiveContext.regionIdRef !== targetRegionId;
 }
 
