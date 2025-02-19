@@ -1,7 +1,8 @@
 import { BaseAdapter, CueNode } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
-import { createScope, type Scope } from "./Parser/Scope/Scope.js";
+import { createScope } from "./Parser/Scope/Scope.js";
+import type { Scope, ContextFactory } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import { createStyleContainerContext } from "./Parser/Scope/StyleContainerContext.js";
 import type { RegionContainerContextState } from "./Parser/Scope/RegionContainerContext.js";
@@ -14,6 +15,7 @@ import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/
 import { Token, TokenType } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
 import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
+import type { ActiveStyle } from "./Parser/Scope/TemporalActiveContext.js";
 import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
@@ -21,6 +23,7 @@ import {
 import { createVisitor } from "./Parser/Tags/Representation/Visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
+import { createStyleParser } from "./Parser/parseStyle.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -115,6 +118,14 @@ type INLINE_CLASS_ELEMENT = typeof INLINE_CLASS_ELEMENT;
 
 function isInlineClassElement(content: string): content is INLINE_CLASS_ELEMENT[number] {
 	return INLINE_CLASS_ELEMENT.includes(content as INLINE_CLASS_ELEMENT[number]);
+}
+
+// <br /> omitted on purpose, as it doesn't accept needed any property
+const CONTENT_MODULE_ELEMENTS = ["div", "p", "span", "body"] as const;
+type CONTENT_MODULE_ELEMENTS = typeof CONTENT_MODULE_ELEMENTS;
+
+function isContentModuleElement(content: string): content is CONTENT_MODULE_ELEMENTS[number] {
+	return CONTENT_MODULE_ELEMENTS.includes(content as CONTENT_MODULE_ELEMENTS[number]);
 }
 
 const LAYOUT_CLASS_ELEMENT = ["region"] as const;
@@ -263,7 +274,10 @@ export default class TTMLAdapter extends BaseAdapter {
 								appendNodeAttributes(currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(
 									createNodeWithAttributes(
-										createNodeWithDestinationMatch(token, destinationMatch),
+										createNodeWithScope(
+											createNodeWithDestinationMatch(token, destinationMatch),
+											treeScope,
+										),
 										NodeAttributes.IGNORED,
 									),
 								);
@@ -272,41 +286,12 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					const canElementFlowInRegions =
-						isBlockClassElement(token.content) ||
-						(isInlineClassElement(token.content) && token.content !== "br");
-
-					if (!canElementFlowInRegions) {
-						nodeTree.push(
-							createNodeWithAttributes(
-								createNodeWithScope(
-									createNodeWithDestinationMatch(token, destinationMatch),
-									treeScope,
-								),
-								NodeAttributes.NO_ATTRS,
-							),
-						);
-						break;
-					}
-
-					if (shouldCreateTimeContext(token)) {
-						treeScope = createScope(
-							treeScope,
-							createTimeContext({
-								begin: token.attributes["begin"],
-								end: token.attributes["end"],
-								dur: token.attributes["dur"],
-								timeContainer: token.attributes["timeContainer"],
-							}),
-						);
-					}
-
 					/**
 					 * Checking if there's a region collision between a parent and a children.
 					 * Regions will be evaluated when its end tag is received.
 					 */
 
-					if (token.attributes["region"]) {
+					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
 						if (
 							isDefaultRegionActive(treeScope) ||
 							isFlowingTargetRegionConflicting(token.attributes["region"], treeScope)
@@ -320,15 +305,60 @@ export default class TTMLAdapter extends BaseAdapter {
 									NodeAttributes.IGNORED,
 								),
 							);
+
 							continue;
 						}
+					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
+								NodeAttributes.IGNORED,
+							),
+						);
 
+						continue;
+					}
+
+					// ************************************* //
+					// *** VALID NODE CONFIRMATION POINT *** //
+					// ************************************* //
+
+					/**
+					 * Checking this allows us to also
+					 * prevent adding new things to a new scope.
+					 * Regions and stylings > style are meant to
+					 * be set on the global scope.
+					 *
+					 * @TODO should we use regions and style contexts
+					 * to write on the document context instead
+					 * and only use them as processors?
+					 */
+
+					if (!isContentModuleElement(token.content)) {
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
+								NodeAttributes.NO_ATTRS,
+							),
+						);
+
+						continue;
+					}
+
+					const contextsList: ContextFactory[] = [];
+
+					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
 						const regionContext = readScopeRegionContext(treeScope);
 						const flowedRegion = regionContext.getRegionById(token.attributes["region"]);
 
 						if (flowedRegion) {
-							treeScope = createScope(
-								treeScope,
+							contextsList.push(
 								/**
 								 * @TODO timing attributes on a region are temporal details
 								 * for which "the region is eligible for activation".
@@ -349,22 +379,37 @@ export default class TTMLAdapter extends BaseAdapter {
 								}),
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
-									styles: [],
 								}),
 							);
 						}
-					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
-						nodeTree.push(
-							createNodeWithAttributes(
-								createNodeWithScope(
-									createNodeWithDestinationMatch(token, destinationMatch),
-									treeScope,
-								),
-								NodeAttributes.IGNORED,
-							),
-						);
-						continue;
 					}
+
+					/**
+					 * Using "begin" because if an element supports it,
+					 * it must support "end", "dur" and "timeContainer" as well.
+					 */
+					if (destinationMatch.matchesAttribute("begin") && hasTimingAttributes(token)) {
+						contextsList.push(
+							createTimeContext({
+								begin: token.attributes["begin"],
+								end: token.attributes["end"],
+								dur: token.attributes["dur"],
+								timeContainer: token.attributes["timeContainer"],
+							}),
+						);
+					}
+
+					const inlineStyles = extractInlineStyles(currentNode, treeScope);
+
+					if (inlineStyles) {
+						contextsList.push(
+							createTemporalActiveContext({
+								styles: [inlineStyles],
+							}),
+						);
+					}
+
+					treeScope = createScope(treeScope, ...contextsList);
 
 					nodeTree.push(
 						createNodeWithAttributes(
@@ -375,6 +420,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							NodeAttributes.NO_ATTRS,
 						),
 					);
+
 					break;
 				}
 
@@ -627,11 +673,7 @@ function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean
  * @param token
  * @returns
  */
-function shouldCreateTimeContext(token: Token) {
-	if (token.content !== "div" && token.content !== "body") {
-		return false;
-	}
-
+function hasTimingAttributes(token: Token): boolean {
 	const { attributes } = token;
 
 	return (
@@ -733,4 +775,41 @@ function extractOutOfLineStyles(currentNode: NodeWithRelationship<Token>) {
 	}
 
 	return styles;
+}
+
+function extractInlineStyles(
+	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
+	scope: Scope,
+): ActiveStyle | undefined {
+	if (!currentNode.content[nodeMatchSymbol].matchesAttribute("tts:*")) {
+		return undefined;
+	}
+
+	const {
+		content: { attributes },
+	} = currentNode;
+
+	const styles = Object.keys(attributes).reduce<Record<string, string>>((acc, key) => {
+		if (key.startsWith("tts:")) {
+			acc[key] = attributes[key];
+		}
+
+		return acc;
+	}, {});
+
+	if (!Object.keys(styles).length) {
+		return undefined;
+	}
+
+	const styleParser = createStyleParser(scope);
+	styleParser.process(styles);
+
+	return Object.create(styleParser.get("inline"), {
+		kind: {
+			value: "inline",
+		},
+		"xml:id": {
+			value: "inline",
+		},
+	}) as ActiveStyle;
 }
