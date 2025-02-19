@@ -109,6 +109,49 @@ describe("Scope and contexts", () => {
 				scope.getContextByIdentifier(mockedContextSymbol).content,
 			).toEqual(["a", "b", "c", "d", "e", "f", "g", "h"]);
 		});
+
+		it("should merge two contexts with the same identifier when a parent is available", () => {
+			const mockedContextSymbol = Symbol("mockedContextSymbol");
+			const mockedContext = (contents) => {
+				return (_scope) => {
+					return {
+						ownContents: contents,
+						parent: undefined,
+						identifier: mockedContextSymbol,
+						get content() {
+							return contents;
+						},
+						get args() {
+							return [];
+						},
+
+						/**
+						 *
+						 * @param {MockedContextExtension<string[]>} context
+						 */
+
+						[onMergeSymbol](context) {
+							// @ts-ignore
+							contents.push(...context.content);
+						},
+					};
+				};
+			};
+
+			const contexts = [
+				mockedContext(["a", "b", "c", "d"]),
+				mockedContext(["e", "f", "g", "h"]),
+				mockedContext(["j", "k", "l", "m"]),
+			];
+			const scope = createScope(undefined, contexts[0]);
+			const scope2 = createScope(scope, contexts[1], contexts[2]);
+
+			expect(scope2.getAllContexts().length).toBe(1);
+			expect(
+				// @ts-ignore
+				scope2.getContextByIdentifier(mockedContextSymbol).content,
+			).toEqual(["e", "f", "g", "h", "j", "k", "l", "m"]);
+		});
 	});
 
 	describe("TimeContext", () => {
