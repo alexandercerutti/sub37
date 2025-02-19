@@ -113,14 +113,24 @@ export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresent
 export function or(...nodes: NodeRepresentation<string>[]): KleeneNodeRepresentation<"|"> {
 	let matchedNode: NodeRepresentation<string> | undefined;
 
+	let lastMatchedNode: NodeRepresentation<string> | undefined = undefined;
+
 	return {
 		[operatorSymbol]: "|",
 		[usagesSymbol]: 0,
 		nodeName: "collector",
 		destinationFactory: () => matchedNode?.destinationFactory() ?? [],
-		matches(nodeName: string) {
+		matches(nodeName: string): boolean {
 			matchedNode = nodes.find((node) => node.matches(nodeName));
+			lastMatchedNode = matchedNode;
 			return Boolean(matchedNode);
+		},
+		matchesAttribute(attribute): boolean {
+			if (!lastMatchedNode) {
+				throw new Error("Cannot match when a node has not been matched yet.");
+			}
+
+			return lastMatchedNode.matchesAttribute(attribute);
 		},
 	};
 }

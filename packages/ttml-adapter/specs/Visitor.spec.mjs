@@ -6,7 +6,7 @@ import * as Kleene from "../lib/Parser/Tags/Representation/kleene.js";
 describe("Visitor", () => {
 	it("should return the first node that matches", () => {
 		const visitor = createVisitor(
-			createNode(null, () => [
+			createNode(null, [], () => [
 				Kleene.zeroOrOne(createNode("test1")),
 				Kleene.oneOrMore(createNode("test2")),
 			]),
@@ -20,10 +20,10 @@ describe("Visitor", () => {
 
 	it("should navigate to the next node and perform a match check on it's destinations and back", () => {
 		const visitor = createVisitor(
-			createNode(null, () => [
+			createNode(null, [], () => [
 				Kleene.zeroOrOne(createNode("test1")),
-				Kleene.oneOrMore(createNode("test2", () => [Kleene.oneOrMore(createNode("test3"))])),
-				Kleene.oneOrMore(createNode("test4", () => [Kleene.zeroOrOne(createNode("test4"))])),
+				Kleene.oneOrMore(createNode("test2", [], () => [Kleene.oneOrMore(createNode("test3"))])),
+				Kleene.oneOrMore(createNode("test4", [], () => [Kleene.zeroOrOne(createNode("test4"))])),
 			]),
 		);
 
