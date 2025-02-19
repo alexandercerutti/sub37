@@ -9,6 +9,6 @@ describe("Tag entities", () => {
 		expect(entity.attributes).toEqual(new Map());
 		expect(entity.classes).toEqual([]);
 		expect(entity.tagType).toBe(Entities.TagType.BOLD);
-		expect(entity.type).toBe(1);
+		expect(entity.type).toBe(2);
 	});
 });
