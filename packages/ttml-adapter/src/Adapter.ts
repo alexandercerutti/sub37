@@ -196,12 +196,13 @@ export default class TTMLAdapter extends BaseAdapter {
 					representationVisitor.navigate(destinationMatch);
 
 					if (token.content === "tt") {
-						if (readScopeDocumentContext(treeScope)) {
-							/**
-							 * @TODO Change in a fatal error;
-							 */
-							throw new Error("Malformed TTML track: multiple <tt> were found.");
-						}
+						treeScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
+						treeScope.addContext(
+							createTimeContext({
+								// Default data. Will result in an infinite duration.
+								begin: "0s",
+							}),
+						);
 
 						nodeTree.push(
 							createNodeWithAttributes(
@@ -213,7 +214,6 @@ export default class TTMLAdapter extends BaseAdapter {
 							),
 						);
 
-						treeScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
 						continue;
 					}
 

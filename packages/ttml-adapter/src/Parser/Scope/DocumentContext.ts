@@ -37,15 +37,7 @@ export function createDocumentContext(
 	nodeTree: NodeTree<Token>,
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
-	return function (scope: Scope) {
-		const previousDocumentContext = readScopeDocumentContext(scope);
-
-		if (previousDocumentContext) {
-			throw new Error(
-				"A document context is already existing. One document context is allowed per time",
-			);
-		}
-
+	return function (_scope: Scope) {
 		const attributes = parseDocumentSupportedAttributes(rawAttributes);
 
 		/**
@@ -80,7 +72,7 @@ export function createDocumentContext(
 			},
 			[onMergeSymbol](_context) {
 				throw new Error(
-					"Document context merge is not allowed. Only one document context can exists at the same time.",
+					"A document context is already existing. One document (context) can exists per TTML track. Merging is not allowed",
 				);
 			},
 			attributes,
