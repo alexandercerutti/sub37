@@ -9,7 +9,7 @@ export interface NodeRepresentation<T extends string> {
 
 export function createNode<const T extends string>(
 	nodeName: T,
-	attributes: string[] = [],
+	attributes: Set<string> = new Set<string>(),
 	destinationFactory: DestinationFactory = () => [],
 ): NodeRepresentation<T> {
 	return {

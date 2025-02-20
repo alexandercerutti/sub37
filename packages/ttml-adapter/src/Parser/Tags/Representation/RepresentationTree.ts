@@ -8,39 +8,62 @@ import * as Kleene from "./kleene.js";
  * a tt.
  */
 
-const TIMING_ATTRIBUTES = ["begin", "dur", "end", "timeContainer"] as const;
-const ANIMATION_ATTRIBUTES = ["animate"] as const;
-const LAYOUT_ATTRIBUTES = ["tts:*", "region", "style"] as const;
+const TIMING_ATTRIBUTES = {
+	begin: "begin",
+	dur: "dur",
+	end: "end",
+	timeContainer: "timeContainer",
+} as const;
+
+const ANIMATION_ATTRIBUTES = {
+	animate: "animate",
+	repeatCount: "repeatCount",
+	fill: "fill",
+} as const;
+
+const LAYOUT_ATTRIBUTES = {
+	"tts:*": "tts:*",
+	region: "region",
+	style: "style",
+} as const;
 
 /**
  * @see https://w3c.github.io/ttml2/#element-vocab-group-block
  */
-const CATALOG_CONTENT_ELEMENTS_ATTRIBUTES = ["tts:*", "xml:id"]
-	.concat(TIMING_ATTRIBUTES)
-	.concat(ANIMATION_ATTRIBUTES)
-	.concat(LAYOUT_ATTRIBUTES);
+const CONTENT_MODULE_ELEMENTS_ATTRIBUTES = new Set([
+	"tts:*",
+	"xml:id",
+	TIMING_ATTRIBUTES.begin,
+	TIMING_ATTRIBUTES.dur,
+	TIMING_ATTRIBUTES.end,
+	TIMING_ATTRIBUTES.timeContainer,
+	ANIMATION_ATTRIBUTES.animate,
+	LAYOUT_ATTRIBUTES["tts:*"],
+	LAYOUT_ATTRIBUTES.region,
+	LAYOUT_ATTRIBUTES.style,
+] as const);
 
-export const RepresentationTree = createNode(null, [], () => [
-	createNode("tt", ["tt:*", "tts:extent"], () => [
+export const RepresentationTree = createNode(null, new Set([]), () => [
+	createNode("tt", new Set(["tt:*", "tts:extent"]), () => [
 		Kleene.zeroOrOne(
-			createNode("head", [], () => [
+			createNode("head", new Set([]), () => [
 				Kleene.zeroOrOne(
-					createNode("styling", [], () => [
+					createNode("styling", new Set([]), () => [
 						Kleene.zeroOrMore(
 							//
-							createNode("initial", ["tts:*"]),
+							createNode("initial", new Set([LAYOUT_ATTRIBUTES["tts:*"]])),
 						),
 						Kleene.zeroOrMore(Style()),
 					]),
 				),
 				Kleene.zeroOrOne(
-					createNode("layout", [], () => [
+					createNode("layout", new Set([]), () => [
 						//
 						Kleene.zeroOrMore(LayoutClass()),
 					]),
 				),
 				Kleene.zeroOrOne(
-					createNode("animation", [], () => [
+					createNode("animation", new Set([]), () => [
 						//
 						Kleene.zeroOrMore(AnimationClass()),
 					]),
@@ -48,15 +71,15 @@ export const RepresentationTree = createNode(null, [], () => [
 			]),
 		),
 		Kleene.zeroOrOne(
-			createNode("body", CATALOG_CONTENT_ELEMENTS_ATTRIBUTES, () => [
+			createNode("body", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
 				Kleene.zeroOrMore(AnimationClass()),
 				Kleene.zeroOrMore(
 					withSelfReference(
-						createNode("div", CATALOG_CONTENT_ELEMENTS_ATTRIBUTES, () => [
+						createNode("div", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
 							Kleene.zeroOrMore(AnimationClass()),
 							Kleene.zeroOrOne(LayoutClass()),
 							Kleene.zeroOrMore(
-								createNode("p", CATALOG_CONTENT_ELEMENTS_ATTRIBUTES, () => [
+								createNode("p", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
 									Kleene.zeroOrMore(AnimationClass()),
 									Kleene.zeroOrOne(LayoutClass()),
 									Kleene.zeroOrMore(InlineClass()),
@@ -75,13 +98,15 @@ export const RepresentationTree = createNode(null, [], () => [
  * @see https://w3c.github.io/ttml2/#element-vocab-group-block
  */
 function LayoutClass() {
-	const REGION_ATTRIBUTES = ["xml:id"]
-		/**
-		 * Should omit "region" attribute from here
-		 * however, we won't use it.
-		 */
-		.concat(LAYOUT_ATTRIBUTES)
-		.concat(TIMING_ATTRIBUTES);
+	const REGION_ATTRIBUTES = new Set([
+		"xml:id",
+		LAYOUT_ATTRIBUTES["tts:*"],
+		LAYOUT_ATTRIBUTES.style,
+		TIMING_ATTRIBUTES.begin,
+		TIMING_ATTRIBUTES.dur,
+		TIMING_ATTRIBUTES.end,
+		TIMING_ATTRIBUTES.timeContainer,
+	] as const);
 
 	return createNode("region", REGION_ATTRIBUTES, () => [
 		Kleene.zeroOrMore(AnimationClass()),
@@ -94,14 +119,26 @@ function LayoutClass() {
  * @see https://w3c.github.io/ttml2/#element-vocab-group-block
  */
 function AnimationClass() {
-	const ANIMATE_ATTRIBUTES = ["tts:*", "calcMode", "fill", "keySplines", "keyTimes", "repeatCount"]
-		/**
-		 * Should omit "timeContainer" from here
-		 * however, we won't use it.
-		 */
-		.concat(TIMING_ATTRIBUTES);
+	const ANIMATE_ATTRIBUTES = new Set([
+		LAYOUT_ATTRIBUTES["tts:*"],
+		TIMING_ATTRIBUTES.begin,
+		TIMING_ATTRIBUTES.dur,
+		TIMING_ATTRIBUTES.end,
+		ANIMATION_ATTRIBUTES.repeatCount,
+		ANIMATION_ATTRIBUTES.fill,
+		"calcMode",
+		"keySplines",
+		"keyTimes",
+	] as const);
 
-	const SET_ATTRIBUTES = ["tts:*", "fill", "repeatCount"].concat(TIMING_ATTRIBUTES);
+	const SET_ATTRIBUTES = new Set([
+		LAYOUT_ATTRIBUTES["tts:*"],
+		TIMING_ATTRIBUTES.begin,
+		TIMING_ATTRIBUTES.dur,
+		TIMING_ATTRIBUTES.end,
+		ANIMATION_ATTRIBUTES.repeatCount,
+		ANIMATION_ATTRIBUTES.fill,
+	] as const);
 
 	return Kleene.or(
 		//
@@ -115,10 +152,16 @@ function AnimationClass() {
  * @see https://w3c.github.io/ttml2/#element-vocab-group-inline
  */
 function InlineClass() {
-	const SPAN_ATTRIBUTES: string[] = []
-		.concat(TIMING_ATTRIBUTES)
-		.concat(ANIMATION_ATTRIBUTES)
-		.concat(LAYOUT_ATTRIBUTES);
+	const SPAN_ATTRIBUTES = new Set([
+		LAYOUT_ATTRIBUTES["tts:*"],
+		LAYOUT_ATTRIBUTES.region,
+		LAYOUT_ATTRIBUTES.style,
+		ANIMATION_ATTRIBUTES.animate,
+		TIMING_ATTRIBUTES.begin,
+		TIMING_ATTRIBUTES.dur,
+		TIMING_ATTRIBUTES.end,
+		TIMING_ATTRIBUTES.timeContainer,
+	] as const);
 
 	return Kleene.or(
 		withSelfReference(
@@ -135,5 +178,11 @@ function InlineClass() {
 }
 
 function Style() {
-	return createNode("style", ["tts:*", "style", "xml:id"]);
+	const STYLE_ATTRIBUTES = new Set([
+		LAYOUT_ATTRIBUTES["tts:*"],
+		LAYOUT_ATTRIBUTES.style,
+		"xml:id",
+	] as const);
+
+	return createNode("style", STYLE_ATTRIBUTES);
 }
