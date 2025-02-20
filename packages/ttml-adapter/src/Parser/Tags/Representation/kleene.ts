@@ -27,14 +27,7 @@ export function zeroOrMore(node: NodeRepresentation<string>): KleeneNodeRepresen
 		},
 		matches: {
 			value(this: KleeneOperator<"*">, nodeName: string) {
-				let matches = nodeName === node.nodeName;
-
-				if (
-					!matches &&
-					(node as KleeneNodeRepresentation<KleeneOperationSymbols>)[operatorSymbol]
-				) {
-					matches = node.matches(nodeName);
-				}
+				const matches = node.matches(nodeName);
 
 				this[usagesSymbol] += Number(matches);
 
@@ -55,15 +48,7 @@ export function oneOrMore(node: NodeRepresentation<string>): KleeneNodeRepresent
 		},
 		matches: {
 			value(this: KleeneOperator<"+">, nodeName: string) {
-				let matches = nodeName === node.nodeName;
-
-				if (
-					!matches &&
-					(node as KleeneNodeRepresentation<KleeneOperationSymbols>)[operatorSymbol]
-				) {
-					// Delegating to the inner operator
-					matches = node.matches(nodeName);
-				}
+				const matches = node.matches(nodeName);
 
 				if (this[usagesSymbol] < 1 && !matches) {
 					throw new MinimumElementViolationError(node.nodeName);
@@ -92,15 +77,7 @@ export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresent
 					return false;
 				}
 
-				let matches = nodeName === node.nodeName;
-
-				if (
-					!matches &&
-					(node as KleeneNodeRepresentation<KleeneOperationSymbols>)[operatorSymbol]
-				) {
-					// Delegating to the inner operator
-					matches = node.matches(nodeName);
-				}
+				const matches = node.matches(nodeName);
 
 				this[usagesSymbol] += Number(matches);
 
