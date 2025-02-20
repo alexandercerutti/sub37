@@ -44,7 +44,7 @@ const CONTENT_MODULE_ELEMENTS_ATTRIBUTES = new Set([
 ] as const);
 
 export const RepresentationTree = createNode(null, new Set([]), () => [
-	createNode("tt", new Set(["tt:*", "tts:extent"]), () => [
+	createNode("tt", new Set(["ttp:*", "tts:extent", "xml:lang"]), () => [
 		Kleene.zeroOrOne(
 			createNode("head", new Set([]), () => [
 				Kleene.zeroOrOne(
