@@ -802,13 +802,17 @@ function extractInlineStyles(
 	}
 
 	const styleParser = createStyleParser(scope);
-	styleParser.process(styles);
+	styleParser.process(
+		Object.create(styles, {
+			"xml:id": {
+				value: "inline",
+				enumerable: true,
+			},
+		}),
+	);
 
 	return Object.create(styleParser.get("inline"), {
 		kind: {
-			value: "inline",
-		},
-		"xml:id": {
 			value: "inline",
 		},
 	}) as ActiveStyle;
