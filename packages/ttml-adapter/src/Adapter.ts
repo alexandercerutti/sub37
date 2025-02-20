@@ -250,9 +250,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * Region completion will happen in the END_TAG, if not ignored.
 					 */
 
-					const { currentNode } = nodeTree;
-
 					if (isLayoutClassElement(token.content)) {
+						const { currentNode } = nodeTree;
 						const currentTagName = currentNode.content.content;
 						const isParentLayout = currentTagName === "layout";
 
@@ -400,7 +399,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (destinationMatch.matchesAttribute("tts:*")) {
-						const inlineStyles = extractInlineStyles(currentNode, treeScope);
+						const inlineStyles = extractInlineStylesFromToken(token, treeScope);
 
 						if (inlineStyles) {
 							contextsList.push(
@@ -779,17 +778,8 @@ function extractOutOfLineStyles(currentNode: NodeWithRelationship<Token>) {
 	return styles;
 }
 
-function extractInlineStyles(
-	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
-	scope: Scope,
-): ActiveStyle | undefined {
-	if (!currentNode.content[nodeMatchSymbol].matchesAttribute("tts:*")) {
-		return undefined;
-	}
-
-	const {
-		content: { attributes },
-	} = currentNode;
+function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle | undefined {
+	const { attributes } = token;
 
 	const styles = Object.keys(attributes).reduce<Record<string, string>>((acc, key) => {
 		if (key.startsWith("tts:")) {
