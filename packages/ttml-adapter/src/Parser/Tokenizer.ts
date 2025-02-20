@@ -288,6 +288,7 @@ export class Tokenizer {
 					result += char;
 
 					if (this.sourceWindow.peekAdvance(PI_END_CHECKER)) {
+						this.sourceWindow.advance();
 						return Token.ProcessingInstruction(result);
 					}
 
