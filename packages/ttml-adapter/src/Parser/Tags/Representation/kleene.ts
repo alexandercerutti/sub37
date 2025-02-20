@@ -116,8 +116,24 @@ export function or(...nodes: NodeRepresentation<string>[]): KleeneNodeRepresenta
 	return {
 		[operatorSymbol]: "|",
 		[usagesSymbol]: 0,
-		nodeName: "collector",
-		destinationFactory: () => matchedNode?.destinationFactory() ?? [],
+		get nodeName(): string {
+			if (!matchedNode) {
+				throw new Error(
+					"Cannot get nodeName when a node has not been matched yet through an or operator",
+				);
+			}
+
+			return matchedNode.nodeName;
+		},
+		destinationFactory: () => {
+			if (!matchedNode) {
+				throw new Error(
+					"Cannot get destinations when a node has not been matched yet through an or operator",
+				);
+			}
+
+			return matchedNode?.destinationFactory() ?? [];
+		},
 		matches(nodeName: string): boolean {
 			matchedNode = nodes.find((node) => node.matches(nodeName));
 			return Boolean(matchedNode);
