@@ -38,6 +38,12 @@ export function createDocumentContext(
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
 	return function (_scope: Scope) {
+		if (typeof rawAttributes["xml:lang"] === "undefined") {
+			throw new Error(
+				"Document failed to parse: <tt> element is lacking of 'xml:lang' attribute. The attribute is required, even if empty.",
+			);
+		}
+
 		const attributes = parseDocumentSupportedAttributes(rawAttributes);
 
 		/**

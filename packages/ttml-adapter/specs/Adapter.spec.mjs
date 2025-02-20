@@ -45,7 +45,7 @@ describe("Adapter", () => {
 				it("should let cue inherit them from an out-of-line region", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" begin="3s" end="5s" />
@@ -91,7 +91,7 @@ describe("Adapter", () => {
 					const adapter = new TTMLAdapter();
 
 					const { data: cues } = adapter.parse(`
-						<tt>
+						<tt xml:lang="en">
 							<body>
 								<div>
 									<region xml:id="r1" begin="0s" end="1.3s" />
@@ -189,7 +189,7 @@ describe("Adapter", () => {
 
 					const { data: cues } = adapter.parse(
 						`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" backgroundColor="red" />
@@ -238,7 +238,7 @@ describe("Adapter", () => {
 
 					adapter.parse(
 						`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" backgroundColor="red" />
@@ -267,7 +267,7 @@ describe("Adapter", () => {
 
 					adapter.parse(
 						`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" backgroundColor="red" />
@@ -298,7 +298,7 @@ describe("Adapter", () => {
 
 					adapter.parse(
 						`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" backgroundColor="red" />
@@ -326,7 +326,7 @@ describe("Adapter", () => {
 
 			adapter.parse(
 				`
-							<tt>
+							<tt xml:lang="en">
 								<head>
 									<layout>
 										<region xml:id="r1" backgroundColor="red" />
@@ -351,7 +351,7 @@ describe("Adapter", () => {
 	describe("Regions", () => {
 		it("Should ignore nested elements that have a region attribute different from parent's", () => {
 			const track = `
-<tt>
+<tt xml:lang="en">
 	<head>
 		<layout>
 			<region xml:id="r1"></region>
@@ -405,7 +405,7 @@ describe("Adapter", () => {
 
 		it("Should ignore elements that have a region attribute when the default region is active", () => {
 			const track = `
-<tt>
+<tt xml:lang="en">
 	<body>
 		<region xml:id="r3></region>
 		<div>
