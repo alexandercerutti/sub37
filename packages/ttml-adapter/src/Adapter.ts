@@ -399,14 +399,16 @@ export default class TTMLAdapter extends BaseAdapter {
 						);
 					}
 
-					const inlineStyles = extractInlineStyles(currentNode, treeScope);
+					if (destinationMatch.matchesAttribute("tts:*")) {
+						const inlineStyles = extractInlineStyles(currentNode, treeScope);
 
-					if (inlineStyles) {
-						contextsList.push(
-							createTemporalActiveContext({
-								styles: [inlineStyles],
-							}),
-						);
+						if (inlineStyles) {
+							contextsList.push(
+								createTemporalActiveContext({
+									styles: [inlineStyles],
+								}),
+							);
+						}
 					}
 
 					treeScope = createScope(treeScope, ...contextsList);
