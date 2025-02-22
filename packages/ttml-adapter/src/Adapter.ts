@@ -4,7 +4,10 @@ import { Tokenizer } from "./Parser/Tokenizer.js";
 import { createScope } from "./Parser/Scope/Scope.js";
 import type { Scope, ContextFactory } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
-import { createStyleContainerContext } from "./Parser/Scope/StyleContainerContext.js";
+import {
+	createStyleContainerContext,
+	readScopeStyleContainerContext,
+} from "./Parser/Scope/StyleContainerContext.js";
 import type { RegionContainerContextState } from "./Parser/Scope/RegionContainerContext.js";
 import {
 	createRegionContainerContext,
@@ -410,6 +413,18 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
+					if (destinationMatch.matchesAttribute("style") && token.attributes["style"]) {
+						const outOfLineStyle = getOutOfLineStyle(token, treeScope);
+
+						if (outOfLineStyle) {
+							contextsList.push(
+								createTemporalActiveContext({
+									styles: [outOfLineStyle],
+								}),
+							);
+						}
+					}
+
 					treeScope = createScope(treeScope, ...contextsList);
 
 					nodeTree.push(
@@ -808,4 +823,36 @@ function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle |
 			value: "inline",
 		},
 	}) as ActiveStyle;
+}
+
+function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined {
+	const { attributes } = token;
+	const styleContext = readScopeStyleContainerContext(scope);
+
+	if (!styleContext) {
+		const tokenId = `${token.content}#${attributes["xml:id"] || "(n/a)"}`;
+
+		console.warn(
+			`'${tokenId}' referenced style '${attributes["style"]}', but no out-of-line style was defined in this document. Ignored.`,
+		);
+
+		return undefined;
+	}
+
+	const style = styleContext.getStyleByIDRef(attributes["style"]);
+
+	if (!style) {
+		const tokenId = `${token.content}#${attributes["xml:id"] || "(n/a)"}`;
+		console.warn(
+			`'${tokenId}' referenced style '${attributes["style"]}', but this out-of-line style was not defined or was ignored. Ignored.`,
+		);
+
+		return undefined;
+	}
+
+	return Object.create(style, {
+		kind: {
+			value: "referential",
+		},
+	});
 }
