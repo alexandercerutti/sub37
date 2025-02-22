@@ -1,7 +1,7 @@
 import type { Region } from "@sub37/server";
 import type { Token } from "./Token";
 import type { TTMLStyle } from "./parseStyle";
-import { createStyleParser } from "./parseStyle.js";
+import { createStyleParser, isStyleAttribute } from "./parseStyle.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree";
 import { memoizationFactory } from "./memoizationFactory.js";
 import type { Scope } from "./Scope/Scope";
@@ -27,33 +27,37 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 
 	const styleParser = createStyleParser(scope);
 
-	styleParser.process(
-		Object.create(attributes, {
-			/**
-			 * If attributes contains an xml:id, it is the region id.
-			 * However, we want to define the id for the styles.
-			 *
-			 * The attributes will be filtered once the style will be
-			 * processed when attributes getter in styleParser is accessed.
-			 */
-			"xml:id": {
-				value: "inline",
-				enumerable: true,
-			},
-		}),
-	);
+	if (Object.keys(attributes).some(isStyleAttribute)) {
+		styleParser.process(
+			Object.create(attributes, {
+				/**
+				 * If attributes contains an xml:id, it is the region id.
+				 * However, we want to define the id for the styles.
+				 *
+				 * The attributes will be filtered once the style will be
+				 * processed when attributes getter in styleParser is accessed.
+				 */
+				"xml:id": {
+					value: "inline",
+					enumerable: true,
+				},
+			}),
+		);
+	}
 
-	styleParser.process(
-		Object.create(extractNestedStylesChildren(children), {
-			"xml:id": {
-				value: "nested",
-				enumerable: true,
-			},
-		}),
-	);
+	if (children.length) {
+		styleParser.process(
+			Object.create(extractNestedStylesChildren(children), {
+				"xml:id": {
+					value: "nested",
+					enumerable: true,
+				},
+			}),
+		);
+	}
 
 	function stylesRetriever(): TTMLStyle[] {
-		return [styleParser.get("inline"), styleParser.get("nested")];
+		return [styleParser.get("inline"), styleParser.get("nested")].filter(Boolean);
 	}
 
 	const region = new TTMLRegion(
@@ -118,3 +122,38 @@ export class TTMLRegion implements Region {
 		return this.stylesRetriever() || [];
 	}
 }
+
+// set styles(styles: TTMLStyle[]) {
+// 	const stylesContainer: Record<`tts:${string}`, string> = {};
+
+// 	const joinedStylesAttrs = Object.assign(
+// 		{},
+// 		...styles.map(({ attributes }) => attributes),
+// 	) as Record<`tts:${string}`, string>;
+
+// 	for (const attribute in joinedStylesAttrs) {
+// 		switch (attribute) {
+// 			case "tts:origin": {
+// 				const [x = "0", y = "0"] = joinedStylesAttrs[attribute].split("\x20");
+// 				this["origin"] = [`${parseFloat(x)}%`, `${parseFloat(y)}%`];
+
+// 				break;
+// 			}
+
+// 			default: {
+// 				const attr = attribute as `tts:${string}`;
+// 				stylesContainer[attr] = joinedStylesAttrs[attr];
+// 			}
+// 		}
+// 	}
+
+// 	this[styleContainerSymbol] = stylesContainer;
+// }
+
+// get styles(): Record<`tts:${string}`, string> {
+// 	return this[styleContainerSymbol];
+// }
+
+// public get height(): string {
+// 	return this.extent[1];
+// }

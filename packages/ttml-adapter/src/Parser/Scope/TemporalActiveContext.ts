@@ -58,13 +58,7 @@ export function createTemporalActiveContext(
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
 			get args() {
-				return Object.assign(
-					{
-						stylesIDRefs: [],
-						regionIdRef: undefined,
-					},
-					initParams,
-				);
+				return store;
 			},
 			[onAttachedSymbol](): void {
 				const { regionIDRef, styles } = this.args;
@@ -129,23 +123,16 @@ export function createTemporalActiveContext(
 				}
 
 				if (styles?.length) {
-					if (!store.styles?.length) {
-						store.styles.concat(styles);
-						return;
-					}
-
 					const currentStylesIds = new Set(store.styles.map(({ id }) => id));
-					const selectedStyles: ActiveStyle[] = [];
 
 					for (const style of styles) {
 						if (currentStylesIds.has(style.id)) {
 							continue;
 						}
 
-						selectedStyles.push(style);
+						store.styles.push(style);
+						stylesContainer[style.kind].push(style);
 					}
-
-					store.styles.concat(selectedStyles);
 				}
 			},
 			computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]> {
