@@ -8,8 +8,7 @@ import {
 	readScopeTemporalActiveContext,
 } from "./Scope/TemporalActiveContext.js";
 import type { ActiveStyle } from "./Scope/TemporalActiveContext.js";
-import { TTMLStyle, createStyleParser, isStyleAttribute } from "./parseStyle.js";
-import { readScopeStyleContainerContext } from "./Scope/StyleContainerContext.js";
+import { createStyleParser, isStyleAttribute } from "./parseStyle.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	if (!node.children.length) {
@@ -17,49 +16,6 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	}
 
 	const { attributes } = node.content;
-
-	const scopeStyles: ActiveStyle[] = [];
-
-	if (Object.keys(attributes).some(isStyleAttribute)) {
-		const styleParser = createStyleParser(scope);
-
-		styleParser.process(
-			Object.create(attributes, {
-				"xml:id": {
-					value: "inline",
-					enumerable: true,
-				},
-			}),
-		);
-
-		scopeStyles.push(
-			Object.create(styleParser.get("inline"), {
-				kind: {
-					value: "inline",
-				},
-			}) as ActiveStyle,
-		);
-	}
-
-	if (attributes["style"]) {
-		const styleContext = readScopeStyleContainerContext(scope);
-
-		let style: TTMLStyle;
-
-		if (styleContext && (style = styleContext.getStyleByIDRef(attributes["style"]))) {
-			scopeStyles.push(
-				Object.create(style, {
-					kind: {
-						value: "referential",
-					},
-				}),
-			);
-		} else {
-			console.warn(
-				`A referenced style '${attributes["style"]}' has been applied to '${node.content.content}#${attributes["xml:id"] || "unknown-id"}' but it wasn't defined before. Ignored.`,
-			);
-		}
-	}
 
 	/**
 	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
@@ -69,27 +25,13 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
 	 */
 
-	const localScope = createScope(
-		scope,
-		createTimeContext({
-			begin: attributes["begin"],
-			dur: attributes["dur"],
-			end: attributes["end"],
-			timeContainer: attributes["timeContainer"],
-		}),
-		createTemporalActiveContext({
-			regionIDRef: attributes["region"],
-			styles: scopeStyles,
-		}),
-	);
-
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < node.children.length; i++) {
 		const children = node.children[i];
 
 		if (children.content.content === "span") {
-			cues.push(...getCuesFromSpan(children, localScope, attributes["xml:id"] || `unk-par-${i}`));
+			cues.push(...getCuesFromSpan(children, scope, attributes["xml:id"] || `unk-par-${i}`));
 			continue;
 		}
 
@@ -108,7 +50,7 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 				createCueFromAnonymousSpan(
 					children,
 					node.content.attributes["xml:id"] || `unk-span-${i}`,
-					localScope,
+					scope,
 				),
 			);
 
