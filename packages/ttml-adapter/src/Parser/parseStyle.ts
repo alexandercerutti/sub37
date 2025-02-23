@@ -261,7 +261,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * Not known
+	 * This property defines the size an element should have
+	 * while in the Block Progress Dimension (bpd) which will
+	 * be vertical when writing mode is from left to right (or
+	 * viceversa) and horizonal when writing mode is from top
+	 * to bottom (or viceversa?)
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-bpd
 	 * @see https://w3c.github.io/ttml2/#derivation-bpd
@@ -461,7 +465,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * Not known
+	 * This property defines the size an element should have
+	 * while in the Inline Progress Dimension (ipd) which will
+	 * be horizotal when writing mode is from left to right (or
+	 * viceversa) and vertical when writing mode is from top
+	 * to bottom (or viceversa?)
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-ipd
 	 * @see https://w3c.github.io/ttml2/#derivation-ipd
