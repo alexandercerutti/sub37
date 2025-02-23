@@ -481,17 +481,10 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 
 	let entityDifferenceIndex = 0;
 
-	const longestCueEntitiesLength = Math.max(
-		currentCue.entities.length,
-		previousCue.entities.length,
-	);
+	const currentEntities = currentCue.entities.filter(isTagEntityOrLocalStyleEntity);
+	const previousEntities = previousCue.entities.filter(isTagEntityOrLocalStyleEntity);
 
-	const currentEntities = currentCue.entities.filter(
-		(e) => Entities.isTagEntity(e) || Entities.isLocalStyleEntity(e),
-	);
-	const previousEntities = previousCue.entities.filter(
-		(e) => Entities.isTagEntity(e) || Entities.isLocalStyleEntity(e),
-	);
+	const longestCueEntitiesLength = Math.max(currentEntities.length, previousEntities.length);
 
 	for (let i = entityDifferenceIndex; i < longestCueEntitiesLength; i++, entityDifferenceIndex++) {
 		if (!currentEntities[i] || !previousEntities[i]) {
@@ -534,8 +527,15 @@ function getCueNodeFragmentSubtree(
 ): [root: Node, textNode: Text] {
 	const textNode = document.createTextNode(currentCue.content);
 
-	return [
-		wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities.slice(entityDifferenceIndex)),
-		textNode,
-	];
+	const filteredEntities = currentCue.entities
+		.filter(isTagEntityOrLocalStyleEntity)
+		.slice(entityDifferenceIndex);
+
+	return [wrapIntoEntitiesDocumentFragment(textNode, filteredEntities), textNode];
+}
+
+function isTagEntityOrLocalStyleEntity(
+	entity: Entities.AllEntities,
+): entity is Entities.TagEntity | Entities.LocalStyleEntity {
+	return Entities.isTagEntity(entity) || Entities.isLocalStyleEntity(entity);
 }
