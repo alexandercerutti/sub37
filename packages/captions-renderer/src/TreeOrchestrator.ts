@@ -462,6 +462,10 @@ function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement {
  * is the DOM line depth level) at which the first
  * different entity should be inserted.
  *
+ * Entities should always be in the same and same
+ * position when they are in similar cues in order
+ * for rendering to work properly.
+ *
  * @param currentCue
  * @param previousCue
  * @returns
@@ -494,7 +498,7 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 		const currentCueEntity = currentEntities[i];
 		const previousCueEntity = previousEntities[i];
 
-		if (currentCueEntity.type !== previousCueEntity.type) {
+		if (currentCueEntity !== previousCueEntity) {
 			break;
 		}
 
