@@ -171,11 +171,10 @@ div.region div > p.line-block > span {
 			const cue = cueData[i];
 			const prevCue = cueData[i - 1];
 
-			const modifierId =
-				getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers) || i;
+			const modifierId = getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers);
 
 			const regionIdentifier = cue.region?.id || "default";
-			const region = `${regionIdentifier}-${modifierId}`;
+			const region = modifierId ? `${regionIdentifier}-${modifierId}` : regionIdentifier;
 
 			if (!cueGroupsByRegion[region]) {
 				cueGroupsByRegion[region] = [];
