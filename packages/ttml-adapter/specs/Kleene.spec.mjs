@@ -6,8 +6,15 @@ describe("Kleene", () => {
 	 * @param {string} nodeName
 	 * @returns {boolean}
 	 */
-
 	function matches(nodeName) {
+		return true;
+	}
+
+	/**
+	 * @param {string} attr
+	 * @returns {boolean}
+	 */
+	function matchesAttribute(attr) {
 		return true;
 	}
 
@@ -17,6 +24,7 @@ describe("Kleene", () => {
 				nodeName: "test",
 				destinationFactory: () => [],
 				matches,
+				matchesAttribute,
 			});
 
 			expect(operator.matches("test")).toBe(true);
@@ -33,6 +41,7 @@ describe("Kleene", () => {
 						matches(nodeName) {
 							return nodeName === "testA";
 						},
+						matchesAttribute,
 					},
 					{
 						nodeName: "testB",
@@ -40,6 +49,7 @@ describe("Kleene", () => {
 						matches(nodeName) {
 							return nodeName === "testB";
 						},
+						matchesAttribute,
 					},
 				),
 			);
@@ -56,6 +66,7 @@ describe("Kleene", () => {
 				nodeName: "test",
 				destinationFactory: () => [],
 				matches,
+				matchesAttribute,
 			});
 
 			expect(operator.matches("test")).toBe(true);
@@ -68,6 +79,7 @@ describe("Kleene", () => {
 				nodeName: "test",
 				destinationFactory: () => [],
 				matches,
+				matchesAttribute,
 			});
 
 			expect(() => operator.matches("test1")).toThrowError();
@@ -78,6 +90,7 @@ describe("Kleene", () => {
 				nodeName: "test",
 				destinationFactory: () => [],
 				matches,
+				matchesAttribute,
 			});
 
 			expect(operator.matches("test")).toBe(true);
@@ -93,6 +106,7 @@ describe("Kleene", () => {
 						matches(nodeName) {
 							return nodeName === "testA";
 						},
+						matchesAttribute,
 					},
 					{
 						nodeName: "testB",
@@ -100,6 +114,7 @@ describe("Kleene", () => {
 						matches() {
 							return false;
 						},
+						matchesAttribute,
 					},
 				),
 			);
@@ -116,6 +131,7 @@ describe("Kleene", () => {
 				nodeName: "test",
 				destinationFactory: () => [],
 				matches,
+				matchesAttribute,
 			});
 
 			expect(operator.matches("test")).toBe(true);
@@ -131,6 +147,7 @@ describe("Kleene", () => {
 						matches(nodeName) {
 							return nodeName === "testA";
 						},
+						matchesAttribute,
 					},
 					{
 						nodeName: "testB",
@@ -138,6 +155,7 @@ describe("Kleene", () => {
 						matches() {
 							return true;
 						},
+						matchesAttribute,
 					},
 				),
 			);
