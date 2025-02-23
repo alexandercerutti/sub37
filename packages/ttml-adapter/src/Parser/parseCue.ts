@@ -58,6 +58,18 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 		}
 	}
 
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	if (temporalActiveContext) {
+		const lineEntity = Entities.createLineStyleEntity(
+			temporalActiveContext.computeStylesForElement("p"),
+		);
+
+		for (const cue of cues) {
+			cue.entities.push(lineEntity);
+		}
+	}
+
 	return cues;
 }
 
@@ -207,10 +219,6 @@ function createCueFromAnonymousSpan(
 		/** @TODO Fix region association */
 		region: undefined,
 		entities: [
-			/**
-			 * @TODO some styles might get repeated between p and span
-			 */
-			Entities.createLineStyleEntity(temporalActiveContext.computeStylesForElement("p")),
 			Entities.createLocalStyleEntity(
 				/**
 				 * "For the purpose of determining the applicability of a style property,
