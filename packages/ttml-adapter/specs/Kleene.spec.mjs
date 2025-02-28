@@ -78,18 +78,24 @@ describe("Kleene", () => {
 			const operator = Kleene.oneOrMore({
 				nodeName: "test",
 				destinationFactory: () => [],
-				matches,
+				matches(nodeName) {
+					return this.nodeName === nodeName;
+				},
 				matchesAttribute,
 			});
 
-			expect(() => operator.matches("test1")).toThrowError();
+			expect(() => {
+				operator.matches("test1");
+			}).toThrowError();
 		});
 
 		it("should not throw an error if an element is found now and not found later", () => {
 			const operator = Kleene.oneOrMore({
 				nodeName: "test",
 				destinationFactory: () => [],
-				matches,
+				matches(nodeName) {
+					return this.nodeName === nodeName;
+				},
 				matchesAttribute,
 			});
 

@@ -99,7 +99,7 @@ describe("parseCue", () => {
 
 		const scope = createScope(
 			undefined,
-			createDocumentContext(new NodeTree(), {}),
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 			createTemporalActiveContext({}),
 		);
 
@@ -220,7 +220,7 @@ describe("parseCue", () => {
 
 		const scope = createScope(
 			undefined,
-			createDocumentContext(new NodeTree(), {}),
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 			createTimeContext({
 				begin: "0s",
 				end: "25s",

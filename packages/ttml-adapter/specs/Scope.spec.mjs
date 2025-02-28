@@ -162,7 +162,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end and dur, on the same context", () => {
 			const scope = createScope(
 				undefined,
-				createDocumentContext(new NodeTree(), {}),
+				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 				createTimeContext({
 					end: "10s",
 					dur: "20s",
@@ -175,7 +175,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end and dur, on the different contexts", () => {
 			const scope1 = createScope(
 				undefined,
-				createDocumentContext(new NodeTree(), {}),
+				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 				createTimeContext({
 					end: "20s",
 				}),
@@ -194,7 +194,7 @@ describe("Scope and contexts", () => {
 		it("should return the minimum between end - begin and dur plus the startTime, when begin is specified", () => {
 			const scope1 = createScope(
 				undefined,
-				createDocumentContext(new NodeTree(), {}),
+				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 				createTimeContext({
 					begin: "5s",
 					end: "20s",
@@ -214,7 +214,7 @@ describe("Scope and contexts", () => {
 		it("should return infinity if neither dur and end are specified", () => {
 			const scope = createScope(
 				undefined,
-				createDocumentContext(new NodeTree(), {}),
+				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 				createTimeContext({
 					timeContainer: "par",
 				}),
@@ -227,7 +227,7 @@ describe("Scope and contexts", () => {
 			const scope1 = createScope(
 				createScope(
 					undefined,
-					createDocumentContext(new NodeTree(), {}),
+					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 					createTimeContext({
 						timeContainer: "seq",
 					}),
