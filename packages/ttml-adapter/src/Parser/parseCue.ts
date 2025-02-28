@@ -210,6 +210,21 @@ function createCueFromAnonymousSpan(
 	const timeContext = readScopeTimeContext(localScope);
 	const temporalActiveContext = readScopeTemporalActiveContext(localScope);
 
+	const entities: Entities.AllEntities[] = [];
+
+	if (temporalActiveContext) {
+		/**
+		 * "For the purpose of determining the applicability of a style property,
+		 * if the style property is defined so as to apply to a span element,
+		 * then it also applies to anonymous span elements."
+		 */
+		const styles = temporalActiveContext.computeStylesForElement("span");
+
+		if (Object.keys(styles).length) {
+			entities.push(Entities.createLocalStyleEntity(styles));
+		}
+	}
+
 	return new CueNode({
 		id: parentId,
 		content,
@@ -218,16 +233,7 @@ function createCueFromAnonymousSpan(
 
 		/** @TODO Fix region association */
 		region: undefined,
-		entities: [
-			Entities.createLocalStyleEntity(
-				/**
-				 * "For the purpose of determining the applicability of a style property,
-				 * if the style property is defined so as to apply to a span element,
-				 * then it also applies to anonymous span elements."
-				 */
-				temporalActiveContext.computeStylesForElement("span"),
-			),
-		],
+		entities,
 	});
 }
 
