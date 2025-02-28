@@ -85,29 +85,6 @@ function getCuesFromSpan(
 	const cues: CueNode[] = [];
 	const { attributes } = node.content;
 
-	const scopeStyles: ActiveStyle[] = [];
-
-	if (Object.keys(attributes).some(isStyleAttribute)) {
-		const styleParser = createStyleParser(scope);
-
-		styleParser.process(
-			Object.create(attributes, {
-				"xml:id": {
-					value: "inline",
-					enumerable: true,
-				},
-			}),
-		);
-
-		scopeStyles.push(
-			Object.create(styleParser.get("inline"), {
-				kind: {
-					value: "inline",
-				},
-			}) as ActiveStyle,
-		);
-	}
-
 	const localScope = createScope(
 		scope,
 		createTimeContext({
@@ -115,10 +92,6 @@ function getCuesFromSpan(
 			dur: attributes["dur"],
 			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
-		}),
-		createTemporalActiveContext({
-			regionIDRef: attributes["region"],
-			styles: scopeStyles,
 		}),
 	);
 
