@@ -100,7 +100,10 @@ describe("parseCue", () => {
 		const scope = createScope(
 			undefined,
 			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-			createTemporalActiveContext({}),
+			/**
+			 * Paragraph timeContainer is set outside parseCue
+			 */
+			createTimeContext(Paragraph.content.attributes),
 		);
 
 		const parsed = parseCue(Paragraph, scope);

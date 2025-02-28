@@ -157,7 +157,7 @@ function createCueFromAnonymousSpan(
 	scope: Scope,
 ): CueNode[] {
 	const {
-		content: { content },
+		content: { content, attributes },
 	} = node;
 
 	/**
