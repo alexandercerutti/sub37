@@ -60,14 +60,18 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 		return [styleParser.get("inline"), styleParser.get("nested")].filter(Boolean);
 	}
 
-	const region = new TTMLRegion(
-		attributes["xml:id"] || "inline",
-		{
+	const regionTimingAttributes =
+		(hasTimingAttributes(attributes) && {
 			begin: attributes["begin"],
 			dur: attributes["dur"],
 			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
-		},
+		}) ||
+		undefined;
+
+	const region = new TTMLRegion(
+		attributes["xml:id"] || "inline",
+		regionTimingAttributes,
 		stylesRetriever,
 	);
 
@@ -102,7 +106,7 @@ export class TTMLRegion implements Region {
 
 	public constructor(
 		id: string,
-		timingAttributes: TimeContextData,
+		timingAttributes: TimeContextData | undefined,
 		stylesRetriever: TTMLRegion["stylesRetriever"],
 	) {
 		this.id = id;
@@ -121,6 +125,23 @@ export class TTMLRegion implements Region {
 	public get styles(): TTMLStyle[] {
 		return this.stylesRetriever() || [];
 	}
+}
+
+/**
+ * Checks if the element is suitable for
+ * containing time attributes and if it
+ * actually have them
+ *
+ * @param token
+ * @returns
+ */
+function hasTimingAttributes(attributes: Record<string, string>): boolean {
+	return (
+		"begin" in attributes ||
+		"end" in attributes ||
+		"dur" in attributes ||
+		"timeContainer" in attributes
+	);
 }
 
 // set styles(styles: TTMLStyle[]) {

@@ -154,3 +154,28 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 		},
 	});
 }
+
+/**
+ * When reading a context, this masks the parent property
+ * with a getter, in order to prevent internal properties to
+ * access it.
+ *
+ * @param context
+ * @returns
+ */
+
+export function isolateContext<CT extends Context>(
+	context: CT,
+): (Omit<CT, "parent"> & { parent: undefined }) | undefined {
+	if (!context) {
+		return undefined;
+	}
+
+	return Object.create(context, {
+		parent: {
+			get() {
+				return undefined;
+			},
+		},
+	});
+}

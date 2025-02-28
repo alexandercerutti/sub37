@@ -72,18 +72,38 @@ describe("Adapter", () => {
 							</tt>
 							`);
 
-					expect(cues.length).toBe(3);
+					expect(cues.length).toBe(8);
 					expect(cues[0]).toMatchObject({
-						startTime: 3000,
-						endTime: 5000,
+						startTime: 0,
+						endTime: 3000,
 					});
 					expect(cues[1]).toMatchObject({
 						startTime: 3000,
-						endTime: 8000,
+						endTime: 5000,
 					});
 					expect(cues[2]).toMatchObject({
+						startTime: 5000,
+						endTime: Infinity,
+					});
+					expect(cues[3]).toMatchObject({
+						startTime: 0,
+						endTime: 3000,
+					});
+					expect(cues[4]).toMatchObject({
+						startTime: 3000,
+						endTime: 8000,
+					});
+					expect(cues[5]).toMatchObject({
+						startTime: 8000,
+						endTime: Infinity,
+					});
+					expect(cues[6]).toMatchObject({
 						startTime: 0,
 						endTime: 5000,
+					});
+					expect(cues[7]).toMatchObject({
+						startTime: 5000,
+						endTime: Infinity,
 					});
 				});
 
@@ -104,10 +124,15 @@ describe("Adapter", () => {
 						</tt>
 					`);
 
-					expect(cues.length).toBe(1);
+					expect(cues.length).toBe(2);
 					expect(cues[0]).toMatchObject({
 						content: "Paragraph flowed inside r1",
 						startTime: 0,
+						endTime: 1300,
+					});
+					expect(cues[1]).toMatchObject({
+						content: "Paragraph flowed inside r1",
+						startTime: 1300,
 						endTime: Infinity,
 					});
 				});
@@ -117,7 +142,7 @@ describe("Adapter", () => {
 				it("should emit a cue from anonymous span with indefinite active duration when sequential parent doesn't specify a duration", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
-						<tt ttp:timeBase="media">
+						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
 									<p>Test cue</p>
@@ -136,7 +161,7 @@ describe("Adapter", () => {
 				it("should emit a cue from anonymous span with active duration of 0s when parent is sequential", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
-						<tt ttp:timeBase="media">
+						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div>
 									<p begin="0s" timeContainer="seq">
@@ -157,7 +182,7 @@ describe("Adapter", () => {
 				it("should emit a cue from anonymous span with active duration of 3s when parent is sequential", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
-						<tt ttp:timeBase="media">
+						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
 									<p dur="3s">Test cue 1</p>

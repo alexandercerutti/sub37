@@ -1,14 +1,9 @@
 import { CueNode, Entities } from "@sub37/server";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
-import { type Scope, createScope } from "./Scope/Scope.js";
+import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
-import {
-	createTemporalActiveContext,
-	readScopeTemporalActiveContext,
-} from "./Scope/TemporalActiveContext.js";
-import type { ActiveStyle } from "./Scope/TemporalActiveContext.js";
-import { createStyleParser, isStyleAttribute } from "./parseStyle.js";
+import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
 	if (!node.children.length) {
@@ -25,7 +20,7 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
 	 */
 
-	const cues: CueNode[] = [];
+	let cues: CueNode[] = [];
 
 	for (let i = 0; i < node.children.length; i++) {
 		const children = node.children[i];
@@ -46,7 +41,7 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 				continue;
 			}
 
-			cues.push(
+			cues = cues.concat(
 				createCueFromAnonymousSpan(
 					children,
 					node.content.attributes["xml:id"] || `unk-span-${i}`,
@@ -82,7 +77,7 @@ function getCuesFromSpan(
 		return [];
 	}
 
-	const cues: CueNode[] = [];
+	let cues: CueNode[] = [];
 	const { attributes } = node.content;
 
 	const localScope = createScope(
@@ -128,7 +123,7 @@ function getCuesFromSpan(
 
 		if (children.content.type === TokenType.STRING) {
 			if (!cues.length) {
-				cues.push(
+				cues = cues.concat(
 					createCueFromAnonymousSpan(
 						children,
 						node.content.attributes["xml:id"] || `unk-span-${i}`,
@@ -160,9 +155,9 @@ function createCueFromAnonymousSpan(
 	node: NodeWithRelationship<Token>,
 	parentId: string,
 	scope: Scope,
-): CueNode {
+): CueNode[] {
 	const {
-		content: { content, attributes },
+		content: { content },
 	} = node;
 
 	/**
@@ -180,7 +175,6 @@ function createCueFromAnonymousSpan(
 		}),
 	);
 
-	const timeContext = readScopeTimeContext(localScope);
 	const temporalActiveContext = readScopeTemporalActiveContext(localScope);
 
 	const entities: Entities.AllEntities[] = [];
@@ -198,16 +192,24 @@ function createCueFromAnonymousSpan(
 		}
 	}
 
-	return new CueNode({
-		id: parentId,
-		content,
-		startTime: timeContext.startTime,
-		endTime: timeContext.endTime,
+	const timeIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(localScope);
 
-		/** @TODO Fix region association */
-		region: undefined,
-		entities,
-	});
+	const cues: CueNode[] = [];
+
+	for (const [startTime, endTime, isRegion] of timeIntervals) {
+		cues.push(
+			new CueNode({
+				id: parentId,
+				content,
+				startTime,
+				endTime,
+				region: isRegion ? temporalActiveContext.region : undefined,
+				entities,
+			}),
+		);
+	}
+
+	return cues;
 }
 
 function isTimestamp(attributes: Record<string, string>): boolean {
@@ -216,4 +218,146 @@ function isTimestamp(attributes: Record<string, string>): boolean {
 		typeof attributes["end"] === "undefined" &&
 		typeof attributes["dur"] === "undefined"
 	);
+}
+
+type TemporalIntervalList = [startTime: number, endTime: number, isRegion: 0 | 1][];
+
+/**
+ * A region can specify timing attributes for which
+ * its activation is elegible for.
+ *
+ * We have to segment the timeline and the cues
+ * in order to make them activate only in that specific
+ * time shift.
+ */
+function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): TemporalIntervalList {
+	const tac = readScopeTemporalActiveContext(scope);
+	const region = tac?.region;
+
+	if (!region?.timingAttributes) {
+		const cueTimeContext = readScopeTimeContext(scope);
+
+		return [[cueTimeContext.startTime, cueTimeContext.endTime, 0]];
+	}
+
+	const regionScope = createScope(
+		//
+		scope,
+		createTimeContext(region.timingAttributes),
+	);
+
+	const regionTimeContext = isolateContext(readScopeTimeContext(regionScope));
+	const cueTimeContext = readScopeTimeContext(scope);
+
+	return getTimeIntervalsByTimeContexts(regionTimeContext, cueTimeContext);
+}
+
+type TimeContext = ReturnType<typeof readScopeTimeContext>;
+
+function getTimeIntervalsByTimeContexts(
+	regionTimeContext: TimeContext,
+	cueTimeContext: TimeContext,
+): TemporalIntervalList {
+	const regionStartTime = regionTimeContext.startTime;
+	const regionEndTime = regionTimeContext.endTime;
+
+	const cueStartTime = cueTimeContext.startTime;
+	const cueEndTime = cueTimeContext.endTime;
+
+	let timeIntervals: TemporalIntervalList = [];
+
+	if (regionStartTime > cueStartTime) {
+		/**
+		 *  |-----|...
+		 * cst   rst
+		 */
+
+		timeIntervals.push(
+			//
+			[cueStartTime, regionStartTime, 0],
+		);
+
+		if (regionEndTime < cueEndTime) {
+			/**
+			 *  |:::::|----|-----|
+			 * cst   rst  ret   cet
+			 */
+
+			timeIntervals.push(
+				//
+				[regionStartTime, regionEndTime, 1],
+				[regionEndTime, cueEndTime, 0],
+			);
+		} else {
+			/**
+			 *  |:::::|-------|
+			 * cst   rst  ret>=cet
+			 */
+
+			timeIntervals.push(
+				//
+				[regionStartTime, cueEndTime, 1],
+			);
+		}
+
+		return timeIntervals;
+	}
+
+	if (regionStartTime === cueStartTime) {
+		if (regionEndTime < cueEndTime) {
+			/**
+			 * Two segments:
+			 *
+			 *    |------|-----|
+			 * rst=cst  ret   cet
+			 */
+
+			timeIntervals.push(
+				//
+				[regionStartTime, regionEndTime, 1],
+				[regionEndTime, cueEndTime, 0],
+			);
+		} else {
+			/**
+			 * One segment:
+			 *
+			 *    |----------|
+			 * rst=cst   ret>=cet
+			 */
+
+			timeIntervals.push([regionStartTime, cueEndTime, 1]);
+		}
+
+		return timeIntervals;
+	}
+
+	// ofc, rst < cst
+	if (regionEndTime < cueEndTime) {
+		/**
+		 *  |-----|-----|-----|
+		 * cst   rst   ret   cet
+		 */
+
+		timeIntervals.push(
+			[cueStartTime, regionStartTime, 0],
+			[regionStartTime, regionEndTime, 1],
+			[regionEndTime, cueEndTime, 0],
+		);
+	} else {
+		/**
+		 *  |-----|--------|
+		 * cst   rst   ret>=cet
+		 */
+
+		timeIntervals.push(
+			//
+			[cueStartTime, cueEndTime, 1],
+		);
+	}
+
+	if (!timeIntervals.length) {
+		return [[cueStartTime, cueEndTime, 0]];
+	}
+
+	return timeIntervals;
 }
