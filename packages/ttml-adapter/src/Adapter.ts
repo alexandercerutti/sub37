@@ -389,8 +389,15 @@ export default class TTMLAdapter extends BaseAdapter {
 					/**
 					 * Using "begin" because if an element supports it,
 					 * it must support "end", "dur" and "timeContainer" as well.
+					 *
+					 * A time context should always get created because we
+					 * might have an element with `timeContainer` attribute
+					 * that must be read by its children.
+					 *
+					 * @TODO animation elements support all but timeContainer.
+					 * How should we improve the check here?
 					 */
-					if (destinationMatch.matchesAttribute("begin") && hasTimingAttributes(token)) {
+					if (destinationMatch.matchesAttribute("begin")) {
 						contextsList.push(
 							createTimeContext({
 								begin: token.attributes["begin"],
@@ -679,25 +686,6 @@ function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean
 	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 
 	return Boolean(temporalActiveContext?.regionIdRef || isDefaultRegionActive(scope));
-}
-
-/**
- * Checks if the element is suitable for
- * containing time attributes and if it
- * actually have them
- *
- * @param token
- * @returns
- */
-function hasTimingAttributes(token: Token): boolean {
-	const { attributes } = token;
-
-	return (
-		"begin" in attributes ||
-		"end" in attributes ||
-		"dur" in attributes ||
-		"timeContainer" in attributes
-	);
 }
 
 function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
