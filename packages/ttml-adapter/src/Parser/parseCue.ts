@@ -168,9 +168,6 @@ function createCueFromAnonymousSpan(
 	const localScope = createScope(
 		scope,
 		createTimeContext({
-			begin: attributes["begin"],
-			dur: attributes["dur"],
-			end: attributes["end"],
 			timeContainer: attributes["timeContainer"],
 		}),
 	);
