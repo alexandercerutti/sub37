@@ -289,29 +289,13 @@ describe("parseCue", () => {
 });
 
 describe("Cell Resolution", () => {
-	it("should default if not available", () => {
-		/**
-		 * @TODO
-		 */
-	});
+	it.todo("should default if not available");
 
-	it("should default if its values are incorrect", () => {
-		/**
-		 * @TODO
-		 */
-	});
+	it.todo("should default if its values are incorrect");
 
-	it("should be used it available and correct", () => {
-		/**
-		 * @TODO
-		 */
-	});
+	it.todo("should be used it available and correct");
 
-	it("should be allowed to be converted to pixels", () => {
-		/**
-		 * @TODO
-		 */
-	});
+	it.todo("should be allowed to be converted to pixels");
 
 	/**
 	 * @TODO Add tests for font-size cell conversion to pixel
@@ -330,22 +314,10 @@ describe("Lengths", () => {
 
 describe("Styling", () => {
 	describe("Chaining Referential Styling", () => {
-		it("should be applied if one IDREF is specified through style attribute", () => {
-			/**
-			 * @TODO
-			 */
-		});
+		it.todo("should be applied if one IDREF is specified through style attribute");
 
-		it("should be applied if multiple IDREFs are specified through style attribute", () => {
-			/**
-			 * @TODO
-			 */
-		});
+		it.todo("should be applied if multiple IDREFs are specified through style attribute");
 
-		it("should throw if there's a loop in styling referencing chain", () => {
-			/**
-			 * @TODO
-			 */
-		});
+		it.todo("should throw if there's a loop in styling referencing chain");
 	});
 });
