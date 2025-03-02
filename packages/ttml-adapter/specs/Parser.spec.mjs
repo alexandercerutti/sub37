@@ -6,83 +6,111 @@ import { createScope } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import { TokenType } from "../lib/Parser/Token.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
-import { createTemporalActiveContext } from "../lib/Parser/Scope/TemporalActiveContext.js";
 import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
+import { nodeScopeSymbol } from "../lib/Adapter.js";
+
+/**
+ * @param {import("../lib/Parser/Tags/NodeTree.js").NodeWithRelationship<import("./NodeTree.spec.mjs").Token & import("../lib/Adapter.js").NodeWithScope>} node
+ */
+
+function linkChildrenAndParents(node) {
+	for (const child of node.children) {
+		child.parent = node;
+		child.content[nodeScopeSymbol] = createScope(
+			node.content[nodeScopeSymbol],
+			createTimeContext({
+				begin: child.content.attributes["begin"],
+				end: child.content.attributes["end"],
+				dur: child.content.attributes["dur"],
+				timeContainer: undefined,
+			}),
+		);
+		linkChildrenAndParents(child);
+	}
+}
 
 describe("parseCue", () => {
 	it("should be coherent with anonymous span", () => {
-		const Hello = {
-			content: {
-				content: "Hello",
-				attributes: {},
-				type: TokenType.STRING,
-			},
-			children: [],
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+		);
+
+		const paragraphAttrs = {
+			timeContainer: "seq",
+			"xml:id": "par-01",
 		};
 
-		const Guten = {
-			content: {
-				content: "Guten ",
-				attributes: {},
-				type: TokenType.STRING,
-			},
-			children: [],
-		};
+		const paragraphScope = createScope(
+			baseScope,
+			/**
+			 * Paragraph timeContainer is set outside parseCue
+			 */
+			createTimeContext(paragraphAttrs),
+		);
 
-		const Tag = {
+		const Paragraph = {
 			content: {
-				content: "Tag",
-				attributes: {},
-				type: TokenType.STRING,
-			},
-			children: [],
-		};
-
-		const NamedSpan1 = {
-			content: {
-				content: "span",
-				attributes: {},
+				[nodeScopeSymbol]: paragraphScope,
+				content: "p",
+				attributes: paragraphAttrs,
 				type: TokenType.START_TAG,
 			},
 			children: [
-				Guten,
+				{
+					content: {
+						content: "Hello",
+						attributes: {},
+						type: TokenType.STRING,
+					},
+					children: [],
+				},
 				{
 					content: {
 						content: "span",
 						attributes: {},
 						type: TokenType.START_TAG,
 					},
-					children: [Tag],
+					children: [
+						{
+							content: {
+								content: "Guten ",
+								attributes: {},
+								type: TokenType.STRING,
+							},
+							children: [],
+						},
+						{
+							content: {
+								content: "span",
+								attributes: {},
+								type: TokenType.START_TAG,
+							},
+							children: [
+								{
+									content: {
+										content: "Tag",
+										attributes: {},
+										type: TokenType.STRING,
+									},
+									children: [],
+								},
+							],
+						},
+					],
+				},
+				{
+					content: {
+						content: "Allo",
+						attributes: {},
+						type: TokenType.STRING,
+					},
+					children: [],
 				},
 			],
 		};
 
-		const Allo = {
-			content: {
-				content: "Allo",
-				attributes: {},
-				type: TokenType.STRING,
-			},
-			children: [],
-		};
-
-		const Paragraph = {
-			content: {
-				content: "p",
-				attributes: {
-					timeContainer: "seq",
-					"xml:id": "par-01",
-				},
-				type: TokenType.START_TAG,
-			},
-			children: [Hello, NamedSpan1, Allo],
-		};
-
-		Hello.parent = Paragraph;
-		Allo.parent = Paragraph;
-		NamedSpan1.parent = Paragraph;
-		Guten.parent = NamedSpan1;
-		Tag.parent = NamedSpan1.children[0];
+		linkChildrenAndParents(Paragraph);
 
 		/**
 		 * <p timeContainer="seq" xml:id="par-01">
@@ -97,16 +125,7 @@ describe("parseCue", () => {
 		 * </p>
 		 */
 
-		const scope = createScope(
-			undefined,
-			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-			/**
-			 * Paragraph timeContainer is set outside parseCue
-			 */
-			createTimeContext(Paragraph.content.attributes),
-		);
-
-		const parsed = parseCue(Paragraph, scope);
+		const parsed = parseCue(Paragraph);
 
 		expect(parsed).toBeInstanceOf(Array);
 		expect(parsed.length).toBe(4);
@@ -133,12 +152,31 @@ describe("parseCue", () => {
 	});
 
 	it("should be return timestamps", () => {
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+			createTimeContext({}),
+		);
+
+		const paragraphAttrs = {
+			"xml:id": "par-01",
+			begin: "0s",
+			end: "25s",
+		};
+
+		const paragraphScope = createScope(
+			baseScope,
+			/**
+			 * Paragraph timeContainer is set outside parseCue
+			 */
+			createTimeContext(paragraphAttrs),
+		);
+
 		const Paragraph1 = {
 			content: {
+				[nodeScopeSymbol]: paragraphScope,
 				content: "p",
-				attributes: {
-					"xml:id": "par-01",
-				},
+				attributes: paragraphAttrs,
 				type: TokenType.START_TAG,
 			},
 			children: [
@@ -221,15 +259,9 @@ describe("parseCue", () => {
 			],
 		};
 
-		const scope = createScope(
-			undefined,
-			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-			createTimeContext({
-				begin: "0s",
-				end: "25s",
-			}),
-		);
-		const parsed = parseCue(Paragraph1, scope);
+		linkChildrenAndParents(Paragraph1);
+
+		const parsed = parseCue(Paragraph1);
 
 		expect(parsed).toBeInstanceOf(Array);
 		expect(parsed.length).toBe(4);

@@ -29,7 +29,7 @@ import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepres
 import { createStyleParser } from "./Parser/parseStyle.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
-const nodeScopeSymbol = Symbol("nodeScopeSymbol");
+export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
 const nodeMatchSymbol = Symbol("nodeMatchSymbol");
 
 enum NodeAttributes {
@@ -41,7 +41,7 @@ interface NodeWithAttributes {
 	[nodeAttributesSymbol]: NodeAttributes;
 }
 
-interface NodeWithScope {
+export interface NodeWithScope {
 	[nodeScopeSymbol]?: Scope;
 }
 
@@ -183,7 +183,26 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					nodeTree.track(createNodeWithAttributes(token, NodeAttributes.NO_ATTRS));
+					/**
+					 * Creating a new scope to allow
+					 * anonymous spans to access to parents
+					 * `timeContainer`. On their own, they do
+					 * not specify any timing detail.
+					 */
+
+					const localScope = createScope(
+						treeScope,
+						createTimeContext({
+							timeContainer: undefined,
+						}),
+					);
+
+					nodeTree.track(
+						createNodeWithAttributes(
+							createNodeWithScope(token, localScope),
+							NodeAttributes.NO_ATTRS,
+						),
+					);
 					break;
 				}
 
@@ -525,7 +544,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					) {
 						if (currentTag === "p") {
 							const node = currentElement;
-							cues.push(...parseCue(node, currentElement.content[nodeScopeSymbol]));
+							cues = cues.concat(parseCue(node));
 						}
 
 						break;

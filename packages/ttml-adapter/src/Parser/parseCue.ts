@@ -4,8 +4,9 @@ import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
+import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 
-export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNode[] {
+export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): CueNode[] {
 	if (!node.children.length) {
 		return [];
 	}
@@ -26,7 +27,7 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 		const children = node.children[i];
 
 		if (children.content.content === "span") {
-			cues.push(...getCuesFromSpan(children, scope, attributes["xml:id"] || `unk-par-${i}`));
+			cues.push(...getCuesFromSpan(children, attributes["xml:id"] || `unk-par-${i}`));
 			continue;
 		}
 
@@ -42,18 +43,14 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 			}
 
 			cues = cues.concat(
-				createCueFromAnonymousSpan(
-					children,
-					node.content.attributes["xml:id"] || `unk-span-${i}`,
-					scope,
-				),
+				createCueFromAnonymousSpan(children, node.content.attributes["xml:id"] || `unk-span-${i}`),
 			);
 
 			continue;
 		}
 	}
 
-	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+	const temporalActiveContext = readScopeTemporalActiveContext(node.content[nodeScopeSymbol]);
 
 	if (temporalActiveContext) {
 		const lineEntity = Entities.createLineStyleEntity(
@@ -69,31 +66,22 @@ export function parseCue(node: NodeWithRelationship<Token>, scope: Scope): CueNo
 }
 
 function getCuesFromSpan(
-	node: NodeWithRelationship<Token>,
-	scope: Scope,
+	node: NodeWithRelationship<Token & NodeWithScope>,
 	parentId: string,
 ): CueNode[] {
 	if (!node.children.length) {
 		return [];
 	}
 
+	const scope = node.content[nodeScopeSymbol];
+
 	let cues: CueNode[] = [];
 	const { attributes } = node.content;
-
-	const localScope = createScope(
-		scope,
-		createTimeContext({
-			begin: attributes["begin"],
-			dur: attributes["dur"],
-			end: attributes["end"],
-			timeContainer: attributes["timeContainer"],
-		}),
-	);
 
 	const nextCueID = attributes["xml:id"] || parentId;
 
 	if (isTimestamp(attributes)) {
-		const timeContext = readScopeTimeContext(localScope);
+		const timeContext = readScopeTimeContext(scope);
 
 		cues.push(
 			new CueNode({
@@ -112,7 +100,7 @@ function getCuesFromSpan(
 		const children = node.children[i];
 
 		if (children.content.content === "span") {
-			cues.push(...getCuesFromSpan(children, localScope, parentId));
+			cues.push(...getCuesFromSpan(children, parentId));
 			continue;
 		}
 
@@ -127,7 +115,6 @@ function getCuesFromSpan(
 					createCueFromAnonymousSpan(
 						children,
 						node.content.attributes["xml:id"] || `unk-span-${i}`,
-						localScope,
 					),
 				);
 
@@ -152,27 +139,14 @@ function processLineBreak(cue: CueNode | undefined): void {
 }
 
 function createCueFromAnonymousSpan(
-	node: NodeWithRelationship<Token>,
+	node: NodeWithRelationship<Token & NodeWithScope>,
 	parentId: string,
-	scope: Scope,
 ): CueNode[] {
 	const {
-		content: { content, attributes },
+		content: { content, [nodeScopeSymbol]: scope },
 	} = node;
 
-	/**
-	 * A new scope is requires here otherwise anonymous
-	 * span are not able to inherit the `timeContainer`
-	 */
-
-	const localScope = createScope(
-		scope,
-		createTimeContext({
-			timeContainer: attributes["timeContainer"],
-		}),
-	);
-
-	const temporalActiveContext = readScopeTemporalActiveContext(localScope);
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 
 	const entities: Entities.AllEntities[] = [];
 
@@ -189,7 +163,7 @@ function createCueFromAnonymousSpan(
 		}
 	}
 
-	const timeIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(localScope);
+	const timeIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(scope);
 
 	const cues: CueNode[] = [];
 
