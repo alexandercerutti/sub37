@@ -155,7 +155,8 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		let cues: CueNode[] = [];
-		let treeScope: Scope = createScope(undefined);
+		const rootScope: Scope = createScope(undefined);
+		let treeScope: Scope = rootScope;
 
 		const nodeTree = new NodeTree<
 			Token & NodeWithAttributes & NodeWithScope & NodeWithDestinationMatch
@@ -229,8 +230,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					representationVisitor.navigate(destinationMatch);
 
 					if (token.content === "tt") {
-						treeScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
-						treeScope.addContext(
+						rootScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
+						rootScope.addContext(
 							createTimeContext({
 								// Default data. Will result in an infinite duration.
 								begin: "0s",
@@ -241,7 +242,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							createNodeWithAttributes(
 								createNodeWithScope(
 									createNodeWithDestinationMatch(token, destinationMatch),
-									treeScope,
+									rootScope,
 								),
 								NodeAttributes.NO_ATTRS,
 							),
@@ -283,7 +284,7 @@ export default class TTMLAdapter extends BaseAdapter {
 									createNodeWithAttributes(
 										createNodeWithScope(
 											createNodeWithDestinationMatch(token, destinationMatch),
-											treeScope,
+											rootScope,
 										),
 										NodeAttributes.IGNORED,
 									),
@@ -297,7 +298,7 @@ export default class TTMLAdapter extends BaseAdapter {
 									createNodeWithAttributes(
 										createNodeWithScope(
 											createNodeWithDestinationMatch(token, destinationMatch),
-											treeScope,
+											rootScope,
 										),
 										NodeAttributes.IGNORED,
 									),
@@ -321,7 +322,7 @@ export default class TTMLAdapter extends BaseAdapter {
 								createNodeWithAttributes(
 									createNodeWithScope(
 										createNodeWithDestinationMatch(token, destinationMatch),
-										treeScope,
+										rootScope,
 									),
 									NodeAttributes.IGNORED,
 								),
@@ -363,7 +364,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							createNodeWithAttributes(
 								createNodeWithScope(
 									createNodeWithDestinationMatch(token, destinationMatch),
-									treeScope,
+									rootScope,
 								),
 								NodeAttributes.NO_ATTRS,
 							),
@@ -462,14 +463,20 @@ export default class TTMLAdapter extends BaseAdapter {
 						representationVisitor.back();
 
 						const currentNode = nodeTree.currentNode.content;
-						const parentNode = nodeTree.currentNode.parent?.content;
-						const didScopeUpgrade = parentNode
-							? currentNode[nodeScopeSymbol] !== parentNode[nodeScopeSymbol]
-							: true;
 
-						if (didScopeUpgrade && treeScope.parent) {
+						if (currentNode[nodeScopeSymbol] !== rootScope) {
 							treeScope = treeScope.parent;
 						}
+
+						// const currentNode = nodeTree.currentNode.content;
+						// const parentNode = nodeTree.currentNode.parent?.content;
+						// const didScopeUpgrade = parentNode
+						// 	? currentNode[nodeScopeSymbol] !== parentNode[nodeScopeSymbol]
+						// 	: true;
+
+						// if (didScopeUpgrade && treeScope.parent) {
+						// 	treeScope = treeScope.parent;
+						// }
 					}
 
 					if (isNodeIgnored(nodeTree.currentNode.content)) {
@@ -523,7 +530,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						const outOfLineRegions = extractOutOfLineRegions(closingElement);
 
 						if (outOfLineRegions.length) {
-							treeScope.addContext(createRegionContainerContext(outOfLineRegions));
+							rootScope.addContext(createRegionContainerContext(outOfLineRegions));
 						}
 
 						break;
@@ -531,7 +538,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isStylingElement(closingElement)) {
 						const styles = extractOutOfLineStyles(closingElement);
-						treeScope.addContext(createStyleContainerContext(styles));
+						rootScope.addContext(createStyleContainerContext(styles));
 
 						break;
 					}
@@ -545,7 +552,7 @@ export default class TTMLAdapter extends BaseAdapter {
 			}
 		}
 
-		if (!readScopeDocumentContext(treeScope)) {
+		if (!readScopeDocumentContext(rootScope)) {
 			throw new Error(`Document failed to parse: <tt> element is apparently missing.`);
 		}
 
