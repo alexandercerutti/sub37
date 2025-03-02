@@ -27,7 +27,7 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 		const children = node.children[i];
 
 		if (children.content.content === "span") {
-			cues.push(...getCuesFromSpan(children, attributes["xml:id"] || `unk-par-${i}`));
+			cues = cues.concat(getCuesFromSpan(children, attributes["xml:id"] || `unk-par-${i}`));
 			continue;
 		}
 
@@ -100,7 +100,7 @@ function getCuesFromSpan(
 		const children = node.children[i];
 
 		if (children.content.content === "span") {
-			cues.push(...getCuesFromSpan(children, parentId));
+			cues = cues.concat(getCuesFromSpan(children, parentId));
 			continue;
 		}
 
