@@ -512,17 +512,15 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					const currentTag = nodeTree.currentNode.content.content;
-
 					/**
 					 * Processing [out-of-line region]
 					 * @see https://w3c.github.io/ttml2/#terms-out-of-line-region
 					 */
 
-					const currentElement = nodeTree.pop();
+					const closingElement = nodeTree.pop();
 
-					if (isLayoutElement(currentElement)) {
-						const outOfLineRegions = extractOutOfLineRegions(currentElement);
+					if (isLayoutElement(closingElement)) {
+						const outOfLineRegions = extractOutOfLineRegions(closingElement);
 
 						if (outOfLineRegions.length) {
 							treeScope.addContext(createRegionContainerContext(outOfLineRegions));
@@ -531,24 +529,18 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
-					if (isStylingElement(currentElement)) {
-						const styles = extractOutOfLineStyles(currentElement);
+					if (isStylingElement(closingElement)) {
+						const styles = extractOutOfLineStyles(closingElement);
 						treeScope.addContext(createStyleContainerContext(styles));
 
 						break;
 					}
 
-					if (
-						isBlockClassElement(currentTag) ||
-						(isInlineClassElement(currentTag) && currentTag !== "br")
-					) {
-						if (currentTag === "p") {
-							const node = currentElement;
-							cues = cues.concat(parseCue(node));
-						}
-
-						break;
+					if (closingElement.content.content === "p") {
+						cues = cues.concat(parseCue(closingElement));
 					}
+
+					break;
 				}
 			}
 		}
