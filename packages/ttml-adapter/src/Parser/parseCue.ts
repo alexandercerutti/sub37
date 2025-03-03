@@ -73,28 +73,7 @@ function getCuesFromSpan(
 		return [];
 	}
 
-	const scope = node.content[nodeScopeSymbol];
-
 	let cues: CueNode[] = [];
-	const { attributes } = node.content;
-
-	const nextCueID = attributes["xml:id"] || parentId;
-
-	if (isTimestamp(attributes)) {
-		const timeContext = readScopeTimeContext(scope);
-
-		cues.push(
-			new CueNode({
-				id: nextCueID,
-				content: "",
-				startTime: timeContext.startTime,
-				endTime: timeContext.endTime,
-				/** @TODO Fix region association */
-				// region: matchingRegion,
-				entities: cues[cues.length - 1]?.entities,
-			}),
-		);
-	}
 
 	for (let i = 0; i < node.children.length; i++) {
 		const children = node.children[i];
@@ -181,14 +160,6 @@ function createCueFromAnonymousSpan(
 	}
 
 	return cues;
-}
-
-function isTimestamp(attributes: Record<string, string>): boolean {
-	return (
-		typeof attributes["begin"] !== "undefined" &&
-		typeof attributes["end"] === "undefined" &&
-		typeof attributes["dur"] === "undefined"
-	);
 }
 
 type TemporalIntervalList = [startTime: number, endTime: number, isRegion: 0 | 1][];
@@ -328,19 +299,19 @@ function getTimeIntervalsByTimeContexts(
 	// ofc, rst < cst
 	if (regionEndTime < cueEndTime) {
 		/**
-		 *  |-----|-----|-----|
-		 * cst   rst   ret   cet
+		 *  |/////|-----|-----|
+		 * rst   cst   ret   cet
 		 */
 
 		timeIntervals.push(
-			[cueStartTime, regionStartTime, 0],
-			[regionStartTime, regionEndTime, 1],
+			//
+			[cueStartTime, regionEndTime, 1],
 			[regionEndTime, cueEndTime, 0],
 		);
 	} else {
 		/**
-		 *  |-----|--------|
-		 * cst   rst   ret>=cet
+		 *  |/////|--------|
+		 * rst   cst   ret>=cet
 		 */
 
 		timeIntervals.push(

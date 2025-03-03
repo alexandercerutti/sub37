@@ -136,6 +136,50 @@ describe("Adapter", () => {
 						endTime: Infinity,
 					});
 				});
+
+				it("should let timestamp cues inherit from an out-of-line region", () => {
+					const adapter = new TTMLAdapter();
+					const { data: cues } = adapter.parse(`
+							<tt xml:lang="en">
+								<head>
+									<layout>
+										<region xml:id="r1" begin="3s" end="5s" />
+									</layout>
+								</head>
+								<body>
+									<div>
+										<p region="r1">
+											<span begin="2.5s">
+												Test cue r1
+											</span>
+											<span begin="5s">
+												Test cue r2
+											</span>
+											<span begin="7s">
+												Test cue r3
+											</span>
+										</p>
+									</div>
+								</body>
+							</tt>
+							`);
+
+					expect(cues.length).toBe(5);
+					expect(cues[0].startTime).toBe(2500);
+					expect(cues[0].endTime).toBe(3000);
+
+					expect(cues[1].startTime).toBe(3000);
+					expect(cues[1].endTime).toBe(5000);
+
+					expect(cues[2].startTime).toBe(5000);
+					expect(cues[2].endTime).toBe(Infinity);
+
+					expect(cues[3].startTime).toBe(5000);
+					expect(cues[3].endTime).toBe(Infinity);
+
+					expect(cues[4].startTime).toBe(7000);
+					expect(cues[4].endTime).toBe(Infinity);
+				});
 			});
 
 			describe("ttp:timeBase 'media'", () => {
