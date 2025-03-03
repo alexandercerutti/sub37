@@ -235,6 +235,29 @@ function getTimeIntervalsByTimeContexts(
 	const cueStartTime = cueTimeContext.startTime;
 	const cueEndTime = cueTimeContext.endTime;
 
+	/**
+	 * Not intersecting:
+	 * ===========================================
+	 * ||	rst							ret cst								||
+	 * ||	 | ////////////// |	 |								||
+	 * ||	 |								|	 | ////////////// ||
+	 * ===========================================
+	 *
+	 * Intersecting:
+	 * =====================================
+	 * ||	rst				 cst	 ret				cet ||
+	 * ||	 | ////////////// |	 				 |	||
+	 * ||	 |					| ////////////// |	||
+	 * =====================================
+	 */
+
+	/** */
+	const cueIntersectsRegionActivationTime = regionEndTime > cueStartTime;
+
+	if (!cueIntersectsRegionActivationTime) {
+		return [[cueStartTime, cueEndTime, 0]];
+	}
+
 	let timeIntervals: TemporalIntervalList = [];
 
 	if (regionStartTime > cueStartTime) {
