@@ -214,115 +214,114 @@ function getTimeIntervalsByTimeContexts(
 	 * ||	 |								|	 | ////////////// ||
 	 * ===========================================
 	 *
-	 * Intersecting:
+	 * Intersecting: region ends before cue end
 	 * =====================================
 	 * ||	rst				 cst	 ret				cet ||
 	 * ||	 | ////////////// |	 				 |	||
 	 * ||	 |					| ////////////// |	||
 	 * =====================================
+	 *
+	 * Intersecting (opposite):
+	 * =====================================
+	 * ||	cst				 rst	 cet				ret ||
+	 * ||	 |					| ////////////// |	||
+	 * ||	 | ////////////// |	 				 |	||
+	 * =====================================
+	 *
 	 */
 
 	/** */
-	const cueIntersectsRegionActivationTime = regionEndTime > cueStartTime;
+	const cueIntersectsRegionActivationTime = cueStartTime < regionEndTime;
 
 	if (!cueIntersectsRegionActivationTime) {
 		return [[cueStartTime, cueEndTime, 0]];
 	}
 
-	let timeIntervals: TemporalIntervalList = [];
+	const regionEndPartiallyIntersectsCue = regionEndTime < cueEndTime;
 
 	if (regionStartTime > cueStartTime) {
-		/**
-		 *  |-----|...
-		 * cst   rst
-		 */
-
-		timeIntervals.push(
-			//
-			[cueStartTime, regionStartTime, 0],
-		);
-
-		if (regionEndTime < cueEndTime) {
+		if (regionEndPartiallyIntersectsCue) {
 			/**
-			 *  |:::::|----|-----|
+			 *  |-----|----|-----|
 			 * cst   rst  ret   cet
 			 */
 
-			timeIntervals.push(
-				//
+			return [
+				[cueStartTime, regionStartTime, 0],
 				[regionStartTime, regionEndTime, 1],
 				[regionEndTime, cueEndTime, 0],
-			);
-		} else {
-			/**
-			 *  |:::::|-------|
-			 * cst   rst  ret>=cet
-			 */
-
-			timeIntervals.push(
-				//
-				[regionStartTime, cueEndTime, 1],
-			);
+			];
 		}
 
-		return timeIntervals;
-	}
-
-	if (regionStartTime === cueStartTime) {
-		if (regionEndTime < cueEndTime) {
-			/**
-			 * Two segments:
-			 *
-			 *    |------|-----|
-			 * rst=cst  ret   cet
-			 */
-
-			timeIntervals.push(
-				//
-				[regionStartTime, regionEndTime, 1],
-				[regionEndTime, cueEndTime, 0],
-			);
-		} else {
-			/**
-			 * One segment:
-			 *
-			 *    |----------|
-			 * rst=cst   ret>=cet
-			 */
-
-			timeIntervals.push([regionStartTime, cueEndTime, 1]);
-		}
-
-		return timeIntervals;
-	}
-
-	// ofc, rst < cst
-	if (regionEndTime < cueEndTime) {
 		/**
-		 *  |/////|-----|-----|
+		 *  |-----|-------|
+		 * cst   rst  ret>=cet
+		 */
+
+		return [
+			[cueStartTime, regionStartTime, 0],
+			[regionStartTime, cueEndTime, 1],
+		];
+	}
+
+	if (regionEndPartiallyIntersectsCue) {
+		/**
+		 * Always two segments. Possible scenarios:
+		 * - `rst === cst`
+		 * - `rst  <  cst`.
+		 * - `ret !== cet`
+		 *
+		 * ```
+		 *    |------|?????|
+		 * rst=cst  ret   cet
+		 * ```
+		 *
+		 * Or:
+		 *
+		 * ```
+		 *  |/////|-----|?????|
 		 * rst   cst   ret   cet
+		 * ```
+		 * First segment doesn't exist.
+		 * The third is optional as might not exists.
+		 *
+		 * Either of two, cueStartTime wins.
 		 */
 
-		timeIntervals.push(
+		const firstSegment: TemporalIntervalList[number] = [cueStartTime, regionEndTime, 1];
+
+		if (regionEndTime === cueEndTime) {
+			return [firstSegment];
+		}
+
+		return [
 			//
-			[cueStartTime, regionEndTime, 1],
+			firstSegment,
 			[regionEndTime, cueEndTime, 0],
-		);
-	} else {
-		/**
-		 *  |/////|--------|
-		 * rst   cst   ret>=cet
-		 */
-
-		timeIntervals.push(
-			//
-			[cueStartTime, cueEndTime, 1],
-		);
+		];
 	}
 
-	if (!timeIntervals.length) {
-		return [[cueStartTime, cueEndTime, 0]];
-	}
+	/**
+	 * Always one segment. Possible scenarios
+	 * (like above)
+	 *
+	 * ```
+	 *    |----------|
+	 * rst=cst   ret>=cet
+	 * ```
+	 *
+	 * ```
+	 *  |/////|--------|
+	 * rst   cst   ret>=cet
+	 * ```
+	 *
+	 * First segment doesn't exists.
+	 * The second will be produced because
+	 * region could
+	 */
 
-	return timeIntervals;
+	return [
+		//
+		[cueStartTime, cueEndTime, 1],
+	];
 }
