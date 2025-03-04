@@ -41,10 +41,11 @@ describe("Adapter", () => {
 
 	describe("Cues", () => {
 		describe("Timing semantics", () => {
-			describe("Region timing inheritance", () => {
-				it("should let cue inherit them from an out-of-line region", () => {
-					const adapter = new TTMLAdapter();
-					const { data: cues } = adapter.parse(`
+			describe("Region temporal activation", () => {
+				describe("Out-of-line regions", () => {
+					it("should let cue inherit them from an out-of-line region", () => {
+						const adapter = new TTMLAdapter();
+						const { data: cues } = adapter.parse(`
 							<tt xml:lang="en">
 								<head>
 									<layout>
@@ -72,74 +73,44 @@ describe("Adapter", () => {
 							</tt>
 							`);
 
-					expect(cues.length).toBe(8);
-					expect(cues[0]).toMatchObject({
-						startTime: 0,
-						endTime: 3000,
+						expect(cues.length).toBe(8);
+						expect(cues[0]).toMatchObject({
+							startTime: 0,
+							endTime: 3000,
+						});
+						expect(cues[1]).toMatchObject({
+							startTime: 3000,
+							endTime: 5000,
+						});
+						expect(cues[2]).toMatchObject({
+							startTime: 5000,
+							endTime: Infinity,
+						});
+						expect(cues[3]).toMatchObject({
+							startTime: 0,
+							endTime: 3000,
+						});
+						expect(cues[4]).toMatchObject({
+							startTime: 3000,
+							endTime: 8000,
+						});
+						expect(cues[5]).toMatchObject({
+							startTime: 8000,
+							endTime: Infinity,
+						});
+						expect(cues[6]).toMatchObject({
+							startTime: 0,
+							endTime: 5000,
+						});
+						expect(cues[7]).toMatchObject({
+							startTime: 5000,
+							endTime: Infinity,
+						});
 					});
-					expect(cues[1]).toMatchObject({
-						startTime: 3000,
-						endTime: 5000,
-					});
-					expect(cues[2]).toMatchObject({
-						startTime: 5000,
-						endTime: Infinity,
-					});
-					expect(cues[3]).toMatchObject({
-						startTime: 0,
-						endTime: 3000,
-					});
-					expect(cues[4]).toMatchObject({
-						startTime: 3000,
-						endTime: 8000,
-					});
-					expect(cues[5]).toMatchObject({
-						startTime: 8000,
-						endTime: Infinity,
-					});
-					expect(cues[6]).toMatchObject({
-						startTime: 0,
-						endTime: 5000,
-					});
-					expect(cues[7]).toMatchObject({
-						startTime: 5000,
-						endTime: Infinity,
-					});
-				});
 
-				it("should not let cue inherit them from an inline region", () => {
-					const adapter = new TTMLAdapter();
-
-					const { data: cues } = adapter.parse(`
-						<tt xml:lang="en">
-							<body>
-								<div>
-									<region xml:id="r1" begin="0s" end="1.3s" />
-									<p>
-										<!-- anonymous span -->
-										Paragraph flowed inside r1
-									</p>
-								</div>
-							</body>
-						</tt>
-					`);
-
-					expect(cues.length).toBe(2);
-					expect(cues[0]).toMatchObject({
-						content: "Paragraph flowed inside r1",
-						startTime: 0,
-						endTime: 1300,
-					});
-					expect(cues[1]).toMatchObject({
-						content: "Paragraph flowed inside r1",
-						startTime: 1300,
-						endTime: Infinity,
-					});
-				});
-
-				it("should let timestamp cues inherit from an out-of-line region", () => {
-					const adapter = new TTMLAdapter();
-					const { data: cues } = adapter.parse(`
+					it("should let timestamp cues inherit from an out-of-line region", () => {
+						const adapter = new TTMLAdapter();
+						const { data: cues } = adapter.parse(`
 							<tt xml:lang="en">
 								<head>
 									<layout>
@@ -164,21 +135,59 @@ describe("Adapter", () => {
 							</tt>
 							`);
 
-					expect(cues.length).toBe(5);
-					expect(cues[0].startTime).toBe(2500);
-					expect(cues[0].endTime).toBe(3000);
+						expect(cues.length).toBe(5);
+						expect(cues[0].startTime).toBe(2500);
+						expect(cues[0].endTime).toBe(3000);
+						expect(cues[0].region).toBeUndefined();
 
-					expect(cues[1].startTime).toBe(3000);
-					expect(cues[1].endTime).toBe(5000);
+						expect(cues[1].startTime).toBe(3000);
+						expect(cues[1].endTime).toBe(5000);
+						expect(cues[1].region).not.toBeUndefined();
 
-					expect(cues[2].startTime).toBe(5000);
-					expect(cues[2].endTime).toBe(Infinity);
+						expect(cues[2].startTime).toBe(5000);
+						expect(cues[2].endTime).toBe(Infinity);
+						expect(cues[2].region).toBeUndefined();
 
-					expect(cues[3].startTime).toBe(5000);
-					expect(cues[3].endTime).toBe(Infinity);
+						expect(cues[3].startTime).toBe(5000);
+						expect(cues[3].endTime).toBe(Infinity);
+						expect(cues[3].region).toBeUndefined();
 
-					expect(cues[4].startTime).toBe(7000);
-					expect(cues[4].endTime).toBe(Infinity);
+						expect(cues[4].startTime).toBe(7000);
+						expect(cues[4].endTime).toBe(Infinity);
+						expect(cues[4].region).toBeUndefined();
+					});
+				});
+
+				describe("Inline regions", () => {
+					it("should not let cue inherit them from an inline region", () => {
+						const adapter = new TTMLAdapter();
+
+						const { data: cues } = adapter.parse(`
+						<tt xml:lang="en">
+							<body>
+								<div>
+									<region xml:id="r1" begin="0s" end="1.3s" />
+									<p>
+										<!-- anonymous span -->
+										Paragraph flowed inside r1
+									</p>
+								</div>
+							</body>
+						</tt>
+					`);
+
+						expect(cues.length).toBe(2);
+						expect(cues[0]).toMatchObject({
+							content: "Paragraph flowed inside r1",
+							startTime: 0,
+							endTime: 1300,
+						});
+						expect(cues[1]).toMatchObject({
+							content: "Paragraph flowed inside r1",
+							startTime: 1300,
+							endTime: Infinity,
+						});
+					});
 				});
 			});
 
