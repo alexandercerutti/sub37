@@ -40,13 +40,17 @@ export class Tokenizer {
 	/** Next token index in the content */
 	private startPoint = 0;
 
-	constructor(private rawContent: string) {}
+	private rawContent: string;
 
-	static isWhitespace(character: string) {
+	public constructor(rawContent: string) {
+		this.rawContent = rawContent;
+	}
+
+	public static isWhitespace(character: string) {
 		return character == "\x20" || character == "\x09" || character == "\x0C";
 	}
 
-	static isNewLine(character: string) {
+	public static isNewLine(character: string) {
 		return character == "\x0A";
 	}
 
@@ -60,7 +64,7 @@ export class Tokenizer {
 	 * @returns
 	 */
 
-	static parseHTMLEntity(
+	public static parseHTMLEntity(
 		source: string,
 		currentCursor: number,
 		additionalAllowedCharacters: string[] = [],
