@@ -79,7 +79,12 @@ type PropertiesMapper<OutProperties extends string[]> = (
 ) => PropertiesCollection<OutProperties>;
 
 const AttributeFlags = {
-	INHERITABLE: 0b0001,
+	INHERITABLE: /***/ 0b0001,
+} as const;
+
+const AnimationFlags = {
+	DISCRETE: /******/ 0b0100,
+	CONTINUOUS: /****/ 0b0110,
 } as const;
 
 interface AttributeDefinition<DestinationProperties extends string[] = string[]> {
@@ -95,6 +100,11 @@ interface AttributeDefinition<DestinationProperties extends string[] = string[]>
 
 function inheritable<Attr extends AttributeDefinition>(def: Attr): Readonly<Attr> {
 	def.flags ^= AttributeFlags.INHERITABLE;
+	return def;
+}
+
+function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr): Readonly<Attr> {
+	def.flags ^= attrs;
 	return def;
 }
 
@@ -168,96 +178,120 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundClip
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundClip
 	 */
-	"tts:backgroundClip": createAttributeDefinition(
-		"tts:backgroundClip",
-		["body", "div", "image", "p", "region", "span"],
-		"border",
-		new Set(["border", "content", "padding"]),
-		createPassThroughMapper("background-clip"),
+	"tts:backgroundClip": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundClip",
+			["body", "div", "image", "p", "region", "span"],
+			"border",
+			new Set(["border", "content", "padding"]),
+			createPassThroughMapper("background-clip"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundColor
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundColor
 	 */
-	"tts:backgroundColor": createAttributeDefinition(
-		"tts:backgroundColor",
-		["body", "div", "image", "p", "region", "span"],
-		"transparent",
-		undefined,
-		createPassThroughMapper("background-color"),
+	"tts:backgroundColor": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition(
+			"tts:backgroundColor",
+			["body", "div", "image", "p", "region", "span"],
+			"transparent",
+			undefined,
+			createPassThroughMapper("background-color"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundExtent
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundExtent
 	 */
-	"tts:backgroundExtent": createAttributeDefinition(
-		"tts:backgroundExtent",
-		["body", "div", "image", "p", "region", "span"],
-		"",
-		undefined,
-		createPassThroughMapper("background-size"),
+	"tts:backgroundExtent": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundExtent",
+			["body", "div", "image", "p", "region", "span"],
+			"",
+			undefined,
+			createPassThroughMapper("background-size"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundImage
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundImage
 	 */
-	"tts:backgroundImage": createAttributeDefinition(
-		"tts:backgroundImage",
-		["body", "div", "image", "p", "region", "span"],
-		"none",
-		undefined,
-		createPassThroughMapper("background-image"),
+	"tts:backgroundImage": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundImage",
+			["body", "div", "image", "p", "region", "span"],
+			"none",
+			undefined,
+			createPassThroughMapper("background-image"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundOrigin
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundOrigin
 	 */
-	"tts:backgroundOrigin": createAttributeDefinition(
-		"tts:backgroundOrigin",
-		["body", "div", "image", "p", "region", "span"],
-		"padding",
-		new Set(["border", "content", "padding"]),
-		createPassThroughMapper("background-origin"),
+	"tts:backgroundOrigin": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundOrigin",
+			["body", "div", "image", "p", "region", "span"],
+			"padding",
+			new Set(["border", "content", "padding"]),
+			createPassThroughMapper("background-origin"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundPosition
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundPosition
 	 */
-	"tts:backgroundPosition": createAttributeDefinition(
-		"tts:backgroundPosition",
-		["body", "div", "image", "p", "region", "span"],
-		"0% 0%",
-		undefined,
-		createPassThroughMapper("background-position"),
+	"tts:backgroundPosition": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundPosition",
+			["body", "div", "image", "p", "region", "span"],
+			"0% 0%",
+			undefined,
+			createPassThroughMapper("background-position"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundRepeat
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundRepeat
 	 */
-	"tts:backgroundRepeat": createAttributeDefinition(
-		"tts:backgroundRepeat",
-		["body", "div", "image", "p", "region", "span"],
-		"repeat",
-		new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
-		createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
+	"tts:backgroundRepeat": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:backgroundRepeat",
+			["body", "div", "image", "p", "region", "span"],
+			"repeat",
+			new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
+			createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-border
 	 * @see https://w3c.github.io/ttml2/#derivation-border
 	 */
-	"tts:border": createAttributeDefinition(
-		"tts:border",
-		["body", "div", "image", "p", "region", "span"],
-		"none",
-		undefined,
-		borderMapper,
+	"tts:border": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition(
+			"tts:border",
+			["body", "div", "image", "p", "region", "span"],
+			"none",
+			undefined,
+			borderMapper,
+		),
 	),
 
 	/**
@@ -270,12 +304,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-bpd
 	 * @see https://w3c.github.io/ttml2/#derivation-bpd
 	 */
-	"tts:bpd": createAttributeDefinition(
-		"tts:bpd",
-		["body", "div", "p", "span"],
-		"auto",
-		undefined,
-		nullMapper,
+	"tts:bpd": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:bpd",
+			["body", "div", "p", "span"],
+			"auto",
+			undefined,
+			nullMapper,
+		),
 	),
 
 	/**
@@ -283,12 +320,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-color
 	 */
 	"tts:color": inheritable(
-		createAttributeDefinition(
-			"tts:color",
-			["span", ""],
-			"white",
-			undefined,
-			createPassThroughMapper("color"),
+		animatable(
+			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+			createAttributeDefinition(
+				"tts:color",
+				["span", ""],
+				"white",
+				undefined,
+				createPassThroughMapper("color"),
+			),
 		),
 	),
 
@@ -297,12 +337,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-direction
 	 */
 	"tts:direction": inheritable(
-		createAttributeDefinition(
-			"tts:direction",
-			["p", "span"],
-			"ltr",
-			new Set(["ltr", "rtl"]),
-			createPassThroughMapper("direction"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:direction",
+				["p", "span"],
+				"ltr",
+				new Set(["ltr", "rtl"]),
+				createPassThroughMapper("direction"),
+			),
 		),
 	),
 	// ttml-only
@@ -310,48 +353,60 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-disparity
 	 * @see https://w3c.github.io/ttml2/#derivation-disparity
 	 */
-	"tts:disparity": createAttributeDefinition(
-		"tts:disparity",
-		["region", "div", "p"],
-		"0px",
-		undefined,
-		nullMapper,
+	"tts:disparity": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition(
+			"tts:disparity",
+			["region", "div", "p"],
+			"0px",
+			undefined,
+			nullMapper,
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-display
 	 * @see https://w3c.github.io/ttml2/#derivation-display
 	 */
-	"tts:display": createAttributeDefinition(
-		"tts:display",
-		["body", "div", "image", "p", "region", "span"],
-		"auto",
-		new Set(["auto", "none", "inlineBlock"]),
-		createPassThroughMapper("display"),
+	"tts:display": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:display",
+			["body", "div", "image", "p", "region", "span"],
+			"auto",
+			new Set(["auto", "none", "inlineBlock"]),
+			createPassThroughMapper("display"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-displayAlign
 	 * @see https://w3c.github.io/ttml2/#derivation-displayAlign
 	 */
-	"tts:displayAlign": createAttributeDefinition(
-		"tts:displayAlign",
-		["body", "div", "p", "region"],
-		"before",
-		new Set(["before", "center", "after", "justify"]),
-		createPassThroughMapper("justify-content", displayAlignValueMapper),
+	"tts:displayAlign": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:displayAlign",
+			["body", "div", "p", "region"],
+			"before",
+			new Set(["before", "center", "after", "justify"]),
+			createPassThroughMapper("justify-content", displayAlignValueMapper),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-extent
 	 * @see https://w3c.github.io/ttml2/#derivation-extent
 	 */
-	"tts:extent": createAttributeDefinition<["width", "height"], string>(
-		"tts:extent",
-		["tt", "region", "image", "div", "p"],
-		"auto",
-		undefined,
-		extentMapper,
+	"tts:extent": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition<["width", "height"], string>(
+			"tts:extent",
+			["tt", "region", "image", "div", "p"],
+			"auto",
+			undefined,
+			extentMapper,
+		),
 	),
 
 	/**
@@ -359,12 +414,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontFamily
 	 */
 	"tts:fontFamily": inheritable(
-		createAttributeDefinition(
-			"tts:fontFamily",
-			["p", "span"],
-			"default",
-			undefined,
-			createPassThroughMapper("font-family"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontFamily",
+				["p", "span"],
+				"default",
+				undefined,
+				createPassThroughMapper("font-family"),
+			),
 		),
 	),
 
@@ -373,12 +431,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontKerning
 	 */
 	"tts:fontKerning": inheritable(
-		createAttributeDefinition(
-			"tts:fontKerning",
-			["span"],
-			"normal",
-			new Set(["none", "normal"]),
-			createPassThroughMapper("font-kerning"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontKerning",
+				["span"],
+				"normal",
+				new Set(["none", "normal"]),
+				createPassThroughMapper("font-kerning"),
+			),
 		),
 	),
 
@@ -389,12 +450,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontSelectionStrategy
 	 */
 	"tts:fontSelectionStrategy": inheritable(
-		createAttributeDefinition(
-			"tts:fontSelectionStrategy",
-			["p", "span"],
-			"auto",
-			new Set(["auto", "character"]),
-			nullMapper,
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontSelectionStrategy",
+				["p", "span"],
+				"auto",
+				new Set(["auto", "character"]),
+				nullMapper,
+			),
 		),
 	),
 
@@ -405,7 +469,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontShear
 	 */
 	"tts:fontShear": inheritable(
-		createAttributeDefinition("tts:fontShear", ["span"], "0%", undefined, nullMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition("tts:fontShear", ["span"], "0%", undefined, nullMapper),
+		),
 	),
 
 	/**
@@ -413,12 +480,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontSize
 	 */
 	"tts:fontSize": inheritable(
-		createAttributeDefinition(
-			"tts:fontSize",
-			["p", "span", "region"],
-			"1c",
-			undefined,
-			createPassThroughMapper("font-size", fontSizeValueMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontSize",
+				["p", "span", "region"],
+				"1c",
+				undefined,
+				createPassThroughMapper("font-size", fontSizeValueMapper),
+			),
 		),
 	),
 
@@ -427,12 +497,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontStyle
 	 */
 	"tts:fontStyle": inheritable(
-		createAttributeDefinition(
-			"tts:fontStyle",
-			["p", "span"],
-			"normal",
-			new Set(["normal", "italic", "oblique"]),
-			createPassThroughMapper("font-style"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontStyle",
+				["p", "span"],
+				"normal",
+				new Set(["normal", "italic", "oblique"]),
+				createPassThroughMapper("font-style"),
+			),
 		),
 	),
 
@@ -441,12 +514,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontVariant
 	 */
 	"tts:fontVariant": inheritable(
-		createAttributeDefinition(
-			"tts:fontVariant",
-			["p", "span"],
-			"normal",
-			undefined,
-			nullMapper, // Maps to multiple values. Must be handled differently
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontVariant",
+				["p", "span"],
+				"normal",
+				undefined,
+				nullMapper, // Maps to multiple values. Must be handled differently
+			),
 		),
 	),
 
@@ -455,12 +531,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-fontWeight
 	 */
 	"tts:fontWeight": inheritable(
-		createAttributeDefinition(
-			"tts:fontWeight",
-			["p", "span"],
-			"normal",
-			new Set(["normal", "bold"]),
-			createPassThroughMapper("font-weight"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:fontWeight",
+				["p", "span"],
+				"normal",
+				new Set(["normal", "bold"]),
+				createPassThroughMapper("font-weight"),
+			),
 		),
 	),
 
@@ -474,12 +553,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-ipd
 	 * @see https://w3c.github.io/ttml2/#derivation-ipd
 	 */
-	"tts:ipd": createAttributeDefinition(
-		"tts:ipd",
-		["body", "div", "p", "span"],
-		"auto",
-		undefined,
-		nullMapper, // ??????
+	"tts:ipd": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:ipd",
+			["body", "div", "p", "span"],
+			"auto",
+			undefined,
+			nullMapper, // ??????
+		),
 	),
 
 	/**
@@ -487,12 +569,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-letterSpacing
 	 */
 	"tts:letterSpacing": inheritable(
-		createAttributeDefinition(
-			"tts:letterSpacing",
-			["p", "span"],
-			"normal",
-			undefined,
-			createPassThroughMapper("letter-spacing"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:letterSpacing",
+				["p", "span"],
+				"normal",
+				undefined,
+				createPassThroughMapper("letter-spacing"),
+			),
 		),
 	),
 
@@ -501,12 +586,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-lineHeight
 	 */
 	"tts:lineHeight": inheritable(
-		createAttributeDefinition(
-			"tts:lineHeight",
-			["p"],
-			"normal",
-			undefined,
-			createPassThroughMapper("line-height"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:lineHeight",
+				["p"],
+				"normal",
+				undefined,
+				createPassThroughMapper("line-height"),
+			),
 		),
 	),
 	// Maps to CSS values. Must be handled differently
@@ -515,7 +603,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-lineShear
 	 */
 	"tts:lineShear": inheritable(
-		createAttributeDefinition("tts:lineShear", ["p"], "0%", undefined, nullMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition("tts:lineShear", ["p"], "0%", undefined, nullMapper),
+		),
 	),
 
 	/**
@@ -524,24 +615,24 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-luminanceGain
 	 * @see https://w3c.github.io/ttml2/#derivation-luminanceGain
 	 */
-	"tts:luminanceGain": createAttributeDefinition(
-		"tts:luminanceGain",
-		["region"],
-		"1.0",
-		undefined,
-		nullMapper,
+	"tts:luminanceGain": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition("tts:luminanceGain", ["region"], "1.0", undefined, nullMapper),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-opacity
 	 * @see https://w3c.github.io/ttml2/#derivation-opacity
 	 */
-	"tts:opacity": createAttributeDefinition(
-		"tts:opacity",
-		["body", "div", "image", "p", "region", "span"],
-		"1.0",
-		undefined,
-		createPassThroughMapper("opacity"),
+	"tts:opacity": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition(
+			"tts:opacity",
+			["body", "div", "image", "p", "region", "span"],
+			"1.0",
+			undefined,
+			createPassThroughMapper("opacity"),
+		),
 	),
 
 	/**
@@ -555,48 +646,60 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-origin
 	 * @see https://w3c.github.io/ttml2/#derivation-origin
 	 */
-	"tts:origin": createAttributeDefinition(
-		"tts:origin",
-		["region", "div", "p"],
-		"auto",
-		undefined,
-		originMapper,
+	"tts:origin": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:origin",
+			["region", "div", "p"],
+			"auto",
+			undefined,
+			originMapper,
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-overflow
 	 * @see https://w3c.github.io/ttml2/#derivation-overflow
 	 */
-	"tts:overflow": createAttributeDefinition(
-		"tts:overflow",
-		["region"],
-		"hidden",
-		new Set(["visible", "hidden"]),
-		createPassThroughMapper("overflow"),
+	"tts:overflow": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:overflow",
+			["region"],
+			"hidden",
+			new Set(["visible", "hidden"]),
+			createPassThroughMapper("overflow"),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-padding
 	 * @see https://w3c.github.io/ttml2/#derivation-padding
 	 */
-	"tts:padding": createAttributeDefinition(
-		"tts:padding",
-		["body", "div", "image", "p", "region", "span"],
-		"0px",
-		undefined,
-		createPassThroughMapper("padding", paddingValueMapper),
+	"tts:padding": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:padding",
+			["body", "div", "image", "p", "region", "span"],
+			"0px",
+			undefined,
+			createPassThroughMapper("padding", paddingValueMapper),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-position
 	 * @see https://w3c.github.io/ttml2/#derivation-position
 	 */
-	"tts:position": createAttributeDefinition(
-		"tts:position",
-		["region", "div", "p"],
-		"top left",
-		undefined,
-		createPassThroughMapper("background-position"),
+	"tts:position": animatable(
+		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+		createAttributeDefinition(
+			"tts:position",
+			["region", "div", "p"],
+			"top left",
+			undefined,
+			createPassThroughMapper("background-position"),
+		),
 	),
 
 	/**
@@ -616,12 +719,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyAlign
 	 */
 	"tts:rubyAlign": inheritable(
-		createAttributeDefinition(
-			"tts:rubyAlign",
-			["span"],
-			"center",
-			new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
-			createPassThroughMapper("ruby-align"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:rubyAlign",
+				["span"],
+				"center",
+				new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
+				createPassThroughMapper("ruby-align"),
+			),
 		),
 	),
 
@@ -630,12 +736,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyPosition
 	 */
 	"tts:rubyPosition": inheritable(
-		createAttributeDefinition(
-			"tts:rubyPosition",
-			["span"],
-			"outside",
-			new Set(["before", "after", "outside"]),
-			createPassThroughMapper("ruby-position"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:rubyPosition",
+				["span"],
+				"outside",
+				new Set(["before", "after", "outside"]),
+				createPassThroughMapper("ruby-position"),
+			),
 		),
 	),
 
@@ -644,7 +753,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyReserve
 	 */
 	"tts:rubyReserve": inheritable(
-		createAttributeDefinition("tts:rubyReserve", ["p"], "none", undefined, nullMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition("tts:rubyReserve", ["p"], "none", undefined, nullMapper),
+		),
 	),
 
 	/**
@@ -652,31 +764,40 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-shear
 	 */
 	"tts:shear": inheritable(
-		createAttributeDefinition("tts:shear", ["p"], "0%", undefined, nullMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition("tts:shear", ["p"], "0%", undefined, nullMapper),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-showBackground
 	 * @see https://w3c.github.io/ttml2/#derivation-showBackground
 	 */
-	"tts:showBackground": createAttributeDefinition(
-		"tts:showBackground",
-		["region"],
-		"always",
-		new Set(["always", "whenActive"]),
-		nullMapper,
+	"tts:showBackground": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:showBackground",
+			["region"],
+			"always",
+			new Set(["always", "whenActive"]),
+			nullMapper,
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-textAlign
 	 * @see https://w3c.github.io/ttml2/#derivation-textAlign
 	 */
-	"tts:textAlign": createAttributeDefinition(
-		"tts:textAlign",
-		["p"],
-		"start",
-		new Set(["left", "center", "right", "start", "end", "justify"]),
-		createPassThroughMapper("text-align"),
+	"tts:textAlign": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:textAlign",
+			["p"],
+			"start",
+			new Set(["left", "center", "right", "start", "end", "justify"]),
+			createPassThroughMapper("text-align"),
+		),
 	),
 
 	/**
@@ -684,12 +805,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-textCombine
 	 */
 	"tts:textCombine": inheritable(
-		createAttributeDefinition(
-			"tts:textCombine",
-			["span"],
-			"none",
-			undefined,
-			createPassThroughMapper("text-combine-upright"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:textCombine",
+				["span"],
+				"none",
+				undefined,
+				createPassThroughMapper("text-combine-upright"),
+			),
 		),
 	),
 
@@ -698,12 +822,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-textDecoration
 	 */
 	"tts:textDecoration": inheritable(
-		createAttributeDefinition(
-			"tts:textDecoration",
-			["span"],
-			"none",
-			undefined,
-			createPassThroughMapper("text-decoration", textDecorationValueMapper),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:textDecoration",
+				["span"],
+				"none",
+				undefined,
+				createPassThroughMapper("text-decoration", textDecorationValueMapper),
+			),
 		),
 	),
 
@@ -712,12 +839,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-textEmphasis
 	 */
 	"tts:textEmphasis": inheritable(
-		createAttributeDefinition(
-			"tts:textEmphasis",
-			["span"],
-			"none",
-			undefined,
-			createPassThroughMapper("text-emphasis"),
+		animatable(
+			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+			createAttributeDefinition(
+				"tts:textEmphasis",
+				["span"],
+				"none",
+				undefined,
+				createPassThroughMapper("text-emphasis"),
+			),
 		),
 	),
 
@@ -740,12 +870,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-textOutline
 	 */
 	"tts:textOutline": inheritable(
-		createAttributeDefinition(
-			"tts:textOutline",
-			["span"],
-			"none",
-			undefined,
-			createPassThroughMapper("outline"),
+		animatable(
+			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+			createAttributeDefinition(
+				"tts:textOutline",
+				["span"],
+				"none",
+				undefined,
+				createPassThroughMapper("outline"),
+			),
 		),
 	),
 
@@ -754,12 +887,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-textShadow
 	 */
 	"tts:textShadow": inheritable(
-		createAttributeDefinition(
-			"tts:textShadow",
-			["span"],
-			"none",
-			undefined,
-			createPassThroughMapper("text-shadow"),
+		animatable(
+			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
+			createAttributeDefinition(
+				"tts:textShadow",
+				["span"],
+				"none",
+				undefined,
+				createPassThroughMapper("text-shadow"),
+			),
 		),
 	),
 
@@ -767,12 +903,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-unicodeBidi
 	 * @see https://w3c.github.io/ttml2/#derivation-unicodeBidi
 	 */
-	"tts:unicodeBidi": createAttributeDefinition(
-		"tts:unicodeBidi",
-		["p", "span"],
-		"normal",
-		new Set(["normal", "embed", "bidiOverride", "isolate"]),
-		createPassThroughMapper("unicode-bidi"),
+	"tts:unicodeBidi": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:unicodeBidi",
+			["p", "span"],
+			"normal",
+			new Set(["normal", "embed", "bidiOverride", "isolate"]),
+			createPassThroughMapper("unicode-bidi"),
+		),
 	),
 
 	/**
@@ -780,12 +919,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-visibility
 	 */
 	"tts:visibility": inheritable(
-		createAttributeDefinition(
-			"tts:visibility",
-			["body", "div", "image", "p", "region", "span"],
-			"visible",
-			new Set(["visible", "hidden"]),
-			createPassThroughMapper("visibility"),
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:visibility",
+				["body", "div", "image", "p", "region", "span"],
+				"visible",
+				new Set(["visible", "hidden"]),
+				createPassThroughMapper("visibility"),
+			),
 		),
 	),
 
@@ -799,12 +941,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-wrapOption
 	 */
 	"tts:wrapOption": inheritable(
-		createAttributeDefinition(
-			"tts:wrapOption",
-			["span"],
-			"wrap",
-			new Set(["wrap", "noWrap"]),
-			nullMapper,
+		animatable(
+			AnimationFlags.DISCRETE,
+			createAttributeDefinition(
+				"tts:wrapOption",
+				["span"],
+				"wrap",
+				new Set(["wrap", "noWrap"]),
+				nullMapper,
+			),
 		),
 	),
 
@@ -817,12 +962,15 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-writingMode
 	 * @see https://w3c.github.io/ttml2/#derivation-writingMode
 	 */
-	"tts:writingMode": createAttributeDefinition(
-		"tts:writingMode",
-		["region"],
-		"lrtb",
-		new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
-		nullMapper,
+	"tts:writingMode": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition(
+			"tts:writingMode",
+			["region"],
+			"lrtb",
+			new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
+			nullMapper,
+		),
 	),
 
 	/**
@@ -833,7 +981,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#style-attribute-zIndex
 	 * @see https://w3c.github.io/ttml2/#derivation-zIndex
 	 */
-	"tts:zIndex": createAttributeDefinition("tts:zIndex", ["region"], "auto", undefined, nullMapper),
+	"tts:zIndex": animatable(
+		AnimationFlags.DISCRETE,
+		createAttributeDefinition("tts:zIndex", ["region"], "auto", undefined, nullMapper),
+	),
 } as const;
 
 type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
