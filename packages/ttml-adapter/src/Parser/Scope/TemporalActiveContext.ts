@@ -32,6 +32,7 @@ export type ActiveStyle = TTMLStyle & {
 interface TemporalActiveInitParams {
 	regionIDRef?: string;
 	styles?: ActiveStyle[];
+	animationsIDRefs?: string[];
 }
 
 type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
@@ -44,6 +45,7 @@ export function createTemporalActiveContext(
 			{
 				styles: [],
 				regionIDRef: undefined,
+				animationsIDRefs: [],
 			} satisfies TemporalActiveInitParams,
 			initParams,
 		);
@@ -61,7 +63,7 @@ export function createTemporalActiveContext(
 				return store;
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, styles } = this.args;
+				const { regionIDRef, styles, animationsIDRefs } = this.args;
 
 				const regionContext = readScopeRegionContext(scope);
 
@@ -94,6 +96,13 @@ export function createTemporalActiveContext(
 
 						stylesContainer[style.kind].push(style);
 					}
+				}
+
+				if (animationsIDRefs.length) {
+					/**
+					 * @TODO query the animation context and check
+					 * for any available
+					 */
 				}
 			},
 			[onMergeSymbol](context: TemporalActiveContext): void {

@@ -434,6 +434,23 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
+					if (destinationMatch.matchesAttribute("animate") && token.attributes["animate"]) {
+						/**
+						 * @TODO Check the animation context, retrieve the IDREFS in this attribute
+						 * and add them to the TemporalActiveContext.
+						 */
+
+						const animationsIDRefs: string[] = [];
+
+						if (animationsIDRefs.length) {
+							contextsList.push(
+								createTemporalActiveContext({
+									animationsIDRefs,
+								}),
+							);
+						}
+					}
+
 					treeScope = createScope(treeScope, ...contextsList);
 
 					nodeTree.push(
@@ -489,6 +506,16 @@ export default class TTMLAdapter extends BaseAdapter {
 						break;
 					}
 
+					if (isInlineAnimation(nodeTree.currentNode)) {
+						/**
+						 * @TODO add this animation to a new scope and
+						 * 			generate it an id
+						 * @TODO add the id to a temporal active context
+						 */
+
+						break;
+					}
+
 					/**
 					 * Processing inline regions to be saved.
 					 * Remember: inline regions end before we
@@ -539,6 +566,15 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (isStylingElement(closingElement)) {
 						const styles = extractOutOfLineStyles(closingElement);
 						rootScope.addContext(createStyleContainerContext(styles));
+
+						break;
+					}
+
+					if (isAnimationElement(closingElement)) {
+						const animations = extractOutOfLineAnimations(closingElement);
+						/**
+						 * @TODO add children to animation context
+						 */
 
 						break;
 					}
@@ -843,4 +879,39 @@ function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined 
 			value: "referential",
 		},
 	});
+}
+
+function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
+	const { parent, content } = currentNode;
+	const parentNode = parent.content.content;
+	return (
+		isBlockClassElement(parentNode) &&
+		(content.content === "animation" || content.content === "set")
+	);
+}
+
+function isAnimationElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "animation";
+}
+
+function extractOutOfLineAnimations(
+	currentNode: NodeWithRelationship<Token>,
+): Record<string, string>[] {
+	const { children } = currentNode;
+
+	if (!children.length) {
+		return [];
+	}
+
+	const animations: Record<string, string>[] = [];
+
+	for (const { content: tokenContent } of children) {
+		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+			continue;
+		}
+
+		animations.push(tokenContent.attributes);
+	}
+
+	return animations;
 }
