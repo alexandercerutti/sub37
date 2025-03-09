@@ -146,14 +146,14 @@ function createCueFromAnonymousSpan(
 
 	const cues: CueNode[] = [];
 
-	for (const [startTime, endTime, isRegion] of timeIntervals) {
+	for (const [startTime, endTime, attrs] of timeIntervals) {
 		cues.push(
 			new CueNode({
 				id: parentId,
 				content,
 				startTime,
 				endTime,
-				region: isRegion ? temporalActiveContext.region : undefined,
+				region: attrs & TemporalAttributes.REGION ? temporalActiveContext.region : undefined,
 				entities,
 			}),
 		);
@@ -162,7 +162,12 @@ function createCueFromAnonymousSpan(
 	return cues;
 }
 
-type TemporalIntervalList = [startTime: number, endTime: number, isRegion: 0 | 1][];
+const TemporalAttributes = {
+	CUE: /*********/ 0b001,
+	REGION: /******/ 0b010,
+} as const;
+
+type TemporalIntervalList = [startTime: number, endTime: number, attrs: number][];
 
 /**
  * A region can specify timing attributes for which
@@ -173,155 +178,149 @@ type TemporalIntervalList = [startTime: number, endTime: number, isRegion: 0 | 1
  * time shift.
  */
 function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): TemporalIntervalList {
+	const cueTimeContext = readScopeTimeContext(scope);
 	const tac = readScopeTemporalActiveContext(scope);
 	const region = tac?.region;
 
-	if (!region?.timingAttributes) {
-		const cueTimeContext = readScopeTimeContext(scope);
+	/**
+	 * This array order is linked to the
+	 * one in the categorizeTimeSegments.
+	 */
+	const timeItemsIntervals: [number, number][] = [
+		[cueTimeContext.startTime, cueTimeContext.endTime],
+	];
 
-		return [[cueTimeContext.startTime, cueTimeContext.endTime, 0]];
+	if (region?.timingAttributes) {
+		const regionScope = createScope(
+			//
+			scope,
+			createTimeContext(region.timingAttributes),
+		);
+		const regionTimeContext = isolateContext(readScopeTimeContext(regionScope));
+
+		timeItemsIntervals.push([regionTimeContext.startTime, regionTimeContext.endTime]);
 	}
 
-	const regionScope = createScope(
-		//
-		scope,
-		createTimeContext(region.timingAttributes),
+	/**
+	 * @TODO add check on animation timing attributes
+	 */
+
+	const timeIntervals = categorizeTimeSegments(
+		timeItemsIntervals,
+		getTimeSegments(timeItemsIntervals),
 	);
 
-	const regionTimeContext = isolateContext(readScopeTimeContext(regionScope));
-	const cueTimeContext = readScopeTimeContext(scope);
+	const activeCueTimeIntervals = timeIntervals.filter(
+		([, , attr]) => attr & TemporalAttributes.CUE,
+	);
 
-	return getTimeIntervalsByTimeContexts(regionTimeContext, cueTimeContext);
+	if (!activeCueTimeIntervals.length) {
+		/**
+		 * This could happen because we got a cue with
+		 * a duration of 0s (e.g. begin of 0s and sequential
+		 * timeContainer, which leads to 0s).
+		 *
+		 * In that case, the cue would never get rendered.
+		 *
+		 * So, what's the difference between emitting a cue
+		 * that lasts 0s and not emitting one at all?
+		 * Probably just the fact that it could get debugged
+		 * and inspected and nothing else.
+		 *
+		 * For this reason, if this case, we are returning
+		 * the [0s,0s]. But one day we might decide to
+		 * remove it.
+		 */
+
+		return [[timeItemsIntervals[0][0], timeItemsIntervals[0][1], TemporalAttributes.CUE]];
+	}
+
+	return activeCueTimeIntervals;
 }
 
-type TimeContext = ReturnType<typeof readScopeTimeContext>;
+/**
+ * Given a set of `[start, end]` intervals, expands all
+ * the possible time intervals.
+ *
+ * @example
+ *
+ * Not intersecting, (2 segments)
+ * ==============================================
+ * ||	rst							ret cst							 cet ||
+ * ||	 | ////////////// |	 |								|  ||
+ * ||	 |								|	 | ////////////// |  ||
+ * ==============================================
+ *
+ * Intersecting, region ends before cue end (3 segments)
+ * =====================================
+ * ||	rst				 cst	 ret				cet ||
+ * ||	 | ////////////// |	 				 |	||
+ * ||	 |					| ////////////// |	||
+ * =====================================
+ *
+ * Intersecting (opposite, 3 segments)
+ * =====================================
+ * ||	cst				 rst	 cet				ret ||
+ * ||	 |					| ////////////// |	||
+ * ||	 | ////////////// |	 				 |	||
+ * =====================================
+ *
+ *
+ * @param intervals
+ * @returns
+ */
 
-function getTimeIntervalsByTimeContexts(
-	regionTimeContext: TimeContext,
-	cueTimeContext: TimeContext,
+function getTimeSegments(
+	intervals: [start: number, end: number][],
+): [t0: number, t1: number, attrs: number][] {
+	const timeBreakpoints = Array.from(new Set(intervals.flat())).sort((a, b) => a - b);
+
+	const timeIntervals: [number, number, number][] = [];
+
+	for (let i = 0; i < timeBreakpoints.length - 1; i++) {
+		const t0 = timeBreakpoints[i];
+		const t1 = timeBreakpoints[i + 1];
+
+		timeIntervals.push([t0, t1, 0]);
+	}
+
+	return timeIntervals;
+}
+
+/**
+ * Associates a segment with an attribute.
+ * A segment might contain multiple attributes.
+ * E.g. a segment might belong to a cue associated
+ * with a region, or just the region but not the
+ * cue.
+ *
+ * @param intervals
+ * @returns
+ */
+
+function categorizeTimeSegments(
+	baseTimeIntervals: [startTime: number, endTime: number][],
+	intervals: TemporalIntervalList,
 ): TemporalIntervalList {
-	const regionStartTime = regionTimeContext.startTime;
-	const regionEndTime = regionTimeContext.endTime;
+	const timeItemsAttributes = [TemporalAttributes.CUE, TemporalAttributes.REGION] as const;
 
-	const cueStartTime = cueTimeContext.startTime;
-	const cueEndTime = cueTimeContext.endTime;
-
-	/**
-	 * Not intersecting:
-	 * ===========================================
-	 * ||	rst							ret cst								||
-	 * ||	 | ////////////// |	 |								||
-	 * ||	 |								|	 | ////////////// ||
-	 * ===========================================
-	 *
-	 * Intersecting: region ends before cue end
-	 * =====================================
-	 * ||	rst				 cst	 ret				cet ||
-	 * ||	 | ////////////// |	 				 |	||
-	 * ||	 |					| ////////////// |	||
-	 * =====================================
-	 *
-	 * Intersecting (opposite):
-	 * =====================================
-	 * ||	cst				 rst	 cet				ret ||
-	 * ||	 |					| ////////////// |	||
-	 * ||	 | ////////////// |	 				 |	||
-	 * =====================================
-	 *
-	 */
-
-	/** */
-	const cueIntersectsRegionActivationTime = cueStartTime < regionEndTime;
-
-	if (!cueIntersectsRegionActivationTime) {
-		return [[cueStartTime, cueEndTime, 0]];
+	if (baseTimeIntervals.length > timeItemsAttributes.length) {
+		throw new Error(
+			"Not all the baseTimeIntervals have a matching attribute. One interval should be associated with one attribute.",
+		);
 	}
 
-	const regionEndPartiallyIntersectsCue = regionEndTime < cueEndTime;
+	for (let i = 0; i < baseTimeIntervals.length; i++) {
+		const [itemStartTime, itemEndTime] = baseTimeIntervals[i];
 
-	if (regionStartTime > cueStartTime) {
-		if (regionEndPartiallyIntersectsCue) {
-			/**
-			 *  |-----|----|-----|
-			 * cst   rst  ret   cet
-			 */
+		for (const interval of intervals) {
+			const [start, end] = interval;
 
-			return [
-				[cueStartTime, regionStartTime, 0],
-				[regionStartTime, regionEndTime, 1],
-				[regionEndTime, cueEndTime, 0],
-			];
+			if (start >= itemStartTime && end <= itemEndTime) {
+				interval[2] |= timeItemsAttributes[i];
+			}
 		}
-
-		/**
-		 *  |-----|-------|
-		 * cst   rst  ret>=cet
-		 */
-
-		return [
-			[cueStartTime, regionStartTime, 0],
-			[regionStartTime, cueEndTime, 1],
-		];
 	}
 
-	if (regionEndPartiallyIntersectsCue) {
-		/**
-		 * Always two segments. Possible scenarios:
-		 * - `rst === cst`
-		 * - `rst  <  cst`.
-		 * - `ret !== cet`
-		 *
-		 * ```
-		 *    |------|?????|
-		 * rst=cst  ret   cet
-		 * ```
-		 *
-		 * Or:
-		 *
-		 * ```
-		 *  |/////|-----|?????|
-		 * rst   cst   ret   cet
-		 * ```
-		 * First segment doesn't exist.
-		 * The third is optional as might not exists.
-		 *
-		 * Either of two, cueStartTime wins.
-		 */
-
-		const firstSegment: TemporalIntervalList[number] = [cueStartTime, regionEndTime, 1];
-
-		if (regionEndTime === cueEndTime) {
-			return [firstSegment];
-		}
-
-		return [
-			//
-			firstSegment,
-			[regionEndTime, cueEndTime, 0],
-		];
-	}
-
-	/**
-	 * Always one segment. Possible scenarios
-	 * (like above)
-	 *
-	 * ```
-	 *    |----------|
-	 * rst=cst   ret>=cet
-	 * ```
-	 *
-	 * ```
-	 *  |/////|--------|
-	 * rst   cst   ret>=cet
-	 * ```
-	 *
-	 * First segment doesn't exists.
-	 * The second will be produced because
-	 * region could
-	 */
-
-	return [
-		//
-		[cueStartTime, cueEndTime, 1],
-	];
+	return intervals;
 }
