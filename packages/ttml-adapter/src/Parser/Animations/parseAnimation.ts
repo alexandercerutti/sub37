@@ -6,11 +6,16 @@ import { KeySplinesRequiredError } from "./KeySplinesRequiredError.js";
 import { KeyTimesPacedNotAllowedError } from "./KeyTimesNotAllowedError.js";
 
 interface MetaAnimation extends Record<string, string> {
+	/**
+	 * CalcMode is also used for <set> when we register
+	 * discrete animations, in order to understand how
+	 * to behave.
+	 */
+	calcMode: string;
 	keyTimes?: string;
 	keySplines?: string;
 	fill?: string;
 	repeatCount?: string;
-	calcMode?: string;
 	begin?: string;
 	end?: string;
 	dur?: string;
