@@ -1,11 +1,12 @@
 import { memoizationFactory } from "../memoizationFactory.js";
 import { isStyleAttribute } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
+import { TimeContextData } from "../Scope/TimeContext.js";
 import { KeySplinesNotAllowedError } from "./KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./KeySplinesRequiredError.js";
 import { KeyTimesPacedNotAllowedError } from "./KeyTimesNotAllowedError.js";
 
-interface MetaAnimation extends Record<string, string> {
+interface MetaAnimation extends Record<`tts:${string}`, string> {
 	/**
 	 * CalcMode is also used for <set> when we register
 	 * discrete animations, in order to understand how
@@ -21,82 +22,49 @@ interface MetaAnimation extends Record<string, string> {
 	dur?: string;
 }
 
-type AnimationTypes = "discrete" | "continuous";
+type DiscreteCalcMode = "discrete";
+type ContinuousCalcMode = "linear" | "paced" | "spline";
+type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
 
-interface Animation<Kind extends AnimationTypes> {
-	kind: Kind;
+interface Animation<CM extends CalcMode> {
+	calcMode: CM;
 	fill: "freeze" | "remove";
 	repeatCount: number;
-	rawTimingAttributes: {
+	timingAttributes: {
 		begin?: string;
 		end?: string;
 		dur?: string;
 	};
 }
 
-interface DiscreteAnimation extends Animation<"discrete"> {}
-
-interface ContinuousAnimation extends Animation<"continuous"> {
-	keyTimes?: number[];
-	keySplines?: (0 | 1)[];
-}
-
 export const createAnimationParser = memoizationFactory(function animationParser(
 	animationStorage: Map<string, unknown>,
 	scope: Scope | undefined,
 	attributes: MetaAnimation,
-): Animation<AnimationTypes> | undefined {
+): Animation<CalcMode> | undefined {
 	const calcMode = attributes["calcMode"];
 
 	switch (true) {
 		case isDiscreteAnimation(calcMode): {
-			if (attributes["keySplines"]) {
-				throw new KeySplinesNotAllowedError();
-			}
-
 			const animation = createDiscreteAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousLinearAnimation(calcMode): {
-			if (attributes["keySplines"]) {
-				throw new KeySplinesNotAllowedError();
-			}
-
-			const animation = createContinuousAnimation(attributes);
+			const animation = createLinearAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousPacedAnimation(calcMode): {
-			if (attributes["keySplines"]) {
-				throw new KeySplinesNotAllowedError();
-			}
-
-			if (attributes["keyTimes"]) {
-				throw new KeyTimesPacedNotAllowedError();
-			}
-
-			const animation = createContinuousAnimation(attributes);
+			const animation = createPacedAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousSplineAnimation(calcMode): {
-			if (!attributes["keySplines"]) {
-				throw new KeySplinesRequiredError();
-			}
-
-			const animation = createContinuousAnimation(attributes);
-
-			const keyTimes = getKeyTimes(attributes["keyTimes"], attributes);
-
-			if (!keyTimes.length) {
-				return undefined;
-			}
-
-			// animationStorage.set();
+			const animation = createSplineAnimation(attributes);
 
 			break;
 		}
@@ -108,31 +76,6 @@ export const createAnimationParser = memoizationFactory(function animationParser
 
 	return undefined;
 });
-
-/**
- * Discrete value will happen exclusively
- * when animation is defined through `<animate>`
- * tag. `<set>` won't have this, and it is
- * discrete by design.
- *
- * @param calcMode
- * @returns
- */
-function isDiscreteAnimation(calcMode: string | undefined): calcMode is "discrete" {
-	return typeof calcMode === "undefined" || calcMode === "discrete";
-}
-
-function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
-	return calcMode === "linear";
-}
-
-function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
-	return calcMode === "paced";
-}
-
-function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
-	return calcMode === "spline";
-}
 
 /**
  * <repeat-count>
@@ -170,6 +113,10 @@ function getFill(value: string): "freeze" | "remove" {
 
 function isValidFillValue(value: string): value is "freeze" | "remove" {
 	return value === "freeze" || value === "remove";
+}
+
+function getStyleAttributes(attributes: MetaAnimation): Record<`tts:${string}`, string> {
+	return Object.fromEntries(Object.entries(attributes).filter(([key]) => isStyleAttribute(key)));
 }
 
 /**
@@ -213,34 +160,149 @@ function getKeyTimes(value: string, styles: Record<string, string>): number[] {
 	return [];
 }
 
-function getKeySplines(value: string, keyTimes: number[]): (0 | 1)[] {
-	return;
+function getKeySplines(value: string, keyTimes: number[]): number[] {
+	return [];
 }
 
-function createAnimation<Kind extends AnimationTypes>(
-	kind: Kind,
-	attributes: Record<string, string>,
-): Animation<Kind> {
+interface DiscreteAnimation extends Animation<DiscreteCalcMode> {
+	keyTimes: number[];
+}
+
+/**
+ * Discrete value will happen exclusively
+ * when animation is defined through `<animate>`
+ * tag. `<set>` won't have this, and it is
+ * discrete by design.
+ *
+ * @param calcMode
+ * @returns
+ */
+function isDiscreteAnimation(calcMode: string): calcMode is DiscreteCalcMode {
+	return calcMode === "discrete";
+}
+
+function createDiscreteAnimation(attributes: MetaAnimation): DiscreteAnimation {
+	assertKeySplinesMissing(attributes);
+
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const rawTimingAttributes = {
-		begin: attributes["begin"],
-		end: attributes["end"],
-		dur: attributes["dur"],
-	} as const;
+	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
-		kind,
+		calcMode: "discrete",
+		keyTimes: [],
 		repeatCount,
 		fill,
-		rawTimingAttributes,
+		timingAttributes,
 	};
 }
 
-function createDiscreteAnimation(attributes: Record<string, string>): DiscreteAnimation {
-	return createAnimation("discrete", attributes);
+interface LinearAnimation extends Animation<"linear"> {
+	keyTimes: number[];
 }
 
-function createContinuousAnimation(attributes: Record<string, string>): ContinuousAnimation {
-	return createAnimation("continuous", attributes);
+function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
+	return calcMode === "linear";
+}
+
+function createLinearAnimation(attributes: MetaAnimation): LinearAnimation {
+	assertKeySplinesMissing(attributes);
+
+	const repeatCount = getRepeatCount(attributes["repeatCount"]);
+	const fill = getFill(attributes["fill"]);
+	const keyTimes = getKeyTimes(attributes.keyTimes, getStyleAttributes(attributes));
+	const timingAttributes = extractTimingAttributes(attributes);
+
+	return {
+		calcMode: "linear",
+		keyTimes,
+		repeatCount,
+		fill,
+		timingAttributes,
+	};
+}
+
+interface PacedAnimation extends Animation<"paced"> {}
+
+function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
+	return calcMode === "paced";
+}
+
+function createPacedAnimation(attributes: MetaAnimation): PacedAnimation {
+	assertKeySplinesMissing(attributes);
+	assertKeyTimesMissing(attributes);
+
+	const repeatCount = getRepeatCount(attributes["repeatCount"]);
+	const fill = getFill(attributes["fill"]);
+	const timingAttributes = extractTimingAttributes(attributes);
+
+	return {
+		calcMode: "paced",
+		repeatCount,
+		fill,
+		timingAttributes,
+	};
+}
+
+interface SplineAnimation extends Animation<"spline"> {
+	keyTimes: number[];
+	keySplines: number[];
+}
+
+function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
+	return calcMode === "spline";
+}
+
+function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
+	assertKeySplineRequired(attributes);
+
+	const repeatCount = getRepeatCount(attributes["repeatCount"]);
+	const fill = getFill(attributes["fill"]);
+	const styleAttributes = getStyleAttributes(attributes);
+	const keyTimes = getKeyTimes(attributes.keyTimes, styleAttributes);
+	const keySplines = getKeySplines(attributes.keySplines, keyTimes);
+	const timingAttributes = extractTimingAttributes(attributes);
+
+	return {
+		calcMode: "spline",
+		keySplines,
+		keyTimes,
+		repeatCount,
+		fill,
+		timingAttributes,
+	};
+}
+
+function assertKeySplinesMissing(
+	attributes: MetaAnimation,
+): asserts attributes is Omit<MetaAnimation, "keySplines"> {
+	if (attributes.keySplines) {
+		throw new KeySplinesNotAllowedError();
+	}
+}
+
+function assertKeyTimesMissing(
+	attributes: MetaAnimation,
+): asserts attributes is Omit<MetaAnimation, "keyTimes"> {
+	if (attributes.keyTimes) {
+		throw new KeyTimesPacedNotAllowedError();
+	}
+}
+
+function assertKeySplineRequired(
+	attributes: MetaAnimation,
+): asserts attributes is Omit<MetaAnimation, "keyTimes"> {
+	if (!attributes.keySplines) {
+		throw new KeySplinesRequiredError();
+	}
+}
+
+function extractTimingAttributes(
+	attributes: MetaAnimation,
+): Omit<TimeContextData, "timeContainer"> {
+	return {
+		begin: attributes["begin"],
+		dur: attributes["dur"],
+		end: attributes["end"],
+	};
 }
