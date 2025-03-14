@@ -42,7 +42,7 @@ export const createAnimationParser = memoizationFactory(function animationParser
 	scope: Scope | undefined,
 	attributes: MetaAnimation,
 ): Animation<CalcMode> | undefined {
-	const calcMode = attributes["calcMode"];
+	const calcMode = attributes["calcMode"] || "linear";
 
 	switch (true) {
 		case isDiscreteAnimation(calcMode): {
