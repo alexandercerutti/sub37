@@ -46,25 +46,25 @@ export const createAnimationParser = memoizationFactory(function animationParser
 
 	switch (true) {
 		case isDiscreteAnimation(calcMode): {
-			const animation = createDiscreteAnimation(attributes);
+			const animation = createDiscreteAnimation(attributes, scope);
 
 			break;
 		}
 
 		case isContinuousLinearAnimation(calcMode): {
-			const animation = createLinearAnimation(attributes);
+			const animation = createLinearAnimation(attributes, scope);
 
 			break;
 		}
 
 		case isContinuousPacedAnimation(calcMode): {
-			const animation = createPacedAnimation(attributes);
+			const animation = createPacedAnimation(attributes, scope);
 
 			break;
 		}
 
 		case isContinuousSplineAnimation(calcMode): {
-			const animation = createSplineAnimation(attributes);
+			const animation = createSplineAnimation(attributes, scope);
 
 			break;
 		}
@@ -181,7 +181,7 @@ function isDiscreteAnimation(calcMode: string): calcMode is DiscreteCalcMode {
 	return calcMode === "discrete";
 }
 
-function createDiscreteAnimation(attributes: MetaAnimation): DiscreteAnimation {
+function createDiscreteAnimation(attributes: MetaAnimation, scope: Scope): DiscreteAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -205,7 +205,7 @@ function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
 	return calcMode === "linear";
 }
 
-function createLinearAnimation(attributes: MetaAnimation): LinearAnimation {
+function createLinearAnimation(attributes: MetaAnimation, scope: Scope): LinearAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -228,7 +228,7 @@ function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
 	return calcMode === "paced";
 }
 
-function createPacedAnimation(attributes: MetaAnimation): PacedAnimation {
+function createPacedAnimation(attributes: MetaAnimation, scope: Scope): PacedAnimation {
 	assertKeySplinesMissing(attributes);
 	assertKeyTimesMissing(attributes);
 
@@ -253,7 +253,7 @@ function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
 	return calcMode === "spline";
 }
 
-function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
+function createSplineAnimation(attributes: MetaAnimation, scope: Scope): SplineAnimation {
 	assertKeySplineRequired(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
