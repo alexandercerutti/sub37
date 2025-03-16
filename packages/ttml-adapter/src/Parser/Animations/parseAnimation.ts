@@ -173,7 +173,13 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 		return splittedKeyTimes;
 	}
 
-	let keyTimesFound = animationValueListsEntries[0][1].length;
+	const keyTimesFound = animationValueListsEntries[0][1].length;
+
+	if (keyTimesFound < 2) {
+		throw new Error(
+			"Invalid inferred keyTimes: at least two keyTimes are required for each component",
+		);
+	}
 
 	for (let i = 1; i < animationValueListsEntries.length; i++) {
 		const animationValueList = animationValueListsEntries[i][1];
@@ -184,10 +190,6 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 				`Invalid inferred keyTimes: ${styleName} has ${animationValueList.length} <animation-value> while some have ${keyTimesFound}. All the <animation-value-list> must have the same amount of <animation-value>.`,
 			);
 		}
-	}
-
-	if (keyTimesFound < 2) {
-		throw new Error("Invalid inferred keyTimes: at least two keyTimes are required.");
 	}
 
 	const keyTimes: number[] = [];
