@@ -257,15 +257,71 @@ describe("TTML Continuous Animations - Spline", () => {
 
 	it("should animate tts:textShadow correctly with only color changes with spline timing", () => {
 		const ttml = `
-      <animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1" calcMode="spline" tts:textShadow="1px 1px red;1px 1px green;1px 1px blue"/>
+      <animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.25 0.1 0.25 1;0 0 0.58 1" calcMode="spline" tts:textShadow="1px 1px red;1px 1px green;1px 1px blue"/>
     `;
 		// Implement the test logic based on the provided TTML content
 	});
 
 	it("should animate tts:border correctly with only color changes and starting point with spline timing", () => {
 		const ttml = `
-      <animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1" calcMode="spline" tts:border="2px solid black; green; blue; red"/>
+      <animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 1 1;0 0 1 1" calcMode="spline" tts:border="2px solid black; green; blue; red"/>
     `;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should properly parse valid keySplines in animate tag", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.1 0.8 0.2 0.8" calcMode="spline" tts:color="red;green;blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error when keySplines count does not match keyTimes count minus one", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1" calcMode="spline" tts:color="red;green;blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error when keySplines control points are not exactly 4", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58;0.1 0.8 0.9" calcMode="spline" tts:color="red;green;blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error when keySplines coordinate is out of [0,1] range", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1.2;0.1 0.8 0.9 0.2" calcMode="spline" tts:color="red;green;blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should animate tts:color correctly with spline timing", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0 0 0.58 1" calcMode="spline" tts:color="red;green;blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error for invalid tts:border animation with continuous change in non-animatable components", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0 0 1 1" calcMode="spline" tts:border="1px solid black;2px dotted red;3px dashed blue"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error for tts:textOutline with continuous change in non-animatable components", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.25 0.1 0.25 1;0.42 0 0.58 1" calcMode="spline" tts:textOutline="red 1px;green 2px;blue 3px"/>
+		`;
+		// Implement the test logic based on the provided TTML content
+	});
+
+	it("should throw error for invalid tts:textShadow animation with continuous change in non-animatable components", () => {
+		const ttml = `
+			<animate xml:id="s1" keyTimes="0;0.5;1" keySplines="0.1 0.8 0.2 0.8;0.25 0.1 0.25 1" calcMode="spline" tts:textShadow="1px 1px red;2px 2px green;3px 3px blue"/>
+		`;
 		// Implement the test logic based on the provided TTML content
 	});
 });

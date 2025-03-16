@@ -2,6 +2,10 @@ import { memoizationFactory } from "../memoizationFactory.js";
 import { isStyleAttribute } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import { TimeContextData } from "../Scope/TimeContext.js";
+import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
+import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotMatchingKeyTimesError.js";
+import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError.js";
+import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError.js";
 import { KeySplinesNotAllowedError } from "./KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./KeySplinesRequiredError.js";
 import { KeyTimesPacedNotAllowedError } from "./KeyTimesNotAllowedError.js";
@@ -160,8 +164,50 @@ function getKeyTimes(value: string, styles: Record<string, string>): number[] {
 	return [];
 }
 
-function getKeySplines(value: string, keyTimes: number[]): number[] {
-	return [];
+/**
+ * <key-splines>
+ * @see https://w3c.github.io/ttml2/#animation-value-key-splines
+ *
+ * @param value
+ * @param keyTimes
+ * @returns
+ */
+function getKeySplines(value: string, keyTimes: number[]): number[][] {
+	const splineControls = value.split(";");
+	const splines: number[][] = [];
+
+	if (splineControls.length !== keyTimes.length - 1) {
+		throw new KeySplinesAmountNotMatchingKeyTimesError(splineControls.length, keyTimes.length);
+	}
+
+	for (const control of splineControls) {
+		const coordinates = getSplittedLinearWhitespaceValues(control);
+		const splineCoordinates = [];
+
+		if (coordinates.length !== 4) {
+			throw new KeySplinesInvalidControlsAmountError(control);
+		}
+
+		for (const coordinate of coordinates) {
+			if (typeof coordinate !== "string") {
+				throw new Error(
+					`Invalid spline: control '${control}' parsing failed because a coordinate is not a string.`,
+				);
+			}
+
+			const coordinateNumber = parseFloat(coordinate);
+
+			if (Number.isNaN(coordinateNumber) || coordinateNumber < 0 || coordinateNumber > 1) {
+				throw new KeySplinesCoordinateOutOfBoundaryError(control, coordinateNumber);
+			}
+
+			splineCoordinates.push(coordinateNumber);
+		}
+
+		splineCoordinates.push(splineCoordinates);
+	}
+
+	return splines;
 }
 
 interface DiscreteAnimation extends Animation<DiscreteCalcMode> {
@@ -246,7 +292,7 @@ function createPacedAnimation(attributes: MetaAnimation, scope: Scope): PacedAni
 
 interface SplineAnimation extends Animation<"spline"> {
 	keyTimes: number[];
-	keySplines: number[];
+	keySplines: number[][];
 }
 
 function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
