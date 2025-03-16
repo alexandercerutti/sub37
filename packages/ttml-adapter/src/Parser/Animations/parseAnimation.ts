@@ -124,7 +124,6 @@ function getStyleAttributes(attributes: MetaAnimation): Record<`tts:${string}`, 
 }
 
 /**
- * @TODO waiting for the response from W3C question
  *
  * @param value
  * @param styles
