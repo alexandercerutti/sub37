@@ -119,8 +119,31 @@ function isValidFillValue(value: string): value is "freeze" | "remove" {
 	return value === "freeze" || value === "remove";
 }
 
-function getStyleAttributes(attributes: MetaAnimation): Record<`tts:${string}`, string> {
-	return Object.fromEntries(Object.entries(attributes).filter(([key]) => isStyleAttribute(key)));
+type AnimationValueList = string[];
+type AnimationValueLists = {
+	[key: string]: AnimationValueList;
+};
+
+/**
+ * <animation-value-list>
+ *
+ * @see https://w3c.github.io/ttml2/#animation-value-animation-value-list
+ */
+function getAnimationValueLists(attributes: MetaAnimation): AnimationValueLists {
+	const styles = Object.entries(attributes) as [string, string][];
+	const lists: AnimationValueLists = {};
+
+	for (const [key, value] of styles) {
+		if (!isStyleAttribute(key)) {
+			continue;
+		}
+
+		// <animation-value>
+		const animationValues = value.split(";");
+		lists[key] = animationValues;
+	}
+
+	return lists;
 }
 
 /**
@@ -129,38 +152,100 @@ function getStyleAttributes(attributes: MetaAnimation): Record<`tts:${string}`, 
  * @param styles
  * @returns
  */
-function getKeyTimes(value: string, styles: Record<string, string>): number[] {
-	const styleAttributesEntries = Object.entries(styles).filter(([key]) => isStyleAttribute(key));
+function getKeyTimes(value: string, animationValueLists: AnimationValueLists): number[] {
+	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt)) || [];
+	const animationValueListsEntries = Object.entries(animationValueLists);
 
-	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt));
+	if (splittedKeyTimes.length) {
+		assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
+		assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
 
-	if (!styleAttributesEntries.length && !splittedKeyTimes.length) {
-		return [];
-	}
+		for (const [styleName, animationValueList] of animationValueListsEntries) {
+			if (animationValueList.length === splittedKeyTimes.length) {
+				continue;
+			}
 
-	if (styleAttributesEntries.length && !splittedKeyTimes.length) {
-		/**
-		 * @TODO verify if all styleAttributesEnties have the same amount of steps
-		 * @TODO get the amount
-		 */
-
-		const frames: number[] = [];
-
-		if (!frames.length) {
-			return [];
+			throw new Error(
+				`Invalid KeyTimes: the amount of keytimes (${splittedKeyTimes.length}) is different from the amount of <animation-value> for style '${styleName}'. Ignoring animation.`,
+			);
 		}
 
-		const factor = 1 / frames.length;
-
-		return frames.map((frame) => frame * factor);
+		return splittedKeyTimes;
 	}
 
-	/**
-	 * @TODO verify if all styleAttributesEnties have the same amount of steps
-	 * @TODO verify if this amount corresponds to the keyTimes amount
-	 */
+	let keyTimesFound = animationValueListsEntries[0][1].length;
 
-	return [];
+	for (let i = 1; i < animationValueListsEntries.length; i++) {
+		const animationValueList = animationValueListsEntries[i][1];
+
+		if (animationValueList.length !== keyTimesFound) {
+			const styleName = animationValueListsEntries[i][0];
+			throw new Error(
+				`Invalid inferred keyTimes: ${styleName} has ${animationValueList.length} <animation-value> while some have ${keyTimesFound}. All the <animation-value-list> must have the same amount of <animation-value>.`,
+			);
+		}
+	}
+
+	if (keyTimesFound < 2) {
+		throw new Error("Invalid inferred keyTimes: at least two keyTimes are required.");
+	}
+
+	const keyTimes: number[] = [];
+	const factor = 1 / (keyTimesFound - 1);
+
+	for (let i = 0; i < keyTimesFound; i++) {
+		keyTimes.push(i * factor);
+	}
+
+	return keyTimes;
+}
+
+function assertAllKeyTimesWithinBoundaries(values: number[]): void {
+	let lastKeyTime = 0;
+
+	for (const keyTime of values) {
+		if (keyTime < 0 || keyTime > 1) {
+			throw new Error(
+				`Invalid keyTimes: keyTime component '${keyTime}' exceeds the boundary of [0, 1]. Ignored.`,
+			);
+		}
+
+		if (keyTime < lastKeyTime) {
+			throw new Error(
+				`Invalid keyTimes: keyTime component '${keyTime}' is greater than the previous component. Ascending order is mandatory.`,
+			);
+		}
+
+		lastKeyTime = keyTime;
+	}
+}
+
+/**
+ * From SVG 1.1 standard:
+ *
+ * "The ‘keyTimes’ list semantics depends upon the interpolation mode:
+ * 		For linear and spline animation, the first time value in the list
+ * 		must be 0, and the last time value in the list must be 1. The key
+ * 		time associated with each value defines when the value is set;
+ * 		values are interpolated between the key times.
+ *
+ * 		For discrete animation, the first time value in the list must be 0.
+ * 		The time associated with each value defines when the value is set;
+ * 		the animation function uses that value until the next time defined
+ * 		in ‘keyTimes’."
+ *
+ * @see https://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#KeyTimesAttribute
+ */
+function assertKeyTimesBeginIsZero(value: number): void {
+	if (value !== 0) {
+		throw new Error("Invalid keyTimes: first value is not 0.");
+	}
+}
+
+function assertKeyTimesEndIsOne(value: number): void {
+	if (value !== 0) {
+		throw new Error("Invalid keyTimes: last value is not 1.");
+	}
 }
 
 /**
@@ -231,11 +316,14 @@ function createDiscreteAnimation(attributes: MetaAnimation, scope: Scope): Discr
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
+	const animationValueLists = getAnimationValueLists(attributes);
+	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueLists);
+
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		calcMode: "discrete",
-		keyTimes: [],
+		keyTimes,
 		repeatCount,
 		fill,
 		timingAttributes,
@@ -255,7 +343,11 @@ function createLinearAnimation(attributes: MetaAnimation, scope: Scope): LinearA
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const keyTimes = getKeyTimes(attributes.keyTimes, getStyleAttributes(attributes));
+	const animationValueLists = getAnimationValueLists(attributes);
+	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
+
+	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
+
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -279,6 +371,7 @@ function createPacedAnimation(attributes: MetaAnimation, scope: Scope): PacedAni
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
+	const animationValueLists = getAnimationValueLists(attributes);
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -303,8 +396,11 @@ function createSplineAnimation(attributes: MetaAnimation, scope: Scope): SplineA
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const styleAttributes = getStyleAttributes(attributes);
-	const keyTimes = getKeyTimes(attributes.keyTimes, styleAttributes);
+	const animationValueLists = getAnimationValueLists(attributes);
+	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
+
+	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
+
 	const keySplines = getKeySplines(attributes.keySplines, keyTimes);
 	const timingAttributes = extractTimingAttributes(attributes);
 
