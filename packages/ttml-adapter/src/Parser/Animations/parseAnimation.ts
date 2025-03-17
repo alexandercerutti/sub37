@@ -195,11 +195,11 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 		}
 	}
 
-	const keyTimes: number[] = [];
+	const keyTimes = new Array<number>(keyTimesFound).fill(0.0);
 	const factor = 1 / (keyTimesFound - 1);
 
 	for (let i = 0; i < keyTimesFound; i++) {
-		keyTimes.push(i * factor);
+		keyTimes[i] = i * factor;
 	}
 
 	return keyTimes;
