@@ -8,6 +8,13 @@ import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOu
 import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError.js";
 import { KeySplinesNotAllowedError } from "./KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./KeySplinesRequiredError.js";
+import { KeyTimesAmountNotMatchingError } from "./KeyTimesAmountNotMatchingError.js";
+import { KeyTimesAscendingOrderViolationError } from "./KeyTimesAscendingOrderViolationError.js";
+import { KeyTimesComponentOutOfBoundaryError } from "./KeyTimesComponentOutOfBoundaryError.js";
+import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError.js";
+import { KeyTimesInferredMinimumUnmatchedError } from "./KeyTimesInferredMinimumUnmatchedError.js";
+import { KeyTimesInferredUnmatchedAnimationValueError } from "./KeyTimesInferredUnmatchedAnimationValueError.js";
+import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError.js";
 import { KeyTimesPacedNotAllowedError } from "./KeyTimesNotAllowedError.js";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
@@ -168,9 +175,7 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 				continue;
 			}
 
-			throw new Error(
-				`Invalid KeyTimes: the amount of keytimes (${splittedKeyTimes.length}) is different from the amount of <animation-value> for style '${styleName}'. Ignoring animation.`,
-			);
+			throw new KeyTimesAmountNotMatchingError(splittedKeyTimes.length, styleName);
 		}
 
 		return splittedKeyTimes;
@@ -179,9 +184,7 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 	const keyTimesFound = animationValueListsEntries[0][1].length;
 
 	if (keyTimesFound < 2) {
-		throw new Error(
-			"Invalid inferred keyTimes: at least two keyTimes are required for each component",
-		);
+		throw new KeyTimesInferredMinimumUnmatchedError();
 	}
 
 	for (let i = 1; i < animationValueListsEntries.length; i++) {
@@ -189,8 +192,10 @@ function getKeyTimes(value: string, animationValueLists: AnimationValueLists): n
 
 		if (animationValueList.length !== keyTimesFound) {
 			const styleName = animationValueListsEntries[i][0];
-			throw new Error(
-				`Invalid inferred keyTimes: ${styleName} has ${animationValueList.length} <animation-value> while some have ${keyTimesFound}. All the <animation-value-list> must have the same amount of <animation-value>.`,
+			throw new KeyTimesInferredUnmatchedAnimationValueError(
+				styleName,
+				animationValueList.length,
+				keyTimesFound,
 			);
 		}
 	}
@@ -210,15 +215,11 @@ function assertAllKeyTimesWithinBoundaries(values: number[]): void {
 
 	for (const keyTime of values) {
 		if (keyTime < 0 || keyTime > 1) {
-			throw new Error(
-				`Invalid keyTimes: keyTime component '${keyTime}' exceeds the boundary of [0, 1]. Ignored.`,
-			);
+			throw new KeyTimesComponentOutOfBoundaryError(keyTime);
 		}
 
 		if (keyTime < lastKeyTime) {
-			throw new Error(
-				`Invalid keyTimes: keyTime component '${keyTime}' is greater than the previous component. Ascending order is mandatory.`,
-			);
+			throw new KeyTimesAscendingOrderViolationError(keyTime);
 		}
 
 		lastKeyTime = keyTime;
@@ -243,13 +244,13 @@ function assertAllKeyTimesWithinBoundaries(values: number[]): void {
  */
 function assertKeyTimesBeginIsZero(value: number): void {
 	if (value !== 0) {
-		throw new Error("Invalid keyTimes: first value is not 0.");
+		throw new KeyTimesFirstValueNotZeroError();
 	}
 }
 
 function assertKeyTimesEndIsOne(value: number): void {
 	if (value !== 0) {
-		throw new Error("Invalid keyTimes: last value is not 1.");
+		throw new KeyTimesLastValueNotOneError();
 	}
 }
 
@@ -278,12 +279,6 @@ function getKeySplines(value: string, keyTimes: number[]): number[][] {
 		}
 
 		for (const coordinate of coordinates) {
-			if (typeof coordinate !== "string") {
-				throw new Error(
-					`Invalid spline: control '${control}' parsing failed because a coordinate is not a string.`,
-				);
-			}
-
 			const coordinateNumber = parseFloat(coordinate);
 
 			if (Number.isNaN(coordinateNumber) || coordinateNumber < 0 || coordinateNumber > 1) {
