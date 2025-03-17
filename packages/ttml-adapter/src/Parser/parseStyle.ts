@@ -108,6 +108,26 @@ function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr):
 	return def;
 }
 
+function resolveStyleDefinitionByName(propName: string): AttributeDefinition {
+	if (!isMappedKey(propName)) {
+		throw new Error(
+			"Provided name is not a valid (mapped) style property. Cannot retrieve animation details.",
+		);
+	}
+
+	return TTML_CSS_ATTRIBUTES_MAP[propName];
+}
+
+export function isPropertyContinuouslyAnimatable(name: string): boolean {
+	const attribute = resolveStyleDefinitionByName(name);
+	return Boolean(attribute.flags & AnimationFlags.CONTINUOUS);
+}
+
+export function isPropertyDiscretelyAnimatable(name: string): boolean {
+	const attribute = resolveStyleDefinitionByName(name);
+	return Boolean(attribute.flags & AnimationFlags.DISCRETE);
+}
+
 function createAttributeDefinition<
 	DestinationProperties extends string[],
 	const AllowedValues extends string,
