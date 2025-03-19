@@ -2,20 +2,11 @@ import { memoizationFactory } from "../memoizationFactory.js";
 import { createStyleParser, isStyleAttribute } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import { TimeContextData } from "../Scope/TimeContext.js";
-import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
-import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotMatchingKeyTimesError.js";
-import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError.js";
-import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError.js";
-import { KeySplinesNotAllowedError } from "./KeySplinesNotAllowedError.js";
-import { KeySplinesRequiredError } from "./KeySplinesRequiredError.js";
-import { KeyTimesAmountNotMatchingError } from "./KeyTimesAmountNotMatchingError.js";
-import { KeyTimesAscendingOrderViolationError } from "./KeyTimesAscendingOrderViolationError.js";
-import { KeyTimesComponentOutOfBoundaryError } from "./KeyTimesComponentOutOfBoundaryError.js";
-import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError.js";
-import { KeyTimesInferredMinimumUnmatchedError } from "./KeyTimesInferredMinimumUnmatchedError.js";
-import { KeyTimesInferredUnmatchedAnimationValueError } from "./KeyTimesInferredUnmatchedAnimationValueError.js";
-import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError.js";
-import { KeyTimesPacedNotAllowedError } from "./KeyTimesNotAllowedError.js";
+import { getKeySplines } from "./keySplines/index.js";
+import { KeySplinesNotAllowedError } from "./keySplines/KeySplinesNotAllowedError.js";
+import { KeySplinesRequiredError } from "./keySplines/KeySplinesRequiredError.js";
+import { assertKeyTimesEndIsOne, getKeyTimes } from "./keyTimes/index.js";
+import { KeyTimesPacedNotAllowedError } from "./keyTimes/KeyTimesNotAllowedError.js";
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 
@@ -129,8 +120,8 @@ function isValidFillValue(value: string): value is "freeze" | "remove" {
 	return value === "freeze" || value === "remove";
 }
 
-type AnimationValueList = string[];
-type AnimationValueLists = {
+export type AnimationValueList = string[];
+export type AnimationValueLists = {
 	[key: string]: AnimationValueList;
 };
 
@@ -154,144 +145,6 @@ function getAnimationValueLists(attributes: MetaAnimation): AnimationValueLists 
 	}
 
 	return lists;
-}
-
-/**
- *
- * @param value
- * @param styles
- * @returns
- */
-function getKeyTimes(value: string, animationValueLists: AnimationValueLists): number[] {
-	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt)) || [];
-	const animationValueListsEntries = Object.entries(animationValueLists);
-
-	if (splittedKeyTimes.length) {
-		assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
-		assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
-
-		for (const [styleName, animationValueList] of animationValueListsEntries) {
-			if (animationValueList.length === splittedKeyTimes.length) {
-				continue;
-			}
-
-			throw new KeyTimesAmountNotMatchingError(splittedKeyTimes.length, styleName);
-		}
-
-		return splittedKeyTimes;
-	}
-
-	const keyTimesFound = animationValueListsEntries[0][1].length;
-
-	if (keyTimesFound < 2) {
-		throw new KeyTimesInferredMinimumUnmatchedError();
-	}
-
-	for (let i = 1; i < animationValueListsEntries.length; i++) {
-		const animationValueList = animationValueListsEntries[i][1];
-
-		if (animationValueList.length !== keyTimesFound) {
-			const styleName = animationValueListsEntries[i][0];
-			throw new KeyTimesInferredUnmatchedAnimationValueError(
-				styleName,
-				animationValueList.length,
-				keyTimesFound,
-			);
-		}
-	}
-
-	const keyTimes = new Array<number>(keyTimesFound).fill(0.0);
-	const factor = 1 / (keyTimesFound - 1);
-
-	for (let i = 0; i < keyTimesFound; i++) {
-		keyTimes[i] = i * factor;
-	}
-
-	return keyTimes;
-}
-
-function assertAllKeyTimesWithinBoundaries(values: number[]): void {
-	let lastKeyTime = 0;
-
-	for (const keyTime of values) {
-		if (keyTime < 0 || keyTime > 1) {
-			throw new KeyTimesComponentOutOfBoundaryError(keyTime);
-		}
-
-		if (keyTime < lastKeyTime) {
-			throw new KeyTimesAscendingOrderViolationError(keyTime);
-		}
-
-		lastKeyTime = keyTime;
-	}
-}
-
-/**
- * From SVG 1.1 standard:
- *
- * "The ‘keyTimes’ list semantics depends upon the interpolation mode:
- * 		For linear and spline animation, the first time value in the list
- * 		must be 0, and the last time value in the list must be 1. The key
- * 		time associated with each value defines when the value is set;
- * 		values are interpolated between the key times.
- *
- * 		For discrete animation, the first time value in the list must be 0.
- * 		The time associated with each value defines when the value is set;
- * 		the animation function uses that value until the next time defined
- * 		in ‘keyTimes’."
- *
- * @see https://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#KeyTimesAttribute
- */
-function assertKeyTimesBeginIsZero(value: number): void {
-	if (value !== 0) {
-		throw new KeyTimesFirstValueNotZeroError();
-	}
-}
-
-function assertKeyTimesEndIsOne(value: number): void {
-	if (value !== 0) {
-		throw new KeyTimesLastValueNotOneError();
-	}
-}
-
-/**
- * <key-splines>
- * @see https://w3c.github.io/ttml2/#animation-value-key-splines
- *
- * @param value
- * @param keyTimes
- * @returns
- */
-function getKeySplines(value: string, keyTimes: number[]): number[][] {
-	const splineControls = value.split(";");
-	const splines: number[][] = [];
-
-	if (splineControls.length !== keyTimes.length - 1) {
-		throw new KeySplinesAmountNotMatchingKeyTimesError(splineControls.length, keyTimes.length);
-	}
-
-	for (const control of splineControls) {
-		const coordinates = getSplittedLinearWhitespaceValues(control);
-		const splineCoordinates = [];
-
-		if (coordinates.length !== 4) {
-			throw new KeySplinesInvalidControlsAmountError(control);
-		}
-
-		for (const coordinate of coordinates) {
-			const coordinateNumber = parseFloat(coordinate);
-
-			if (Number.isNaN(coordinateNumber) || coordinateNumber < 0 || coordinateNumber > 1) {
-				throw new KeySplinesCoordinateOutOfBoundaryError(control, coordinateNumber);
-			}
-
-			splineCoordinates.push(coordinateNumber);
-		}
-
-		splineCoordinates.push(splineCoordinates);
-	}
-
-	return splines;
 }
 
 interface DiscreteAnimation extends Animation<DiscreteCalcMode> {
