@@ -15,13 +15,12 @@ import type { AnimationValueListMap } from "../parseAnimation";
  */
 export function getKeyTimes(value: string, animationValueLists: AnimationValueListMap): number[] {
 	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt)) || [];
-	const animationValueListsEntries = Object.entries(animationValueLists);
 
 	if (splittedKeyTimes.length) {
 		assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
 		assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
 
-		for (const [styleName, animationValueList] of animationValueListsEntries) {
+		for (const [styleName, animationValueList] of animationValueLists) {
 			if (animationValueList.length === splittedKeyTimes.length) {
 				continue;
 			}
@@ -32,24 +31,7 @@ export function getKeyTimes(value: string, animationValueLists: AnimationValueLi
 		return splittedKeyTimes;
 	}
 
-	const keyTimesFound = animationValueListsEntries[0][1].length;
-
-	if (keyTimesFound < 2) {
-		throw new KeyTimesInferredMinimumUnmatchedError();
-	}
-
-	for (let i = 1; i < animationValueListsEntries.length; i++) {
-		const animationValueList = animationValueListsEntries[i][1];
-
-		if (animationValueList.length !== keyTimesFound) {
-			const styleName = animationValueListsEntries[i][0];
-			throw new KeyTimesInferredUnmatchedAnimationValueError(
-				styleName,
-				animationValueList.length,
-				keyTimesFound,
-			);
-		}
-	}
+	const keyTimesFound = getKeyTimesAmountFromAnimationValueLists(animationValueLists);
 
 	const keyTimes = new Array<number>(keyTimesFound).fill(0.0);
 	const factor = 1 / (keyTimesFound - 1);
@@ -59,6 +41,36 @@ export function getKeyTimes(value: string, animationValueLists: AnimationValueLi
 	}
 
 	return keyTimes;
+}
+
+function getKeyTimesAmountFromAnimationValueLists(
+	animationValueLists: AnimationValueListMap,
+): number {
+	let keyTimesAmount = 0;
+
+	for (const list of animationValueLists) {
+		const animationValueList = list[1];
+
+		if (animationValueList.length < 2) {
+			throw new KeyTimesInferredMinimumUnmatchedError();
+		}
+
+		if (!keyTimesAmount) {
+			keyTimesAmount = animationValueList.length;
+			continue;
+		}
+
+		if (animationValueList.length !== keyTimesAmount) {
+			const styleName = list[0];
+			throw new KeyTimesInferredUnmatchedAnimationValueError(
+				styleName,
+				animationValueList.length,
+				keyTimesAmount,
+			);
+		}
+	}
+
+	return keyTimesAmount;
 }
 
 function assertAllKeyTimesWithinBoundaries(values: number[]): void {
