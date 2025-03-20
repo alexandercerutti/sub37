@@ -19,14 +19,7 @@ export function getKeyTimes(value: string, animationValueLists: AnimationValueLi
 	if (splittedKeyTimes.length) {
 		assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
 		assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
-
-		for (const [styleName, animationValueList] of animationValueLists) {
-			if (animationValueList.length === splittedKeyTimes.length) {
-				continue;
-			}
-
-			throw new KeyTimesAmountNotMatchingError(splittedKeyTimes.length, styleName);
-		}
+		assertKeyTimesAmountMatchingAnimationValueLists(splittedKeyTimes, animationValueLists);
 
 		return splittedKeyTimes;
 	}
@@ -71,6 +64,19 @@ function getKeyTimesAmountFromAnimationValueLists(
 	}
 
 	return keyTimesAmount;
+}
+
+function assertKeyTimesAmountMatchingAnimationValueLists(
+	keyTimes: number[],
+	animationValueLists: AnimationValueListMap,
+): void {
+	for (const [styleName, animationValueList] of animationValueLists) {
+		if (animationValueList.length === keyTimes.length) {
+			continue;
+		}
+
+		throw new KeyTimesAmountNotMatchingError(keyTimes.length, styleName);
+	}
 }
 
 function assertAllKeyTimesWithinBoundaries(values: number[]): void {
