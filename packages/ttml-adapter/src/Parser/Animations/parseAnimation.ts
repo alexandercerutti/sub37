@@ -4,10 +4,10 @@ import {
 	isPropertyContinuouslyAnimatable,
 	isPropertyDiscretelyAnimatable,
 	isStyleAttribute,
-	TTMLStyle,
 } from "../parseStyle.js";
+import type { TTMLStyle } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
-import { TimeContextData } from "../Scope/TimeContext.js";
+import type { TimeContextData } from "../Scope/TimeContext.js";
 import { getKeySplines } from "./keySplines/index.js";
 import { KeySplinesNotAllowedError } from "./keySplines/KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./keySplines/KeySplinesRequiredError.js";
@@ -198,6 +198,8 @@ function getStylesFrameListMap(
 	return styleMap;
 }
 
+// region calcMode:discrete
+
 interface DiscreteAnimation extends Animation<DiscreteCalcMode> {
 	keyTimes: number[];
 }
@@ -238,6 +240,8 @@ function createDiscreteAnimation(
 	};
 }
 
+// region calcMode:linear
+
 interface LinearAnimation extends Animation<"linear"> {
 	keyTimes: number[];
 }
@@ -271,6 +275,8 @@ function createLinearAnimation(
 	};
 }
 
+// region calcMode:paced
+
 interface PacedAnimation extends Animation<"paced"> {}
 
 function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
@@ -294,6 +300,8 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 		timingAttributes,
 	};
 }
+
+// region calcMode:spline
 
 interface SplineAnimation extends Animation<"spline"> {
 	keyTimes: number[];
