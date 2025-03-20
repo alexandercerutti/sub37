@@ -1,5 +1,11 @@
 import { memoizationFactory } from "../memoizationFactory.js";
-import { createStyleParser, isStyleAttribute } from "../parseStyle.js";
+import {
+	createStyleParser,
+	isPropertyContinuouslyAnimatable,
+	isPropertyDiscretelyAnimatable,
+	isStyleAttribute,
+	TTMLStyle,
+} from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import { TimeContextData } from "../Scope/TimeContext.js";
 import { getKeySplines } from "./keySplines/index.js";
@@ -121,18 +127,16 @@ function isValidFillValue(value: string): value is "freeze" | "remove" {
 }
 
 export type AnimationValueList = string[];
-export type AnimationValueLists = {
-	[key: string]: AnimationValueList;
-};
+export type AnimationValueListMap = Map<string, AnimationValueList>;
 
 /**
  * <animation-value-list>
  *
  * @see https://w3c.github.io/ttml2/#animation-value-animation-value-list
  */
-function getAnimationValueLists(attributes: MetaAnimation): AnimationValueLists {
+function getAnimationValueLists(attributes: MetaAnimation): AnimationValueListMap {
 	const styles = Object.entries(attributes) as [string, string][];
-	const lists: AnimationValueLists = {};
+	const lists: AnimationValueListMap = new Map();
 
 	for (const [key, value] of styles) {
 		if (!isStyleAttribute(key)) {
@@ -141,10 +145,57 @@ function getAnimationValueLists(attributes: MetaAnimation): AnimationValueLists 
 
 		// <animation-value>
 		const animationValues = value.split(";");
-		lists[key] = animationValues;
+		lists.set(key, animationValues);
 	}
 
 	return lists;
+}
+
+/**
+ * Verifies if a property is animatable and converts the
+ * <animation-value> into a list of TTMLStyles.
+ *
+ * @param animationValueLists
+ * @param styleParser
+ * @returns
+ */
+function getStylesFrameListMap(
+	animationValueLists: AnimationValueListMap,
+	styleParser: StyleParser,
+): Map<string, TTMLStyle[]> {
+	const styleMap = new Map<string, TTMLStyle[]>();
+
+	for (const [name, animationValueList] of animationValueLists) {
+		const isAnimatable =
+			isPropertyDiscretelyAnimatable(name) || isPropertyContinuouslyAnimatable(name);
+
+		if (!isAnimatable) {
+			/**
+			 * "Targeting a non-animatable style is considered an error and
+			 * must be ignored for the purpose of presentation processing."
+			 */
+			console.warn(
+				`Style '${name}' was specified as animation-value, but is not animatable. Ignored.`,
+			);
+			continue;
+		}
+
+		if (!styleMap.has(name)) {
+			styleMap.set(name, []);
+		}
+
+		const styleList = styleMap.get(name);
+
+		for (const animationValue of animationValueList) {
+			const style = styleParser.process({
+				[name]: animationValue,
+			});
+
+			styleList.push(style);
+		}
+	}
+
+	return styleMap;
 }
 
 interface DiscreteAnimation extends Animation<DiscreteCalcMode> {
@@ -173,6 +224,7 @@ function createDiscreteAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
+	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
 	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueLists);
 
 	const timingAttributes = extractTimingAttributes(attributes);
@@ -203,6 +255,7 @@ function createLinearAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
+	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
@@ -231,6 +284,7 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
+	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -259,6 +313,8 @@ function createSplineAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
+	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
+
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);

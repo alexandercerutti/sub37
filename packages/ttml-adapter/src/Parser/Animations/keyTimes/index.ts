@@ -5,7 +5,7 @@ import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError
 import { KeyTimesInferredMinimumUnmatchedError } from "./KeyTimesInferredMinimumUnmatchedError";
 import { KeyTimesInferredUnmatchedAnimationValueError } from "./KeyTimesInferredUnmatchedAnimationValueError";
 import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError";
-import type { AnimationValueLists } from "../parseAnimation";
+import type { AnimationValueListMap } from "../parseAnimation";
 
 /**
  *
@@ -13,7 +13,7 @@ import type { AnimationValueLists } from "../parseAnimation";
  * @param styles
  * @returns
  */
-export function getKeyTimes(value: string, animationValueLists: AnimationValueLists): number[] {
+export function getKeyTimes(value: string, animationValueLists: AnimationValueListMap): number[] {
 	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt)) || [];
 	const animationValueListsEntries = Object.entries(animationValueLists);
 
