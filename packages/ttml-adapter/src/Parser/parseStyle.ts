@@ -1603,11 +1603,13 @@ function textOutlineMapper(
 	];
 }
 
-function getTextOutlineComponents(value: string): {
+interface TextOutlineComponents {
 	color: string;
 	thickness: string;
 	blur: string;
-} {
+}
+
+function getTextOutlineComponents(value: string): TextOutlineComponents {
 	const [param1, param2, param3] = getSplittedLinearWhitespaceValues(value);
 
 	let outlineColor: string = "";
