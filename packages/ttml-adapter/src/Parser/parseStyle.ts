@@ -893,11 +893,12 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
 			createAttributeDefinition(
+				//
 				"tts:textOutline",
 				["span"],
 				"none",
 				undefined,
-				createPassThroughMapper("outline"),
+				textOutlineMapper,
 			),
 		),
 	),
@@ -1579,4 +1580,55 @@ function getBorderRadii(component: string): string {
 	const sqerAsLength = toLength(secondQuarterEllipseRadius) || createUnit(0, "px");
 
 	return `${fqerAsLength.toString()} ${sqerAsLength.toString()}`;
+}
+
+// region tts:textOutline
+
+function textOutlineMapper(
+	_scope: Scope,
+	value: string,
+): PropertiesCollection<["text-shadow", "-webkit-text-stroke"]> {
+	if (value === "none") {
+		return [
+			["text-shadow", "none"],
+			["-webkit-text-stroke", "0 currentColor"],
+		];
+	}
+
+	const { color, thickness, blur } = getTextOutlineComponents(value);
+
+	return [
+		["text-shadow", `${color} 1px 1px ${blur}`],
+		["-webkit-text-stroke", `${thickness} ${color}`],
+	];
+}
+
+function getTextOutlineComponents(value: string): {
+	color: string;
+	thickness: string;
+	blur: string;
+} {
+	const [param1, param2, param3] = getSplittedLinearWhitespaceValues(value);
+
+	let outlineColor: string = "";
+	let outlineThickness: Length;
+	let outlineBlur: Length;
+
+	if (isValidColor(param1)) {
+		outlineColor = param1;
+		outlineThickness = toLength(param2) || createUnit(1, "px");
+		outlineBlur = toLength(param3) || createUnit(0, "px");
+	} else {
+		/** CSS Default */
+		outlineColor = "white";
+
+		outlineThickness = toLength(param1) || createUnit(1, "px");
+		outlineBlur = toLength(param2) || createUnit(0, "px");
+	}
+
+	return {
+		color: outlineColor,
+		thickness: outlineThickness.toString(),
+		blur: outlineBlur.toString(),
+	};
 }
