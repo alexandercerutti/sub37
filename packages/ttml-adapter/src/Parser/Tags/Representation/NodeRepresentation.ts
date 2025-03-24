@@ -1,16 +1,14 @@
-export type DestinationFactory = () => NodeRepresentation<string>[];
+import type { DestinationFactory, Matchable } from "./kleene";
 
-export interface NodeRepresentation<T extends string> {
+export type NodeRepresentation<T extends string> = Matchable<{
 	nodeName: T;
-	destinationFactory: DestinationFactory;
-	matches(nodeName: string): boolean;
 	matchesAttribute(attribute: string): boolean;
-}
+}>;
 
 export function createNode<const T extends string>(
 	nodeName: T,
 	attributes: Set<string> = new Set<string>(),
-	destinationFactory: DestinationFactory = () => [],
+	destinationFactory: DestinationFactory<NodeRepresentation<T>> = () => [],
 ): NodeRepresentation<T> {
 	return {
 		nodeName: nodeName,

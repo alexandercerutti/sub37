@@ -1,22 +1,28 @@
 import { MinimumElementViolationError } from "./MinimumElementViolationError";
-import type { NodeRepresentation } from "./NodeRepresentation";
 
 const operatorSymbol = Symbol("kleene.operator");
 const usagesSymbol = Symbol("kleene.counter");
 
 type KleeneOperationSymbols = "*" | "?" | "+" | "|";
 
-interface KleeneOperator<Op extends KleeneOperationSymbols> {
-	[operatorSymbol]: Op;
-	[usagesSymbol]: number;
+export type DestinationFactory<T extends Matchable = Matchable> = () => T[];
 
+interface MatchableNode {
+	nodeName: string;
 	matches(nodeName: string): boolean;
 }
 
-type KleeneNodeRepresentation<Op extends "*" | "?" | "+" | "|"> = KleeneOperator<Op> &
-	NodeRepresentation<string>;
+export type Matchable<T extends Omit<MatchableNode, "matches"> = MatchableNode> = T &
+	MatchableNode & {
+		destinationFactory: DestinationFactory<Matchable<T>>;
+	};
 
-export function zeroOrMore(node: NodeRepresentation<string>): KleeneNodeRepresentation<"*"> {
+interface KleeneMatchable<Op extends KleeneOperationSymbols> extends Matchable {
+	[operatorSymbol]: Op;
+	[usagesSymbol]: number;
+}
+
+export function zeroOrMore<const T extends Matchable>(node: T): T & KleeneMatchable<"*"> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "*",
@@ -26,7 +32,7 @@ export function zeroOrMore(node: NodeRepresentation<string>): KleeneNodeRepresen
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneOperator<"*">, nodeName: string) {
+			value(this: KleeneMatchable<"*">, nodeName: string) {
 				const matches = node.matches(nodeName);
 
 				this[usagesSymbol] += Number(matches);
@@ -37,7 +43,7 @@ export function zeroOrMore(node: NodeRepresentation<string>): KleeneNodeRepresen
 	});
 }
 
-export function oneOrMore(node: NodeRepresentation<string>): KleeneNodeRepresentation<"+"> {
+export function oneOrMore<const T extends Matchable>(node: T): T & KleeneMatchable<"+"> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "+",
@@ -47,7 +53,7 @@ export function oneOrMore(node: NodeRepresentation<string>): KleeneNodeRepresent
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneOperator<"+">, nodeName: string) {
+			value(this: KleeneMatchable<"+">, nodeName: string) {
 				const matches = node.matches(nodeName);
 
 				if (this[usagesSymbol] < 1 && !matches) {
@@ -62,7 +68,7 @@ export function oneOrMore(node: NodeRepresentation<string>): KleeneNodeRepresent
 	});
 }
 
-export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresentation<"?"> {
+export function zeroOrOne<const T extends Matchable>(node: T): T & KleeneMatchable<"?"> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "?",
@@ -72,7 +78,7 @@ export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresent
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneOperator<"?">, nodeName: string) {
+			value(this: KleeneMatchable<"?">, nodeName: string) {
 				if (this[usagesSymbol] > 0) {
 					return false;
 				}
@@ -87,40 +93,43 @@ export function zeroOrOne(node: NodeRepresentation<string>): KleeneNodeRepresent
 	});
 }
 
-export function or(...nodes: NodeRepresentation<string>[]): KleeneNodeRepresentation<"|"> {
-	let matchedNode: NodeRepresentation<string> | undefined;
+export function or<const T extends Matchable[]>(...nodes: T): T[number] & KleeneMatchable<"|"> {
+	let matchedNode: Matchable | undefined;
 
-	return {
-		[operatorSymbol]: "|",
-		[usagesSymbol]: 0,
-		get nodeName(): string {
-			if (!matchedNode) {
-				throw new Error(
-					"Cannot get nodeName when a node has not been matched yet through an or operator",
-				);
-			}
+	function matches(nodeName: string): boolean {
+		matchedNode = nodes.find((node) => node.matches(nodeName));
+		return Boolean(matchedNode);
+	}
 
-			return matchedNode.nodeName;
-		},
-		destinationFactory: () => {
-			if (!matchedNode) {
-				throw new Error(
-					"Cannot get destinations when a node has not been matched yet through an or operator",
-				);
-			}
+	function assertPropBelongsToNode<T extends Matchable>(prop: unknown, node: T): prop is keyof T {
+		return (prop as keyof T) in node;
+	}
 
-			return matchedNode?.destinationFactory() ?? [];
-		},
-		matches(nodeName: string): boolean {
-			matchedNode = nodes.find((node) => node.matches(nodeName));
-			return Boolean(matchedNode);
-		},
-		matchesAttribute(attribute): boolean {
-			if (!matchedNode) {
-				throw new Error("Cannot match when a node has not been matched yet.");
-			}
+	return new Proxy(
+		{
+			[operatorSymbol]: "|",
+			[usagesSymbol]: 0,
+		} as KleeneMatchable<"|">,
+		{
+			get(target, prop) {
+				if (assertPropBelongsToNode(prop, target)) {
+					return target[prop];
+				}
 
-			return matchedNode.matchesAttribute(attribute);
+				if (prop === "matches") {
+					return matches;
+				}
+
+				if (!matchedNode) {
+					throw new Error(`Cannot access to a property when no element has been matched yet`);
+				}
+
+				if (!assertPropBelongsToNode(prop, matchedNode)) {
+					throw new Error("Klenee OR operator: property not found in matched element.");
+				}
+
+				return matchedNode[prop];
+			},
 		},
-	};
+	);
 }
