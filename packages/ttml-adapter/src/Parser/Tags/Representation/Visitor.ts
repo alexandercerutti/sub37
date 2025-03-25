@@ -1,28 +1,28 @@
-import type { NodeRepresentation } from "./NodeRepresentation";
+import type { Matchable } from "./kleene";
 
-interface HistoryListNode {
-	node: NodeRepresentation<string> | null;
-	destinations: NodeRepresentation<string>[];
+interface HistoryListNode<T extends Matchable> {
+	node: T | null;
+	destinations: T[];
 	lastDestinationIndex: number;
-	prev: HistoryListNode;
+	prev: HistoryListNode<T>;
 }
 
-interface Visitor {
-	match(nodeName: string): NodeRepresentation<string> | null;
-	navigate?(node: NodeRepresentation<string>): void;
+interface Visitor<T extends Matchable> {
+	match(nodeName: string): T | null;
+	navigate?(node: T): void;
 	back(): void;
 }
 
-export function createVisitor(node: NodeRepresentation<string>): Visitor {
-	let historyList: HistoryListNode = {
+export function createVisitor<T extends Matchable>(node: T): Visitor<T> {
+	let historyList: HistoryListNode<T> = {
 		node,
-		destinations: node.destinationFactory?.() ?? [],
+		destinations: (node.destinationFactory?.() ?? []) as T[],
 		lastDestinationIndex: 0,
 		prev: null,
 	};
 
 	return {
-		match(nodeName: string): NodeRepresentation<string> | null {
+		match(nodeName: string): T | null {
 			const { destinations, lastDestinationIndex } = historyList;
 
 			/**
@@ -49,10 +49,10 @@ export function createVisitor(node: NodeRepresentation<string>): Visitor {
 
 			return null;
 		},
-		navigate(node: NodeRepresentation<string>): void {
+		navigate(node: T): void {
 			historyList = {
 				node,
-				destinations: node.destinationFactory?.() ?? [],
+				destinations: (node.destinationFactory?.() ?? []) as T[],
 				prev: historyList,
 				lastDestinationIndex: 0,
 			};
@@ -61,7 +61,7 @@ export function createVisitor(node: NodeRepresentation<string>): Visitor {
 			if (!historyList.prev) {
 				historyList = {
 					node: null,
-					destinations: node.destinationFactory?.() ?? [],
+					destinations: (node.destinationFactory?.() ?? []) as T[],
 					lastDestinationIndex: 0,
 					prev: null,
 				};
