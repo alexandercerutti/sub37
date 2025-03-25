@@ -93,16 +93,16 @@ export function zeroOrOne<const T extends Matchable>(node: T): T & KleeneMatchab
 	});
 }
 
+function assertPropBelongsToNode<T extends Matchable>(prop: unknown, node: T): prop is keyof T {
+	return (prop as keyof T) in node;
+}
+
 export function or<const T extends Matchable[]>(...nodes: T): T[number] & KleeneMatchable<"|"> {
 	let matchedNode: Matchable | undefined;
 
 	function matches(nodeName: string): boolean {
 		matchedNode = nodes.find((node) => node.matches(nodeName));
 		return Boolean(matchedNode);
-	}
-
-	function assertPropBelongsToNode<T extends Matchable>(prop: unknown, node: T): prop is keyof T {
-		return (prop as keyof T) in node;
 	}
 
 	return new Proxy(
