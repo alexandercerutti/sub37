@@ -1,6 +1,6 @@
 import { createStyleNode } from "./StyleNode.js";
 import * as Kleene from "../../structure/kleene.js";
-import { Color } from "./Color.js";
+import { Color } from "./color.js";
 
 /**
  * @syntax

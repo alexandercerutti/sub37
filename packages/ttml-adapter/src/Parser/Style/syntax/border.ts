@@ -1,5 +1,5 @@
 import * as Kleene from "../../structure/kleene.js";
-import { Color } from "./Color.js";
+import { Color } from "./color.js";
 import { createStyleNode } from "./StyleNode.js";
 
 /**
