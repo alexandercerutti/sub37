@@ -1,4 +1,4 @@
-import type { DestinationFactory, Matchable } from "../../Tags/Representation/kleene.js";
+import type { DestinationFactory, Matchable } from "../../structure/kleene.js";
 
 export type MatchableStyleNode<T extends string, SN extends string = string> = Matchable<{
 	nodeName: T;

@@ -1,4 +1,4 @@
-import type { Matchable } from "./kleene";
+import type { Matchable } from "./kleene.js";
 
 interface HistoryListNode<T extends Matchable> {
 	node: T | null;

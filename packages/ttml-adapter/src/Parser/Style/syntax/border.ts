@@ -1,4 +1,4 @@
-import * as Kleene from "../../Tags/Representation/kleene.js";
+import * as Kleene from "../../structure/kleene.js";
 import { Color } from "./Color.js";
 import { createStyleNode } from "./StyleNode.js";
 

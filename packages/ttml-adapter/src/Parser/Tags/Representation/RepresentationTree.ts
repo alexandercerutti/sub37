@@ -1,5 +1,5 @@
 import { createNode, withSelfReference } from "./NodeRepresentation.js";
-import * as Kleene from "./kleene.js";
+import * as Kleene from "../../structure/kleene.js";
 
 /**
  * This is a tree representing how elements are allowed to be disposed in a

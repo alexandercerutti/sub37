@@ -23,7 +23,7 @@ import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
 } from "./Parser/Scope/TemporalActiveContext.js";
-import { createVisitor } from "./Parser/Tags/Representation/Visitor.js";
+import { createVisitor } from "./Parser/structure/visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 import { createStyleParser } from "./Parser/parseStyle.js";
