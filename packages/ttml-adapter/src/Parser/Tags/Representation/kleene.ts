@@ -4,6 +4,7 @@ const operatorSymbol = Symbol("kleene.operator");
 const usagesSymbol = Symbol("kleene.counter");
 
 type KleeneOperationSymbols = "*" | "?" | "+" | "|";
+type OperationSymbols = KleeneOperationSymbols | "&";
 
 export type DestinationFactory<T extends Matchable = Matchable> = () => T[];
 
@@ -14,10 +15,10 @@ interface MatchableNode {
 
 export type Matchable<T extends Omit<MatchableNode, "matches"> = MatchableNode> = T &
 	MatchableNode & {
-		destinationFactory: DestinationFactory<Matchable<T>>;
+		destinationFactory: DestinationFactory<Matchable<MatchableNode>>;
 	};
 
-interface KleeneMatchable<Op extends KleeneOperationSymbols> extends Matchable {
+interface KleeneMatchable<Op extends OperationSymbols> extends Matchable {
 	[operatorSymbol]: Op;
 	[usagesSymbol]: number;
 }
@@ -126,6 +127,45 @@ export function or<const T extends Matchable[]>(...nodes: T): T[number] & Kleene
 
 				if (!assertPropBelongsToNode(prop, matchedNode)) {
 					throw new Error("Klenee OR operator: property not found in matched element.");
+				}
+
+				return matchedNode[prop];
+			},
+		},
+	);
+}
+
+export function ordered<const T extends Matchable[]>(
+	...nodes: T
+): T[number] & KleeneMatchable<"&"> {
+	let matchedNode: Matchable | undefined;
+
+	function matches(nodeName: string): boolean {
+		matchedNode = nodes.find((node) => node.matches(nodeName));
+		return Boolean(matchedNode);
+	}
+
+	return new Proxy(
+		{
+			[operatorSymbol]: "&",
+			[usagesSymbol]: 0,
+		} as KleeneMatchable<"&">,
+		{
+			get(target, prop) {
+				if (assertPropBelongsToNode(prop, target)) {
+					return target[prop];
+				}
+
+				if (prop === "matches") {
+					return matches;
+				}
+
+				if (!matchedNode) {
+					throw new Error(`Cannot access to a property when no element has been matched yet`);
+				}
+
+				if (!assertPropBelongsToNode(prop, matchedNode)) {
+					throw new Error("Klenee Ordered operator: property not found in matched element.");
 				}
 
 				return matchedNode[prop];
