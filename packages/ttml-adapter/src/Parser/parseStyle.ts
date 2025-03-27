@@ -8,6 +8,9 @@ import { isPercentage, toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
 import { createUnit } from "./Units/unit.js";
 import { memoizationFactory } from "./memoizationFactory.js";
+import * as Syntax from "./Style/syntax/index.js";
+import { createStyleNode } from "./Style/syntax/StyleNode.js";
+import type { MatchableStyleNode } from "./Style/syntax/StyleNode.js";
 
 type StyleAttributeString = `tts:${string}`;
 
@@ -94,6 +97,7 @@ interface AttributeDefinition<DestinationProperties extends string[] = string[]>
 	readonly allowedValues: Set<unknown>;
 	readonly namespace: string | undefined;
 	readonly toCSS: PropertiesMapper<DestinationProperties>;
+	readonly syntax: MatchableStyleNode<string, string>;
 
 	flags: number;
 }
@@ -137,6 +141,7 @@ function createAttributeDefinition<
 	defaultValue: NoInfer<AllowedValues>,
 	allowedValues: Set<AllowedValues> | undefined,
 	mapper: PropertiesMapper<DestinationProperties>,
+	syntax: MatchableStyleNode<string, string>,
 ): AttributeDefinition<DestinationProperties> {
 	return Object.create(null, {
 		name: {
@@ -166,11 +171,18 @@ function createAttributeDefinition<
 				return nameSlice.length >= 2 ? nameSlice[0] : undefined;
 			},
 		},
+		syntax: {
+			value: syntax,
+		},
 		flags: {
 			value: 0,
 			writable: true,
 		},
 	} satisfies PropertyDescriptorMap);
+}
+
+function SyntaxUnavailable(): MatchableStyleNode<string, string> {
+	return createStyleNode("unavailable", "unavailable");
 }
 
 function defaultValueMapper(_scope: Scope, value: string): string {
@@ -206,6 +218,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"border",
 			new Set(["border", "content", "padding"]),
 			createPassThroughMapper("background-clip"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -221,6 +234,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"transparent",
 			undefined,
 			createPassThroughMapper("background-color"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -236,6 +250,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"",
 			undefined,
 			createPassThroughMapper("background-size"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -251,6 +266,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"none",
 			undefined,
 			createPassThroughMapper("background-image"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -266,6 +282,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"padding",
 			new Set(["border", "content", "padding"]),
 			createPassThroughMapper("background-origin"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -281,6 +298,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0% 0%",
 			undefined,
 			createPassThroughMapper("background-position"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -296,6 +314,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"repeat",
 			new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
 			createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -311,6 +330,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"none",
 			undefined,
 			borderMapper,
+			Syntax.Border,
 		),
 	),
 
@@ -332,6 +352,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			nullMapper,
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -348,6 +369,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"white",
 				undefined,
 				createPassThroughMapper("color"),
+				Syntax.Color,
 			),
 		),
 	),
@@ -365,6 +387,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"ltr",
 				new Set(["ltr", "rtl"]),
 				createPassThroughMapper("direction"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -381,6 +404,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0px",
 			undefined,
 			nullMapper,
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -396,6 +420,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			new Set(["auto", "none", "inlineBlock"]),
 			createPassThroughMapper("display"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -411,6 +436,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"before",
 			new Set(["before", "center", "after", "justify"]),
 			createPassThroughMapper("justify-content", displayAlignValueMapper),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -426,6 +452,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			extentMapper,
+			Syntax.Extent,
 		),
 	),
 
@@ -442,6 +469,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"default",
 				undefined,
 				createPassThroughMapper("font-family"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -459,6 +487,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["none", "normal"]),
 				createPassThroughMapper("font-kerning"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -478,6 +507,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"auto",
 				new Set(["auto", "character"]),
 				nullMapper,
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -491,12 +521,20 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:fontShear": inheritable(
 		animatable(
 			AnimationFlags.DISCRETE,
-			createAttributeDefinition("tts:fontShear", ["span"], "0%", undefined, nullMapper),
+			createAttributeDefinition(
+				"tts:fontShear",
+				["span"],
+				"0%",
+				undefined,
+				nullMapper,
+				SyntaxUnavailable(),
+			),
 		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-fontSize
+	 * SyntaxUnavailable(),
 	 * @see https://w3c.github.io/ttml2/#derivation-fontSize
 	 */
 	"tts:fontSize": inheritable(
@@ -508,6 +546,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"1c",
 				undefined,
 				createPassThroughMapper("font-size", fontSizeValueMapper),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -525,6 +564,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["normal", "italic", "oblique"]),
 				createPassThroughMapper("font-style"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -542,6 +582,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				nullMapper, // Maps to multiple values. Must be handled differently
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -559,6 +600,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["normal", "bold"]),
 				createPassThroughMapper("font-weight"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -581,6 +623,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			nullMapper, // ??????
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -597,6 +640,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				createPassThroughMapper("letter-spacing"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -614,6 +658,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				createPassThroughMapper("line-height"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -625,24 +670,40 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:lineShear": inheritable(
 		animatable(
 			AnimationFlags.DISCRETE,
-			createAttributeDefinition("tts:lineShear", ["p"], "0%", undefined, nullMapper),
+			createAttributeDefinition(
+				"tts:lineShear",
+				["p"],
+				"0%",
+				undefined,
+				nullMapper,
+				SyntaxUnavailable(),
+			),
 		),
 	),
 
 	/**
 	 * TTML Only
+	 * SyntaxUnavailable(),
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-luminanceGain
 	 * @see https://w3c.github.io/ttml2/#derivation-luminanceGain
 	 */
 	"tts:luminanceGain": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
-		createAttributeDefinition("tts:luminanceGain", ["region"], "1.0", undefined, nullMapper),
+		createAttributeDefinition(
+			"tts:luminanceGain",
+			["region"],
+			"1.0",
+			undefined,
+			nullMapper,
+			SyntaxUnavailable(),
+		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-opacity
 	 * @see https://w3c.github.io/ttml2/#derivation-opacity
+	 * SyntaxUnavailable(),
 	 */
 	"tts:opacity": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
@@ -652,6 +713,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"1.0",
 			undefined,
 			createPassThroughMapper("opacity"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -674,6 +736,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			originMapper,
+			Syntax.Origin,
 		),
 	),
 
@@ -689,6 +752,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"hidden",
 			new Set(["visible", "hidden"]),
 			createPassThroughMapper("overflow"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -704,6 +768,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0px",
 			undefined,
 			createPassThroughMapper("padding", paddingValueMapper),
+			Syntax.Padding,
 		),
 	),
 
@@ -719,6 +784,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"top left",
 			undefined,
 			createPassThroughMapper("background-position"),
+			Syntax.Position,
 		),
 	),
 
@@ -732,6 +798,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		"none",
 		new Set(["none", "container", "base", "baseContainer", "text", "textContainer", "delimiter"]),
 		nullMapper,
+		SyntaxUnavailable(),
 	),
 
 	/**
@@ -747,6 +814,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"center",
 				new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
 				createPassThroughMapper("ruby-align"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -764,6 +832,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"outside",
 				new Set(["before", "after", "outside"]),
 				createPassThroughMapper("ruby-position"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -775,23 +844,39 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:rubyReserve": inheritable(
 		animatable(
 			AnimationFlags.DISCRETE,
-			createAttributeDefinition("tts:rubyReserve", ["p"], "none", undefined, nullMapper),
+			createAttributeDefinition(
+				"tts:rubyReserve",
+				["p"],
+				"none",
+				undefined,
+				nullMapper,
+				SyntaxUnavailable(),
+			),
 		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-shear
+	 * SyntaxUnavailable(),
 	 * @see https://w3c.github.io/ttml2/#derivation-shear
 	 */
 	"tts:shear": inheritable(
 		animatable(
 			AnimationFlags.DISCRETE,
-			createAttributeDefinition("tts:shear", ["p"], "0%", undefined, nullMapper),
+			createAttributeDefinition(
+				"tts:shear",
+				["p"],
+				"0%",
+				undefined,
+				nullMapper,
+				SyntaxUnavailable(),
+			),
 		),
 	),
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-showBackground
+	 * SyntaxUnavailable(),
 	 * @see https://w3c.github.io/ttml2/#derivation-showBackground
 	 */
 	"tts:showBackground": animatable(
@@ -802,6 +887,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"always",
 			new Set(["always", "whenActive"]),
 			nullMapper,
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -817,6 +903,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"start",
 			new Set(["left", "center", "right", "start", "end", "justify"]),
 			createPassThroughMapper("text-align"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -833,6 +920,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-combine-upright"),
+				Syntax.TextCombine,
 			),
 		),
 	),
@@ -850,6 +938,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-decoration", textDecorationValueMapper),
+				Syntax.TextDecoration,
 			),
 		),
 	),
@@ -867,6 +956,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-emphasis"),
+				Syntax.TextEmphasis,
 			),
 		),
 	),
@@ -882,6 +972,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"mixed",
 			new Set(["mixed", "sideways", "upright"]),
 			createPassThroughMapper("text-orientation", textOrientationValueMapper),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -899,6 +990,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				textOutlineMapper,
+				Syntax.TextOutline,
 			),
 		),
 	),
@@ -916,6 +1008,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-shadow"),
+				Syntax.TextShadow,
 			),
 		),
 	),
@@ -932,6 +1025,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"normal",
 			new Set(["normal", "embed", "bidiOverride", "isolate"]),
 			createPassThroughMapper("unicode-bidi"),
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -948,6 +1042,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"visible",
 				new Set(["visible", "hidden"]),
 				createPassThroughMapper("visibility"),
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -970,6 +1065,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"wrap",
 				new Set(["wrap", "noWrap"]),
 				nullMapper,
+				SyntaxUnavailable(),
 			),
 		),
 	),
@@ -991,6 +1087,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"lrtb",
 			new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
 			nullMapper,
+			SyntaxUnavailable(),
 		),
 	),
 
@@ -1004,7 +1101,14 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 */
 	"tts:zIndex": animatable(
 		AnimationFlags.DISCRETE,
-		createAttributeDefinition("tts:zIndex", ["region"], "auto", undefined, nullMapper),
+		createAttributeDefinition(
+			"tts:zIndex",
+			["region"],
+			"auto",
+			undefined,
+			nullMapper,
+			SyntaxUnavailable(),
+		),
 	),
 } as const;
 
