@@ -9,3 +9,5 @@ export * from "./text-decoration.js";
 export * from "./text-emphasis.js";
 export * from "./text-outline.js";
 export * from "./text-shadow.js";
+
+export * from "./Unavailable.js";
