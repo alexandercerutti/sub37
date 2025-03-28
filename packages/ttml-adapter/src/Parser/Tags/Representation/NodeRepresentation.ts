@@ -2,6 +2,7 @@ import type { DestinationFactory, Matchable } from "../../structure/kleene";
 
 export type NodeRepresentation<T extends string> = Matchable<{
 	nodeName: T;
+	matches(nodeName: string): boolean;
 	matchesAttribute(attribute: string): boolean;
 }>;
 

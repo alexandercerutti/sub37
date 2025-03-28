@@ -10,10 +10,10 @@ export type DestinationFactory<T extends Matchable = Matchable> = () => T[];
 
 interface MatchableNode {
 	nodeName: string;
-	matches(nodeName: string): boolean;
+	matches(nodeName: string): unknown;
 }
 
-export type Matchable<T extends Omit<MatchableNode, "matches"> = MatchableNode> = T &
+export type Matchable<T extends MatchableNode = MatchableNode> = T &
 	MatchableNode & {
 		destinationFactory: DestinationFactory<Matchable<MatchableNode>>;
 	};
