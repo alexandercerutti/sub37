@@ -6,14 +6,16 @@ import { Color } from "./color.js";
  * @syntax "none" | (\<color> \<lwsp>)? \<length> (\<lwsp> \<length>)?
  * @see https://w3c.github.io/ttml2/#style-value-text-outline
  */
-export const TextOutline = createStyleNode("text-outline", "text-outline", () => [
-	Kleene.or(
-		createStyleNode("none", "none"),
-		Kleene.ordered(
-			//
-			Kleene.zeroOrOne(Color),
-			createStyleNode("length", "thickness"),
-			Kleene.zeroOrOne(createStyleNode("length", "blur-radius")),
+export const TextOutline = createStyleNode(null, null, () => [
+	createStyleNode("text-outline", "text-outline", () => [
+		Kleene.or(
+			createStyleNode("none", "none"),
+			Kleene.ordered(
+				//
+				Kleene.zeroOrOne(Color),
+				createStyleNode("length", "thickness"),
+				Kleene.zeroOrOne(createStyleNode("length", "blur-radius")),
+			),
 		),
-	),
+	]),
 ]);

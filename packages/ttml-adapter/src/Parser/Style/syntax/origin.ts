@@ -7,13 +7,15 @@ import * as Kleene from "../../structure/kleene.js";
  *  | \<length> \<lwsp> \<length>
  * @see https://w3c.github.io/ttml2/#style-value-origin
  */
-export const Origin = createStyleNode("origin", "origin", () => [
-	Kleene.or(
-		createStyleNode("auto", "auto"),
-		Kleene.ordered(
-			//
-			createStyleNode("length", "x-origin"),
-			createStyleNode("length", "y-origin"),
+export const Origin = createStyleNode(null, null, () => [
+	createStyleNode("origin", "origin", () => [
+		Kleene.or(
+			createStyleNode("auto", "auto"),
+			Kleene.ordered(
+				//
+				createStyleNode("length", "x-origin"),
+				createStyleNode("length", "y-origin"),
+			),
 		),
-	),
+	]),
 ]);

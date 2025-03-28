@@ -252,24 +252,26 @@ const OffsetPositionV = createStyleNode("offset-position-v", "offset-position-v"
  *
  * In both cases, the resulting difference may be a negative percentage.
  */
-export const Position = createStyleNode("position", "position", () => [
-	Kleene.or(
-		// Single component values
-		OffsetPositionH,
-		EdgeKeywordV,
+export const Position = createStyleNode(null, null, () => [
+	createStyleNode("position", "position", () => [
+		Kleene.or(
+			// Single component values
+			OffsetPositionH,
+			EdgeKeywordV,
 
-		// Two component values
-		Kleene.ordered(OffsetPositionH, OffsetPositionV),
-		Kleene.ordered(PositionKeywordV, PositionKeywordH),
+			// Two component values
+			Kleene.ordered(OffsetPositionH, OffsetPositionV),
+			Kleene.ordered(PositionKeywordV, PositionKeywordH),
 
-		// Three component values
-		Kleene.ordered(PositionKeywordH, EdgeOffsetV),
-		Kleene.ordered(PositionKeywordV, EdgeOffsetH),
-		Kleene.ordered(EdgeOffsetH, PositionKeywordV),
-		Kleene.ordered(EdgeOffsetV, PositionKeywordH),
+			// Three component values
+			Kleene.ordered(PositionKeywordH, EdgeOffsetV),
+			Kleene.ordered(PositionKeywordV, EdgeOffsetH),
+			Kleene.ordered(EdgeOffsetH, PositionKeywordV),
+			Kleene.ordered(EdgeOffsetV, PositionKeywordH),
 
-		// Four component values
-		Kleene.ordered(EdgeOffsetH, EdgeOffsetV),
-		Kleene.ordered(EdgeOffsetV, EdgeOffsetH),
-	),
+			// Four component values
+			Kleene.ordered(EdgeOffsetH, EdgeOffsetV),
+			Kleene.ordered(EdgeOffsetV, EdgeOffsetH),
+		),
+	]),
 ]);

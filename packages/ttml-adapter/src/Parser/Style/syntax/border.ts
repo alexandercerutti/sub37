@@ -39,11 +39,13 @@ const BorderStyle = createStyleNode("border-style", "border-style", () => [
  * @syntax \<border-thickness> || \<border-style> || \<border-color> || \<border-radii>
  * @see https://w3c.github.io/ttml2/#style-value-border
  */
-export const Border = createStyleNode("border", "border", () => [
-	Kleene.or(
-		Kleene.zeroOrOne(BorderThickness),
-		Kleene.zeroOrOne(BorderStyle),
-		Kleene.zeroOrOne(BorderColor),
-		Kleene.zeroOrOne(createStyleNode("border-radii", "radius")),
-	),
+export const Border = createStyleNode(null, null, () => [
+	createStyleNode("border", "border", () => [
+		Kleene.or(
+			Kleene.zeroOrOne(BorderThickness),
+			Kleene.zeroOrOne(BorderStyle),
+			Kleene.zeroOrOne(BorderColor),
+			Kleene.zeroOrOne(createStyleNode("border-radii", "radius")),
+		),
+	]),
 ]);

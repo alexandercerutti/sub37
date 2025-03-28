@@ -5,4 +5,6 @@ import { createStyleNode } from "./StyleNode.js";
  * we might not have implemented or won't implement
  * a certain syntax.
  */
-export const Unavailable = createStyleNode("unavailable", "unavailable");
+export const Unavailable = createStyleNode(null, null, () => [
+	createStyleNode("unavailable", "unavailable"),
+]);

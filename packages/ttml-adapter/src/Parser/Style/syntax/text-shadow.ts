@@ -31,6 +31,8 @@ const Shadow = createStyleNode("shadow", "shadow", () => [
  * @syntax \<shadow> (\<lwsp>? "," \<lwsp>? \<shadow>)*
  * @see https://w3c.github.io/ttml2/#style-value-text-shadow
  */
-export const TextShadow = createStyleNode("text-shadow", "text-shadow", () => [
-	Kleene.ordered(Shadow, Kleene.zeroOrMore(Shadow)),
+export const TextShadow = createStyleNode(null, null, () => [
+	createStyleNode("text-shadow", "text-shadow", () => [
+		Kleene.ordered(Shadow, Kleene.zeroOrMore(Shadow)),
+	]),
 ]);
