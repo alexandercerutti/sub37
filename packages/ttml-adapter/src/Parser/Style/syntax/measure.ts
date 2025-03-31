@@ -1,5 +1,6 @@
 import { createStyleNode } from "./StyleNode.js";
 import * as Kleene from "../../structure/kleene.js";
+import { toLength } from "../../Units/length.js";
 
 /**
  *
@@ -63,6 +64,11 @@ export const Measure = createStyleNode("measure", "measure", () => [
 		createStyleNode("fitContent", "fitContent"),
 		createStyleNode("maxContent", "maxContent"),
 		createStyleNode("minContent", "minContent"),
-		createStyleNode("length", "length"),
+		createStyleNode(
+			"length",
+			"length",
+			() => [],
+			(value) => toLength(value)?.toString(),
+		),
 	),
 ]);

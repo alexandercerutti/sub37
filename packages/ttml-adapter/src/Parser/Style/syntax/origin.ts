@@ -1,5 +1,6 @@
 import { createStyleNode } from "./StyleNode.js";
 import * as Kleene from "../../structure/kleene.js";
+import { toLength } from "../../Units/length.js";
 
 /**
  * @syntax \<origin>
@@ -13,8 +14,18 @@ export const Origin = createStyleNode(null, null, () => [
 			createStyleNode("auto", "auto"),
 			Kleene.ordered(
 				//
-				createStyleNode("length", "x-origin"),
-				createStyleNode("length", "y-origin"),
+				createStyleNode(
+					"length",
+					"x-origin",
+					() => [],
+					(value) => toLength(value)?.toString(),
+				),
+				createStyleNode(
+					"length",
+					"y-origin",
+					() => [],
+					(value) => toLength(value)?.toString(),
+				),
 			),
 		),
 	]),

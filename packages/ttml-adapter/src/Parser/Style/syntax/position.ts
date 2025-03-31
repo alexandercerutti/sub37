@@ -1,5 +1,6 @@
 import { createStyleNode } from "./StyleNode.js";
 import * as Kleene from "../../structure/kleene.js";
+import { toLength } from "../../Units/length.js";
 
 /**
  * @syntax "left" | "right"
@@ -52,7 +53,12 @@ const EdgeOffsetH = createStyleNode("edge-offset-h", "edge-offset-h", () => [
 	Kleene.ordered(
 		//
 		EdgeKeywordH,
-		createStyleNode("length", "h-length"),
+		createStyleNode(
+			"length",
+			"h-length",
+			() => [],
+			(value) => toLength(value)?.toString(),
+		),
 	),
 ]);
 
@@ -63,7 +69,12 @@ const EdgeOffsetV = createStyleNode("edge-offset-v", "edge-offset-v", () => [
 	Kleene.ordered(
 		//
 		EdgeKeywordV,
-		createStyleNode("length", "v-length"),
+		createStyleNode(
+			"length",
+			"v-length",
+			() => [],
+			(value) => toLength(value)?.toString(),
+		),
 	),
 ]);
 
@@ -74,7 +85,12 @@ const OffsetPositionH = createStyleNode("offset-position-h", "offset-position-h"
 	Kleene.or(
 		//
 		PositionKeywordH,
-		createStyleNode("length", "h-length"),
+		createStyleNode(
+			"length",
+			"h-length",
+			() => [],
+			(value) => toLength(value)?.toString(),
+		),
 	),
 ]);
 
@@ -85,7 +101,12 @@ const OffsetPositionV = createStyleNode("offset-position-v", "offset-position-v"
 	Kleene.or(
 		//
 		PositionKeywordV,
-		createStyleNode("length", "v-length"),
+		createStyleNode(
+			"length",
+			"v-length",
+			() => [],
+			(value) => toLength(value)?.toString(),
+		),
 	),
 ]);
 

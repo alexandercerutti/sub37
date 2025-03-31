@@ -1,6 +1,7 @@
 import { createStyleNode } from "./StyleNode.js";
 import * as Kleene from "../../structure/kleene.js";
 import { Color } from "./color.js";
+import { toLength } from "../../Units/length.js";
 
 /**
  * @syntax "none" | (\<color> \<lwsp>)? \<length> (\<lwsp> \<length>)?
@@ -14,7 +15,14 @@ export const TextOutline = createStyleNode(null, null, () => [
 				//
 				Kleene.zeroOrOne(Color),
 				createStyleNode("length", "thickness"),
-				Kleene.zeroOrOne(createStyleNode("length", "blur-radius")),
+				Kleene.zeroOrOne(
+					createStyleNode(
+						"length",
+						"blur-radius",
+						() => [],
+						(value) => toLength(value)?.toString(),
+					),
+				),
 			),
 		),
 	]),
