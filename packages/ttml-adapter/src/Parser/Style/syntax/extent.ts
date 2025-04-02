@@ -11,13 +11,11 @@ import { Measure } from "./measure.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-extent
  */
-export const Extent = createStyleNode(null, null, () => [
-	createStyleNode("extent", "extent", () => [
-		Kleene.or(
-			createStyleNode("auto", "auto"),
-			createStyleNode("contain", "contain"),
-			createStyleNode("cover", "cover"),
-			Kleene.ordered(Measure, Measure),
-		),
-	]),
+export const Extent = createStyleNode("extent", "extent", () => [
+	Kleene.or(
+		createStyleNode("auto", "auto"),
+		createStyleNode("contain", "contain"),
+		createStyleNode("cover", "cover"),
+		Kleene.ordered(Measure, Measure),
+	),
 ]);

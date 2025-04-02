@@ -13,6 +13,4 @@ function colorValidator(attribute: string): string | undefined {
  * @syntax \<color>
  * @see https://w3c.github.io/ttml2/#style-value-color
  */
-export const Color = createStyleNode(null, null, () => [
-	createStyleNode("color", "color", () => [], colorValidator),
-]);
+export const Color = createStyleNode("color", "color", () => [], colorValidator);

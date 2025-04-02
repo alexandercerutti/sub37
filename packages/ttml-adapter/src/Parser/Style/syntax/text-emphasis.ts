@@ -155,8 +155,6 @@ const AnnotationPosition = createStyleNode("annotation-position", "annotation-po
  * @syntax \<emphasis-style> || \<emphasis-color> || \<emphasis-position>
  * @see https://w3c.github.io/ttml2/#style-value-text-emphasis
  */
-export const TextEmphasis = createStyleNode(null, null, () => [
-	createStyleNode("text-emphasis", "text-emphasis", () => [
-		Kleene.or(EmphasisStyle, AnnotationColor, AnnotationPosition),
-	]),
+export const TextEmphasis = createStyleNode("text-emphasis", "text-emphasis", () => [
+	Kleene.or(EmphasisStyle, AnnotationColor, AnnotationPosition),
 ]);
