@@ -18,12 +18,19 @@ export type Matchable<T extends MatchableNode = MatchableNode> = T &
 		destinationFactory: DestinationFactory<Matchable<MatchableNode>>;
 	};
 
-interface KleeneMatchable<Op extends OperationSymbols> extends Matchable {
+type KleeneDescriptors<Op extends OperationSymbols> = {
 	[operatorSymbol]: Op;
 	[usagesSymbol]: number;
-}
+};
 
-export function zeroOrMore<const T extends Matchable>(node: T): T & KleeneMatchable<"*"> {
+type KleeneMatchable<
+	Op extends OperationSymbols,
+	M extends Matchable | (Matchable & KleeneDescriptors<OperationSymbols>),
+> = ((...args: [M]) => unknown) extends (...args: [KleeneDescriptors<Op> & infer R]) => unknown
+	? R
+	: M & KleeneDescriptors<Op>;
+
+export function zeroOrMore<const T extends Matchable>(node: T): KleeneMatchable<"*", T> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "*",
@@ -33,7 +40,7 @@ export function zeroOrMore<const T extends Matchable>(node: T): T & KleeneMatcha
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneMatchable<"*">, nodeName: string) {
+			value(this: KleeneDescriptors<"*"> & T, nodeName: string) {
 				const matches = node.matches(nodeName);
 
 				this[usagesSymbol] += Number(matches);
@@ -44,7 +51,7 @@ export function zeroOrMore<const T extends Matchable>(node: T): T & KleeneMatcha
 	});
 }
 
-export function oneOrMore<const T extends Matchable>(node: T): T & KleeneMatchable<"+"> {
+export function oneOrMore<const T extends Matchable>(node: T): KleeneMatchable<"+", T> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "+",
@@ -54,7 +61,7 @@ export function oneOrMore<const T extends Matchable>(node: T): T & KleeneMatchab
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneMatchable<"+">, nodeName: string) {
+			value(this: KleeneDescriptors<"+"> & T, nodeName: string) {
 				const matches = node.matches(nodeName);
 
 				if (this[usagesSymbol] < 1 && !matches) {
@@ -69,7 +76,7 @@ export function oneOrMore<const T extends Matchable>(node: T): T & KleeneMatchab
 	});
 }
 
-export function zeroOrOne<const T extends Matchable>(node: T): T & KleeneMatchable<"?"> {
+export function zeroOrOne<const T extends Matchable>(node: T): KleeneMatchable<"?", T> {
 	return Object.create(node, {
 		[operatorSymbol]: {
 			value: "?",
@@ -79,7 +86,7 @@ export function zeroOrOne<const T extends Matchable>(node: T): T & KleeneMatchab
 			writable: true,
 		},
 		matches: {
-			value(this: KleeneMatchable<"?">, nodeName: string) {
+			value(this: KleeneDescriptors<"?"> & T, nodeName: string) {
 				if (this[usagesSymbol] > 0) {
 					return false;
 				}
@@ -98,7 +105,7 @@ function assertPropBelongsToNode<T extends Matchable>(prop: unknown, node: T): p
 	return typeof node[prop as keyof T] !== "undefined";
 }
 
-export function or<const T extends Matchable[]>(...nodes: T): T[number] & KleeneMatchable<"|"> {
+export function or<const T extends Matchable[]>(...nodes: T): KleeneMatchable<"|", T[number]> {
 	let matchedNode: Matchable | undefined;
 
 	function matches(nodeName: string): boolean {
@@ -110,7 +117,7 @@ export function or<const T extends Matchable[]>(...nodes: T): T[number] & Kleene
 		{
 			[operatorSymbol]: "|",
 			[usagesSymbol]: 0,
-		} as KleeneMatchable<"|">,
+		} as KleeneDescriptors<"|"> & T[number],
 		{
 			get(target, prop) {
 				if (assertPropBelongsToNode(prop, target)) {
@@ -135,9 +142,7 @@ export function or<const T extends Matchable[]>(...nodes: T): T[number] & Kleene
 	);
 }
 
-export function ordered<const T extends Matchable[]>(
-	...nodes: T
-): T[number] & KleeneMatchable<"&"> {
+export function ordered<const T extends Matchable[]>(...nodes: T): KleeneMatchable<"&", T[number]> {
 	let matchedNode: Matchable | undefined;
 
 	function matches(nodeName: string): boolean {
@@ -149,7 +154,7 @@ export function ordered<const T extends Matchable[]>(
 		{
 			[operatorSymbol]: "&",
 			[usagesSymbol]: 0,
-		} as KleeneMatchable<"&">,
+		} as KleeneDescriptors<"&"> & T[number],
 		{
 			get(target, prop) {
 				if (assertPropBelongsToNode(prop, target)) {
