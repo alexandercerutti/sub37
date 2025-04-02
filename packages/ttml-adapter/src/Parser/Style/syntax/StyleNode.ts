@@ -20,20 +20,28 @@ export function createStyleNode<const T extends string, const SN extends string>
 	return {
 		nodeName,
 		semanticName,
-		matches(nodeName: string) {
-			const validationResult = validator(nodeName);
+		matches(nodeValue: string) {
+			if (typeof validator === "undefined") {
+				return nodeValue === nodeName ? nodeName : undefined;
+			}
+
+			const validationResult = validator?.(nodeValue);
 
 			if (!validationResult) {
 				return undefined;
 			}
 
-			lastValidationAttribute = validator(nodeName);
+			lastValidationAttribute = validationResult;
 			return lastValidationAttribute;
 		},
 		destinationFactory,
 		validate(attribute: string) {
 			if (typeof validator === "undefined") {
 				return attribute;
+			}
+
+			if (lastValidationAttribute) {
+				return lastValidationAttribute;
 			}
 
 			const validationResults = validator(attribute);
