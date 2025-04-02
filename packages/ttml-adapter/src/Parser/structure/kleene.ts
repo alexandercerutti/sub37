@@ -95,7 +95,7 @@ export function zeroOrOne<const T extends Matchable>(node: T): T & KleeneMatchab
 }
 
 function assertPropBelongsToNode<T extends Matchable>(prop: unknown, node: T): prop is keyof T {
-	return (prop as keyof T) in node;
+	return typeof node[prop as keyof T] !== "undefined";
 }
 
 export function or<const T extends Matchable[]>(...nodes: T): T[number] & KleeneMatchable<"|"> {
