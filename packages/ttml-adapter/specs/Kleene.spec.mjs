@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import * as Kleene from "../lib/Parser/Tags/Representation/kleene.js";
+import * as Kleene from "../lib/Parser/structure/kleene.js";
 
 describe("Kleene", () => {
 	/**
