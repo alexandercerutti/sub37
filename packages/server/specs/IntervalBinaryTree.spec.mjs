@@ -202,7 +202,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 1",
 					startTime: 11000,
 					endTime: 12000,
 				}),
@@ -214,7 +214,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 2",
 					startTime: 3000,
 					endTime: 10000,
 				}),
@@ -226,7 +226,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 3",
 					startTime: 12000,
 					endTime: 15000,
 				}),
@@ -238,7 +238,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 4",
 					startTime: 0,
 					endTime: 5000,
 				}),
@@ -250,7 +250,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 5",
 					startTime: 5000,
 					endTime: 9000,
 				}),
@@ -262,7 +262,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 6",
 					startTime: 12000,
 					endTime: 13000,
 				}),
@@ -274,7 +274,7 @@ describe("IntervalBinaryTree", () => {
 			cueNodeToTreeLeaf(
 				new CueNode({
 					id: "any",
-					content: "A test content",
+					content: "A test content 7",
 					startTime: 13000,
 					endTime: 15000,
 				}),
@@ -285,53 +285,117 @@ describe("IntervalBinaryTree", () => {
 
 		expect(query.length).toBe(7);
 
-		expect(query).toEqual([
-			// left
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 0,
-				endTime: 5000,
-			}),
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 3000,
-				endTime: 10000,
-			}),
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 5000,
-				endTime: 9000,
-			}),
-			// Root
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 11000,
-				endTime: 12000,
-			}),
-			// right
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 12000,
-				endTime: 13000,
-			}),
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 12000,
-				endTime: 15000,
-			}),
-			new CueNode({
-				id: "any",
-				content: "A test content",
-				startTime: 13000,
-				endTime: 15000,
-			}),
-		]);
+		/** LEFT NODES */
+
+		expect(query[0]).toMatchObject({
+			content: "A test content 4",
+			startTime: 0,
+			endTime: 5000,
+		});
+
+		expect(query[1]).toMatchObject({
+			content: "A test content 2",
+			startTime: 3000,
+			endTime: 10000,
+		});
+
+		expect(query[2]).toMatchObject({
+			content: "A test content 5",
+			startTime: 5000,
+			endTime: 9000,
+		});
+
+		/** ROOT NODE */
+
+		expect(query[3]).toMatchObject({
+			content: "A test content 1",
+			startTime: 11000,
+			endTime: 12000,
+		});
+
+		/** RIGHT NODES */
+
+		expect(query[4]).toMatchObject({
+			content: "A test content 3",
+			startTime: 12000,
+			endTime: 15000,
+		});
+
+		expect(query[5]).toMatchObject({
+			content: "A test content 6",
+			startTime: 12000,
+			endTime: 13000,
+		});
+
+		expect(query[6]).toMatchObject({
+			content: "A test content 7",
+			startTime: 13000,
+			endTime: 15000,
+		});
+	});
+
+	it("should always return a node that has Infinity as high, once it entered", () => {
+		/** Root */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 0,
+					endTime: 1000,
+				}),
+			),
+		);
+
+		/** Adding on left */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 500,
+					endTime: Infinity,
+				}),
+			),
+		);
+
+		/** Adding on right */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 1000,
+					endTime: 3000,
+				}),
+			),
+		);
+
+		/** Adding on left's left */
+		tree.addNode(
+			cueNodeToTreeLeaf(
+				new CueNode({
+					id: "any",
+					content: "A test content",
+					startTime: 2500,
+					endTime: 5000,
+				}),
+			),
+		);
+
+		const query1 = tree.getCurrentNodes(0);
+		const query2 = tree.getCurrentNodes(500);
+		const query3 = tree.getCurrentNodes(1000);
+		const query4 = tree.getCurrentNodes(2500);
+		const query5 = tree.getCurrentNodes(5000);
+		const query6 = tree.getCurrentNodes(6000);
+
+		expect(query1?.length).toBe(1);
+		expect(query2?.length).toBe(2);
+		expect(query3?.length).toBe(3);
+		expect(query4?.length).toBe(3);
+		expect(query5?.length).toBe(2);
+		expect(query6?.length).toBe(1);
 	});
 });
 

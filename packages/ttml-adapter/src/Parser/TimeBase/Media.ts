@@ -1,0 +1,138 @@
+/**
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-media-timing
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-frameRate
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#parameter-attribute-frameRateMultiplier
+ */
+
+import type { TimeDetails } from ".";
+import type { ClockTimeUnit } from "../TimeExpressions/matchers/clockTime";
+import type { OffsetTimeUnit } from "../TimeExpressions/matchers/offsetTime";
+import type { WallClockUnit } from "../TimeExpressions/matchers/wallclockTime";
+import { getActualFramesInSeconds } from "../TimeExpressions/frames.js";
+import { getHHMMSSUnitsToSeconds } from "../TimeExpressions/math.js";
+
+/** To keep track and debug */
+export const timeBaseNameSymbol = Symbol("Media Time Base");
+
+/**
+ * @param match
+ * @param timeDetails
+ * @param [referenceBegin=0] previous cue end time in milliseconds
+ * @returns
+ */
+
+export function getMillisecondsByClockTime(
+	match: ClockTimeUnit,
+	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
+): number {
+	const [
+		{ value: hours },
+		{ value: minutes },
+		{ value: seconds },
+		{ value: frames },
+		{ value: subframes },
+	] = match;
+
+	const finalTime = getHHMMSSUnitsToSeconds(hours, minutes, seconds);
+
+	const framesInSeconds = getActualFramesInSeconds(frames, subframes, timeDetails);
+
+	return referenceBegin + (finalTime + framesInSeconds) * 1000;
+}
+
+/**
+ * "It is considered an error if the wallclock-time form of
+ * a <time-expression> is used in a document instance and
+ * the government time base is not clock."
+ *
+ * @see https://w3c.github.io/ttml2/#timing-value-time-expression
+ */
+
+export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
+	throw new Error("WallClockTime is not supported when using Media as 'ttp:timeBase'.");
+}
+
+/**
+ * "If a time expression uses a clock-time form or an offset-time
+ * form that doesn't use the ticks (t) metric, then:
+ *
+ * 		M = referenceBegin + 3600 * hours + 60 * minutes + seconds + ((frames + (subFrames / subFrameRate)) / effectiveFrameRate)
+ *
+ * [...]
+ *
+ * Otherwise, if a time expression uses an offset-time form that
+ * uses the ticks (t) metric, then:
+ *
+ * 		M = referenceBegin + ticks / tickRate
+ * "
+ *
+ * However, omitting the "t" metric leaves us to the subset
+ * ("h" | "m" | "s" | "ms" | "f"). Only one of them can be
+ * used in the same expression, which leaves us with "zeroing"
+ * the missing fields. If we take "10s" as an example, we
+ * would have:
+ *
+ * ```
+ * 		M = referenceBegin + (3600 * 0) + (60 * 0) + 10 + ((0 + (0 / subFrameRate)) / effectiveFrameRate)
+ * ```
+ *
+ * Same TTML zone also specifies:
+ *
+ * "furthermore, [...] if the time expression takes the form of
+ * an offset-time expression, then the fraction component, if
+ * present, is added to the time-count component to form a
+ * real-valued time count component according to the specified
+ * offset metric".
+ *
+ * Other than 'f', for which its fractional part is not subframes,
+ * and it is not actually clear what a fractional part of a frame
+ * could ever be, the fractional part directly belongs to the
+ * metric value itself.
+ *
+ * ```
+ * 2.5h => 3600 * 2.5 => 3600 * 2 + 60 * 30
+ * 2.5m => [...] 60 * 2.5 => [...] 60 * 2 + 30
+ * ```
+ *
+ * @param match
+ * @param timeDetails
+ * @param [referenceBegin=0] previous cue end time in milliseconds
+ * @returns
+ */
+
+export function getMillisecondsByOffsetTime(
+	match: OffsetTimeUnit,
+	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
+): number {
+	const { value: timeCount, metric } = match;
+
+	if (metric === "t") {
+		// e.g. 10_100_000 / 10_000_000 = 1,001 * 1000 = 1000.99999999. Don't need that decimal part.
+		return Math.ceil((timeCount / (timeDetails["ttp:tickRate"] || 1)) * 1000);
+	}
+
+	if (metric === "f") {
+		const frames = Math.trunc(timeCount);
+		// Not precise, but how much precision we need? 3.2 % 1 or this both return 0.2000[...]018
+		const subFrames = timeCount - Math.floor(timeCount);
+
+		const framesInSeconds = getActualFramesInSeconds(frames, subFrames, timeDetails);
+		return Math.ceil(referenceBegin + framesInSeconds * 1000);
+	}
+
+	if (metric === "ms") {
+		return referenceBegin + timeCount;
+	}
+
+	if (metric === "s") {
+		return referenceBegin + timeCount * 1000;
+	}
+
+	if (metric === "m") {
+		return referenceBegin + timeCount * 60 * 1000;
+	}
+
+	return referenceBegin + timeCount * 3600 * 1000;
+}

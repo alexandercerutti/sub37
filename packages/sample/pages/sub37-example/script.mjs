@@ -1,10 +1,12 @@
 import "@sub37/captions-renderer";
 import { Server } from "@sub37/server";
 import { WebVTTAdapter } from "@sub37/webvtt-adapter";
+import { TTMLAdapter } from "@sub37/ttml-adapter";
 import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
 import "../../src/components/customElements/scheduled-textarea";
 import "../../src/components/customElements/fake-video";
+import "../../src/components/customElements/processorSelector";
 
 /**
  * @typedef {import("../../src/components/customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
@@ -22,7 +24,7 @@ const defaultTrackLoadBtn = document.getElementById("load-default-track");
  * @type {Server}
  */
 
-const server = new Server(WebVTTAdapter);
+const server = new Server(WebVTTAdapter, TTMLAdapter);
 
 /**
  * Instance to let tests access to the server instance
@@ -91,7 +93,7 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 	// 00:00:04.000 --> 00:10:00.000 region:fred align:left
 	// Hello world, bibi
 
-	document.querySelector('input[name="caption-type"][id="webvtt"]').setAttribute("checked", true);
+	document.forms["content-type"].elements.webvtt.checked = true;
 	defaultTrackLoadBtn.disabled = true;
 
 	const [vttTrack, vttChunk] = await Promise.all([
@@ -147,10 +149,8 @@ videoTag.addEventListener("pause", () => {
 	}
 });
 
-scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
+scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
-
-	const timeStart = performance.now();
 
 	try {
 		/**
@@ -161,18 +161,19 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 		 */
 
 		await Promise.resolve();
+		const timeStart = performance.now();
 
-		server.createSession(
-			[
-				{
-					lang: "any",
-					content: vttTrack,
-					mimeType: "text/vtt",
-					active: true,
-				},
-			],
-			contentMimeType,
-		);
+		const isWebVTTTrackSelected = contentMimeType === "text/vtt";
+		const isTTMLTrackSelected = contentMimeType === "application/ttml+xml";
+
+		server.createSession([
+			{
+				lang: "any",
+				content: track,
+				mimeType: contentMimeType,
+				active: true,
+			},
+		]);
 		console.info(
 			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
 			"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
