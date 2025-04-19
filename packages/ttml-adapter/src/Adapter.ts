@@ -24,6 +24,7 @@ import {
 	readScopeTemporalActiveContext,
 } from "./Parser/Scope/TemporalActiveContext.js";
 import { createVisitor } from "./Parser/structure/visitor.js";
+import type { Visitor } from "./Parser/structure/visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 import { createStyleParser } from "./Parser/parseStyle.js";
@@ -161,7 +162,6 @@ export default class TTMLAdapter extends BaseAdapter {
 		const nodeTree = new NodeTree<
 			Token & NodeWithAttributes & NodeWithScope & NodeWithDestinationMatch
 		>();
-		const representationVisitor = createVisitor(RepresentationTree);
 		const tokenizer = new Tokenizer(rawContent);
 
 		let token: Token = null;
@@ -178,7 +178,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					// Treating strings as Anonymous spans
-					const destinationMatch = representationVisitor.match("span");
+					const destinationMatch = getNextVisitor(nodeTree).match("span");
 
 					if (!destinationMatch) {
 						continue;
@@ -212,7 +212,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					const destinationMatch = representationVisitor.match(token.content);
+					const destinationMatch = getNextVisitor(nodeTree).match(token.content);
 
 					if (!destinationMatch) {
 						/**
@@ -226,8 +226,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
 						continue;
 					}
-
-					representationVisitor.navigate(destinationMatch);
 
 					if (token.content === "tt") {
 						rootScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
@@ -477,7 +475,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isNodeMatched(nodeTree.currentNode.content)) {
 						// Pruned by rules, not by destination mismatching
-						representationVisitor.back();
 
 						const currentNode = nodeTree.currentNode.content;
 
@@ -543,6 +540,7 @@ export default class TTMLAdapter extends BaseAdapter {
 							}),
 						);
 
+						nodeTree.pop();
 						break;
 					}
 
@@ -594,6 +592,18 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		return BaseAdapter.ParseResult(cues, []);
 	}
+}
+
+function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
+	nodeTree: NodeTree<T>,
+): Visitor<NodeRepresentation<string>> {
+	if (!nodeTree.currentNode) {
+		return createVisitor(RepresentationTree);
+	}
+
+	const lastDestinationMatched = nodeTree.currentNode.content[nodeMatchSymbol];
+
+	return createVisitor(lastDestinationMatched);
 }
 
 /**

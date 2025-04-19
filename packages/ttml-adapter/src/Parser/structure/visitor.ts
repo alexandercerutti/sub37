@@ -1,75 +1,28 @@
 import type { Matchable } from "./kleene.js";
 
-interface HistoryListNode<T extends Matchable> {
-	node: T | null;
-	destinations: T[];
-	lastDestinationIndex: number;
-	prev: HistoryListNode<T>;
-}
-
-interface Visitor<T extends Matchable> {
+export interface Visitor<T extends Matchable> {
 	match(nodeName: string): T | null;
-	navigate?(node: T): void;
-	back(): void;
 }
 
 export function createVisitor<T extends Matchable>(node: T): Visitor<T> {
-	let historyList: HistoryListNode<T> = {
-		node,
-		destinations: (node.destinationFactory?.() ?? []) as T[],
-		lastDestinationIndex: 0,
-		prev: null,
-	};
+	const destinations = node.destinationFactory() ?? [];
 
 	return {
 		match(nodeName: string): T | null {
-			const { destinations, lastDestinationIndex } = historyList;
+			let currentIndex = 0;
 
-			/**
-			 * Once a node doesn't match, we go on to preserve order
-			 */
-
-			let nextDestinationIndex = lastDestinationIndex;
-
-			while (nextDestinationIndex < destinations.length) {
-				const dest = destinations[nextDestinationIndex];
+			while (currentIndex < destinations.length) {
+				const dest = destinations[currentIndex] as T;
 
 				if (!dest.matches(nodeName)) {
-					nextDestinationIndex++;
+					currentIndex++;
 					continue;
 				}
 
-				/**
-				 * Committing the last index. So we mark we found a match
-				 * and we can start back again from here later.
-				 */
-				historyList.lastDestinationIndex = nextDestinationIndex;
 				return dest;
 			}
 
 			return null;
-		},
-		navigate(node: T): void {
-			historyList = {
-				node,
-				destinations: (node.destinationFactory?.() ?? []) as T[],
-				prev: historyList,
-				lastDestinationIndex: 0,
-			};
-		},
-		back(): void {
-			if (!historyList.prev) {
-				historyList = {
-					node: null,
-					destinations: (node.destinationFactory?.() ?? []) as T[],
-					lastDestinationIndex: 0,
-					prev: null,
-				};
-
-				return;
-			}
-
-			historyList = historyList.prev;
 		},
 	};
 }
