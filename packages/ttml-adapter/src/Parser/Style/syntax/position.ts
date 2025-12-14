@@ -1,114 +1,78 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { toLength } from "../../Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
+import { oneOf, sequence } from "../structure/operators.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { length } from "../structure/derivables/length.js";
 
 /**
  * @syntax "left" | "right"
  */
-const EdgeKeywordH = createStyleNode("edge-keyword-h", "edge-keyword-h", () => [
-	Kleene.or(
-		//
-		createStyleNode("left", "left"),
-		createStyleNode("right", "right"),
-	),
+const EdgeKeywordH = oneOf([
+	//
+	keyword("left"),
+	keyword("right"),
 ]);
 
 /**
  * @syntax "top" | "bottom"
  */
-const EdgeKeywordV = createStyleNode("edge-keyword-v", "edge-keyword-v", () => [
-	Kleene.or(
-		//
-		createStyleNode("top", "edge-keyword-v"),
-		createStyleNode("bottom", "edge-keyword-v"),
-	),
+const EdgeKeywordV = oneOf([
+	//
+	keyword("top"),
+	keyword("bottom"),
 ]);
 
 /**
  * @syntax "center" | edge-keyword-h
  */
-const PositionKeywordH = createStyleNode("position-keyword-h", "position-keyword-h", () => [
-	Kleene.or(
-		//
-		createStyleNode("center", "center"),
-		EdgeKeywordH,
-	),
+const PositionKeywordH = oneOf([
+	//
+	keyword("center"),
+	EdgeKeywordH,
 ]);
 
 /**
  * @syntax "center" | edge-keyword-v
  */
-const PositionKeywordV = createStyleNode("position-keyword-v", "position-keyword-v", () => [
-	Kleene.or(
-		//
-		createStyleNode("center", "center"),
-		EdgeKeywordV,
-	),
+const PositionKeywordV = oneOf([
+	//
+	keyword("center"),
+	EdgeKeywordV,
 ]);
 
 /**
  * @syntax edge-keyword-h \<lwsp> \<length>
  */
-const EdgeOffsetH = createStyleNode("edge-offset-h", "edge-offset-h", () => [
-	Kleene.ordered(
-		//
-		EdgeKeywordH,
-		createStyleNode(
-			"length",
-			"h-length",
-			() => [],
-			(value) => toLength(value)?.toString(),
-		),
-	),
+const EdgeOffsetH = sequence([
+	//
+	EdgeKeywordH,
+	length(),
 ]);
 
 /**
  * @syntax edge-keyword-v \<lwsp> \<length>
  */
-const EdgeOffsetV = createStyleNode("edge-offset-v", "edge-offset-v", () => [
-	Kleene.ordered(
-		//
-		EdgeKeywordV,
-		createStyleNode(
-			"length",
-			"v-length",
-			() => [],
-			(value) => toLength(value)?.toString(),
-		),
-	),
+const EdgeOffsetV = sequence([
+	//
+	EdgeKeywordV,
+	length(),
 ]);
 
 /**
  * @syntax position-keyword-h | \<length>
  */
-const OffsetPositionH = createStyleNode("offset-position-h", "offset-position-h", () => [
-	Kleene.or(
-		//
-		PositionKeywordH,
-		createStyleNode(
-			"length",
-			"h-length",
-			() => [],
-			(value) => toLength(value)?.toString(),
-		),
-	),
+const OffsetPositionH = oneOf([
+	//
+	PositionKeywordH,
+	length(),
 ]);
 
 /**
  * @syntax position-keyword-v | \<length>
  */
-const OffsetPositionV = createStyleNode("offset-position-v", "offset-position-v", () => [
-	Kleene.or(
-		//
-		PositionKeywordV,
-		createStyleNode(
-			"length",
-			"v-length",
-			() => [],
-			(value) => toLength(value)?.toString(),
-		),
-	),
+const OffsetPositionV = oneOf([
+	//
+	PositionKeywordV,
+	length(),
 ]);
 
 function PositionProcessor(value: string): string[] {
@@ -278,29 +242,23 @@ function PositionProcessor(value: string): string[] {
  *
  * In both cases, the resulting difference may be a negative percentage.
  */
-export const Position = createStyleNode(
-	"position",
-	"position",
-	() => [
-		Kleene.or(
-			// Single component values
-			OffsetPositionH,
-			EdgeKeywordV,
+export const Position = oneOf([
+	// Single component values
+	OffsetPositionH,
+	EdgeKeywordV,
 
-			// Two component values
-			Kleene.ordered(OffsetPositionH, OffsetPositionV),
-			Kleene.ordered(PositionKeywordV, PositionKeywordH),
+	// Two component values
+	sequence([OffsetPositionH, OffsetPositionV]),
+	sequence([PositionKeywordV, PositionKeywordH]),
 
-			// Three component values
-			Kleene.ordered(PositionKeywordH, EdgeOffsetV),
-			Kleene.ordered(PositionKeywordV, EdgeOffsetH),
-			Kleene.ordered(EdgeOffsetH, PositionKeywordV),
-			Kleene.ordered(EdgeOffsetV, PositionKeywordH),
+	// Three component values
+	sequence([PositionKeywordH, EdgeOffsetV]),
 
-			// Four component values
-			Kleene.ordered(EdgeOffsetH, EdgeOffsetV),
-			Kleene.ordered(EdgeOffsetV, EdgeOffsetH),
-		),
-	],
-	PositionProcessor,
-);
+	sequence([PositionKeywordV, EdgeOffsetH]),
+	sequence([EdgeOffsetH, PositionKeywordV]),
+	sequence([EdgeOffsetV, PositionKeywordH]),
+
+	// Four component values
+	sequence([EdgeOffsetH, EdgeOffsetV]),
+	sequence([EdgeOffsetV, EdgeOffsetH]),
+]);

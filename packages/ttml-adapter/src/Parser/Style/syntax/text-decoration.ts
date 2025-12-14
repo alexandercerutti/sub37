@@ -1,5 +1,5 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
+import { oneOf, someOf } from "../structure/operators.js";
+import { keyword } from "../structure/derivables/keyword.js";
 
 /**
  * @syntax \<text-decoration>
@@ -8,22 +8,25 @@ import * as Kleene from "../../structure/kleene.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-text-decoration
  */
-export const TextDecoration = createStyleNode("text-decoration", "text-decoration", () => [
-	Kleene.or(
-		createStyleNode("none", "none"),
-		Kleene.ordered(
-			Kleene.or(
-				createStyleNode("underline", "underline"),
-				createStyleNode("noUnderline", "no-underline"),
-			),
-			Kleene.or(
-				createStyleNode("lineThrough", "line-through"),
-				createStyleNode("noLineThrough", "no-line-through"),
-			),
-			Kleene.or(
-				createStyleNode("overline", "overline"),
-				createStyleNode("noOverline", "no-overline"),
-			),
-		),
-	),
+export const TextDecoration = oneOf([
+	//
+	keyword("none"),
+	someOf([
+		//
+		oneOf([
+			//
+			keyword("underline"),
+			keyword("noUnderline"),
+		]),
+		oneOf([
+			//
+			keyword("lineThrough"),
+			keyword("noLineThrough"),
+		]),
+		oneOf([
+			//
+			keyword("overline"),
+			keyword("noOverline"),
+		]),
+	]),
 ]);

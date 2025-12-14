@@ -1,51 +1,47 @@
-import * as Kleene from "../../structure/kleene.js";
-import { isPercentage, toLength } from "../../Units/length.js";
+import { toLength } from "../../Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
 import { createUnit } from "../../Units/unit.js";
-import { Color } from "./color.js";
-import { createStyleNode } from "./StyleNode.js";
-
-function processBorderThicknessLength(component: string) {
-	const borderThicknessLength = toLength(component);
-
-	if (!borderThicknessLength || isPercentage(borderThicknessLength)) {
-		return undefined;
-	}
-
-	return borderThicknessLength.toString();
-}
+import { alias } from "../structure/derivables/alias.js";
+import { color } from "../structure/derivables/color.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { length, ScalarConstraint } from "../structure/derivables/length.js";
+import {
+	Derivable,
+	DerivationResult,
+	DerivationState,
+	oneOf,
+	someOf,
+} from "../structure/operators.js";
 
 /**
  * @syntax thin | medium | thick | \<length>
  * @see https://w3c.github.io/ttml2/#style-value-border-thickness
  */
-const BorderThickness = createStyleNode("border-thickness", "border-thickness", () => [
-	Kleene.or(
-		createStyleNode("thin", "thickness"),
-		createStyleNode("medium", "thickness"),
-		createStyleNode("thick", "thickness"),
-		createStyleNode("length", "thickness", () => [], processBorderThicknessLength),
-	),
+const BorderThickness = oneOf([
+	//
+	keyword("thin"),
+	keyword("medium"),
+	keyword("thick"),
+	length(ScalarConstraint),
 ]);
 
 /**
- * @syntax \<color>
+ * @syntax \<border-color>
  * @see https://w3c.github.io/ttml2/#style-value-border-color
  */
-const BorderColor = Color;
+const BorderColor = alias("<border-color>", color());
 
 /**
  * @syntax none | dotted | dashed | solid | double
  * @see https://w3c.github.io/ttml2/#style-value-border-style
  */
-const BorderStyle = createStyleNode("border-style", "border-style", () => [
-	Kleene.or(
-		createStyleNode("none", "style"),
-		createStyleNode("dotted", "style"),
-		createStyleNode("dashed", "style"),
-		createStyleNode("solid", "style"),
-		createStyleNode("double", "style"),
-	),
+const BorderStyle = oneOf([
+	//
+	keyword("none"),
+	keyword("dotted"),
+	keyword("dashed"),
+	keyword("solid"),
+	keyword("double"),
 ]);
 
 /**
@@ -94,7 +90,29 @@ function validateBorderRadii(component: string): string {
  * present, then it is interpreted as if two lengths were specified with the same
  * value.
  */
-const BorderRadii = createStyleNode("border-radii", "border-radius", () => [], validateBorderRadii);
+function BorderRadii(): Derivable {
+	return Object.create(null, {
+		symbol: {
+			value: Symbol("<border-radii>"),
+		},
+		derive: {
+			value(token: string): DerivationResult {
+				const parsing = validateBorderRadii(token);
+
+				if (!parsing) {
+					return {
+						state: DerivationState.REJECTED,
+					};
+				}
+
+				return {
+					state: DerivationState.DONE,
+					values: [parsing],
+				};
+			},
+		},
+	});
+}
 
 function BorderProcessor(attribute: string): string[] {
 	return getSplittedLinearWhitespaceValues(attribute);
@@ -104,16 +122,10 @@ function BorderProcessor(attribute: string): string[] {
  * @syntax \<border-thickness> || \<border-style> || \<border-color> || \<border-radii>
  * @see https://w3c.github.io/ttml2/#style-value-border
  */
-export const Border = createStyleNode(
-	"border",
-	"border",
-	() => [
-		Kleene.or(
-			Kleene.zeroOrOne(BorderThickness),
-			Kleene.zeroOrOne(BorderStyle),
-			Kleene.zeroOrOne(BorderColor),
-			Kleene.zeroOrOne(BorderRadii),
-		),
-	],
-	BorderProcessor,
-);
+export const Border = someOf([
+	//
+	BorderThickness,
+	BorderStyle,
+	BorderColor,
+	BorderRadii(),
+]);

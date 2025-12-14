@@ -1,14 +1,12 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
+import { oneOf } from "../structure/operators.js";
+import { keyword } from "../structure/derivables/keyword.js";
 
 /**
  * @syntax "none" | "all"
  * @see https://w3c.github.io/ttml2/#style-value-text-combine
  */
-export const TextCombine = createStyleNode("text-combine", "text-combine", () => [
-	Kleene.or(
-		//
-		createStyleNode("none", "combine"),
-		createStyleNode("all", "combine"),
-	),
+export const TextCombine = oneOf([
+	//
+	keyword("none"),
+	keyword("all"),
 ]);

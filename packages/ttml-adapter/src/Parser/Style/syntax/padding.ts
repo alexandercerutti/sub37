@@ -1,11 +1,9 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { toLength } from "../../Units/length.js";
-import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
+import { oneOf, sequence } from "../structure/operators.js";
+import { length } from "../structure/derivables/length.js";
 
-function PaddingProcessor(value: string) {
-	return getSplittedLinearWhitespaceValues(value);
-}
+// function PaddingProcessor(value: string) {
+// 	return getSplittedLinearWhitespaceValues(value);
+// }
 
 /**
  * @syntax \<padding>
@@ -15,85 +13,28 @@ function PaddingProcessor(value: string) {
  *  | \<length>
  * @see https://w3c.github.io/ttml2/#style-value-padding
  */
-export const Padding = createStyleNode(
-	"padding",
-	"padding",
-	() => [
-		Kleene.or(
-			// Four values: top right bottom left
-			Kleene.ordered(
-				createStyleNode(
-					"length",
-					"padding-top",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-right",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-bottom",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-left",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-			),
+export const Padding = oneOf([
+	// Four values: top right bottom left
+	sequence([
+		length(), // padding-top
+		length(), // padding-right
+		length(), // padding-bottom
+		length(), // padding-left
+	]),
 
-			// Three values: top right/left bottom
-			Kleene.ordered(
-				createStyleNode(
-					"length",
-					"padding-top",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-right-left",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-bottom",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-			),
+	// Three values: top right/left bottom
+	sequence([
+		length(), // padding-top
+		length(), // padding-right-left
+		length(), // padding-bottom
+	]),
 
-			// Two values: top/bottom right/left
-			Kleene.ordered(
-				createStyleNode(
-					"length",
-					"padding-top-bottom",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-				createStyleNode(
-					"length",
-					"padding-right-left",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-			),
+	// Two values: top/bottom right/left
+	sequence([
+		length(), // padding-top-bottom
+		length(), // padding-right-left
+	]),
 
-			// One value: all sides
-			createStyleNode(
-				"length",
-				"padding-all",
-				() => [],
-				(value) => toLength(value)?.toString(),
-			),
-		),
-	],
-	PaddingProcessor,
-);
+	// One value: all sides
+	length(),
+]);

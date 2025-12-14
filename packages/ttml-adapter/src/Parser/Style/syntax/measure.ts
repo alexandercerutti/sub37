@@ -1,6 +1,6 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { toLength } from "../../Units/length.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
+import { oneOf } from "../structure/operators.js";
 
 /**
  *
@@ -58,17 +58,10 @@ import { toLength } from "../../Units/length.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-measure
  */
-export const Measure = createStyleNode("measure", "measure", () => [
-	Kleene.or(
-		createStyleNode("auto", "auto"),
-		createStyleNode("fitContent", "fitContent"),
-		createStyleNode("maxContent", "maxContent"),
-		createStyleNode("minContent", "minContent"),
-		createStyleNode(
-			"length",
-			"length",
-			() => [],
-			(value) => toLength(value)?.toString(),
-		),
-	),
+export const Measure = oneOf([
+	keyword("auto"),
+	keyword("fitContent"),
+	keyword("maxContent"),
+	keyword("minContent"),
+	length(NonNegativeConstraint),
 ]);

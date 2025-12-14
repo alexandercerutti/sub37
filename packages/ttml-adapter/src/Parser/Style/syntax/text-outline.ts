@@ -1,27 +1,22 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { Color } from "./color.js";
-import { toLength } from "../../Units/length.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { oneOf, sequence, zeroOrOne } from "../structure/operators.js";
+import { color } from "../structure/derivables/color.js";
+import { length } from "../structure/derivables/length.js";
 
 /**
  * @syntax "none" | (\<color> \<lwsp>)? \<length> (\<lwsp> \<length>)?
  * @see https://w3c.github.io/ttml2/#style-value-text-outline
  */
-export const TextOutline = createStyleNode("text-outline", "text-outline", () => [
-	Kleene.or(
-		createStyleNode("none", "none"),
-		Kleene.ordered(
-			//
-			Kleene.zeroOrOne(Color),
-			createStyleNode("length", "thickness"),
-			Kleene.zeroOrOne(
-				createStyleNode(
-					"length",
-					"blur-radius",
-					() => [],
-					(value) => toLength(value)?.toString(),
-				),
-			),
+export const TextOutline = oneOf([
+	keyword("none"),
+	sequence([
+		//
+		zeroOrOne(color()),
+		// Thickness
+		length(),
+		zeroOrOne(
+			// Blur radius
+			length(),
 		),
-	),
+	]),
 ]);

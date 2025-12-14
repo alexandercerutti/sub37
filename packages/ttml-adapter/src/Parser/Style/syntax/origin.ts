@@ -1,6 +1,6 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { toLength } from "../../Units/length.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { oneOf, sequence } from "../structure/operators.js";
+import { length } from "../structure/derivables/length.js";
 
 /**
  * @syntax \<origin>
@@ -8,23 +8,13 @@ import { toLength } from "../../Units/length.js";
  *  | \<length> \<lwsp> \<length>
  * @see https://w3c.github.io/ttml2/#style-value-origin
  */
-export const Origin = createStyleNode("origin", "origin", () => [
-	Kleene.or(
-		createStyleNode("auto", "auto"),
-		Kleene.ordered(
-			//
-			createStyleNode(
-				"length",
-				"x-origin",
-				() => [],
-				(value) => toLength(value)?.toString(),
-			),
-			createStyleNode(
-				"length",
-				"y-origin",
-				() => [],
-				(value) => toLength(value)?.toString(),
-			),
-		),
-	),
+export const Origin = oneOf([
+	//
+	keyword("auto"),
+	sequence([
+		// x
+		length(),
+		// y
+		length(),
+	]),
 ]);

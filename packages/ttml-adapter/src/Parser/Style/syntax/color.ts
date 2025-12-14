@@ -1,16 +1,7 @@
-import { isValidColor } from "../../Units/color.js";
-import { createStyleNode } from "./StyleNode.js";
-
-function colorValidator(attribute: string): string | undefined {
-	if (!isValidColor(attribute)) {
-		return undefined;
-	}
-
-	return attribute;
-}
+import { color } from "../structure/derivables/color.js";
 
 /**
  * @syntax \<color>
  * @see https://w3c.github.io/ttml2/#style-value-color
  */
-export const Color = createStyleNode("color", "color", () => [], colorValidator);
+export const Color = color();

@@ -1,6 +1,6 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
 import { Measure } from "./measure.js";
+import { oneOf, sequence } from "../structure/operators.js";
+import { keyword } from "../structure/derivables/keyword.js";
 
 /**
  * @syntax \<extent>
@@ -11,11 +11,13 @@ import { Measure } from "./measure.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-extent
  */
-export const Extent = createStyleNode("extent", "extent", () => [
-	Kleene.or(
-		createStyleNode("auto", "auto"),
-		createStyleNode("contain", "contain"),
-		createStyleNode("cover", "cover"),
-		Kleene.ordered(Measure, Measure),
-	),
+export const Extent = oneOf([
+	keyword("auto"),
+	keyword("contain"),
+	keyword("cover"),
+	sequence([
+		//
+		Measure,
+		Measure,
+	]),
 ]);

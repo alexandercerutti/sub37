@@ -1,6 +1,7 @@
-import { createStyleNode } from "./StyleNode.js";
-import * as Kleene from "../../structure/kleene.js";
-import { Color } from "./color.js";
+import { oneOf, sequence, zeroOrMore, zeroOrOne } from "../structure/operators.js";
+import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { color } from "../structure/derivables/color.js";
 
 /**
  * @syntax
@@ -9,28 +10,32 @@ import { Color } from "./color.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-shadow
  */
-const Shadow = createStyleNode("shadow", "shadow", () => [
-	Kleene.or(
-		// \<length> \<lwsp> \<length> (\<lwsp> \<color>)?
-		Kleene.ordered(
-			createStyleNode("length", "offset-x"),
-			createStyleNode("length", "offset-y"),
-			Kleene.zeroOrOne(Color),
-		),
-		// \<length> \<lwsp> \<length> \<lwsp> \<length> (\<lwsp> \<color>)?
-		Kleene.ordered(
-			createStyleNode("length", "offset-x"),
-			createStyleNode("length", "offset-y"),
-			createStyleNode("length", "blur-radius"),
-			Kleene.zeroOrOne(Color),
-		),
-	),
+const Shadow = sequence([
+	// offset-x
+	length(),
+	// offset-y
+	length(),
+	// blur-radius
+	zeroOrOne(length(NonNegativeConstraint)),
+	// color
+	zeroOrOne(color()),
 ]);
 
 /**
  * @syntax \<shadow> (\<lwsp>? "," \<lwsp>? \<shadow>)*
  * @see https://w3c.github.io/ttml2/#style-value-text-shadow
  */
-export const TextShadow = createStyleNode("text-shadow", "text-shadow", () => [
-	Kleene.ordered(Shadow, Kleene.zeroOrMore(Shadow)),
+export const TextShadow = oneOf([
+	keyword("none"),
+	sequence([
+		//
+		Shadow,
+		zeroOrMore(
+			sequence([
+				//
+				keyword(","),
+				Shadow,
+			]),
+		),
+	]),
 ]);
