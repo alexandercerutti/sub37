@@ -7,7 +7,7 @@ import { length } from "../structure/derivables/length.js";
  * @syntax "none" | (\<color> \<lwsp>)? \<length> (\<lwsp> \<length>)?
  * @see https://w3c.github.io/ttml2/#style-value-text-outline
  */
-export const TextOutline = oneOf([
+export const Grammar = oneOf([
 	keyword("none"),
 	sequence([
 		//

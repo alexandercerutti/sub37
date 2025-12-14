@@ -8,8 +8,8 @@ import { isPercentage, toLength } from "./Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "./Units/lwsp.js";
 import { createUnit } from "./Units/unit.js";
 import { memoizationFactory } from "./memoizationFactory.js";
-import * as Syntax from "./Style/syntax/index.js";
-import type { MatchableStyleNode } from "./Style/syntax/StyleNode.js";
+import * as Syntaxes from "./Style/syntax/index.js";
+import { Derivable } from "./Style/structure/operators.js";
 
 type StyleAttributeString = `tts:${string}`;
 
@@ -96,7 +96,7 @@ interface AttributeDefinition<DestinationProperties extends string[] = string[]>
 	readonly allowedValues: Set<unknown>;
 	readonly namespace: string | undefined;
 	readonly toCSS: PropertiesMapper<DestinationProperties>;
-	readonly syntax: MatchableStyleNode<string, string>;
+	readonly syntax: SyntaxModuleDefinition;
 
 	flags: number;
 }
@@ -131,6 +131,11 @@ export function isPropertyDiscretelyAnimatable(name: string): boolean {
 	return Boolean(attribute.flags & AnimationFlags.DISCRETE);
 }
 
+interface SyntaxModuleDefinition {
+	Grammar: Derivable;
+	cssTransform?: (scope: Scope, value: unknown) => string | null;
+}
+
 function createAttributeDefinition<
 	DestinationProperties extends string[],
 	const AllowedValues extends string,
@@ -140,7 +145,7 @@ function createAttributeDefinition<
 	defaultValue: NoInfer<AllowedValues>,
 	allowedValues: Set<AllowedValues> | undefined,
 	mapper: PropertiesMapper<DestinationProperties>,
-	syntax: MatchableStyleNode<string, string>,
+	syntax: SyntaxModuleDefinition,
 ): AttributeDefinition<DestinationProperties> {
 	return Object.create(null, {
 		name: {
@@ -213,7 +218,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"border",
 			new Set(["border", "content", "padding"]),
 			createPassThroughMapper("background-clip"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -229,7 +234,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"transparent",
 			undefined,
 			createPassThroughMapper("background-color"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -245,7 +250,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"",
 			undefined,
 			createPassThroughMapper("background-size"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -261,7 +266,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"none",
 			undefined,
 			createPassThroughMapper("background-image"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -277,7 +282,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"padding",
 			new Set(["border", "content", "padding"]),
 			createPassThroughMapper("background-origin"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -293,7 +298,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0% 0%",
 			undefined,
 			createPassThroughMapper("background-position"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -309,7 +314,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"repeat",
 			new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
 			createPassThroughMapper("background-repeat", backgroundRepeatValueMapper),
-			Syntax.Unavailable,
+			Syntaxes.BackgroundRepeat,
 		),
 	),
 
@@ -325,7 +330,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"none",
 			undefined,
 			borderMapper,
-			Syntax.Border,
+			Syntaxes.Border,
 		),
 	),
 
@@ -347,7 +352,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -364,7 +369,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"white",
 				undefined,
 				createPassThroughMapper("color"),
-				Syntax.Color,
+				Syntaxes.Color,
 			),
 		),
 	),
@@ -382,7 +387,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"ltr",
 				new Set(["ltr", "rtl"]),
 				createPassThroughMapper("direction"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -399,7 +404,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0px",
 			undefined,
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -415,7 +420,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			new Set(["auto", "none", "inlineBlock"]),
 			createPassThroughMapper("display"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -431,7 +436,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"before",
 			new Set(["before", "center", "after", "justify"]),
 			createPassThroughMapper("justify-content", displayAlignValueMapper),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -447,7 +452,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			extentMapper,
-			Syntax.Extent,
+			Syntaxes.Extent,
 		),
 	),
 
@@ -464,7 +469,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"default",
 				undefined,
 				createPassThroughMapper("font-family"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -482,7 +487,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["none", "normal"]),
 				createPassThroughMapper("font-kerning"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -502,7 +507,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"auto",
 				new Set(["auto", "character"]),
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -522,7 +527,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"0%",
 				undefined,
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -541,7 +546,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"1c",
 				undefined,
 				createPassThroughMapper("font-size", fontSizeValueMapper),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -559,7 +564,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["normal", "italic", "oblique"]),
 				createPassThroughMapper("font-style"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -577,7 +582,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				nullMapper, // Maps to multiple values. Must be handled differently
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -595,7 +600,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				new Set(["normal", "bold"]),
 				createPassThroughMapper("font-weight"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -618,7 +623,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			nullMapper, // ??????
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -635,7 +640,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				createPassThroughMapper("letter-spacing"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -653,7 +658,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"normal",
 				undefined,
 				createPassThroughMapper("line-height"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -671,7 +676,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"0%",
 				undefined,
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -691,7 +696,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"1.0",
 			undefined,
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -708,7 +713,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"1.0",
 			undefined,
 			createPassThroughMapper("opacity"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -731,7 +736,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			originMapper,
-			Syntax.Origin,
+			Syntaxes.Origin,
 		),
 	),
 
@@ -747,7 +752,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"hidden",
 			new Set(["visible", "hidden"]),
 			createPassThroughMapper("overflow"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -763,7 +768,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"0px",
 			undefined,
 			createPassThroughMapper("padding", paddingValueMapper),
-			Syntax.Padding,
+			Syntaxes.Padding,
 		),
 	),
 
@@ -779,7 +784,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"top left",
 			undefined,
 			createPassThroughMapper("background-position"),
-			Syntax.Position,
+			Syntaxes.Position,
 		),
 	),
 
@@ -793,7 +798,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		"none",
 		new Set(["none", "container", "base", "baseContainer", "text", "textContainer", "delimiter"]),
 		nullMapper,
-		Syntax.Unavailable,
+		Syntaxes.Unavailable,
 	),
 
 	/**
@@ -809,7 +814,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"center",
 				new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
 				createPassThroughMapper("ruby-align"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -827,7 +832,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"outside",
 				new Set(["before", "after", "outside"]),
 				createPassThroughMapper("ruby-position"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -845,7 +850,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -864,7 +869,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"0%",
 				undefined,
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -882,7 +887,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"always",
 			new Set(["always", "whenActive"]),
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -898,7 +903,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"start",
 			new Set(["left", "center", "right", "start", "end", "justify"]),
 			createPassThroughMapper("text-align"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -915,7 +920,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-combine-upright"),
-				Syntax.TextCombine,
+				Syntaxes.TextCombine,
 			),
 		),
 	),
@@ -933,7 +938,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-decoration", textDecorationValueMapper),
-				Syntax.TextDecoration,
+				Syntaxes.TextDecoration,
 			),
 		),
 	),
@@ -951,7 +956,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-emphasis"),
-				Syntax.TextEmphasis,
+				Syntaxes.TextEmphasis,
 			),
 		),
 	),
@@ -967,7 +972,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"mixed",
 			new Set(["mixed", "sideways", "upright"]),
 			createPassThroughMapper("text-orientation", textOrientationValueMapper),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -985,7 +990,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				textOutlineMapper,
-				Syntax.TextOutline,
+				Syntaxes.TextOutline,
 			),
 		),
 	),
@@ -1003,7 +1008,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"none",
 				undefined,
 				createPassThroughMapper("text-shadow"),
-				Syntax.TextShadow,
+				Syntaxes.TextShadow,
 			),
 		),
 	),
@@ -1020,7 +1025,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"normal",
 			new Set(["normal", "embed", "bidiOverride", "isolate"]),
 			createPassThroughMapper("unicode-bidi"),
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -1037,7 +1042,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"visible",
 				new Set(["visible", "hidden"]),
 				createPassThroughMapper("visibility"),
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -1060,7 +1065,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"wrap",
 				new Set(["wrap", "noWrap"]),
 				nullMapper,
-				Syntax.Unavailable,
+				Syntaxes.Unavailable,
 			),
 		),
 	),
@@ -1082,7 +1087,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"lrtb",
 			new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 
@@ -1102,7 +1107,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"auto",
 			undefined,
 			nullMapper,
-			Syntax.Unavailable,
+			Syntaxes.Unavailable,
 		),
 	),
 } as const;

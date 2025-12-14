@@ -8,7 +8,7 @@ import { keyword } from "../structure/derivables/keyword.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-text-decoration
  */
-export const TextDecoration = oneOf([
+export const Grammar = oneOf([
 	//
 	keyword("none"),
 	someOf([

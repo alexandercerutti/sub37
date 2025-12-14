@@ -2,10 +2,13 @@ import { oneOf } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 
 /**
- * @syntax "none" | "all"
+ * @syntax \<text-combine>
+ * 	: "none"
+ * 	| "all"
+ *
  * @see https://w3c.github.io/ttml2/#style-value-text-combine
  */
-export const TextCombine = oneOf([
+export const Grammar = oneOf([
 	//
 	keyword("none"),
 	keyword("all"),

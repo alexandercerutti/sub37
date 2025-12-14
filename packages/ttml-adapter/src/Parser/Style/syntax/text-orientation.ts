@@ -6,7 +6,7 @@ import { oneOf } from "../structure/operators";
  * @see https://w3c.github.io/ttml2/#style-attribute-textOrientation
  */
 
-export const TextOrientation = oneOf([
+export const Grammar = oneOf([
 	//
 	keyword("sideways"),
 	keyword("mixed"),

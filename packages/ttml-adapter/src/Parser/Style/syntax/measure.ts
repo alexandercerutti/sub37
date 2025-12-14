@@ -58,7 +58,7 @@ import { oneOf } from "../structure/operators.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-measure
  */
-export const Measure = oneOf([
+export const Grammar = oneOf([
 	keyword("auto"),
 	keyword("fitContent"),
 	keyword("maxContent"),

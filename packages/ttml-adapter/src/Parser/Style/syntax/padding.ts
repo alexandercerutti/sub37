@@ -13,7 +13,7 @@ import { length } from "../structure/derivables/length.js";
  *  | \<length>
  * @see https://w3c.github.io/ttml2/#style-value-padding
  */
-export const Padding = oneOf([
+export const Grammar = oneOf([
 	// Four values: top right bottom left
 	sequence([
 		length(), // padding-top

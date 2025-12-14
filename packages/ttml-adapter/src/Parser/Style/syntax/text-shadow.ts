@@ -25,7 +25,7 @@ const Shadow = sequence([
  * @syntax \<shadow> (\<lwsp>? "," \<lwsp>? \<shadow>)*
  * @see https://w3c.github.io/ttml2/#style-value-text-shadow
  */
-export const TextShadow = oneOf([
+export const Grammar = oneOf([
 	keyword("none"),
 	sequence([
 		//

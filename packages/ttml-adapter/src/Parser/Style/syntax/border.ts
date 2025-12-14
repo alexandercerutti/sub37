@@ -122,7 +122,7 @@ function BorderProcessor(attribute: string): string[] {
  * @syntax \<border-thickness> || \<border-style> || \<border-color> || \<border-radii>
  * @see https://w3c.github.io/ttml2/#style-value-border
  */
-export const Border = someOf([
+export const Grammar = someOf([
 	//
 	BorderThickness,
 	BorderStyle,

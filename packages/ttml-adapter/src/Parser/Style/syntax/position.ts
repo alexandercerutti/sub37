@@ -242,7 +242,7 @@ function PositionProcessor(value: string): string[] {
  *
  * In both cases, the resulting difference may be a negative percentage.
  */
-export const Position = oneOf([
+export const Grammar = oneOf([
 	// Single component values
 	OffsetPositionH,
 	EdgeKeywordV,

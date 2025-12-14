@@ -6,7 +6,7 @@ import { oneOf } from "../structure/operators";
  * @syntax "repeat" | "repeatX" | "repeatY" | "noRepeat"
  * @see https://w3c.github.io/ttml2/#style-attribute-backgroundRepeat
  */
-export const BackgroundRepeat = alias(
+export const Grammar = alias(
 	"background-repeat",
 	oneOf([
 		//

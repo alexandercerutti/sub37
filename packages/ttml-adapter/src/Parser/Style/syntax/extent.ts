@@ -1,4 +1,4 @@
-import { Measure } from "./measure.js";
+import { Grammar as Measure } from "./measure.js";
 import { oneOf, sequence } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 
@@ -11,7 +11,7 @@ import { keyword } from "../structure/derivables/keyword.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-extent
  */
-export const Extent = oneOf([
+export const Grammar = oneOf([
 	keyword("auto"),
 	keyword("contain"),
 	keyword("cover"),

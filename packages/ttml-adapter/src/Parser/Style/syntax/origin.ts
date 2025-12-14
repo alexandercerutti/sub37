@@ -8,7 +8,7 @@ import { length } from "../structure/derivables/length.js";
  *  | \<length> \<lwsp> \<length>
  * @see https://w3c.github.io/ttml2/#style-value-origin
  */
-export const Origin = oneOf([
+export const Grammar = oneOf([
 	//
 	keyword("auto"),
 	sequence([
