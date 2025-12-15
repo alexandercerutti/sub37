@@ -25,19 +25,19 @@ export type DerivationResult =
 			state: DerivationState["REJECTED"];
 	  };
 
-function isDerived(
+export function isDerived(
 	derivationResult: DerivationResult,
 ): derivationResult is Extract<DerivationResult, { state: DerivationState["DERIVED"] }> {
 	return Boolean(derivationResult.state & DerivationState.DERIVED);
 }
 
-function isRejected(
+export function isRejected(
 	derivationResult: DerivationResult,
 ): derivationResult is Extract<DerivationResult, { state: DerivationState["REJECTED"] }> {
 	return Boolean(derivationResult.state & DerivationState.REJECTED);
 }
 
-function isDone(
+export function isDone(
 	derivationResult: DerivationResult,
 ): derivationResult is Extract<DerivationResult, { state: DerivationState["DONE"] }> {
 	return Boolean(derivationResult.state & DerivationState.DONE);

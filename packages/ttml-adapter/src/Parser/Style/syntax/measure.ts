@@ -1,3 +1,4 @@
+import { alias } from "../structure/derivables/alias.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
 import { oneOf } from "../structure/operators.js";
@@ -58,10 +59,13 @@ import { oneOf } from "../structure/operators.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-measure
  */
-export const Grammar = oneOf([
-	keyword("auto"),
-	keyword("fitContent"),
-	keyword("maxContent"),
-	keyword("minContent"),
-	length(NonNegativeConstraint),
-]);
+export const Grammar = alias(
+	"measure",
+	oneOf([
+		keyword("auto"),
+		keyword("fitContent"),
+		keyword("maxContent"),
+		keyword("minContent"),
+		length(NonNegativeConstraint),
+	]),
+);

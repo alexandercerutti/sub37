@@ -2,6 +2,7 @@ import { oneOf, sequence, zeroOrMore, zeroOrOne } from "../structure/operators.j
 import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { color } from "../structure/derivables/color.js";
+import { alias } from "../structure/derivables/alias.js";
 
 /**
  * @syntax
@@ -10,32 +11,34 @@ import { color } from "../structure/derivables/color.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-shadow
  */
-const Shadow = sequence([
-	// offset-x
-	length(),
-	// offset-y
-	length(),
-	// blur-radius
-	zeroOrOne(length(NonNegativeConstraint)),
-	// color
-	zeroOrOne(color()),
-]);
+const Shadow = alias(
+	"<shadow>",
+	sequence([
+		alias("offset-x", length()),
+		alias("offset-y", length()),
+		alias("blur-radius", zeroOrOne(length(NonNegativeConstraint))),
+		alias("color", zeroOrOne(color())),
+	]),
+);
 
 /**
  * @syntax \<shadow> (\<lwsp>? "," \<lwsp>? \<shadow>)*
  * @see https://w3c.github.io/ttml2/#style-value-text-shadow
  */
-export const Grammar = oneOf([
-	keyword("none"),
-	sequence([
-		//
-		Shadow,
-		zeroOrMore(
-			sequence([
-				//
-				keyword(","),
-				Shadow,
-			]),
-		),
+export const Grammar = alias(
+	"<text-shadow>",
+	oneOf([
+		keyword("none"),
+		sequence([
+			//
+			Shadow,
+			zeroOrMore(
+				sequence([
+					//
+					keyword(","),
+					Shadow,
+				]),
+			),
+		]),
 	]),
-]);
+);

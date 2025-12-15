@@ -1,3 +1,4 @@
+import { alias } from "../structure/derivables/alias";
 import { keyword } from "../structure/derivables/keyword";
 import { oneOf } from "../structure/operators";
 
@@ -6,9 +7,12 @@ import { oneOf } from "../structure/operators";
  * @see https://w3c.github.io/ttml2/#style-attribute-textOrientation
  */
 
-export const Grammar = oneOf([
-	//
-	keyword("sideways"),
-	keyword("mixed"),
-	keyword("upright"),
-]);
+export const Grammar = alias(
+	"<text-orientation>",
+	oneOf([
+		//
+		keyword("sideways"),
+		keyword("mixed"),
+		keyword("upright"),
+	]),
+);

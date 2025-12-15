@@ -1,5 +1,6 @@
 import { oneOf, someOf } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
+import { alias } from "../structure/derivables/alias.js";
 
 /**
  * @syntax \<text-decoration>
@@ -8,25 +9,28 @@ import { keyword } from "../structure/derivables/keyword.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-text-decoration
  */
-export const Grammar = oneOf([
-	//
-	keyword("none"),
-	someOf([
+export const Grammar = alias(
+	"<text-decoration>",
+	oneOf([
 		//
-		oneOf([
+		keyword("none"),
+		someOf([
 			//
-			keyword("underline"),
-			keyword("noUnderline"),
-		]),
-		oneOf([
-			//
-			keyword("lineThrough"),
-			keyword("noLineThrough"),
-		]),
-		oneOf([
-			//
-			keyword("overline"),
-			keyword("noOverline"),
+			oneOf([
+				//
+				keyword("underline"),
+				keyword("noUnderline"),
+			]),
+			oneOf([
+				//
+				keyword("lineThrough"),
+				keyword("noLineThrough"),
+			]),
+			oneOf([
+				//
+				keyword("overline"),
+				keyword("noOverline"),
+			]),
 		]),
 	]),
-]);
+);

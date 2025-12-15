@@ -1,5 +1,6 @@
 import { oneOf } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
+import { alias } from "../structure/derivables/alias.js";
 
 /**
  * @syntax \<text-combine>
@@ -8,8 +9,11 @@ import { keyword } from "../structure/derivables/keyword.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-text-combine
  */
-export const Grammar = oneOf([
-	//
-	keyword("none"),
-	keyword("all"),
-]);
+export const Grammar = alias(
+	"<text-combine>",
+	oneOf([
+		//
+		keyword("none"),
+		keyword("all"),
+	]),
+);

@@ -2,7 +2,7 @@ import { oneOf, someOf } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { QuotedString } from "../structure/derivables/quoted-string.js";
 import { AnnotationColor, AnnotationPosition } from "../structure/derivables/annotation.js";
-import { alias } from "../structure/derivables/alias.js";
+import { as } from "../structure/derivables/tag.js";
 
 /**
  * @syntax \<emphasis-style>
@@ -46,28 +46,31 @@ import { alias } from "../structure/derivables/alias.js";
  * as such, an implementation that supports text emphasis marks must minimally support
  * the auto value.
  */
-const EmphasisStyle = oneOf([
-	keyword("none"),
-	keyword("auto"),
-	// ( "filled" | "open" ) || ( "circle" | "dot" | "sesame" )
-	someOf([
-		oneOf([
-			//
-			keyword("filled"),
-			keyword("open"),
+const EmphasisStyle = as(
+	"text-emphasis-style",
+	oneOf([
+		keyword("none"),
+		keyword("auto"),
+		// ( "filled" | "open" ) || ( "circle" | "dot" | "sesame" )
+		someOf([
+			oneOf([
+				//
+				keyword("filled"),
+				keyword("open"),
+			]),
+			oneOf([
+				//
+				keyword("circle"),
+				keyword("dot"),
+				keyword("sesame"),
+			]),
 		]),
-		oneOf([
-			//
-			keyword("circle"),
-			keyword("dot"),
-			keyword("sesame"),
-		]),
+		QuotedString,
 	]),
-	QuotedString,
-]);
+);
 
-const EmphasisPosition = alias("<emphasis-position>", AnnotationPosition);
-const EmphasisColor = alias("<emphasis-color>", AnnotationColor);
+const EmphasisPosition = as("text-emphasis-position", AnnotationPosition);
+const EmphasisColor = as("text-emphasis-color", AnnotationColor);
 
 /**
  * @syntax \<emphasis-style> || \<emphasis-color> || \<emphasis-position>
