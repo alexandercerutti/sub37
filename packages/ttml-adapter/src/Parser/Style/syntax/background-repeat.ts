@@ -7,7 +7,7 @@ import { oneOf } from "../structure/operators";
  * @see https://w3c.github.io/ttml2/#style-attribute-backgroundRepeat
  */
 export const Grammar = alias(
-	"background-repeat",
+	"<background-repeat>",
 	oneOf([
 		//
 		keyword("repeat"),
