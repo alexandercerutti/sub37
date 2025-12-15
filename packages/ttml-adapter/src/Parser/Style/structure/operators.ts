@@ -44,14 +44,14 @@ export function isDone(
 }
 
 export interface Derivable<_SymbolName extends string = string> {
-	readonly symbol: symbol;
+	readonly type: string;
 	derive(token: string): DerivationResult;
 }
 
 export function zeroOrOne(node: Derivable): Derivable<"?"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("?"),
+		type: {
+			value: "?",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -71,8 +71,8 @@ export function zeroOrOne(node: Derivable): Derivable<"?"> {
 
 export function zeroOrMore(node: Derivable): Derivable<"*"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("*"),
+		type: {
+			value: "*",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -104,8 +104,8 @@ export function zeroOrMore(node: Derivable): Derivable<"*"> {
 
 export function oneOrMore(node: Derivable): Derivable<"+"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("+"),
+		type: {
+			value: "+",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -137,8 +137,8 @@ export function oneOrMore(node: Derivable): Derivable<"+"> {
 
 export function sequence(nodes: Derivable[]): Derivable<"&&"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("&&"),
+		type: {
+			value: "&&",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -191,8 +191,8 @@ export function sequence(nodes: Derivable[]): Derivable<"&&"> {
 
 export function oneOf(nodes: Derivable[]): Derivable<"|"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("|"),
+		type: {
+			value: "|",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -275,8 +275,8 @@ export function oneOf(nodes: Derivable[]): Derivable<"|"> {
 
 export function someOf(nodes: Derivable[]): Derivable<"||"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("||"),
+		type: {
+			value: "||",
 		},
 		derive: {
 			value(token: string): DerivationResult {

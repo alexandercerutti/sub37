@@ -8,8 +8,8 @@ import type { Derivable, DerivationResult } from "../structure/operators.js";
  */
 export const Grammar = (function (): Derivable {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("unavailable"),
+		type: {
+			value: "unavailable",
 		},
 		derive: {
 			value(): DerivationResult {

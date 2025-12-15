@@ -3,11 +3,12 @@ import type { DerivationResult, Derivable } from "../operators.js";
 
 export function integer(): Derivable<"<integer>"> {
 	return Object.create(null, {
-		symbol: { value: Symbol("<integer>") },
+		type: {
+			value: "<integer>",
+		},
 		derive: {
 			enumerable: true,
 			value(token: string): DerivationResult {
-				// Strict integer check (no decimals)
 				if (/^[+-]?\d+$/.test(token)) {
 					return {
 						state: DerivationState.DONE,
@@ -15,7 +16,9 @@ export function integer(): Derivable<"<integer>"> {
 					};
 				}
 
-				return { state: DerivationState.REJECTED };
+				return {
+					state: DerivationState.REJECTED,
+				};
 			},
 		},
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });

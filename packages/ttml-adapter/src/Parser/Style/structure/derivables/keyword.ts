@@ -5,8 +5,8 @@ export function keyword<N extends string>(content: N): Derivable<N> {
 	const loweredContent = content.toLowerCase();
 
 	return Object.create(null, {
-		symbol: {
-			value: Symbol(`keyword: ${loweredContent}`),
+		type: {
+			value: `keyword: ${loweredContent}`,
 		},
 		derive: {
 			enumerable: true,

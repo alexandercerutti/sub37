@@ -13,8 +13,8 @@ export const ScalarConstraint: ConstaintValidator = isScalar;
 
 export function length(...constraints: ConstaintValidator[]): Derivable<"<length>"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("<length>"),
+		type: {
+			value: "<length>",
 		},
 		derive: {
 			enumerable: true,

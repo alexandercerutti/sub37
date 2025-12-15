@@ -4,8 +4,8 @@ import type { Derivable, DerivationResult } from "../operators.js";
 
 export function color(): Derivable<"<color>"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("<color>"),
+		type: {
+			value: "<color>",
 		},
 		derive: {
 			enumerable: true,

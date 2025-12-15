@@ -24,8 +24,8 @@ export const QuotedString = oneOf([
 
 function DoubleQuotedString(): Derivable<"double-quoted-string"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("double-quoted-string"),
+		type: {
+			value: "double-quoted-string",
 		},
 		derive: {
 			value(token: string): DerivationResult {
@@ -52,8 +52,8 @@ function DoubleQuotedString(): Derivable<"double-quoted-string"> {
 
 function SingleQuotedString(): Derivable<"single-quoted-string"> {
 	return Object.create(null, {
-		symbol: {
-			value: Symbol("single-quoted-string"),
+		type: {
+			value: "single-quoted-string",
 		},
 		derive: {
 			value(token: string): DerivationResult {
