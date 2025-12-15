@@ -1,0 +1,37 @@
+import type { Derivable } from "../operators.js";
+import { isRejected } from "../operators.js";
+
+/**
+ * Wraps the result values in an object { type: tagName, value: originalValue }
+ * and changes the type value to the given tagName for debug purposes.
+ *
+ * @param tagName
+ * @param node
+ * @returns
+ */
+export function as(tagName: string, node: Derivable): Derivable {
+	return Object.create(null, {
+		type: {
+			value: tagName,
+		},
+		derive: {
+			enumerable: true,
+			value(token: string) {
+				const result = node.derive(token);
+
+				if (isRejected(result)) {
+					return result;
+				}
+
+				if (result.values) {
+					return {
+						...result,
+						values: result.values.map((v) => ({ type: tagName, value: v })),
+					};
+				}
+
+				return result;
+			},
+		},
+	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
+}
