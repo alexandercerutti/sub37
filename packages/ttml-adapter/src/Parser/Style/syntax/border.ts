@@ -1,5 +1,6 @@
 import type { Scope } from "../../Scope/Scope.js";
-import { toLength } from "../../Units/length.js";
+import { isLength, toLength } from "../../Units/length.js";
+import type { Length } from "../../Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
 import { createUnit } from "../../Units/unit.js";
 import { as } from "../structure/derivables/tag.js";
@@ -13,6 +14,7 @@ import {
 	oneOf,
 	someOf,
 } from "../structure/operators.js";
+import { PropertiesCollection } from "../../parseStyle.js";
 
 /**
  * @syntax thin | medium | thick | \<length>
@@ -138,4 +140,34 @@ export const Grammar = someOf([
 	BorderRadii,
 ]);
 
-export function cssTransform(_scope: Scope, values: unknown[]) {}
+type RemappedValues = (
+	| { type: "border-width"; value: "thin" | "medium" | "thick" | Length }
+	| { type: "border-style"; value: "none" | "dotted" | "dashed" | "solid" | "double" }
+	| { type: "border-color"; value: string }
+	| { type: "border-radius"; value: string }
+)[];
+
+export function cssTransform(
+	_scope: Scope,
+	values: RemappedValues,
+): PropertiesCollection<["border-width", "border-style", "border-color", "border-radius"]> {
+	const propertiesDictionary = values.reduce(
+		(acc, curr) => {
+			acc[curr.type] = isLength(curr.value) ? curr.value.toString() : curr.value;
+			return acc;
+		},
+		{
+			"border-color": "",
+			"border-style": "",
+			"border-width": "",
+			"border-radius": "",
+		} as { [K in RemappedValues[number]["type"]]: string },
+	);
+
+	return [
+		["border-width", propertiesDictionary["border-width"]],
+		["border-style", propertiesDictionary["border-style"]],
+		["border-color", propertiesDictionary["border-color"]],
+		["border-radius", propertiesDictionary["border-radius"]],
+	];
+}
