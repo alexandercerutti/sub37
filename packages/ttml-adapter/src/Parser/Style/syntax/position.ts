@@ -1,4 +1,3 @@
-import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
 import { oneOf, sequence } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length } from "../structure/derivables/length.js";
@@ -74,10 +73,6 @@ const OffsetPositionV = oneOf([
 	PositionKeywordV,
 	length(),
 ]);
-
-function PositionProcessor(value: string): string[] {
-	return getSplittedLinearWhitespaceValues(value);
-}
 
 /**
  * @syntax

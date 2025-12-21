@@ -1,6 +1,5 @@
 import type { Scope } from "../../Scope/Scope.js";
 import { isLength, toLength } from "../../Units/length.js";
-import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
 import { createUnit } from "../../Units/unit.js";
 import { as } from "../structure/derivables/tag.js";
 import { color } from "../structure/derivables/color.js";
@@ -124,10 +123,6 @@ function BorderRadiiGrammar(): Derivable<"border-radii", string> {
 }
 
 const BorderRadii = as("border-radius", BorderRadiiGrammar());
-
-function BorderProcessor(attribute: string): string[] {
-	return getSplittedLinearWhitespaceValues(attribute);
-}
 
 /**
  * @syntax \<border-thickness> || \<border-style> || \<border-color> || \<border-radii>
