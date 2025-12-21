@@ -2,6 +2,7 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { oneOf, sequence, zeroOrOne } from "../structure/operators.js";
+import type { InferDerivableValue } from "../structure/operators.js";
 import { color } from "../structure/derivables/color.js";
 import { length } from "../structure/derivables/length.js";
 import { alias } from "../structure/derivables/alias.js";
@@ -28,16 +29,9 @@ export const Grammar = alias(
 	]),
 );
 
-type RemappedValues = (
-	| "none"
-	| { type: "outline-color"; value: string }
-	| { type: "outline-thickness"; value: string }
-	| { type: "outline-blur-radius"; value: string }
-)[];
-
 export function cssTransform(
 	_scope: Scope,
-	value: RemappedValues,
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["text-shadow", "-webkit-text-stroke"]> | null {
 	if (value[0] === "none") {
 		return [

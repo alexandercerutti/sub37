@@ -9,7 +9,10 @@ import { isRejected } from "../operators.js";
  * @param node
  * @returns
  */
-export function as(tagName: string, node: Derivable): Derivable {
+export function as<const N extends string, D>(
+	tagName: N,
+	node: Derivable<string, D>,
+): Derivable<N, { type: N; value: D }> {
 	return Object.create(null, {
 		type: {
 			value: tagName,

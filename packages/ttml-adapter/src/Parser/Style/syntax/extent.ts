@@ -1,8 +1,9 @@
 import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { Length } from "../../Units/length.js";
-import { Grammar as Measure } from "./measure.js";
+import * as Measure from "./measure.js";
 import { oneOf, sequence } from "../structure/operators.js";
+import type { InferDerivableValue } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { alias } from "../structure/derivables/alias.js";
 import { isLength } from "../../Units/length.js";
@@ -26,23 +27,21 @@ export const Grammar = alias(
 		keyword("cover"),
 		sequence([
 			//
-			Measure,
-			Measure,
+			Measure.Grammar,
+			Measure.Grammar,
 		]),
 	]),
 );
 
 function isExtentSupportedKeyword(
-	value: string | [string | Length, string | Length],
+	value: InferDerivableValue<typeof Grammar>,
 ): value is "auto" | "contain" | "cover" {
 	return ["auto", "contain", "cover"].includes(value as string);
 }
 
-type MeasureValue = "auto" | "fitContent" | "maxContent" | "minContent" | Length;
-
 export function cssTransform(
 	_scope: Scope,
-	value: "auto" | "contain" | "cover" | [MeasureValue, MeasureValue],
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["width", "height"]> {
 	if (isExtentSupportedKeyword(value)) {
 		switch (value) {
@@ -78,9 +77,14 @@ export function cssTransform(
 	if (isLength(width)) {
 		widthLength = toClamped(width, 0, 100) || createUnit(0, "%");
 	} else {
-		if (width === "auto") {
+		if (
+			width === "auto" ||
+			width === "fitContent" ||
+			width === "maxContent" ||
+			width === "minContent"
+		) {
 			console.warn(
-				"Region extent width set to auto with a parametrized height is not yet supported. Will be treated as 100%",
+				"Region extent width set to a value different from a Length is not yet supported. Will be treated as 100%",
 			);
 
 			width = createUnit(100, "%");
@@ -90,12 +94,17 @@ export function cssTransform(
 	if (isLength(height)) {
 		heightLength = toClamped(height, 0, 100) || createUnit(0, "%");
 	} else {
-		if (height === "auto") {
+		if (
+			height === "auto" ||
+			height === "fitContent" ||
+			height === "maxContent" ||
+			height === "minContent"
+		) {
 			console.warn(
-				"Region extent width set to auto with a parametrized height is not yet supported. Will be treated as 100%",
+				"Region extent height set to a value different from a Length is not yet supported. Will be treated as 100%",
 			);
 
-			width = createUnit(100, "%");
+			height = createUnit(100, "%");
 		}
 	}
 

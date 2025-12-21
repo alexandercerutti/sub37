@@ -3,6 +3,7 @@ import type { Scope } from "../../Scope/Scope";
 import { alias } from "../structure/derivables/alias";
 import { keyword } from "../structure/derivables/keyword";
 import { oneOf } from "../structure/operators";
+import type { InferDerivableValue } from "../structure/operators";
 
 /**
  * @syntax "sideways" | "mixed" | "upright"
@@ -16,15 +17,19 @@ export const Grammar = alias(
 		keyword("sideways"),
 		keyword("mixed"),
 		keyword("upright"),
+
+		// Legacy values
+		keyword("sideways-left"),
+		keyword("sideways-right"),
+
+		// SVG ignore value
+		keyword("use-glyph-orientation"),
 	]),
 );
 
-type LegacyValues = "sideways-left" | "sideways-right";
-type SVGIgnoreValues = "use-glyph-orientation";
-
 export function cssTransform(
 	_scope: Scope,
-	value: "sideways" | "mixed" | "upright" | LegacyValues | SVGIgnoreValues,
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["text-orientation"]> | null {
 	switch (value) {
 		// Kept only for compatibility. Remapping.

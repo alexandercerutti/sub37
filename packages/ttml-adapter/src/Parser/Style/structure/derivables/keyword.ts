@@ -1,7 +1,7 @@
 import type { Derivable, DerivationResult } from "../operators.js";
 import { DerivationState } from "../operators.js";
 
-export function keyword<N extends string>(content: N): Derivable<N> {
+export function keyword<N extends string>(content: N): Derivable<N, N> {
 	const loweredContent = content.toLowerCase();
 
 	return Object.create(null, {
@@ -10,7 +10,7 @@ export function keyword<N extends string>(content: N): Derivable<N> {
 		},
 		derive: {
 			enumerable: true,
-			value(token: string): DerivationResult {
+			value(token: string): DerivationResult<N> {
 				if (token.toLowerCase() !== loweredContent) {
 					return {
 						state: DerivationState.REJECTED,

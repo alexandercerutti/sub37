@@ -22,7 +22,7 @@ export const QuotedString = oneOf([
 	SingleQuotedString(),
 ]);
 
-function DoubleQuotedString(): Derivable<"double-quoted-string"> {
+function DoubleQuotedString(): Derivable<"double-quoted-string", string> {
 	return Object.create(null, {
 		type: {
 			value: "double-quoted-string",
@@ -50,7 +50,7 @@ function DoubleQuotedString(): Derivable<"double-quoted-string"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-function SingleQuotedString(): Derivable<"single-quoted-string"> {
+function SingleQuotedString(): Derivable<"single-quoted-string", string> {
 	return Object.create(null, {
 		type: {
 			value: "single-quoted-string",

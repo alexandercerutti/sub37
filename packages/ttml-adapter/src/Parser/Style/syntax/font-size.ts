@@ -7,6 +7,7 @@ import { createUnit } from "../../Units/unit";
 import { alias } from "../structure/derivables/alias";
 import { length, NonNegativeConstraint } from "../structure/derivables/length";
 import { sequence, zeroOrOne } from "../structure/operators";
+import type { InferDerivableValue } from "../structure/operators";
 
 /**
  * @syntax \<font-size>
@@ -26,8 +27,6 @@ export const Grammar = alias(
 		),
 	]),
 );
-
-type RemappedValues = [Length, Length?];
 
 /**
  * TTML supports providing two <length> for `tts:fontSize`.
@@ -52,7 +51,7 @@ type RemappedValues = [Length, Length?];
 
 export function cssTransform(
 	scope: Scope,
-	value: RemappedValues,
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["font-size"]> {
 	const {
 		attributes: {

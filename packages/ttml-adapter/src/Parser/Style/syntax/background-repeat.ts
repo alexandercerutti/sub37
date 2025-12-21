@@ -2,7 +2,7 @@ import type { PropertiesCollection } from "../../parseStyle";
 import type { Scope } from "../../Scope/Scope";
 import { alias } from "../structure/derivables/alias";
 import { keyword } from "../structure/derivables/keyword";
-import { oneOf } from "../structure/operators";
+import { InferDerivableValue, oneOf } from "../structure/operators";
 
 /**
  * @syntax "repeat" | "repeatX" | "repeatY" | "noRepeat"
@@ -21,7 +21,7 @@ export const Grammar = alias(
 
 export function cssTransform(
 	_scope: Scope,
-	value: "repeat" | "repeatX" | "repeatY" | "noRepeat",
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["background-repeat"]> {
 	switch (value) {
 		case "repeat": {

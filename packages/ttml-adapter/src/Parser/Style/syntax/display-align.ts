@@ -3,6 +3,7 @@ import type { PropertiesCollection } from "../../parseStyle";
 import { keyword } from "../structure/derivables/keyword";
 import { as } from "../structure/derivables/tag";
 import { oneOf } from "../structure/operators";
+import type { InferDerivableValue } from "../structure/operators";
 
 /**
  * @syntax "before" | "center" | "after" | "justify"
@@ -21,9 +22,9 @@ export const Grammar = as(
 
 export function cssTransform(
 	_scope: Scope,
-	value: "before" | "center" | "after" | "justify",
+	outcome: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["justify-content"]> {
-	switch (value) {
+	switch (outcome.value) {
 		case "before": {
 			return [["justify-content", "flex-start"]];
 		}

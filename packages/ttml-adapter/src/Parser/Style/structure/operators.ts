@@ -7,14 +7,14 @@ export const DerivationState = {
 
 export type DerivationState = typeof DerivationState;
 
-export type DerivationResult =
+export type DerivationResult<RR = unknown> =
 	| {
 			state: number;
 			values?: unknown[];
 	  }
 	| {
 			state: DerivationState["DERIVED"];
-			nextNode: Derivable;
+			nextNode: Derivable<string, RR>;
 			values: unknown[];
 	  }
 	| {
@@ -24,6 +24,9 @@ export type DerivationResult =
 	| {
 			state: DerivationState["REJECTED"];
 	  };
+
+export type InferDerivableValue<D extends Derivable> =
+	D extends Derivable<any, infer R> ? R : never;
 
 export function isDerived(
 	derivationResult: DerivationResult,
@@ -43,12 +46,12 @@ export function isDone(
 	return Boolean(derivationResult.state & DerivationState.DONE);
 }
 
-export interface Derivable<_SymbolName extends string = string> {
+export interface Derivable<_SymbolName extends string = string, RR = unknown> {
 	readonly type: string;
-	derive(token: string): DerivationResult;
+	derive(token: string): DerivationResult<RR>;
 }
 
-export function zeroOrOne(node: Derivable): Derivable<"?"> {
+export function zeroOrOne<RR>(node: Derivable<string, RR>): Derivable<"?", RR | undefined> {
 	return Object.create(null, {
 		type: {
 			value: "?",
@@ -69,13 +72,13 @@ export function zeroOrOne(node: Derivable): Derivable<"?"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function zeroOrMore(node: Derivable): Derivable<"*"> {
+export function zeroOrMore<RR>(node: Derivable<string, RR>): Derivable<"*", RR[] | undefined> {
 	return Object.create(null, {
 		type: {
 			value: "*",
 		},
 		derive: {
-			value(token: string): DerivationResult {
+			value(token: string): DerivationResult<RR> {
 				const derivationResult = node.derive(token);
 
 				if (isRejected(derivationResult)) {
@@ -102,13 +105,13 @@ export function zeroOrMore(node: Derivable): Derivable<"*"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function oneOrMore(node: Derivable): Derivable<"+"> {
+export function oneOrMore<RR>(node: Derivable<string, RR>): Derivable<"+", RR> {
 	return Object.create(null, {
 		type: {
 			value: "+",
 		},
 		derive: {
-			value(token: string): DerivationResult {
+			value(token: string): DerivationResult<RR> {
 				const derivationResult = node.derive(token);
 
 				if (isRejected(derivationResult)) {
@@ -135,14 +138,20 @@ export function oneOrMore(node: Derivable): Derivable<"+"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function sequence(nodes: Derivable[]): Derivable<"&&"> {
+type MapDerivableValues<T extends Derivable[]> = {
+	[K in keyof T]: InferDerivableValue<T[K]>;
+};
+
+export function sequence<const D extends Derivable<string, unknown>[]>(
+	nodes: D,
+): Derivable<"&&", MapDerivableValues<D>> {
 	return Object.create(null, {
 		type: {
 			value: "&&",
 		},
 		derive: {
 			value(token: string): DerivationResult {
-				let targetNodes = nodes;
+				let targetNodes: Derivable<string, unknown>[] = nodes;
 
 				while (true) {
 					if (!targetNodes.length) {
@@ -189,7 +198,9 @@ export function sequence(nodes: Derivable[]): Derivable<"&&"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function oneOf(nodes: Derivable[]): Derivable<"|"> {
+export function oneOf<const D extends Derivable[]>(
+	nodes: D,
+): Derivable<"|", InferDerivableValue<D[number]>> {
 	return Object.create(null, {
 		type: {
 			value: "|",
@@ -273,7 +284,9 @@ export function oneOf(nodes: Derivable[]): Derivable<"|"> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function someOf(nodes: Derivable[]): Derivable<"||"> {
+export function someOf<const D extends Derivable<string, unknown>[]>(
+	nodes: D,
+): Derivable<"||", D[number] extends Derivable<string, infer R> ? R : never> {
 	return Object.create(null, {
 		type: {
 			value: "||",

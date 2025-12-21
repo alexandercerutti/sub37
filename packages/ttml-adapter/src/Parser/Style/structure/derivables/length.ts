@@ -11,7 +11,7 @@ export const NonNegativeConstraint: ConstaintValidator = (length) => length.valu
 export const PercentageConstraint: ConstaintValidator = (length) => length.metric === "%";
 export const ScalarConstraint: ConstaintValidator = isScalar;
 
-export function length(...constraints: ConstaintValidator[]): Derivable<"<length>"> {
+export function length(...constraints: ConstaintValidator[]): Derivable<"<length>", Length> {
 	return Object.create(null, {
 		type: {
 			value: "<length>",

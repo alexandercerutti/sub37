@@ -7,7 +7,7 @@ import type { Derivable } from "../operators";
  * @param node
  * @returns
  */
-export function alias<N extends string>(name: N, node: Derivable): Derivable<N> {
+export function alias<N extends string, T>(name: N, node: Derivable<string, T>): Derivable<N, T> {
 	return Object.create(node, {
 		type: {
 			value: name,

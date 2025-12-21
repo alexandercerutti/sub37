@@ -1,6 +1,12 @@
 const RGB_REGEX = /rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/;
 const RGBA_REGEX = /rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/;
 
+export type Color =
+	| `#${string}`
+	| `rgb(${number},${number},${number})`
+	| `rgba(${number},${number},${number},${number})`
+	| (typeof NAMED_COLORS)[number];
+
 // region <hex-digit>
 
 /**

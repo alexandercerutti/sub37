@@ -1,8 +1,8 @@
 import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
-import type { Length } from "../../Units/length.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { oneOf, sequence } from "../structure/operators.js";
+import type { InferDerivableValue } from "../structure/operators.js";
 import { length } from "../structure/derivables/length.js";
 import { alias } from "../structure/derivables/alias.js";
 
@@ -27,7 +27,7 @@ export const Grammar = alias(
 
 export function cssTransform(
 	_scope: Scope,
-	value: "auto" | [Length, Length],
+	value: InferDerivableValue<typeof Grammar>,
 ): PropertiesCollection<["x", "y"]> {
 	if (value === "auto") {
 		/**

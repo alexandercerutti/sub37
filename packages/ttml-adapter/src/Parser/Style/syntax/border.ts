@@ -1,6 +1,5 @@
 import type { Scope } from "../../Scope/Scope.js";
 import { isLength, toLength } from "../../Units/length.js";
-import type { Length } from "../../Units/length.js";
 import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
 import { createUnit } from "../../Units/unit.js";
 import { as } from "../structure/derivables/tag.js";
@@ -11,6 +10,7 @@ import {
 	Derivable,
 	DerivationResult,
 	DerivationState,
+	InferDerivableValue,
 	oneOf,
 	someOf,
 } from "../structure/operators.js";
@@ -99,9 +99,8 @@ function validateBorderRadii(component: string): string {
  * present, then it is interpreted as if two lengths were specified with the same
  * value.
  */
-const BorderRadii = as(
-	"border-radius",
-	Object.create(null, {
+function BorderRadiiGrammar(): Derivable<"border-radii", string> {
+	return Object.create(null, {
 		type: {
 			value: "<border-radii>",
 		},
@@ -121,8 +120,10 @@ const BorderRadii = as(
 				};
 			},
 		},
-	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> }),
-);
+	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
+}
+
+const BorderRadii = as("border-radius", BorderRadiiGrammar());
 
 function BorderProcessor(attribute: string): string[] {
 	return getSplittedLinearWhitespaceValues(attribute);
@@ -140,16 +141,9 @@ export const Grammar = someOf([
 	BorderRadii,
 ]);
 
-type RemappedValues = (
-	| { type: "border-width"; value: "thin" | "medium" | "thick" | Length }
-	| { type: "border-style"; value: "none" | "dotted" | "dashed" | "solid" | "double" }
-	| { type: "border-color"; value: string }
-	| { type: "border-radius"; value: string }
-)[];
-
 export function cssTransform(
 	_scope: Scope,
-	values: RemappedValues,
+	values: InferDerivableValue<typeof Grammar>[],
 ): PropertiesCollection<["border-width", "border-style", "border-color", "border-radius"]> {
 	const propertiesDictionary = values.reduce(
 		(acc, curr) => {
@@ -161,7 +155,7 @@ export function cssTransform(
 			"border-style": "",
 			"border-width": "",
 			"border-radius": "",
-		} as { [K in RemappedValues[number]["type"]]: string },
+		} as { [K in InferDerivableValue<typeof Grammar>["type"]]: string },
 	);
 
 	return [
