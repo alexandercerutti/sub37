@@ -60,3 +60,22 @@ export function toLength(value: string): Length | null {
 
 	return createUnit(parseFloat(match[1]), match[2]);
 }
+
+/**
+ * Subtracts two lengths with the same unit
+ *
+ * @param a
+ * @param b
+ * @returns
+ */
+export function subtract<L extends Length>(a: L, b: L): L | null {
+	if (!isLength(a) || !isLength(b)) {
+		return null;
+	}
+
+	if (a.metric !== b.metric) {
+		return null;
+	}
+
+	return createUnit(a.value - b.value, a.metric) as L;
+}
