@@ -59,7 +59,7 @@ import { oneOf } from "../structure/operators.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-measure
  */
-export const Grammar = alias(
+export const MeasureGrammar = alias(
 	"measure",
 	oneOf([
 		keyword("auto"),

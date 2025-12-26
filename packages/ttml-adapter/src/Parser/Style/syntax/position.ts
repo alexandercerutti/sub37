@@ -241,7 +241,7 @@ const OffsetPositionV = oneOf([
  *
  * In both cases, the resulting difference may be a negative percentage.
  */
-export const Grammar = oneOf([
+export const PositionGrammar = oneOf([
 	// Single component values
 	OffsetPositionH,
 	EdgeKeywordV,
@@ -267,7 +267,7 @@ export const Grammar = oneOf([
 // ********************* //
 
 export function normalizePositionValue(
-	value: InferDerivableValue<typeof Grammar>,
+	value: InferDerivableValue<typeof PositionGrammar>,
 ): ["left", Length, "top", Length] | undefined {
 	if (!Array.isArray(value)) {
 		value;
@@ -291,7 +291,7 @@ export function normalizePositionValue(
 // ***************************************** //
 
 function normalizeOneComponentValue(
-	value: Exclude<InferDerivableValue<typeof Grammar>, Array<any>>,
+	value: Exclude<InferDerivableValue<typeof PositionGrammar>, Array<any>>,
 ): ["left", Length, "top", Length] {
 	if (isLength(value)) {
 		// | `<length>`	|	`<length> center`	| `left \<length> top 50%`
@@ -325,7 +325,7 @@ function normalizeOneComponentValue(
 // ***************************************** //
 
 type TwoComponentValue = Extract<
-	InferDerivableValue<typeof Grammar>,
+	InferDerivableValue<typeof PositionGrammar>,
 	[string | Length, string | Length]
 >;
 
@@ -417,14 +417,14 @@ function mapTwoComponentValueAxes(
 
 type ThreeComponentValue = Exclude<
 	Extract<
-		InferDerivableValue<typeof Grammar>,
+		InferDerivableValue<typeof PositionGrammar>,
 		[string | Length, Array<any>] | [Array<any>, string | Length]
 	>,
 	[Array<any>, Array<any>]
 >;
 
 function isThreeComponentValue(
-	value: InferDerivableValue<typeof Grammar>,
+	value: InferDerivableValue<typeof PositionGrammar>,
 ): value is ThreeComponentValue {
 	return Array.isArray(value) && (Array.isArray(value[0]) || Array.isArray(value[1]));
 }
@@ -602,10 +602,13 @@ function mapThreeComponentValueAxes(
 // *** FOUR COMPONENT VALUE NORMALIZATION *** //
 // ****************************************** //
 
-type FourComponentValue = Extract<InferDerivableValue<typeof Grammar>, [Array<any>, Array<any>]>;
+type FourComponentValue = Extract<
+	InferDerivableValue<typeof PositionGrammar>,
+	[Array<any>, Array<any>]
+>;
 
 function isFourComponentValue(
-	value: InferDerivableValue<typeof Grammar>,
+	value: InferDerivableValue<typeof PositionGrammar>,
 ): value is FourComponentValue {
 	return Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[1]);
 }

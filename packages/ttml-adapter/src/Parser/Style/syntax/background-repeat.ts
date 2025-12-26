@@ -1,14 +1,12 @@
-import type { PropertiesCollection } from "../../parseStyle";
-import type { Scope } from "../../Scope/Scope";
 import { alias } from "../structure/derivables/alias";
 import { keyword } from "../structure/derivables/keyword";
-import { InferDerivableValue, oneOf } from "../structure/operators";
+import { oneOf } from "../structure/operators";
 
 /**
  * @syntax "repeat" | "repeatX" | "repeatY" | "noRepeat"
  * @see https://w3c.github.io/ttml2/#style-attribute-backgroundRepeat
  */
-export const Grammar = alias(
+export const BackgroundRepeatGrammar = alias(
 	"<background-repeat>",
 	oneOf([
 		//
@@ -18,26 +16,3 @@ export const Grammar = alias(
 		keyword("noRepeat"),
 	]),
 );
-
-export function cssTransform(
-	_scope: Scope,
-	value: InferDerivableValue<typeof Grammar>,
-): PropertiesCollection<["background-repeat"]> {
-	switch (value) {
-		case "repeat": {
-			return [["background-repeat", "repeat"]];
-		}
-
-		case "repeatX": {
-			return [["background-repeat", "repeat-x"]];
-		}
-
-		case "repeatY": {
-			return [["background-repeat", "repeat-y"]];
-		}
-
-		case "noRepeat": {
-			return [["background-repeat", "no-repeat"]];
-		}
-	}
-}

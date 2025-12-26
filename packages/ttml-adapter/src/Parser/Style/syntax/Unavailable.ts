@@ -6,7 +6,7 @@ import type { Derivable, DerivationResult } from "../structure/operators.js";
  * we might not have implemented or won't implement
  * a certain syntax.
  */
-export const Grammar = (function (): Derivable {
+export const UnavailableGrammar = (function (): Derivable {
 	return Object.create(null, {
 		type: {
 			value: "unavailable",

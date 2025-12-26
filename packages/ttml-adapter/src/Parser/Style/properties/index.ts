@@ -1,0 +1,17 @@
+export * as BackgroundPosition from "./backgroundPosition.js";
+export * as BackgroundRepeat from "./backgroundRepeat.js";
+export * as Border from "./border.js";
+export * as Color from "./color.js";
+export * as DisplayAlign from "./displayAlign.js";
+export * as Extent from "./extent.js";
+export * as FontSize from "./fontSize.js";
+export * as Position from "./position.js";
+export * as Origin from "./origin.js";
+export * as Padding from "./padding.js";
+export * as TextCombine from "./textCombine.js";
+export * as TextDecoration from "./textDecoration.js";
+export * as TextEmphasis from "./textEmphasis.js";
+export * as TextOrientation from "./textOrientation.js";
+export * as TextOutline from "./textOutline.js";
+export * as TextShadow from "./textShadow.js";
+export * as Unavailable from "./unavailable.js";

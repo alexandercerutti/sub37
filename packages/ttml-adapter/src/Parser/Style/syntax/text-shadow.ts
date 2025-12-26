@@ -25,7 +25,7 @@ const Shadow = alias(
  * @syntax \<shadow> (\<lwsp>? "," \<lwsp>? \<shadow>)*
  * @see https://w3c.github.io/ttml2/#style-value-text-shadow
  */
-export const Grammar = alias(
+export const TextShadowGrammar = alias(
 	"<text-shadow>",
 	oneOf([
 		keyword("none"),

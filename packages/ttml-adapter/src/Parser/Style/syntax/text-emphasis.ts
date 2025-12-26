@@ -76,7 +76,7 @@ const EmphasisColor = as("text-emphasis-color", AnnotationColor);
  * @syntax \<emphasis-style> || \<emphasis-color> || \<emphasis-position>
  * @see https://w3c.github.io/ttml2/#style-value-text-emphasis
  */
-export const Grammar = someOf([
+export const TextEmphasisGrammar = someOf([
 	//
 	EmphasisStyle,
 	EmphasisColor,

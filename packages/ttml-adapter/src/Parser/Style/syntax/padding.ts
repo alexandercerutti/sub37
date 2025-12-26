@@ -3,10 +3,6 @@ import { length } from "../structure/derivables/length.js";
 import { as } from "../structure/derivables/tag.js";
 import { alias } from "../structure/derivables/alias.js";
 
-// function PaddingProcessor(value: string) {
-// 	return getSplittedLinearWhitespaceValues(value);
-// }
-
 /**
  * @syntax \<padding>
  *  : \<length> \<lwsp> \<length> \<lwsp> \<length> \<lwsp> \<length>
@@ -15,7 +11,7 @@ import { alias } from "../structure/derivables/alias.js";
  *  | \<length>
  * @see https://w3c.github.io/ttml2/#style-value-padding
  */
-export const Grammar = as(
+export const PaddingGrammar = as(
 	"padding",
 	oneOf([
 		// Four values: top right bottom left

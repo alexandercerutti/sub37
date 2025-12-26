@@ -9,7 +9,7 @@ import { alias } from "../structure/derivables/alias.js";
  *
  * @see https://w3c.github.io/ttml2/#style-value-text-combine
  */
-export const Grammar = alias(
+export const TextCombineGrammar = alias(
 	"<text-combine>",
 	oneOf([
 		//
