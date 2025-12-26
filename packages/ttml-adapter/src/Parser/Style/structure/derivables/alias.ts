@@ -1,4 +1,4 @@
-import type { Derivable } from "../operators";
+import type { Derivable } from "../operators.js";
 
 /**
  * Alias wrapper for nodes that are just renaming another node.

@@ -1,6 +1,6 @@
-import { alias } from "../structure/derivables/alias";
-import { length, NonNegativeConstraint } from "../structure/derivables/length";
-import { sequence, zeroOrOne } from "../structure/operators";
+import { alias } from "../structure/derivables/alias.js";
+import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
+import { sequence, zeroOrOne } from "../structure/operators.js";
 
 /**
  * @syntax \<font-size>

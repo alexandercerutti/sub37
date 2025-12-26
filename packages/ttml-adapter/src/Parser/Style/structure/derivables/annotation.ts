@@ -1,7 +1,7 @@
-import { oneOf } from "../operators";
-import { alias } from "./alias";
-import { color } from "./color";
-import { keyword } from "./keyword";
+import { oneOf } from "../operators.js";
+import { alias } from "./alias.js";
+import { color } from "./color.js";
+import { keyword } from "./keyword.js";
 
 /**
  * @syntax \<annotation-color>

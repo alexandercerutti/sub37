@@ -1,4 +1,4 @@
-import type { Unit } from "./unit";
+import type { Unit } from "./unit.js";
 import { createUnit } from "./unit.js";
 
 /**

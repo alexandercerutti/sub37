@@ -1,4 +1,4 @@
-import { Derivable, DerivationResult, DerivationState, oneOf } from "../operators";
+import { Derivable, DerivationResult, DerivationState, oneOf } from "../operators.js";
 
 /**
  * @syntax \<quoted-string>

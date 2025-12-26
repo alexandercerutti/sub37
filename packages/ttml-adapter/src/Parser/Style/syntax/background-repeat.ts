@@ -1,6 +1,6 @@
-import { alias } from "../structure/derivables/alias";
-import { keyword } from "../structure/derivables/keyword";
-import { oneOf } from "../structure/operators";
+import { alias } from "../structure/derivables/alias.js";
+import { keyword } from "../structure/derivables/keyword.js";
+import { oneOf } from "../structure/operators.js";
 
 /**
  * @syntax "repeat" | "repeatX" | "repeatY" | "noRepeat"

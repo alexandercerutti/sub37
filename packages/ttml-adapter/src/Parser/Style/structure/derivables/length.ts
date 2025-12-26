@@ -1,7 +1,7 @@
-import { isScalar, toLength } from "../../../Units/length";
-import type { Length } from "../../../Units/length";
-import { DerivationState } from "../operators";
-import type { Derivable } from "../operators";
+import { isScalar, toLength } from "../../../Units/length.js";
+import type { Length } from "../../../Units/length.js";
+import { DerivationState } from "../operators.js";
+import type { Derivable } from "../operators.js";
 
 export type ConstaintValidator = (value: Length) => boolean;
 

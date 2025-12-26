@@ -1,9 +1,9 @@
 import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { TextOutlineGrammar } from "../syntax/text-outline";
+import type { TextOutlineGrammar } from "../syntax/text-outline.js";
 
-export { TextOutlineGrammar as Grammar } from "../syntax/text-outline";
+export { TextOutlineGrammar as Grammar } from "../syntax/text-outline.js";
 
 export function cssTransform(
 	_scope: Scope,

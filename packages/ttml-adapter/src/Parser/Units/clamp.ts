@@ -1,4 +1,4 @@
-import { createUnit, type Unit } from "./unit";
+import { createUnit, type Unit } from "./unit.js";
 
 export function toClamped<Metric extends string | undefined>(
 	unit: Unit<Metric> | null,

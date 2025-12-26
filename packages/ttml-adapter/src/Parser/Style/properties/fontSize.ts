@@ -2,10 +2,10 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import type { FontSizeGrammar } from "../syntax/font-size.js";
-import type { Length } from "../../Units/length";
-import { readScopeDocumentContext } from "../../Scope/DocumentContext";
-import { getCellScalarPixelConversion, isCellScalar } from "../../Units/cell";
-import { createUnit } from "../../Units/unit";
+import type { Length } from "../../Units/length.js";
+import { readScopeDocumentContext } from "../../Scope/DocumentContext.js";
+import { getCellScalarPixelConversion, isCellScalar } from "../../Units/cell.js";
+import { createUnit } from "../../Units/unit.js";
 
 export { FontSizeGrammar as Grammar } from "../syntax/font-size.js";
 

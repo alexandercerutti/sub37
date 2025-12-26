@@ -1,6 +1,6 @@
-import { keyword } from "../structure/derivables/keyword";
-import { as } from "../structure/derivables/tag";
-import { oneOf } from "../structure/operators";
+import { keyword } from "../structure/derivables/keyword.js";
+import { as } from "../structure/derivables/tag.js";
+import { oneOf } from "../structure/operators.js";
 
 /**
  * @syntax "before" | "center" | "after" | "justify"

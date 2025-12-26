@@ -1,6 +1,6 @@
-import type { Scope } from "../../Scope/Scope";
-import type { PropertiesCollection } from "../../parseStyle";
-import type { InferDerivableValue } from "../structure/operators";
+import type { Scope } from "../../Scope/Scope.js";
+import type { PropertiesCollection } from "../../parseStyle.js";
+import type { InferDerivableValue } from "../structure/operators.js";
 import type { DisplayAlignGrammar } from "../syntax/display-align.js";
 
 export { DisplayAlignGrammar as Grammar } from "../syntax/display-align.js";
