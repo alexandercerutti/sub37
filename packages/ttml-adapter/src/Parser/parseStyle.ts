@@ -1,7 +1,7 @@
 import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
-import * as Syntaxes from "./Style/syntax/index.js";
+import * as Syntaxes from "./Style/properties/index.js";
 import { Derivable } from "./Style/structure/operators.js";
 
 type StyleAttributeString = `tts:${string}`;
@@ -264,7 +264,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["body", "div", "image", "p", "region", "span"],
 			"0% 0%",
 			undefined,
-			Syntaxes.Unavailable,
+			Syntaxes.BackgroundPosition,
 		),
 	),
 
@@ -395,7 +395,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["body", "div", "p", "region"],
 			"before",
 			new Set(["before", "center", "after", "justify"]),
-			Syntaxes.Unavailable,
+			Syntaxes.DisplayAlign,
 		),
 	),
 
@@ -500,7 +500,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				["p", "span", "region"],
 				"1c",
 				undefined,
-				Syntaxes.Unavailable,
+				Syntaxes.FontSize,
 			),
 		),
 	),
@@ -906,7 +906,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["span"],
 			"mixed",
 			new Set(["mixed", "sideways", "upright"]),
-			Syntaxes.Unavailable,
+			Syntaxes.TextOrientation,
 		),
 	),
 
