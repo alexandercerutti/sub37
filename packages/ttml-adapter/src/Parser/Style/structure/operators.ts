@@ -5,13 +5,15 @@ export const DerivationState = {
 	OPTIONAL: /***/ 0b0001000,
 } as const;
 
+// This mask allows us to combine REJECTED and OPTIONAL states
+// With Typescript. Otherwise the bitwise or operation results in 'number' type
+const OPTIONAL_REJECTION_MASK = (DerivationState.REJECTED | DerivationState.OPTIONAL) as
+	| DerivationState["REJECTED"]
+	| DerivationState["OPTIONAL"];
+
 export type DerivationState = typeof DerivationState;
 
 export type DerivationResult<RR = unknown> =
-	| {
-			state: number;
-			values?: unknown[];
-	  }
 	| {
 			state: DerivationState["DERIVED"];
 			nextNode: Derivable<string, RR>;
@@ -23,6 +25,11 @@ export type DerivationResult<RR = unknown> =
 	  }
 	| {
 			state: DerivationState["REJECTED"];
+	  }
+	| {
+			// number trick here allows us to bitwise OR states
+			state: typeof OPTIONAL_REJECTION_MASK;
+			values?: never;
 	  };
 
 export type InferDerivableValue<D extends Derivable> =
@@ -60,9 +67,9 @@ export function zeroOrOne<RR>(node: Derivable<string, RR>): Derivable<"?", RR | 
 			value(token: string): DerivationResult {
 				const derivationResult = node.derive(token);
 
-				if (derivationResult.state & DerivationState.REJECTED) {
+				if (isRejected(derivationResult)) {
 					return {
-						state: DerivationState.REJECTED | DerivationState.OPTIONAL,
+						state: OPTIONAL_REJECTION_MASK,
 					};
 				}
 
@@ -83,7 +90,7 @@ export function zeroOrMore<RR>(node: Derivable<string, RR>): Derivable<"*", RR[]
 
 				if (isRejected(derivationResult)) {
 					return {
-						state: DerivationState.REJECTED | DerivationState.OPTIONAL,
+						state: OPTIONAL_REJECTION_MASK,
 					};
 				}
 
