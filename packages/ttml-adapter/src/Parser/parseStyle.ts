@@ -64,9 +64,11 @@ export function isStyleAttribute(attribute: string): attribute is StyleAttribute
  * @see https://www.w3.org/TR/ttml2/#style-attribute-derivation
  */
 
-export type PropertiesCollection<Props extends string[]> = {
-	readonly [K in keyof Props]: [Props[K], string];
-};
+export type PropertiesCollection<Props extends string[]> =
+	| {
+			readonly [K in keyof Props]: [Props[K], string];
+	  }
+	| null;
 
 type PropertiesMapper<OutProperties extends string[]> = (
 	scope: Scope,
@@ -1135,6 +1137,10 @@ function convertAttributesToCSS(
 		}
 
 		const mapped = definition.toCSS(scope, value);
+
+		if (mapped === null) {
+			continue;
+		}
 
 		for (const [mappedKey, mappedValue] of mapped) {
 			convertedAttributes[mappedKey] = mappedValue;
