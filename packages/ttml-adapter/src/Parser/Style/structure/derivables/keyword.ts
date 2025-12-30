@@ -14,6 +14,7 @@ export function keyword<N extends string>(content: N): Derivable<N, N> {
 				if (token.toLowerCase() !== loweredContent) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: `Expected keyword ${loweredContent}, got ${token}`,
 					};
 				}
 

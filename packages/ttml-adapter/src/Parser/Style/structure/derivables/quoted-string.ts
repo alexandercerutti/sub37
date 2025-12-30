@@ -32,12 +32,14 @@ function DoubleQuotedString(): Derivable<"double-quoted-string", string> {
 				if (token.length <= 2) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: "DoubleQuotedString length check failed",
 					};
 				}
 
 				if (!token.startsWith("\x22") || token.endsWith("\x22")) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: "DoubleQuotedString didn't start and end with double quotes",
 					};
 				}
 
@@ -60,12 +62,14 @@ function SingleQuotedString(): Derivable<"single-quoted-string", string> {
 				if (token.length <= 2) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: "SingleQuotedString length check failed",
 					};
 				}
 
 				if (!token.startsWith("\x27") || token.endsWith("\x27")) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: "SingleQuotedString didn't start and end with single quotes",
 					};
 				}
 

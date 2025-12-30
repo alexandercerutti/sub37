@@ -15,6 +15,7 @@ export const UnavailableGrammar = (function (): Derivable {
 			value(): DerivationResult {
 				return {
 					state: DerivationState.REJECTED,
+					rejectionDetails: "UnavailableGrammar",
 				};
 			},
 		},

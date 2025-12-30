@@ -1,4 +1,4 @@
-import type { Derivable } from "../operators.js";
+import type { Derivable, DerivationResult } from "../operators.js";
 import { isRejected } from "../operators.js";
 
 /**
@@ -19,7 +19,7 @@ export function as<const N extends string, D>(
 		},
 		derive: {
 			enumerable: true,
-			value(token: string) {
+			value(token: string): DerivationResult {
 				const result = node.derive(token);
 
 				if (isRejected(result)) {
@@ -29,7 +29,7 @@ export function as<const N extends string, D>(
 				if (result.values) {
 					return {
 						...result,
-						values: result.values.map((v) => ({ type: tagName, value: v })),
+						values: result.values?.map((v) => ({ type: tagName, value: v })),
 					};
 				}
 

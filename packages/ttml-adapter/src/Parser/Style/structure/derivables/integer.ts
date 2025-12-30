@@ -18,6 +18,7 @@ export function integer(): Derivable<"<integer>"> {
 
 				return {
 					state: DerivationState.REJECTED,
+					rejectionDetails: `${token} is not an integer`,
 				};
 			},
 		},

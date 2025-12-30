@@ -1,7 +1,7 @@
 import { isScalar, toLength } from "../../../Units/length.js";
 import type { Length } from "../../../Units/length.js";
 import { DerivationState } from "../operators.js";
-import type { Derivable } from "../operators.js";
+import type { Derivable, DerivationResult } from "../operators.js";
 
 export type ConstaintValidator = (value: Length) => boolean;
 
@@ -18,12 +18,13 @@ export function length(...constraints: ConstaintValidator[]): Derivable<"<length
 		},
 		derive: {
 			enumerable: true,
-			value(token: string) {
+			value(token: string): DerivationResult {
 				const parsedLength = toLength(token);
 
 				if (!parsedLength) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: `${token} is not a length`,
 					};
 				}
 
@@ -31,6 +32,7 @@ export function length(...constraints: ConstaintValidator[]): Derivable<"<length
 					if (!validator(parsedLength)) {
 						return {
 							state: DerivationState.REJECTED,
+							rejectionDetails: `Length constraint validation failed for ${token}`,
 						};
 					}
 				}

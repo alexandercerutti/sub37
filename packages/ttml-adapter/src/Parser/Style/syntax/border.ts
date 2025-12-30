@@ -107,6 +107,7 @@ function BorderRadiiGrammar(): Derivable<"border-radii", string> {
 				if (!parsing) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: "BorderRadiiGrammar validation failed",
 					};
 				}
 

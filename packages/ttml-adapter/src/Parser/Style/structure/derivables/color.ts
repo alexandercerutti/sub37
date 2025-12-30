@@ -14,6 +14,7 @@ export function color(): Derivable<"<color>", Color> {
 				if (!isValidColor(token)) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: `${token} is not a valid color`,
 					};
 				}
 

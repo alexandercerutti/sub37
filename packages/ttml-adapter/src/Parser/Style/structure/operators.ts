@@ -25,10 +25,13 @@ export type DerivationResult<RR = unknown> =
 	  }
 	| {
 			state: DerivationState["REJECTED"];
+			rejectionDetails: unknown;
+			values?: never;
 	  }
 	| {
 			// number trick here allows us to bitwise OR states
 			state: typeof OPTIONAL_REJECTION_MASK;
+			rejectionDetails: unknown;
 			values?: never;
 	  };
 
@@ -43,7 +46,7 @@ export function isDerived(
 
 export function isRejected(
 	derivationResult: DerivationResult,
-): derivationResult is Extract<DerivationResult, { state: DerivationState["REJECTED"] }> {
+): derivationResult is Extract<DerivationResult, { state: typeof OPTIONAL_REJECTION_MASK }> {
 	return Boolean(derivationResult.state & DerivationState.REJECTED);
 }
 
@@ -70,6 +73,7 @@ export function zeroOrOne<RR>(node: Derivable<string, RR>): Derivable<"?", RR | 
 				if (isRejected(derivationResult)) {
 					return {
 						state: OPTIONAL_REJECTION_MASK,
+						rejectionDetails: `zeroOrOne(${token}) + ${derivationResult.rejectionDetails}`,
 					};
 				}
 
@@ -91,6 +95,7 @@ export function zeroOrMore<RR>(node: Derivable<string, RR>): Derivable<"*", RR[]
 				if (isRejected(derivationResult)) {
 					return {
 						state: OPTIONAL_REJECTION_MASK,
+						rejectionDetails: `zeroOrMore(${token}) + ${derivationResult.rejectionDetails}`,
 					};
 				}
 
@@ -124,6 +129,7 @@ export function oneOrMore<RR>(node: Derivable<string, RR>): Derivable<"+", RR> {
 				if (isRejected(derivationResult)) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: `oneOrMore(${token}) + ${derivationResult.rejectionDetails}`,
 					};
 				}
 
@@ -164,6 +170,7 @@ export function sequence<const D extends Derivable<string, unknown>[]>(
 					if (!targetNodes.length) {
 						return {
 							state: DerivationState.REJECTED,
+							rejectionDetails: `sequence(${nodes.map((node) => `${node.type}`).join(" + ")})`,
 						};
 					}
 
@@ -231,6 +238,7 @@ export function oneOf<const D extends Derivable[]>(
 				if (!successResults.length) {
 					return {
 						state: DerivationState.REJECTED,
+						rejectionDetails: `oneOf(${nodes.map((node) => `${node.type}`).join(" + ")})`,
 					};
 				}
 
@@ -339,6 +347,7 @@ export function someOf<const D extends Derivable<string, unknown>[]>(
 
 				return {
 					state: DerivationState.REJECTED,
+					rejectionDetails: `someOf(${nodes.map((node) => `${node.type}`).join(" + ")})`,
 				};
 			},
 		},
