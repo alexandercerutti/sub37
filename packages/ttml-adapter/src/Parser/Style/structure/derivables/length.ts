@@ -1,4 +1,4 @@
-import { isScalar, toLength } from "../../../Units/length.js";
+import { isPercentage, isScalar, toLength } from "../../../Units/length.js";
 import type { Length } from "../../../Units/length.js";
 import { DerivationState } from "../operators.js";
 import type { Derivable, DerivationResult } from "../operators.js";
@@ -8,7 +8,7 @@ export type ConstaintValidator = (value: Length) => boolean;
 export const PositiveConstraint: ConstaintValidator = (length) => length.value > 0;
 export const NonNegativeConstraint: ConstaintValidator = (length) => length.value >= 0;
 
-export const PercentageConstraint: ConstaintValidator = (length) => length.metric === "%";
+export const PercentageConstraint: ConstaintValidator = isPercentage;
 export const ScalarConstraint: ConstaintValidator = isScalar;
 
 export function length(...constraints: ConstaintValidator[]): Derivable<"<length>", Length> {
