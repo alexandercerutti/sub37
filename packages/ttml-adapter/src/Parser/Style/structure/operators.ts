@@ -268,9 +268,6 @@ export function oneOf<const D extends Derivable[]>(
 					};
 				}
 
-				// Collect values from all successful paths (ambiguity preservation)
-				const collectedValues = successResults.flatMap((r) => r.values);
-
 				/**
 				 * At least one pattern has completed derivation and
 				 * cannot proceed further. However, other patterns might.
@@ -280,7 +277,8 @@ export function oneOf<const D extends Derivable[]>(
 					return {
 						state: DerivationState.DERIVED,
 						nextNode: zeroOrOne(oneOf(derivedResults.map((result) => result.nextNode))),
-						values: collectedValues,
+						// All the doneResults are expected to have returned the same values conversions
+						values: doneResults[0].values,
 					};
 				}
 
@@ -292,7 +290,8 @@ export function oneOf<const D extends Derivable[]>(
 				return {
 					state: DerivationState.DERIVED,
 					nextNode: oneOf(derivedResults.map((result) => result.nextNode)),
-					values: collectedValues,
+					// All the derivedResults are expected to have returned the same values conversions
+					values: derivedResults[0].values,
 				};
 			},
 		},
