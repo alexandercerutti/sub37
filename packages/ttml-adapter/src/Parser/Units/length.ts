@@ -61,6 +61,31 @@ export function toLength(value: string): Length | null {
 	return createUnit(parseFloat(match[1]), match[2]);
 }
 
+type DeferredLengthSubtraction = Unit<"deferred-subtraction">;
+
+/**
+ * This function returns a Length representing the subtraction of two lengths.
+ *
+ * This is needed because we are currently converting to CSS but when the
+ * length metrics are different, we cannot perform the subtraction directly,
+ * as we need to convert them first. Browser will handle them at this point in time.
+ *
+ * Later, we might create a deferred length on engine level so that the renderer
+ * can handle such cases with - perhaps - other platforms.
+ */
+export function toDeferredLengthSubtraction(
+	value1: Length,
+	value2: Length,
+): DeferredLengthSubtraction {
+	return {
+		metric: "deferred-subtraction",
+		value: NaN,
+		toString() {
+			return `calc(${value1.toString()} - ${value2.toString()})`;
+		},
+	};
+}
+
 /**
  * Subtracts two lengths with the same unit
  *
@@ -68,13 +93,13 @@ export function toLength(value: string): Length | null {
  * @param b
  * @returns
  */
-export function subtract<L extends Length>(a: L, b: L): L | null {
+export function subtract<L extends Length | DeferredLengthSubtraction>(a: L, b: L): L | null {
 	if (!isLength(a) || !isLength(b)) {
 		return null;
 	}
 
 	if (a.metric !== b.metric) {
-		return null;
+		return toDeferredLengthSubtraction(a, b) as L;
 	}
 
 	return createUnit(a.value - b.value, a.metric) as L;
