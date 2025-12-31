@@ -74,6 +74,7 @@ export type PropertiesCollection<Props extends string[]> =
 type PropertiesMapper<OutProperties extends string[]> = (
 	scope: Scope,
 	value: unknown,
+	elementAppliesTo: string,
 ) => PropertiesCollection<OutProperties>;
 
 const AttributeFlags = {
@@ -129,7 +130,11 @@ export function isPropertyDiscretelyAnimatable(name: string): boolean {
 
 interface SyntaxModuleDefinition<DestinationProperties extends string[] = string[]> {
 	Grammar: Derivable;
-	cssTransform?(scope: Scope, value: unknown): PropertiesCollection<DestinationProperties> | null;
+	cssTransform?(
+		scope: Scope,
+		value: unknown,
+		elementAppliesTo: string,
+	): PropertiesCollection<DestinationProperties> | null;
 }
 
 function createAttributeDefinition<
@@ -156,12 +161,17 @@ function createAttributeDefinition<
 			value: allowedValues,
 		},
 		toCSS: {
-			value(this: AttributeDefinition<DestinationProperties>, scope: Scope, value: unknown) {
+			value(
+				this: AttributeDefinition<DestinationProperties>,
+				scope: Scope,
+				value: unknown,
+				elementAppliesTo: string,
+			) {
 				if (typeof this.syntax.cssTransform !== "function") {
 					return [];
 				}
 
-				return this.syntax.cssTransform(scope, value);
+				return this.syntax.cssTransform(scope, value, elementAppliesTo);
 			},
 		},
 		namespace: {
@@ -1175,7 +1185,7 @@ function convertAttributesToCSS(
 			collectedValues.push(tokenDerivationResult.values[0]);
 		}
 
-		const mapped = definition.toCSS(scope, collectedValues);
+		const mapped = definition.toCSS(scope, collectedValues, sourceElementName);
 
 		if (mapped === null) {
 			continue attributesLoop;
