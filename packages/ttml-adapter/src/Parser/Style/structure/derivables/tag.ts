@@ -29,7 +29,7 @@ export function as<const N extends string, D>(
 				if (result.values) {
 					return {
 						...result,
-						values: result.values?.map((v) => ({ type: tagName, value: v })),
+						values: [{ type: tagName, value: result.values }],
 					};
 				}
 
