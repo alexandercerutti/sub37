@@ -1,5 +1,8 @@
 import { Derivable, DerivationResult, DerivationState, oneOf } from "../operators.js";
 
+export type DoubleQuotedString = string & { _b: "double" };
+export type SingleQuotedString = string & { _b: "single" };
+
 /**
  * @syntax \<quoted-string>
  *   : double-quoted-string
@@ -22,7 +25,7 @@ export const QuotedString = oneOf([
 	SingleQuotedString(),
 ]);
 
-function DoubleQuotedString(): Derivable<"double-quoted-string", string> {
+function DoubleQuotedString(): Derivable<"double-quoted-string", DoubleQuotedString> {
 	return Object.create(null, {
 		type: {
 			value: "double-quoted-string",
@@ -52,7 +55,7 @@ function DoubleQuotedString(): Derivable<"double-quoted-string", string> {
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-function SingleQuotedString(): Derivable<"single-quoted-string", string> {
+function SingleQuotedString(): Derivable<"single-quoted-string", SingleQuotedString> {
 	return Object.create(null, {
 		type: {
 			value: "single-quoted-string",

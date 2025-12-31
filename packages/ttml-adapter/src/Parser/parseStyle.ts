@@ -130,7 +130,7 @@ export function isPropertyDiscretelyAnimatable(name: string): boolean {
 
 interface SyntaxModuleDefinition<DestinationProperties extends string[] = string[]> {
 	Grammar: Derivable;
-	cssTransform?(
+	cssTransform(
 		scope: Scope,
 		value: unknown,
 		elementAppliesTo: string,
