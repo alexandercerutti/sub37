@@ -29,7 +29,6 @@ export type DerivationResult<RR = unknown> =
 			values?: never;
 	  }
 	| {
-			// number trick here allows us to bitwise OR states
 			state: typeof OPTIONAL_REJECTION_MASK;
 			rejectionDetails: unknown;
 			values?: never;
