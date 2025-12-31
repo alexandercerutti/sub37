@@ -8,6 +8,7 @@ export { DisplayGrammar as Grammar } from "../syntax/display.js";
 export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof DisplayGrammar>,
+	elementAppliesTo: string,
 ): PropertiesCollection<["display"]> | null {
 	if (value[0] === "none") {
 		return [
@@ -23,10 +24,13 @@ export function cssTransform(
 	}
 
 	if (value[0] === "inlineBlock") {
-		/**
-		 * @TODO Add check on element this is being applied to.
-		 */
-		return [["display", "inline-block"]];
+		if (elementAppliesTo === "span") {
+			return [["display", "inline-block"]];
+		}
+
+		throw new Error(
+			"`inlineBlock` value for `tts:display` property can be applied only to `span` elements.",
+		);
 	}
 
 	return null;
