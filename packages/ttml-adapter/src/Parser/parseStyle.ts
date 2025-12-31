@@ -2,7 +2,8 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
 import * as Syntaxes from "./Style/properties/index.js";
-import { Derivable } from "./Style/structure/operators.js";
+import type { Derivable } from "./Style/structure/operators.js";
+import { isDerived, isRejected } from "./Style/structure/operators.js";
 
 type StyleAttributeString = `tts:${string}`;
 
@@ -1124,7 +1125,8 @@ function convertAttributesToCSS(
 	 * able to detect enumerable keys in prototype chain, and we
 	 * are using them
 	 */
-	for (const attributeKey in attributes) {
+
+	attributesLoop: for (const attributeKey in attributes) {
 		if (!isMappedKey(attributeKey)) {
 			continue;
 		}
@@ -1133,13 +1135,50 @@ function convertAttributesToCSS(
 		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
 
 		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
-			continue;
+			continue attributesLoop;
 		}
 
-		const mapped = definition.toCSS(scope, value);
+		let definitionGrammar = definition.syntax.Grammar;
+
+		/**
+		 * All the properties are space-separated tokens, so derivation is built
+		 * upon this principle.
+		 */
+		const tokens = value.split(/\s+/g);
+		const collectedValues: unknown[] = [];
+
+		while (tokens.length) {
+			const token = tokens.shift();
+
+			if (!token) {
+				break;
+			}
+
+			const tokenDerivationResult = definitionGrammar.derive(token);
+
+			if (isRejected(tokenDerivationResult)) {
+				// A token couldn't be derived, skip entire attribute
+				continue attributesLoop;
+			}
+
+			if (isDerived(tokenDerivationResult)) {
+				definitionGrammar = tokenDerivationResult.nextNode;
+				collectedValues.push(tokenDerivationResult.values[0]);
+				continue;
+			}
+
+			if (tokens.length > 0) {
+				// Derivation finished (done) but there are still tokens left, skip entire attribute
+				continue attributesLoop;
+			}
+
+			collectedValues.push(tokenDerivationResult.values[0]);
+		}
+
+		const mapped = definition.toCSS(scope, collectedValues);
 
 		if (mapped === null) {
-			continue;
+			continue attributesLoop;
 		}
 
 		for (const [mappedKey, mappedValue] of mapped) {
