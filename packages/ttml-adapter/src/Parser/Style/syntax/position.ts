@@ -243,8 +243,9 @@ const OffsetPositionV = oneOf([
  */
 export const PositionGrammar = oneOf([
 	// Single component values
-	OffsetPositionH,
-	EdgeKeywordV,
+	// Wrapping in sequences to force them to return arrays
+	sequence([OffsetPositionH]),
+	sequence([EdgeKeywordV]),
 
 	// Two component values
 	sequence([OffsetPositionH, OffsetPositionV]),
@@ -269,8 +270,7 @@ export const PositionGrammar = oneOf([
 export function normalizePositionValue(
 	value: InferDerivableValue<typeof PositionGrammar>,
 ): ["left", Length, "top", Length] | undefined {
-	if (!Array.isArray(value)) {
-		value;
+	if (value.length === 1) {
 		return normalizeOneComponentValue(value);
 	}
 
@@ -290,18 +290,22 @@ export function normalizePositionValue(
 // *** ONE COMPONENT VALUE NORMALIZATION *** //
 // ***************************************** //
 
+type OneComponentValue = Extract<InferDerivableValue<typeof PositionGrammar>, [string | Length]>;
+
 function normalizeOneComponentValue(
-	value: Exclude<InferDerivableValue<typeof PositionGrammar>, Array<any>>,
+	value: OneComponentValue & {},
 ): ["left", Length, "top", Length] {
-	if (isLength(value)) {
+	const extractedValue = value[0];
+
+	if (isLength(extractedValue)) {
 		// | `<length>`	|	`<length> center`	| `left \<length> top 50%`
-		return ["left", value, "top", createUnit(50, "%")];
+		return ["left", extractedValue, "top", createUnit(50, "%")];
 	}
 
 	/**
 	 * Converting directly to four-component equivalent
 	 */
-	switch (value) {
+	switch (extractedValue) {
 		case "left":
 			// "left center"
 			return ["left", createUnit(0, "%"), "top", createUnit(50, "%")];
