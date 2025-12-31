@@ -1,3 +1,4 @@
+export * as BackgroundColor from "./backgroundColor.js";
 export * as BackgroundPosition from "./backgroundPosition.js";
 export * as BackgroundRepeat from "./backgroundRepeat.js";
 export * as Border from "./border.js";

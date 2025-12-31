@@ -217,7 +217,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["body", "div", "image", "p", "region", "span"],
 			"transparent",
 			undefined,
-			Syntaxes.Unavailable,
+			Syntaxes.BackgroundColor,
 		),
 	),
 
