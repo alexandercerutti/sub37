@@ -11,6 +11,7 @@ export * as Position from "./position.js";
 export * as Opacity from "./opacity.js";
 export * as Origin from "./origin.js";
 export * as Padding from "./padding.js";
+export * as TextAlign from "./textAlign.js";
 export * as TextCombine from "./textCombine.js";
 export * as TextDecoration from "./textDecoration.js";
 export * as TextEmphasis from "./textEmphasis.js";

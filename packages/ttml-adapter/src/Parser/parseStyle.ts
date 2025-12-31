@@ -854,7 +854,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["p"],
 			"start",
 			new Set(["left", "center", "right", "start", "end", "justify"]),
-			Syntaxes.Unavailable,
+			Syntaxes.TextAlign,
 		),
 	),
 
