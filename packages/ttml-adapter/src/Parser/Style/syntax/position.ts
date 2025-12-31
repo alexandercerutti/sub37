@@ -274,23 +274,22 @@ export function normalizePositionValue(
 		return normalizeOneComponentValue(value);
 	}
 
-	if (isFourComponentValue(value)) {
-		return normalizeFourComponentValue(value);
+	if (isTwoComponentValue(value)) {
+		return normalizeTwoComponentValue(value);
 	}
 
 	if (isThreeComponentValue(value)) {
-		value;
 		return normalizeThreeComponentValue(value);
 	}
 
-	return normalizeTwoComponentValue(value);
+	return normalizeFourComponentValue(value);
 }
 
 // ***************************************** //
 // *** ONE COMPONENT VALUE NORMALIZATION *** //
 // ***************************************** //
 
-type OneComponentValue = Extract<InferDerivableValue<typeof PositionGrammar>, [string | Length]>;
+type OneComponentValue = Extract<InferDerivableValue<typeof PositionGrammar>, [unknown]>;
 
 function normalizeOneComponentValue(
 	value: OneComponentValue & {},
@@ -328,10 +327,13 @@ function normalizeOneComponentValue(
 // *** TWO COMPONENT VALUE NORMALIZATION *** //
 // ***************************************** //
 
-type TwoComponentValue = Extract<
-	InferDerivableValue<typeof PositionGrammar>,
-	[string | Length, string | Length]
->;
+type TwoComponentValue = Extract<InferDerivableValue<typeof PositionGrammar>, [unknown, unknown]>;
+
+function isTwoComponentValue(
+	value: InferDerivableValue<typeof PositionGrammar>,
+): value is TwoComponentValue {
+	return value.length === 2;
+}
 
 function normalizeTwoComponentValue(
 	value: TwoComponentValue & {},
@@ -419,18 +421,15 @@ function mapTwoComponentValueAxes(
 // *** THREE COMPONENT VALUE NORMALIZATION *** //
 // ******************************************* //
 
-type ThreeComponentValue = Exclude<
-	Extract<
-		InferDerivableValue<typeof PositionGrammar>,
-		[string | Length, Array<any>] | [Array<any>, string | Length]
-	>,
-	[Array<any>, Array<any>]
+type ThreeComponentValue = Extract<
+	InferDerivableValue<typeof PositionGrammar>,
+	[unknown, unknown, unknown]
 >;
 
 function isThreeComponentValue(
 	value: InferDerivableValue<typeof PositionGrammar>,
 ): value is ThreeComponentValue {
-	return Array.isArray(value) && (Array.isArray(value[0]) || Array.isArray(value[1]));
+	return value.length === 3;
 }
 
 function normalizeThreeComponentValue(
@@ -445,22 +444,29 @@ function normalizeThreeComponentValue(
 	return ["left", axes[0], "top", axes[1]];
 }
 
-function isThreeComponentAxesArrayAndValue(
+/**
+ * When the offset is defined first, it means it is the second component
+ * and thus it refers to the edge defined in first position.
+ *
+ * @param value
+ * @returns
+ */
+function isEdgeFirst(
 	value: ThreeComponentValue & {},
-): value is Extract<
-	ThreeComponentValue,
-	[Array<any>, Exclude<ThreeComponentValue[1], Array<any>>]
-> {
-	return Array.isArray(value[0]);
+): value is Extract<ThreeComponentValue, [unknown, Length, unknown]> {
+	return isLength(value[1]);
 }
 
-function isThreeComponentAxesValueAndArray(
+/**
+ * When the offset is defined last, it means it is the third component
+ * and thus it refers to the edge defined in second position.
+ * @param value
+ * @returns
+ */
+function isEdgeLast(
 	value: ThreeComponentValue & {},
-): value is Extract<
-	ThreeComponentValue,
-	[Exclude<ThreeComponentValue[1], Array<any>>, Array<any>]
-> {
-	return Array.isArray(value[1]);
+): value is Extract<ThreeComponentValue, [unknown, unknown, Length]> {
+	return isLength(value[2]);
 }
 
 function mapThreeComponentValueAxes(
@@ -474,10 +480,8 @@ function mapThreeComponentValueAxes(
 		bottom: 100,
 	};
 
-	if (isThreeComponentAxesArrayAndValue(value)) {
-		const [edgeOffset, position] = value;
-
-		const [edge, offset] = edgeOffset;
+	if (isEdgeFirst(value)) {
+		const [edge, offset, position] = value;
 
 		// Horizontal edge offset + vertical position keyword
 		if (edge === "left" || edge === "right") {
@@ -533,10 +537,8 @@ function mapThreeComponentValueAxes(
 		return undefined;
 	}
 
-	if (isThreeComponentAxesValueAndArray(value)) {
-		const [position, edgeOffset] = value;
-
-		const [edge, offset] = edgeOffset;
+	if (isEdgeLast(value)) {
+		const [position, edge, offset] = value;
 
 		// Horizontal position keyword + vertical edge offset
 		if (position === "left" || position === "right") {
@@ -608,21 +610,13 @@ function mapThreeComponentValueAxes(
 
 type FourComponentValue = Extract<
 	InferDerivableValue<typeof PositionGrammar>,
-	[Array<any>, Array<any>]
+	[unknown, unknown, unknown, unknown]
 >;
-
-function isFourComponentValue(
-	value: InferDerivableValue<typeof PositionGrammar>,
-): value is FourComponentValue {
-	return Array.isArray(value) && Array.isArray(value[0]) && Array.isArray(value[1]);
-}
 
 function normalizeFourComponentValue(
 	value: FourComponentValue & {},
 ): ["left", Length, "top", Length] | undefined {
-	const [firstEdgeOffset, secondEdgeOffset] = value;
-	const [firstEdge, firstOffset] = firstEdgeOffset;
-	const [secondEdge, secondOffset] = secondEdgeOffset;
+	const [firstEdge, firstOffset, secondEdge, secondOffset] = value;
 
 	// Vertical edge offset + Horizontal edge offset
 	if (firstEdge === "top") {

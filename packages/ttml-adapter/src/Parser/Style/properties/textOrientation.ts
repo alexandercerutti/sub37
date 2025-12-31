@@ -9,7 +9,7 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextOrientationGrammar>,
 ): PropertiesCollection<["text-orientation"]> | null {
-	switch (value) {
+	switch (value[0]) {
 		// Kept only for compatibility. Remapping.
 		case "sideways-left":
 		case "sideways-right": {
@@ -22,5 +22,5 @@ export function cssTransform(
 		}
 	}
 
-	return [["text-orientation", value]];
+	return [["text-orientation", value[0]]];
 }

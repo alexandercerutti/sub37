@@ -9,7 +9,7 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof OriginGrammar>,
 ): PropertiesCollection<["x", "y"]> {
-	if (value === "auto") {
+	if (value[0] === "auto") {
 		/**
 		 * @TODO might be wrong
 		 *

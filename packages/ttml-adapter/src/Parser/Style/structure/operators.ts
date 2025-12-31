@@ -35,8 +35,14 @@ export type DerivationResult<RR = unknown> =
 			values?: never;
 	  };
 
+type Flatten<T> = T extends readonly any[]
+	? T extends readonly [infer Head, ...infer Tail]
+		? [...Flatten<Head>, ...Flatten<Tail>]
+		: []
+	: [T];
+
 export type InferDerivableValue<D extends Derivable> =
-	D extends Derivable<any, infer R> ? R : never;
+	D extends Derivable<any, infer R> ? Flatten<R> : never;
 
 export function isDerived(
 	derivationResult: DerivationResult,
