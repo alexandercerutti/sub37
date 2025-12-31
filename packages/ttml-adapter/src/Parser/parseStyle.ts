@@ -673,7 +673,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["body", "div", "image", "p", "region", "span"],
 			"1.0",
 			undefined,
-			Syntaxes.Unavailable,
+			Syntaxes.Opacity,
 		),
 	),
 
