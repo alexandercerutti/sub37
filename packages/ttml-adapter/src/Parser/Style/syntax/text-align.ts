@@ -2,7 +2,7 @@ import { keyword } from "../structure/derivables/keyword.js";
 import { oneOf } from "../structure/operators.js";
 
 /**
- * @syntax "sideways" | "mixed" | "upright"
+ * @syntax "left" | "right" | "center" | "justify" | "start" | "end"
  * @see https://w3c.github.io/ttml2/#style-attribute-textAlign
  */
 
