@@ -383,7 +383,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["body", "div", "image", "p", "region", "span"],
 			"auto",
 			new Set(["auto", "none", "inlineBlock"]),
-			Syntaxes.Unavailable,
+			Syntaxes.Display,
 		),
 	),
 

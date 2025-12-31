@@ -2,6 +2,7 @@ export * as BackgroundPosition from "./backgroundPosition.js";
 export * as BackgroundRepeat from "./backgroundRepeat.js";
 export * as Border from "./border.js";
 export * as Color from "./color.js";
+export * as Display from "./display.js";
 export * as DisplayAlign from "./displayAlign.js";
 export * as Extent from "./extent.js";
 export * as FontSize from "./fontSize.js";
