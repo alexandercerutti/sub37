@@ -7,9 +7,9 @@ export { DisplayAlignGrammar as Grammar } from "../syntax/display-align.js";
 
 export function cssTransform(
 	_scope: Scope,
-	outcome: InferDerivableValue<typeof DisplayAlignGrammar>,
+	value: InferDerivableValue<typeof DisplayAlignGrammar>,
 ): PropertiesCollection<["display", "flex-direction", "position", "justify-content"]> {
-	switch (outcome[0].value[0]) {
+	switch (value[0]) {
 		case "before": {
 			return [
 				["display", "flex"],
