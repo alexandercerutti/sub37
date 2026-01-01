@@ -98,16 +98,16 @@ function assertAllKeyTimesWithinBoundaries(values: number[]): void {
 /**
  * From SVG 1.1 standard:
  *
- * "The ‘keyTimes’ list semantics depends upon the interpolation mode:
- * 		For linear and spline animation, the first time value in the list
- * 		must be 0, and the last time value in the list must be 1. The key
- * 		time associated with each value defines when the value is set;
- * 		values are interpolated between the key times.
- *
- * 		For discrete animation, the first time value in the list must be 0.
- * 		The time associated with each value defines when the value is set;
- * 		the animation function uses that value until the next time defined
- * 		in ‘keyTimes’."
+ * > "The ‘keyTimes’ list semantics depends upon the interpolation mode:
+ * >	For linear and spline animation, the first time value in the list
+ * >	must be 0, and the last time value in the list must be 1. The key
+ * >	time associated with each value defines when the value is set;
+ * >	values are interpolated between the key times.
+ * >
+ * >	For discrete animation, the first time value in the list must be 0.
+ * >	The time associated with each value defines when the value is set;
+ * >	the animation function uses that value until the next time defined
+ * >	in ‘keyTimes’."
  *
  * @see https://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#KeyTimesAttribute
  */
