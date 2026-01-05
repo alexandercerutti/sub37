@@ -9,5 +9,5 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof OpacityGrammar>,
 ): PropertiesCollection<["opacity"]> {
-	return [["opacity", String(value[0])]];
+	return [["opacity", String(value[0].value)]];
 }

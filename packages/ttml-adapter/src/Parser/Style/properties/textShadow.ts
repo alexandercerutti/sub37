@@ -9,5 +9,5 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextShadowGrammar>,
 ): PropertiesCollection<["text-shadow"]> | null {
-	return [["text-shadow", value.map((v) => v.toString()).join(" ")]];
+	return [["text-shadow", value.map(({ value }) => value.toString()).join(" ")]];
 }

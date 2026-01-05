@@ -6,11 +6,6 @@ import type { BorderGrammar } from "../syntax/border.js";
 
 export { BorderGrammar as Grammar } from "../syntax/border.js";
 
-type ExtractBorderProperty<Name extends string> = Extract<
-	InferDerivableValue<typeof BorderGrammar>[number],
-	{ type: Name }
->["value"][number];
-
 export function cssTransform(
 	_scope: Scope,
 	values: InferDerivableValue<typeof BorderGrammar>,
@@ -20,17 +15,17 @@ export function cssTransform(
 	let borderWidth: string | undefined = undefined;
 	let borderRadius: string | undefined = undefined;
 
-	for (const { type, value } of values) {
-		if (type === "border-color") {
-			borderColor = value;
-		} else if (type === "border-style") {
-			const nakedValue = value[0] as ExtractBorderProperty<"border-style">;
+	for (const output of values) {
+		if (isBorderColor(output)) {
+			borderColor = output.value.value;
+		} else if (isBorderStyle(output)) {
+			const nakedValue = output.value[0].value;
 			borderStyle = nakedValue;
-		} else if (type === "border-width") {
-			const nakedValue = value[0] as ExtractBorderProperty<"border-width">;
+		} else if (isBorderWidth(output)) {
+			const nakedValue = output.value[0].value;
 			borderWidth = isLength(nakedValue) ? nakedValue.toString() : nakedValue;
-		} else if (type === "border-radius") {
-			borderRadius = value;
+		} else if (isBorderRadius(output)) {
+			borderRadius = output.value;
 		}
 	}
 
@@ -40,4 +35,41 @@ export function cssTransform(
 		["border-color", borderColor || ""],
 		["border-radius", borderRadius || ""],
 	];
+}
+
+type ExtractBorderProperty<Name extends string> = Extract<
+	InferDerivableValue<typeof BorderGrammar>[number],
+	{ type: Name }
+>;
+
+type BorderColor = ExtractBorderProperty<"border-color">;
+
+function isBorderColor(
+	value: InferDerivableValue<typeof BorderGrammar>[number],
+): value is BorderColor {
+	return value.type === "border-color";
+}
+
+type BorderRadius = ExtractBorderProperty<"border-radius">;
+
+function isBorderRadius(
+	value: InferDerivableValue<typeof BorderGrammar>[number],
+): value is BorderRadius {
+	return value.type === "border-radius";
+}
+
+type BorderWidth = ExtractBorderProperty<"border-width">;
+
+function isBorderWidth(
+	value: InferDerivableValue<typeof BorderGrammar>[number],
+): value is BorderWidth {
+	return value.type === "border-width";
+}
+
+type BorderStyle = ExtractBorderProperty<"border-style">;
+
+function isBorderStyle(
+	value: InferDerivableValue<typeof BorderGrammar>[number],
+): value is BorderStyle {
+	return value.type === "border-style";
 }

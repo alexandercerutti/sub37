@@ -296,15 +296,15 @@ function normalizeOneComponentValue(
 ): ["left", Length, "top", Length] {
 	const extractedValue = value[0];
 
-	if (isLength(extractedValue)) {
+	if (isLength(extractedValue.value)) {
 		// | `<length>`	|	`<length> center`	| `left \<length> top 50%`
-		return ["left", extractedValue, "top", createUnit(50, "%")];
+		return ["left", extractedValue.value, "top", createUnit(50, "%")];
 	}
 
 	/**
 	 * Converting directly to four-component equivalent
 	 */
-	switch (extractedValue) {
+	switch (extractedValue.value) {
 		case "left":
 			// "left center"
 			return ["left", createUnit(0, "%"), "top", createUnit(50, "%")];
@@ -343,7 +343,7 @@ function normalizeTwoComponentValue(
 	/**
 	 * @TODO is this covering all the cases? What if we have an invalid combination?
 	 */
-	const axes = mapTwoComponentValueAxes(first, second);
+	const axes = mapTwoComponentValueAxes(first.value, second.value);
 
 	if (!axes) {
 		return undefined;
@@ -353,8 +353,8 @@ function normalizeTwoComponentValue(
 }
 
 function mapTwoComponentValueAxes(
-	first: TwoComponentValue[0],
-	second: TwoComponentValue[1],
+	first: TwoComponentValue[0]["value"],
+	second: TwoComponentValue[1]["value"],
 ): [horizontal: Length, vertical: Length] | undefined {
 	const scales = {
 		left: 0,
@@ -453,8 +453,11 @@ function normalizeThreeComponentValue(
  */
 function isEdgeFirst(
 	value: ThreeComponentValue & {},
-): value is Extract<ThreeComponentValue, [unknown, Length, unknown]> {
-	return isLength(value[1]);
+): value is Extract<
+	ThreeComponentValue,
+	[{ value: unknown }, { value: Length }, { value: unknown }]
+> {
+	return isLength(value[1].value);
 }
 
 /**
@@ -465,8 +468,11 @@ function isEdgeFirst(
  */
 function isEdgeLast(
 	value: ThreeComponentValue & {},
-): value is Extract<ThreeComponentValue, [unknown, unknown, Length]> {
-	return isLength(value[2]);
+): value is Extract<
+	ThreeComponentValue,
+	[{ value: unknown }, { value: unknown }, { value: Length }]
+> {
+	return isLength(value[2].value);
 }
 
 function mapThreeComponentValueAxes(
@@ -481,7 +487,7 @@ function mapThreeComponentValueAxes(
 	};
 
 	if (isEdgeFirst(value)) {
-		const [edge, offset, position] = value;
+		const [{ value: edge }, { value: offset }, { value: position }] = value;
 
 		// Horizontal edge offset + vertical position keyword
 		if (edge === "left" || edge === "right") {
@@ -538,7 +544,7 @@ function mapThreeComponentValueAxes(
 	}
 
 	if (isEdgeLast(value)) {
-		const [position, edge, offset] = value;
+		const [{ value: position }, { value: edge }, { value: offset }] = value;
 
 		// Horizontal position keyword + vertical edge offset
 		if (position === "left" || position === "right") {
@@ -610,13 +616,18 @@ function mapThreeComponentValueAxes(
 
 type FourComponentValue = Extract<
 	InferDerivableValue<typeof PositionGrammar>,
-	[unknown, unknown, unknown, unknown]
+	[{ value: unknown }, { value: unknown }, { value: unknown }, { value: unknown }]
 >;
 
 function normalizeFourComponentValue(
 	value: FourComponentValue & {},
 ): ["left", Length, "top", Length] | undefined {
-	const [firstEdge, firstOffset, secondEdge, secondOffset] = value;
+	const [
+		{ value: firstEdge },
+		{ value: firstOffset },
+		{ value: secondEdge },
+		{ value: secondOffset },
+	] = value;
 
 	// Vertical edge offset + Horizontal edge offset
 	if (firstEdge === "top") {

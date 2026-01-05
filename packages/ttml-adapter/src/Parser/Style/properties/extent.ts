@@ -11,8 +11,8 @@ export { ExtentGrammar as Grammar } from "../syntax/extent.js";
 
 function isExtentSupportedKeyword(
 	value: InferDerivableValue<typeof ExtentGrammar>,
-): value is Extract<InferDerivableValue<typeof ExtentGrammar>, [unknown]> {
-	return value.length === 1 && ["auto", "contain", "cover"].includes(value[0]);
+): value is Extract<InferDerivableValue<typeof ExtentGrammar>, [{ type: "keyword" }]> {
+	return value.length === 1 && ["auto", "contain", "cover"].includes(value[0].value);
 }
 
 export function cssTransform(
@@ -20,7 +20,7 @@ export function cssTransform(
 	value: InferDerivableValue<typeof ExtentGrammar>,
 ): PropertiesCollection<["width", "height"]> {
 	if (isExtentSupportedKeyword(value)) {
-		switch (value[0]) {
+		switch (value[0].value) {
 			case "auto": {
 				return [
 					["width", "100%"],
@@ -46,7 +46,7 @@ export function cssTransform(
 		}
 	}
 
-	let [width, height] = value;
+	let [{ value: width }, { value: height }] = value;
 	let widthLength: Length;
 	let heightLength: Length;
 

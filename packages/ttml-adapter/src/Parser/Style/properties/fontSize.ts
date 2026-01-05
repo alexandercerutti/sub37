@@ -49,14 +49,14 @@ export function cssTransform(
 	// }
 
 	if (value.length >= 2) {
-		const [horizonalGlyphSizeParsed, verticalGlyphSizeParsed] = value;
+		const [{ value: horizonalGlyphSizeParsed }, { value: verticalGlyphSizeParsed }] = value;
 
 		if (horizonalGlyphSizeParsed.metric !== verticalGlyphSizeParsed.metric) {
 			return [["font-size", fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString()]];
 		}
 	}
 
-	const [fontSize] = value;
+	const [{ value: fontSize }] = value;
 
 	if (isCellScalar(fontSize)) {
 		const {

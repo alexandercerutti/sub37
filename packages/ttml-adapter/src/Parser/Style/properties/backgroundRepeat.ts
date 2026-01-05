@@ -9,7 +9,7 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof BackgroundRepeatGrammar>,
 ): PropertiesCollection<["background-repeat"]> {
-	switch (value[0]) {
+	switch (value[0].value) {
 		case "repeat": {
 			return [["background-repeat", "repeat"]];
 		}

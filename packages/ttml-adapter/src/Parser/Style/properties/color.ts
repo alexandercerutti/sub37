@@ -9,5 +9,5 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof ColorGrammar>,
 ): PropertiesCollection<["color"]> {
-	return [["color", value[0]]];
+	return [["color", value[0].value]];
 }

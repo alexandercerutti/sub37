@@ -10,7 +10,7 @@ export function cssTransform(
 	value: InferDerivableValue<typeof DisplayGrammar>,
 	elementAppliesTo: string,
 ): PropertiesCollection<["display"]> | null {
-	if (value[0] === "none") {
+	if (value[0].value === "none") {
 		return [
 			/**
 			 * This is to handle the `display: none` case when also `displayAlign` is set.
@@ -19,11 +19,11 @@ export function cssTransform(
 		];
 	}
 
-	if (value[0] === "auto") {
+	if (value[0].value === "auto") {
 		return [["display", "flex"]];
 	}
 
-	if (value[0] === "inlineBlock") {
+	if (value[0].value === "inlineBlock") {
 		if (elementAppliesTo === "span") {
 			return [["display", "inline-block"]];
 		}

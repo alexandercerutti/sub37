@@ -13,15 +13,20 @@ const OPTIONAL_REJECTION_MASK = (DerivationState.REJECTED | DerivationState.OPTI
 
 export type DerivationState = typeof DerivationState;
 
+export interface DerivedValue<DT extends string = string, DV extends unknown = unknown> {
+	type: DT;
+	value: DV;
+}
+
 export type DerivationResult<RR = unknown> =
 	| {
 			state: DerivationState["DERIVED"];
 			nextNode: Derivable<string, RR>;
-			values: unknown[];
+			values: DerivedValue[];
 	  }
 	| {
 			state: DerivationState["DONE"];
-			values: unknown[];
+			values: DerivedValue[];
 	  }
 	| {
 			state: DerivationState["REJECTED"];

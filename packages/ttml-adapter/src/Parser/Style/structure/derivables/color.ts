@@ -1,9 +1,9 @@
 import { isValidColor } from "../../../Units/color.js";
 import type { Color } from "../../../Units/color.js";
 import { DerivationState } from "../operators.js";
-import type { Derivable, DerivationResult } from "../operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
 
-export function color(): Derivable<"<color>", Color> {
+export function color(): Derivable<"<color>", DerivedValue<"color", Color>> {
 	return Object.create(null, {
 		type: {
 			value: "<color>",
@@ -20,7 +20,7 @@ export function color(): Derivable<"<color>", Color> {
 
 				return {
 					state: DerivationState.DONE,
-					values: [token],
+					values: [{ type: "color", value: token }],
 				};
 			},
 		},

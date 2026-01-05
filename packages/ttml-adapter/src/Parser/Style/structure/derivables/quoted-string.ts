@@ -1,7 +1,7 @@
-import { Derivable, DerivationResult, DerivationState, oneOf } from "../operators.js";
+import { Derivable, DerivationResult, DerivationState, DerivedValue, oneOf } from "../operators.js";
 
-export type DoubleQuotedString = string & { _b: "double" };
-export type SingleQuotedString = string & { _b: "single" };
+export type DoubleQuotedString = DerivedValue<"double-quoted-string", string>;
+export type SingleQuotedString = DerivedValue<"single-quoted-string", string>;
 
 /**
  * @syntax \<quoted-string>
@@ -48,7 +48,7 @@ function DoubleQuotedString(): Derivable<"double-quoted-string", DoubleQuotedStr
 
 				return {
 					state: DerivationState.DONE,
-					values: [token.slice(1, -1)],
+					values: [{ type: "double-quoted-string", value: token.slice(1, -1) }],
 				};
 			},
 		},
@@ -78,7 +78,7 @@ function SingleQuotedString(): Derivable<"single-quoted-string", SingleQuotedStr
 
 				return {
 					state: DerivationState.DONE,
-					values: [token.slice(1, -1)],
+					values: [{ type: "single-quoted-string", value: token.slice(1, -1) }],
 				};
 			},
 		},

@@ -8,7 +8,7 @@ export { TextEmphasisGrammar as Grammar } from "../syntax/text-emphasis.js";
 type GetValuesForTEProperty<Prop extends string> = Extract<
 	InferDerivableValue<typeof TextEmphasisGrammar>[number],
 	{ type: Prop }
->["value"][number];
+>["value"][number]["value"];
 
 type TextEmphasisStyleValues = GetValuesForTEProperty<"text-emphasis-style">;
 type TextEmphasisPositionValues = GetValuesForTEProperty<"text-emphasis-position">;
@@ -27,17 +27,17 @@ export function cssTransform(
 	for (const item of value) {
 		switch (item.type) {
 			case "text-emphasis-color": {
-				color = item.value[0];
+				color = item.value[0].value;
 				break;
 			}
 
 			case "text-emphasis-style": {
-				style = item.value[0];
+				style = item.value[0].value;
 				break;
 			}
 
 			case "text-emphasis-position": {
-				position = item.value[0];
+				position = item.value[0].value;
 				break;
 			}
 		}

@@ -1,7 +1,7 @@
 import { DerivationState } from "../operators.js";
-import type { DerivationResult, Derivable } from "../operators.js";
+import type { DerivationResult, Derivable, DerivedValue } from "../operators.js";
 
-export function integer(): Derivable<"<integer>"> {
+export function integer(): Derivable<"<integer>", DerivedValue<"integer", number>> {
 	return Object.create(null, {
 		type: {
 			value: "<integer>",
@@ -12,7 +12,7 @@ export function integer(): Derivable<"<integer>"> {
 				if (/^[+-]?\d+$/.test(token)) {
 					return {
 						state: DerivationState.DONE,
-						values: [parseInt(token, 10)],
+						values: [{ type: "integer", value: parseInt(token, 10) }],
 					};
 				}
 

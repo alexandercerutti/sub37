@@ -1,6 +1,7 @@
-import { Derivable, DerivationResult, DerivationState } from "../operators";
+import { DerivationState } from "../operators";
+import type { Derivable, DerivationResult, DerivedValue } from "../operators";
 
-export function alpha(): Derivable<"<alpha>", number> {
+export function alpha(): Derivable<"<alpha>", DerivedValue<"alpha", number>> {
 	return Object.create(null, {
 		type: {
 			value: "<alpha>",
@@ -19,7 +20,7 @@ export function alpha(): Derivable<"<alpha>", number> {
 
 				return {
 					state: DerivationState.DONE,
-					values: [parsedValue],
+					values: [{ type: "alpha", value: parsedValue }],
 				};
 			},
 		},

@@ -9,7 +9,7 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof DisplayAlignGrammar>,
 ): PropertiesCollection<["display", "flex-direction", "position", "justify-content"]> {
-	switch (value[0]) {
+	switch (value[0].value) {
 		case "before": {
 			return [
 				["display", "flex"],

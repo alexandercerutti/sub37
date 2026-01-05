@@ -9,14 +9,19 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextOutlineGrammar>,
 ): PropertiesCollection<["text-shadow", "-webkit-text-stroke"]> | null {
-	if (value[0] === "none") {
+	if (value[0].type === "keyword") {
 		return [
 			["text-shadow", "none"],
 			["-webkit-text-stroke", "0 currentColor"],
 		];
 	}
 
-	const [outlineColor, outlineThickness, outlineBlurRadius] = value;
+	const [
+		//
+		{ value: outlineColor },
+		{ value: outlineThickness },
+		{ value: outlineBlurRadius },
+	] = value;
 
 	return [
 		["text-shadow", `${outlineColor} 1px 1px ${outlineBlurRadius}`],

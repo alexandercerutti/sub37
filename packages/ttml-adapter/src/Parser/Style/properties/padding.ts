@@ -11,6 +11,6 @@ export function cssTransform(
 ): PropertiesCollection<["padding"]> | null {
 	return [
 		//
-		["padding", paddingValues.map((value) => value.toString()).join(" ")],
+		["padding", paddingValues.map(({ value }) => value.toString()).join(" ")],
 	];
 }

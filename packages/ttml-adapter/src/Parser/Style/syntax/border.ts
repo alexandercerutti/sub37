@@ -4,13 +4,8 @@ import { as } from "../structure/derivables/tag.js";
 import { color } from "../structure/derivables/color.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length, ScalarConstraint } from "../structure/derivables/length.js";
-import {
-	Derivable,
-	DerivationResult,
-	DerivationState,
-	oneOf,
-	someOf,
-} from "../structure/operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../structure/operators.js";
+import { oneOf, someOf, DerivationState } from "../structure/operators.js";
 
 /**
  * @syntax thin | medium | thick | \<length>
@@ -95,7 +90,7 @@ function validateBorderRadii(component: string): string {
  * present, then it is interpreted as if two lengths were specified with the same
  * value.
  */
-function BorderRadiiGrammar(): Derivable<"border-radii", string> {
+function BorderRadiiGrammar(): Derivable<"border-radii", DerivedValue<"border-radius", string>> {
 	return Object.create(null, {
 		type: {
 			value: "<border-radii>",
@@ -113,14 +108,14 @@ function BorderRadiiGrammar(): Derivable<"border-radii", string> {
 
 				return {
 					state: DerivationState.DONE,
-					values: [parsing],
+					values: [{ type: "border-radius", value: parsing }],
 				};
 			},
 		},
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-const BorderRadii = as("border-radius", BorderRadiiGrammar());
+const BorderRadii = BorderRadiiGrammar();
 
 /**
  * @syntax \<border-thickness> || \<border-style> || \<border-color> || \<border-radii>

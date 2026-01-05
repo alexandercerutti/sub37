@@ -9,5 +9,5 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextAlignGrammar>,
 ): PropertiesCollection<["text-align"]> | null {
-	return [["text-align", value[0]]];
+	return [["text-align", value[0].value]];
 }

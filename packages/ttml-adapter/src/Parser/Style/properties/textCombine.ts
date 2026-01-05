@@ -9,5 +9,5 @@ export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextCombineGrammar>,
 ): PropertiesCollection<["text-combine-upright"]> {
-	return [["text-combine-upright", value[0]]];
+	return [["text-combine-upright", value[0].value]];
 }
