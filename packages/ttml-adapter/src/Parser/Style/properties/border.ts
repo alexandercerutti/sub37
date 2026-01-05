@@ -9,10 +9,10 @@ export function cssTransform(
 	_scope: Scope,
 	values: InferDerivableValue<typeof BorderGrammar>,
 ): PropertiesCollection<["border-width", "border-style", "border-color", "border-radius"]> {
-	let borderColor: string | undefined = undefined;
-	let borderStyle: string | undefined = undefined;
-	let borderWidth: string | undefined = undefined;
-	let borderRadius: string | undefined = undefined;
+	let borderColor = "";
+	let borderStyle = "";
+	let borderWidth = "";
+	let borderRadius = "";
 
 	for (const output of values) {
 		if (isBorderColor(output)) {
@@ -29,10 +29,10 @@ export function cssTransform(
 	}
 
 	return [
-		["border-width", borderWidth || ""],
-		["border-style", borderStyle || ""],
-		["border-color", borderColor || ""],
-		["border-radius", borderRadius || ""],
+		["border-width", borderWidth],
+		["border-style", borderStyle],
+		["border-color", borderColor],
+		["border-radius", borderRadius],
 	];
 }
 
