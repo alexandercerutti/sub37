@@ -1,7 +1,6 @@
 import type { Scope } from "../../Scope/Scope.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
-import { isLength } from "../../Units/length.js";
 import type { BorderGrammar } from "../syntax/border.js";
 
 export { BorderGrammar as Grammar } from "../syntax/border.js";
@@ -23,7 +22,7 @@ export function cssTransform(
 			borderStyle = nakedValue;
 		} else if (isBorderWidth(output)) {
 			const nakedValue = output.value[0].value;
-			borderWidth = isLength(nakedValue) ? nakedValue.toString() : nakedValue;
+			borderWidth = nakedValue.toString();
 		} else if (isBorderRadius(output)) {
 			borderRadius = output.value;
 		}
