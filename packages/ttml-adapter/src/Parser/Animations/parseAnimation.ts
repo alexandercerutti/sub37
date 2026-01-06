@@ -160,14 +160,17 @@ function getAnimationValueLists(attributes: MetaAnimation): AnimationValueListMa
  * @returns
  */
 function getStylesFrameListMap(
+	animatableStyle: "discrete" | "continuous",
 	animationValueLists: AnimationValueListMap,
 	styleParser: StyleParser,
 ): Map<string, TTMLStyle[]> {
 	const styleMap = new Map<string, TTMLStyle[]>();
 
 	for (const [name, animationValueList] of animationValueLists) {
-		const isAnimatable =
-			isPropertyDiscretelyAnimatable(name) || isPropertyContinuouslyAnimatable(name);
+		const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(name);
+		const isAnimatableContinuously = isPropertyContinuouslyAnimatable(name);
+
+		const isAnimatable = isAnimatableDiscretely || isAnimatableContinuously;
 
 		if (!isAnimatable) {
 			/**
@@ -176,6 +179,13 @@ function getStylesFrameListMap(
 			 */
 			console.warn(
 				`Style '${name}' was specified as animation-value, but is not animatable. Ignored.`,
+			);
+			continue;
+		}
+
+		if (animatableStyle === "discrete" && !isAnimatableDiscretely) {
+			console.warn(
+				`Style '${name}' was specified as animation-value with a continuous animatable style, but is not discretely animatable. Ignored.`,
 			);
 			continue;
 		}
@@ -226,7 +236,7 @@ function createDiscreteAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
+	const stylesFrameListMap = getStylesFrameListMap("discrete", animationValueLists, styleParser);
 	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueLists);
 
 	const timingAttributes = extractTimingAttributes(attributes);
@@ -259,7 +269,7 @@ function createLinearAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
+	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
@@ -290,7 +300,7 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
+	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -321,7 +331,7 @@ function createSplineAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap(animationValueLists, styleParser);
+	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
 
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
 
