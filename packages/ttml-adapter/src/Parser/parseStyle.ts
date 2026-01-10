@@ -1136,7 +1136,7 @@ function convertAttributesToCSS(
 	 * are using them
 	 */
 
-	attributesLoop: for (const attributeKey in attributes) {
+	for (const attributeKey in attributes) {
 		if (!isMappedKey(attributeKey)) {
 			continue;
 		}
@@ -1145,50 +1145,21 @@ function convertAttributesToCSS(
 		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
 
 		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
-			continue attributesLoop;
+			continue;
 		}
 
 		let definitionGrammar = definition.syntax.Grammar;
 
-		/**
-		 * All the properties are space-separated tokens, so derivation is built
-		 * upon this principle.
-		 */
-		const tokens = value.split(/\s+/g);
-		const collectedValues: unknown[] = [];
+		const collectedValues = parseAttributeValue(definitionGrammar, value);
 
-		while (tokens.length) {
-			const token = tokens.shift();
-
-			if (!token) {
-				break;
-			}
-
-			const tokenDerivationResult = definitionGrammar.derive(token);
-
-			if (isRejected(tokenDerivationResult)) {
-				// A token couldn't be derived, skip entire attribute
-				continue attributesLoop;
-			}
-
-			if (isDerived(tokenDerivationResult)) {
-				definitionGrammar = tokenDerivationResult.nextNode;
-				collectedValues.push(tokenDerivationResult.values[0]);
-				continue;
-			}
-
-			if (tokens.length > 0) {
-				// Derivation finished (done) but there are still tokens left, skip entire attribute
-				continue attributesLoop;
-			}
-
-			collectedValues.push(tokenDerivationResult.values[0]);
+		if (collectedValues === null) {
+			continue;
 		}
 
 		const mapped = definition.toCSS(scope, collectedValues, sourceElementName);
 
 		if (mapped === null) {
-			continue attributesLoop;
+			continue;
 		}
 
 		for (const [mappedKey, mappedValue] of mapped) {
@@ -1197,4 +1168,50 @@ function convertAttributesToCSS(
 	}
 
 	return convertedAttributes;
+}
+
+/**
+ * Parses a style attribute value according to its definition grammar
+ *
+ * @param definitionGrammar
+ * @param value
+ * @returns
+ */
+export function parseAttributeValue(definitionGrammar: Derivable, value: string): unknown[] | null {
+	/**
+	 * All the properties are space-separated tokens, so derivation is built
+	 * upon this principle.
+	 */
+	const tokens = value.split(/\s+/g);
+	const collectedValues: unknown[] = [];
+
+	while (tokens.length) {
+		const token = tokens.shift();
+
+		if (!token) {
+			break;
+		}
+
+		const tokenDerivationResult = definitionGrammar.derive(token);
+
+		if (isRejected(tokenDerivationResult)) {
+			// A token couldn't be derived, skip entire attribute
+			return null;
+		}
+
+		if (isDerived(tokenDerivationResult)) {
+			definitionGrammar = tokenDerivationResult.nextNode;
+			collectedValues.push(tokenDerivationResult.values[0]);
+			continue;
+		}
+
+		if (tokens.length > 0) {
+			// Derivation finished (done) but there are still tokens left, skip entire attribute
+			return null;
+		}
+
+		collectedValues.push(tokenDerivationResult.values[0]);
+	}
+
+	return collectedValues;
 }
