@@ -4,10 +4,13 @@ import {
 	isPropertyContinuouslyAnimatable,
 	isPropertyDiscretelyAnimatable,
 	isStyleAttribute,
+	parseAttributeValue,
+	resolveStyleDefinitionByName,
 } from "../parseStyle.js";
 import type { TTMLStyle } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import type { TimeContextData } from "../Scope/TimeContext.js";
+import type { DerivedValue } from "../Style/structure/operators.js";
 import { getKeySplines } from "./keySplines/index.js";
 import { KeySplinesNotAllowedError } from "./keySplines/KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./keySplines/KeySplinesRequiredError.js";
@@ -126,8 +129,25 @@ function isValidFillValue(value: string): value is "freeze" | "remove" {
 	return value === "freeze" || value === "remove";
 }
 
-export type AnimationValueList = string[];
-export type AnimationValueListMap = Map<string, AnimationValueList>;
+/**
+ * \<animation-value>
+ *
+ * A list of one or more values that were separated by semicolons.
+ *
+ * @see https://w3c.github.io/ttml2/#animation-value-animation-value
+ */
+type AnimationValue = string[];
+
+/**
+ * \<animation-value-list>
+ *
+ * A list of one or more \<animation-value> entries separated by semicolons.
+ *
+ * @see https://w3c.github.io/ttml2/#animation-value-animation-value-list
+ */
+type AnimationValueList = string;
+
+type AnimationValueListMap = Map<string, AnimationValueList>;
 
 /**
  * <animation-value-list>
@@ -149,6 +169,86 @@ function getAnimationValueLists(attributes: MetaAnimation): AnimationValueListMa
 	}
 
 	return lists;
+}
+
+function getValidAnimationParsedStyles(
+	animatableStyle: "discrete" | "continuous",
+	animationValueLists: AnimationValueListMap,
+	scope: Scope,
+): Map<string, DerivedValue[]> {
+	const stylesMap = new Map<string, DerivedValue[]>();
+
+	animationValueListsLoop: for (const [name, animationValueList] of animationValueLists) {
+		if (!isStyleAttribute(name)) {
+			continue;
+		}
+
+		if (!isStyleAnimationCompatible(animatableStyle, name)) {
+			continue;
+		}
+
+		const animationValue = splitAnimationValueList(animationValueList);
+		const attribute = resolveStyleDefinitionByName(name);
+		const Grammar = attribute.syntax.Grammar;
+
+		for (const value of animationValue) {
+			const parsingOutcome = parseAttributeValue(Grammar, value);
+
+			if (parsingOutcome === null) {
+				// Attribute is invalid. Skip entire style.
+				continue animationValueListsLoop;
+			}
+
+			/**
+			 * @TODO get parsing outcome and ship it to animation validator for each property,
+			 * along with `attribute.syntax.Grammar`, to ensure the parsed value is valid
+			 * according to the property definition.
+			 */
+
+			const existingStyles = stylesMap.get(name) || [];
+			existingStyles.push(...parsingOutcome);
+
+			stylesMap.set(name, existingStyles);
+		}
+	}
+
+	return stylesMap;
+}
+
+function isStyleAnimationCompatible(
+	animatableStyle: "discrete" | "continuous",
+	styleName: string,
+): boolean {
+	const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(styleName);
+	const isAnimatableContinuously = isPropertyContinuouslyAnimatable(styleName);
+
+	const isAnimatable = isAnimatableDiscretely || isAnimatableContinuously;
+
+	if (!isAnimatable) {
+		/**
+		 * "Targeting a non-animatable style is considered an error and
+		 * must be ignored for the purpose of presentation processing."
+		 */
+		console.warn(
+			`Style '${styleName}' was specified as animation-value, but is not animatable. Ignored.`,
+		);
+
+		return false;
+	}
+
+	if (animatableStyle === "discrete" && !isAnimatableDiscretely) {
+		console.warn(
+			`Style '${styleName}' was specified as animation-value with a continuous animatable style, but is not discretely animatable. Ignored.`,
+		);
+
+		return false;
+	}
+
+	return true;
+}
+
+function splitAnimationValueList(animationValue: AnimationValueList): AnimationValue {
+	return animationValue.split(/\s*;\s*/);
 }
 
 /**
