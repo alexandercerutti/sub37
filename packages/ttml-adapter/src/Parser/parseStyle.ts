@@ -2,7 +2,7 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
 import * as Syntaxes from "./Style/properties/index.js";
-import type { Derivable } from "./Style/structure/operators.js";
+import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
 
 type StyleAttributeString = `tts:${string}`;
@@ -1177,13 +1177,16 @@ function convertAttributesToCSS(
  * @param value
  * @returns
  */
-export function parseAttributeValue(definitionGrammar: Derivable, value: string): unknown[] | null {
+export function parseAttributeValue(
+	definitionGrammar: Derivable,
+	value: string,
+): DerivedValue[] | null {
 	/**
 	 * All the properties are space-separated tokens, so derivation is built
 	 * upon this principle.
 	 */
 	const tokens = value.split(/\s+/g);
-	const collectedValues: unknown[] = [];
+	const collectedValues: DerivedValue[] = [];
 
 	while (tokens.length) {
 		const token = tokens.shift();
