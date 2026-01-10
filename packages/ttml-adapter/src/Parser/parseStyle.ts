@@ -108,7 +108,7 @@ function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr):
 	return def;
 }
 
-function resolveStyleDefinitionByName(propName: string): AttributeDefinition {
+export function resolveStyleDefinitionByName(propName: string): AttributeDefinition {
 	if (!isMappedKey(propName)) {
 		throw new Error(
 			"Provided name is not a valid (mapped) style property. Cannot retrieve animation details.",
