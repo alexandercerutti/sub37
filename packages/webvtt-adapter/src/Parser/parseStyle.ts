@@ -142,8 +142,6 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 	};
 }
 
-const SUPPORTED_STYLABLE_TAG_SELECTORS = ["b", "i", "u", "v", "lang", "c", "ruby", "rt"] as const;
-
 function getSelectorComponents(
 	rawSelector: string,
 ): Omit<Extract<SelectorTarget, { type: StyleDomain.TAG }>, "type" | "classes"> | undefined {
@@ -175,12 +173,11 @@ function getSelectorComponents(
 	};
 }
 
-function isSelectorSupported(
-	selector: string,
-): selector is (typeof SUPPORTED_STYLABLE_TAG_SELECTORS)[number] {
-	return SUPPORTED_STYLABLE_TAG_SELECTORS.includes(
-		selector as (typeof SUPPORTED_STYLABLE_TAG_SELECTORS)[number],
-	);
+const SUPPORTED_STYLABLE_TAG_SELECTORS = ["b", "i", "u", "v", "lang", "c", "ruby", "rt"] as const;
+type SUPPORTED_STYLABLE_TAG_SELECTORS = (typeof SUPPORTED_STYLABLE_TAG_SELECTORS)[number];
+
+function isSelectorSupported(selector: string): selector is SUPPORTED_STYLABLE_TAG_SELECTORS {
+	return SUPPORTED_STYLABLE_TAG_SELECTORS.includes(selector as SUPPORTED_STYLABLE_TAG_SELECTORS);
 }
 
 function normalizeCssString(cssData: string = "") {

@@ -334,7 +334,7 @@ function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDept
 	getNodeAtDepth(diffDepth, lineRootNode.lastChild!).appendChild(cueSubTreeRoot);
 }
 
-function createLine(lineEntities: Entities.LineStyleEntity[]) {
+function createLine(lineEntities: Entities.LineStyleEntity[]): HTMLElement {
 	/**
 	 * LineNode is needed to have an precise place
 	 * where to put block styles.
