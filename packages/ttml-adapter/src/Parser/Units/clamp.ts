@@ -1,10 +1,11 @@
-import { createUnit, type Unit } from "./unit.js";
+import { createUnit } from "./unit.js";
+import type { Unit } from "./unit.js";
 
-export function toClamped<Metric extends string | undefined>(
+export function toClamped<Metric extends string>(
 	unit: Unit<Metric> | null,
 	min: number = -Infinity,
 	max: number = Infinity,
-): Unit<Metric> {
+): Unit<Metric> | null {
 	if (unit === null) {
 		return null;
 	}

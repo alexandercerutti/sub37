@@ -21,7 +21,7 @@ export function getActualFramesInSeconds(
 
 	const totalFrames =
 		clampPositiveFrameRateValue(frames, timeDetails["ttp:frameRate"]) +
-		clampPositiveFrameRateValue(subframes, timeDetails["ttp:subFrameRate"]) /
+		clampPositiveFrameRateValue(subframes ?? 0, timeDetails["ttp:subFrameRate"]) /
 			timeDetails["ttp:subFrameRate"];
 
 	/**
@@ -40,7 +40,7 @@ export function getActualFramesInSeconds(
 }
 
 export function getEffectiveFrameRate(timeDetails: TimeDetails): number {
-	return timeDetails["ttp:frameRate"] * (timeDetails["ttp:frameRateMultiplier"] ?? 1);
+	return timeDetails["ttp:frameRate"] * timeDetails["ttp:frameRateMultiplier"];
 }
 
 /**

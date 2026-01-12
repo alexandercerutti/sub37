@@ -43,7 +43,7 @@ interface NodeWithAttributes {
 }
 
 export interface NodeWithScope {
-	[nodeScopeSymbol]?: Scope;
+	[nodeScopeSymbol]: Scope;
 }
 
 interface NodeWithDestinationMatch {
@@ -146,27 +146,36 @@ export default class TTMLAdapter extends BaseAdapter {
 
 	public override parse(rawContent: string): BaseAdapter.ParseResult {
 		if (!rawContent) {
-			return BaseAdapter.ParseResult(undefined, [
-				{
-					error: new MissingContentError(),
-					failedChunk: "",
-					isCritical: true,
-				},
-			]);
+			return BaseAdapter.ParseResult(
+				[],
+				[
+					{
+						error: new MissingContentError(),
+						failedChunk: "",
+						isCritical: true,
+					},
+				],
+			);
 		}
 
 		let cues: CueNode[] = [];
 		const rootScope: Scope = createScope(undefined);
-		let treeScope: Scope = rootScope;
+		let treeScope: Scope | undefined = rootScope;
 
 		const nodeTree = new NodeTree<
 			Token & NodeWithAttributes & NodeWithScope & NodeWithDestinationMatch
 		>();
 		const tokenizer = new Tokenizer(rawContent);
 
-		let token: Token = null;
+		let token: Token | null = null;
 
 		while ((token = tokenizer.nextToken())) {
+			if (!treeScope) {
+				throw new Error(
+					"Tree scope became undefined. This is an internal error that should not happen. Please report it.",
+				);
+			}
+
 			switch (token.type) {
 				case TokenType.STRING: {
 					if (!nodeTree.currentNode) {
@@ -223,7 +232,12 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * because we are going to ignore it.
 						 */
 
-						nodeTree.push(createNodeWithAttributes(token, NodeAttributes.IGNORED));
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(token, rootScope),
+								NodeAttributes.IGNORED,
+							),
+						);
 						continue;
 					}
 
@@ -375,12 +389,14 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
 						const regionContext = readScopeRegionContext(treeScope);
-						const flowedRegion = regionContext.getRegionById(token.attributes["region"]);
+						const flowedRegion = regionContext?.getRegionById(token.attributes["region"]);
 
 						if (flowedRegion) {
 							contextsList.push(
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
+									styles: [],
+									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -414,7 +430,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (inlineStyles) {
 							contextsList.push(
 								createTemporalActiveContext({
+									regionIDRef: "",
 									styles: [inlineStyles],
+									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -426,7 +444,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (outOfLineStyle) {
 							contextsList.push(
 								createTemporalActiveContext({
+									regionIDRef: "",
 									styles: [outOfLineStyle],
+									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -443,6 +463,8 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (animationsIDRefs.length) {
 							contextsList.push(
 								createTemporalActiveContext({
+									regionIDRef: "",
+									styles: [],
 									animationsIDRefs,
 								}),
 							);
@@ -535,8 +557,9 @@ export default class TTMLAdapter extends BaseAdapter {
 							treeScope,
 							createRegionContainerContext([inlineRegion]),
 							createTemporalActiveContext({
-								regionIDRef: inlineRegion.attributes["xml:id"],
+								regionIDRef: inlineRegion.attributes["xml:id"]!,
 								styles: [],
+								animationsIDRefs: [],
 							}),
 						);
 
@@ -549,7 +572,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * @see https://w3c.github.io/ttml2/#terms-out-of-line-region
 					 */
 
-					const closingElement = nodeTree.pop();
+					const closingElement = nodeTree.pop()!;
 
 					if (isLayoutElement(closingElement)) {
 						const outOfLineRegions = extractOutOfLineRegions(closingElement);
@@ -601,7 +624,7 @@ function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
 		return createVisitor(RepresentationTree);
 	}
 
-	const lastDestinationMatched = nodeTree.currentNode.content[nodeMatchSymbol];
+	const lastDestinationMatched = nodeTree.currentNode.content[nodeMatchSymbol]!;
 
 	return createVisitor(lastDestinationMatched);
 }
@@ -736,7 +759,8 @@ function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean
 
 function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
 	const { parent, content } = currentNode;
-	const parentNode = parent.content.content;
+	const parentNode = parent!.content.content;
+
 	return isBlockClassElement(parentNode) && content.content === "region";
 }
 
@@ -754,11 +778,13 @@ function getInlineRegionFromCloseTag(
 
 	const {
 		content: { attributes: regionAttributes },
-		parent: {
-			content: { attributes: parentAttributes },
-		},
+		parent,
 		children,
 	} = currentNode;
+
+	const {
+		content: { attributes: parentAttributes },
+	} = parent!;
 
 	const INLINE_REGION_PREFIX = "in:region";
 	const regionId =
@@ -832,7 +858,7 @@ function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle |
 
 	const styles = Object.keys(attributes).reduce<Record<string, string>>((acc, key) => {
 		if (key.startsWith("tts:")) {
-			acc[key] = attributes[key];
+			acc[key] = attributes[key]!;
 		}
 
 		return acc;
@@ -852,7 +878,7 @@ function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle |
 		}),
 	);
 
-	return Object.create(styleParser.get("inline"), {
+	return Object.create(styleParser.get("inline")!, {
 		kind: {
 			value: "inline",
 		},
@@ -873,7 +899,7 @@ function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined 
 		return undefined;
 	}
 
-	const style = styleContext.getStyleByIDRef(attributes["style"]);
+	const style = styleContext.getStyleByIDRef(attributes["style"]!);
 
 	if (!style) {
 		const tokenId = `${token.content}#${attributes["xml:id"] || "(n/a)"}`;
@@ -893,7 +919,8 @@ function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined 
 
 function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
 	const { parent, content } = currentNode;
-	const parentNode = parent.content.content;
+	const parentNode = parent!.content.content;
+
 	return (
 		isBlockClassElement(parentNode) &&
 		(content.content === "animation" || content.content === "set")

@@ -24,22 +24,37 @@ export type ClockTimeUnit = [
 	Unit<"subframes">,
 ];
 
-function createClockTimeUnit(match: RegExpMatchArray): ClockTimeUnit {
+type MatchedClockTime = RegExpMatchArray &
+	[
+		unknown,
+		hours: string,
+		minutes: string,
+		seconds: string,
+		fraction: string | undefined,
+		frames: string | undefined,
+		subframes: string | undefined,
+	];
+
+function createClockTimeUnit(match: MatchedClockTime): ClockTimeUnit {
 	const [, hours, minutes, seconds, fraction, frames, subframes] = match;
 
 	return [
 		createUnit(parseInt(hours) || 0, "hours"),
 		createUnit(parseInt(minutes) || 0, "minutes"),
 		createUnit(parseFloat(`${seconds || ""}.${fraction}`) || 0, "seconds"),
-		createUnit(parseInt(frames) || undefined, "frames"),
-		createUnit(parseInt(subframes) || undefined, "subframes"),
+		createUnit(parseInt(frames ?? "0"), "frames"),
+		createUnit(parseInt(subframes ?? "0"), "subframes"),
 	];
 }
 
-export function matchClockTimeExpression(content: string): ClockTimeUnit | null {
-	let match: RegExpMatchArray | null = null;
+function matchedClockTimeExpression(match: RegExpMatchArray | null): match is MatchedClockTime {
+	return match !== null;
+}
 
-	if (!(match = content.match(CLOCK_TIME_REGEX))) {
+export function matchClockTimeExpression(content: string): ClockTimeUnit | null {
+	const match = content.match(CLOCK_TIME_REGEX);
+
+	if (!matchedClockTimeExpression(match)) {
 		return null;
 	}
 

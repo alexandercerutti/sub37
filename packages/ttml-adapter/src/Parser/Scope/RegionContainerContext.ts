@@ -17,8 +17,10 @@ export interface RegionContainerContextState {
 	children: NodeWithRelationship<Token>[];
 }
 
-interface RegionContainerContext
-	extends Context<RegionContainerContext, RegionContainerContextState[]> {
+interface RegionContainerContext extends Context<
+	RegionContainerContext,
+	RegionContainerContextState[]
+> {
 	regions: Region[];
 	getRegionById(id: string | undefined): TTMLRegion | undefined;
 	getStylesByRegionId(id: string | undefined): TTMLStyle[];
@@ -80,7 +82,7 @@ export function createRegionContainerContext(
 					return [];
 				}
 
-				return regionParser.get(id).styles;
+				return regionParser.get(id)!.styles;
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];

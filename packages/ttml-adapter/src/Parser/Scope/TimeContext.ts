@@ -70,7 +70,7 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			return null;
 		}
 
-		const { attributes: documentAttributes } = readScopeDocumentContext(scope);
+		const { attributes: documentAttributes } = readScopeDocumentContext(scope)!;
 
 		const isDurAttributeForbidden =
 			typeof contextInput.dur !== "undefined" &&
@@ -235,11 +235,16 @@ export function readScopeTimeContext(scope: Scope): TimeContext | undefined {
 	return scope.getContextByIdentifier(timeContextSymbol);
 }
 
-function isTimeContainerStardardString(timeContainer: string): timeContainer is "par" | "seq" {
+function isTimeContainerStardardString(
+	timeContainer: string | undefined,
+): timeContainer is "par" | "seq" {
 	return timeContainer === "par" || timeContainer === "seq";
 }
 
-function parseTimeString(timeString: string, timeDetails: TimeDetails): number | undefined {
+function parseTimeString(
+	timeString: string | undefined,
+	timeDetails: TimeDetails,
+): number | undefined {
 	if (!timeString) {
 		return undefined;
 	}

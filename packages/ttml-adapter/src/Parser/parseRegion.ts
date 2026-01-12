@@ -13,7 +13,7 @@ import type { TimeContextData } from "./Scope/TimeContext";
 
 export const createRegionParser = memoizationFactory(function regionParserExecutor(
 	regionStorage: Map<string, TTMLRegion>,
-	scope: Scope | undefined,
+	scope: Scope,
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 ): TTMLRegion | undefined {
@@ -57,7 +57,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	}
 
 	function stylesRetriever(): TTMLStyle[] {
-		return [styleParser.get("inline"), styleParser.get("nested")].filter(Boolean);
+		return [styleParser.get("inline"), styleParser.get("nested")].filter(Boolean) as TTMLStyle[];
 	}
 
 	const regionTimingAttributes =

@@ -33,13 +33,19 @@ export { FontSizeGrammar as Grammar } from "../syntax/font-size.js";
 export function cssTransform(
 	scope: Scope,
 	value: InferDerivableValue<typeof FontSizeGrammar>,
-): PropertiesCollection<["font-size"]> {
+): PropertiesCollection<["font-size"]> | null {
+	const documentContext = readScopeDocumentContext(scope);
+
+	if (!documentContext) {
+		return null;
+	}
+
 	const {
 		attributes: {
 			"ttp:cellResolution": [, cellResolutionHeight],
-			"tts:extent": [exHeight],
+			"tts:extent": extent,
 		},
-	} = readScopeDocumentContext(scope);
+	} = documentContext;
 
 	/**
 	 * @TODO how to handle default value here?
@@ -48,33 +54,38 @@ export function cssTransform(
 	// 	return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
 	// }
 
-	if (value.length >= 2) {
+	if (value[1]) {
 		const [{ value: horizonalGlyphSizeParsed }, { value: verticalGlyphSizeParsed }] = value;
 
 		if (horizonalGlyphSizeParsed.metric !== verticalGlyphSizeParsed.metric) {
-			return [["font-size", fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString()]];
+			if (typeof extent?.[0] === "undefined" || !cellResolutionHeight) {
+				return null;
+			}
+
+			return [
+				["font-size", fontSizeValueDefaultLength(extent[0], cellResolutionHeight).toString()],
+			];
 		}
 	}
 
 	const [{ value: fontSize }] = value;
 
 	if (isCellScalar(fontSize)) {
-		const {
-			attributes: {
-				"ttp:cellResolution": [, cellResolutionHeight],
-				"tts:extent": [exHeight],
-			},
-		} = readScopeDocumentContext(scope);
+		if (typeof extent?.[0] === "undefined" || !cellResolutionHeight) {
+			return null;
+		}
 
-		return [
-			[
-				"font-size",
-				createUnit(
-					getCellScalarPixelConversion(exHeight, cellResolutionHeight, fontSize),
-					"px",
-				).toString(),
-			],
-		];
+		const convertedPixelValue = getCellScalarPixelConversion(
+			extent[0],
+			cellResolutionHeight,
+			fontSize,
+		);
+
+		if (!convertedPixelValue) {
+			return null;
+		}
+
+		return [["font-size", createUnit(convertedPixelValue, "px").toString()]];
 	}
 
 	/**
@@ -87,7 +98,7 @@ export function cssTransform(
 function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
 	// Initial value is 1c
 	return createUnit(
-		getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c")),
+		getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c"))!,
 		"px",
 	);
 }

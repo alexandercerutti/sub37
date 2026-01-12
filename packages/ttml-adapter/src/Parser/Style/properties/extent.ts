@@ -65,6 +65,8 @@ export function cssTransform(
 
 			width = createUnit(100, "%");
 		}
+
+		widthLength = width;
 	}
 
 	if (isLength(height)) {
@@ -82,6 +84,8 @@ export function cssTransform(
 
 			height = createUnit(100, "%");
 		}
+
+		heightLength = height;
 	}
 
 	return [

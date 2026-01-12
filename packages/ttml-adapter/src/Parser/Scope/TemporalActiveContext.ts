@@ -7,14 +7,18 @@
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { TTMLStyle } from "../parseStyle.js";
+import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
+type ComputedCssProperties = {
+	[K in keyof SupportedCSSProperties]: NonNullable<SupportedCSSProperties[K]>;
+};
+
 interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
-	computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]>;
-	get region(): TTMLRegion;
+	computeStylesForElement(element: string): ComputedCssProperties;
+	get region(): TTMLRegion | undefined;
 	get regionIdRef(): string;
 	get stylesIDRefs(): string[];
 }
@@ -30,9 +34,9 @@ export type ActiveStyle = TTMLStyle & {
 };
 
 interface TemporalActiveInitParams {
-	regionIDRef?: string;
-	styles?: ActiveStyle[];
-	animationsIDRefs?: string[];
+	regionIDRef: string;
+	styles: ActiveStyle[];
+	animationsIDRefs: string[];
 }
 
 type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
@@ -41,10 +45,10 @@ export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
 	return function (scope: Scope) {
-		const store = Object.assign(
+		const store: TemporalActiveInitParams = Object.assign(
 			{
 				styles: [],
-				regionIDRef: undefined,
+				regionIDRef: "",
 				animationsIDRefs: [],
 			} satisfies TemporalActiveInitParams,
 			initParams,
@@ -144,7 +148,7 @@ export function createTemporalActiveContext(
 					}
 				}
 			},
-			computeStylesForElement(element: string): ReturnType<TTMLStyle["apply"]> {
+			computeStylesForElement(element: string): ComputedCssProperties {
 				/**
 				 * @see https://w3c.github.io/ttml2/#semantics-style-association
 				 */
@@ -169,9 +173,7 @@ export function createTemporalActiveContext(
 						return Object.assign(acc, style.apply(element));
 					}, {});
 
-				return Object.assign({}, parentComputedStyles, computedStyles) as ReturnType<
-					TTMLStyle["apply"]
-				>;
+				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
 			get regionIdRef(): string {
 				return store.regionIDRef;
@@ -185,7 +187,7 @@ export function createTemporalActiveContext(
 				}
 
 				const regionContext = readScopeRegionContext(scope);
-				return regionContext.getRegionById(store.regionIDRef);
+				return regionContext?.getRegionById(store.regionIDRef);
 			},
 		};
 	};

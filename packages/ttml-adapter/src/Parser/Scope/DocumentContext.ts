@@ -2,16 +2,16 @@ import type { Context, ContextFactory, Scope } from "./Scope";
 import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
-import { asNumbers, preventZeros } from "../Units/number.js";
+import { asNumbers } from "../Units/number.js";
 import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree";
 import type { Token } from "../Token";
 
 const documentContextSymbol = Symbol("document");
 
 export interface DocumentAttributes extends TimeDetails {
-	"ttp:displayAspectRatio"?: number[];
+	"ttp:displayAspectRatio": number[];
+	"ttp:cellResolution": number[];
 	"ttp:pixelAspectRatio"?: number[];
-	"ttp:cellResolution"?: number[];
 	"tts:extent"?: number[];
 }
 
@@ -144,9 +144,8 @@ function parseDocumentSupportedAttributes(
 		/**
 		 * Container attributes
 		 */
-		"ttp:displayAspectRatio": asNumbers(
-			getSplittedLinearWhitespaceValues(attributes["ttp:displayAspectRatio"]),
-		),
+		"ttp:displayAspectRatio":
+			asNumbers(getSplittedLinearWhitespaceValues(attributes["ttp:displayAspectRatio"])) || 1,
 		"ttp:pixelAspectRatio": getPixelAspectRatio(
 			asNumbers(getSplittedLinearWhitespaceValues(attributes["ttp:pixelAspectRatio"])),
 			extent,
@@ -184,7 +183,9 @@ function getPixelAspectRatio(values: number[], extent?: number[]): [number, numb
 	return [numerator, denominator];
 }
 
-function getDropModeResolvedValue(dropMode: string): DocumentAttributes["ttp:dropMode"] {
+function getDropModeResolvedValue(
+	dropMode: string | undefined,
+): DocumentAttributes["ttp:dropMode"] {
 	if (!dropMode) {
 		return "nonDrop";
 	}
@@ -199,12 +200,16 @@ function getDropModeResolvedValue(dropMode: string): DocumentAttributes["ttp:dro
 }
 
 function getFrameRateResolvedValue(
-	frameRate: string,
-): DocumentAttributes["ttp:frameRate"] | undefined {
+	frameRate: string | undefined,
+): DocumentAttributes["ttp:frameRate"] {
+	if (!frameRate) {
+		return 1;
+	}
+
 	const parsed = parseFloat(frameRate);
 
 	if (Number.isNaN(parsed) || parsed <= 0) {
-		return undefined;
+		return 1;
 	}
 
 	return parsed;
@@ -225,11 +230,11 @@ function getFrameRateMultiplerResolvedValue(
 
 	const [numerator, denominator] = parsed;
 
-	if (Number.isNaN(numerator)) {
+	if (typeof numerator !== "number" || Number.isNaN(numerator)) {
 		return 1;
 	}
 
-	if (Number.isNaN(denominator)) {
+	if (typeof denominator !== "number" || Number.isNaN(denominator)) {
 		/** Like `parsed[0] / 1` **/
 		return numerator;
 	}
@@ -238,9 +243,9 @@ function getFrameRateMultiplerResolvedValue(
 }
 
 function getTickRateResolvedValue(
-	tickRate: string,
-	frameRate: number,
-	subFrameRate: number,
+	tickRate: string | undefined,
+	frameRate: number | undefined,
+	subFrameRate: number | undefined,
 ): DocumentAttributes["ttp:tickRate"] {
 	if (!tickRate) {
 		return (frameRate ?? 0) * (subFrameRate ?? 1) || 1;
@@ -249,7 +254,9 @@ function getTickRateResolvedValue(
 	return parseFloat(tickRate);
 }
 
-function getTimeBaseResolvedValue(timeBase: string): DocumentAttributes["ttp:timeBase"] {
+function getTimeBaseResolvedValue(
+	timeBase: string | undefined,
+): DocumentAttributes["ttp:timeBase"] {
 	const dropModes: ReadonlyArray<DocumentAttributes["ttp:timeBase"]> = ["media", "clock", "smpte"];
 
 	return dropModes.find((e) => e === timeBase) ?? "media";
@@ -270,9 +277,9 @@ function getTimeBaseResolvedValue(timeBase: string): DocumentAttributes["ttp:tim
  */
 
 function getCellResolutionComputedValue(
-	resolutionString: string,
+	resolutionString: string | undefined,
 ): DocumentAttributes["ttp:cellResolution"] {
-	const DEFAULTS = [32, 15];
+	const DEFAULTS: [columns: number, rows: number] = [32, 15];
 
 	if (!resolutionString?.length) {
 		/**
@@ -287,19 +294,22 @@ function getCellResolutionComputedValue(
 		return DEFAULTS;
 	}
 
-	let splittedValues = preventZeros(
-		asNumbers(getSplittedLinearWhitespaceValues(resolutionString)),
-		DEFAULTS,
-	);
+	const parsedValues = asNumbers(getSplittedLinearWhitespaceValues(resolutionString)) as [
+		columns: number,
+		rows: number,
+	];
 
-	if (splittedValues.length === 1) {
-		splittedValues = [splittedValues[0], splittedValues[0]];
-	}
-
-	return splittedValues;
+	return [
+		// Negative values are not specified by the standard, but
+		// it sounds logical to prevent them.
+		parsedValues[0] < 1 ? DEFAULTS[0] : parsedValues[0],
+		parsedValues[1] < 1 ? DEFAULTS[1] : parsedValues[1],
+	];
 }
 
-function getMarkerModeResolvedValue(markerMode: string): DocumentAttributes["ttp:markerMode"] {
+function getMarkerModeResolvedValue(
+	markerMode: string | undefined,
+): DocumentAttributes["ttp:markerMode"] {
 	if (markerMode === "continuous" || markerMode === "discontinuous") {
 		return markerMode;
 	}

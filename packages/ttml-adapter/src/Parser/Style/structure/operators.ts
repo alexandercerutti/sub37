@@ -22,11 +22,11 @@ export type DerivationResult<RR = unknown> =
 	| {
 			state: DerivationState["DERIVED"];
 			nextNode: Derivable<string, RR>;
-			values: DerivedValue[];
+			values: (DerivedValue | undefined)[];
 	  }
 	| {
 			state: DerivationState["DONE"];
-			values: DerivedValue[];
+			values: (DerivedValue | undefined)[];
 	  }
 	| {
 			state: DerivationState["REJECTED"];
@@ -46,7 +46,7 @@ type Flatten<T> = T extends readonly any[]
 	: [T];
 
 export type InferDerivableValue<D extends Derivable> =
-	D extends Derivable<any, infer R> ? Flatten<R> : never;
+	D extends Derivable<any, infer R> ? (Flatten<R> extends undefined ? [] : Flatten<R>) : never;
 
 export function isDerived(
 	derivationResult: DerivationResult,
@@ -71,13 +71,15 @@ export interface Derivable<_SymbolName extends string = string, RR = unknown> {
 	derive(token: string): DerivationResult<RR>;
 }
 
-export function zeroOrOne<RR>(node: Derivable<string, RR>): Derivable<"?", RR | undefined> {
+export function zeroOrOne<RR>(
+	node: Derivable<string, RR | undefined>,
+): Derivable<"?", RR | undefined> {
 	return Object.create(null, {
 		type: {
 			value: "?",
 		},
 		derive: {
-			value(token: string): DerivationResult {
+			value(token: string): DerivationResult<RR | undefined> {
 				const derivationResult = node.derive(token);
 
 				if (isRejected(derivationResult)) {
@@ -99,7 +101,7 @@ export function zeroOrMore<RR>(node: Derivable<string, RR>): Derivable<"*", RR[]
 			value: "*",
 		},
 		derive: {
-			value(token: string): DerivationResult<RR> {
+			value(token: string): DerivationResult<RR | undefined> {
 				const derivationResult = node.derive(token);
 
 				if (isRejected(derivationResult)) {
@@ -162,7 +164,11 @@ export function oneOrMore<RR>(node: Derivable<string, RR>): Derivable<"+", RR> {
 }
 
 type MapDerivableValues<T extends Derivable[]> = {
-	[K in keyof T]: InferDerivableValue<T[K]>;
+	[K in keyof T]: T[K] extends Derivable<string, infer RR>
+		? RR extends undefined
+			? never
+			: InferDerivableValue<T[K]>
+		: InferDerivableValue<T[K]>;
 };
 
 export function sequence<const D extends Derivable<string, unknown>[]>(
@@ -175,6 +181,7 @@ export function sequence<const D extends Derivable<string, unknown>[]>(
 		derive: {
 			value(token: string): DerivationResult {
 				let targetNodes: Derivable<string, unknown>[] = nodes;
+				let accumulatedValues: (DerivedValue | undefined)[] = [];
 
 				while (true) {
 					if (!targetNodes.length) {
@@ -185,20 +192,22 @@ export function sequence<const D extends Derivable<string, unknown>[]>(
 					}
 
 					const [head, ...tail] = targetNodes;
-					const derivationResult = head.derive(token);
+					const derivationResult = head!.derive(token);
 
 					if (isDone(derivationResult)) {
+						accumulatedValues = accumulatedValues.concat(derivationResult.values);
+
 						if (!tail.length) {
 							return {
 								state: DerivationState.DONE,
-								values: derivationResult.values,
+								values: accumulatedValues,
 							};
 						}
 
 						return {
 							state: DerivationState.DERIVED,
 							nextNode: sequence(tail),
-							values: derivationResult.values,
+							values: accumulatedValues,
 						};
 					}
 
@@ -206,12 +215,13 @@ export function sequence<const D extends Derivable<string, unknown>[]>(
 						return {
 							state: DerivationState.DERIVED,
 							nextNode: sequence([derivationResult.nextNode].concat(tail)),
-							values: derivationResult.values,
+							values: accumulatedValues.concat(derivationResult.values),
 						};
 					}
 
 					if (derivationResult.state & DerivationState.OPTIONAL) {
 						targetNodes = tail;
+						accumulatedValues.push(undefined);
 						continue;
 					}
 
@@ -253,7 +263,7 @@ export function oneOf<const D extends Derivable[]>(
 				}
 
 				if (successResults.length === 1) {
-					return successResults[0];
+					return successResults[0]!;
 				}
 
 				const derivedResults = successResults.filter(isDerived);
@@ -269,7 +279,7 @@ export function oneOf<const D extends Derivable[]>(
 						 * Equivalent results: picking the first one is perfectly fine
 						 */
 
-						return doneResults[0];
+						return doneResults[0]!;
 					}
 
 					return {
@@ -288,7 +298,7 @@ export function oneOf<const D extends Derivable[]>(
 						state: DerivationState.DERIVED,
 						nextNode: zeroOrOne(oneOf(derivedResults.map((result) => result.nextNode))),
 						// All the doneResults are expected to have returned the same values conversions
-						values: doneResults[0].values,
+						values: doneResults[0]!.values,
 					};
 				}
 
@@ -301,7 +311,7 @@ export function oneOf<const D extends Derivable[]>(
 					state: DerivationState.DERIVED,
 					nextNode: oneOf(derivedResults.map((result) => result.nextNode)),
 					// All the derivedResults are expected to have returned the same values conversions
-					values: derivedResults[0].values,
+					values: derivedResults[0]!.values,
 				};
 			},
 		},
@@ -321,6 +331,11 @@ export function someOf<const D extends Derivable<string, unknown>[]>(
 
 				for (let i = 0; i < nodes.length; i++) {
 					const currentNode = nodes[i];
+
+					if (!currentNode) {
+						continue;
+					}
+
 					const derivationResult = currentNode.derive(token);
 
 					if (isRejected(derivationResult)) {

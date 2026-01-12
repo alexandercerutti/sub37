@@ -1,6 +1,8 @@
 import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
+import type { NodeWithRelationship } from "./Tags/NodeTree.js";
+import type { Token } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
 import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
@@ -26,7 +28,11 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	stylesIDREFSStorage: Map<string, TTMLStyle>,
 	scope: Scope,
 	attributes: Record<string, string>,
-): TTMLStyle {
+): TTMLStyle | undefined {
+	if (!attributes["xml:id"]) {
+		return undefined;
+	}
+
 	const style = {
 		id: attributes["xml:id"],
 		styleAttributes: extractStyleAttributes(attributes),
@@ -44,17 +50,17 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 function extractStyleAttributes(
 	attributes: Record<string, string>,
 ): Record<StyleAttributeString, string> {
-	const attrs: Record<StyleAttributeString, string> = {};
+	const validAttributes: Record<StyleAttributeString, string> = {};
 
-	for (const attr in attributes) {
-		if (!isStyleAttribute(attr)) {
+	for (const [attrName, attr] of Object.entries(attributes)) {
+		if (!isStyleAttribute(attrName)) {
 			continue;
 		}
 
-		attrs[attr] = attributes[attr];
+		validAttributes[attrName] = attr;
 	}
 
-	return attrs;
+	return validAttributes;
 }
 
 export function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
@@ -175,9 +181,9 @@ function createAttributeDefinition<
 			},
 		},
 		namespace: {
-			get(): string {
+			get(): string | undefined {
 				const nameSlice = attributeName.split(":");
-				return nameSlice.length >= 2 ? nameSlice[0] : undefined;
+				return nameSlice.length >= 2 ? nameSlice[0]! : undefined;
 			},
 		},
 		syntax: {
@@ -1056,9 +1062,12 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 
 type TTML_CSS_ATTRIBUTES_MAP = typeof TTML_CSS_ATTRIBUTES_MAP;
 
-type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Collection[number][0];
+type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Exclude<
+	Collection,
+	null
+>[number][0];
 
-type SupportedCSSProperties = {
+export type SupportedCSSProperties = {
 	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<
 		ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]["toCSS"]>
 	>]?: string;
@@ -1099,7 +1108,7 @@ function styleAppliesByInheritance(styleDef: AttributeDefinition, scope: Scope):
 	const hierarchy = getElementsHierarchyFromScope(scope);
 
 	for (let i = 0; i < hierarchy.length; i++) {
-		if (!styleDef.appliesTo.includes(hierarchy[i])) {
+		if (!styleDef.appliesTo.includes(hierarchy[i]!)) {
 			continue;
 		}
 
@@ -1110,14 +1119,14 @@ function styleAppliesByInheritance(styleDef: AttributeDefinition, scope: Scope):
 }
 
 function getElementsHierarchyFromScope(scope: Scope): string[] {
-	const documentContext = readScopeDocumentContext(scope);
+	const documentContext = readScopeDocumentContext(scope)!;
 	const hierarchy: string[] = [];
 
-	let currentNode = documentContext.currentNode;
+	let currentNode: NodeWithRelationship<Token> | null = documentContext.currentNode;
 
 	while (currentNode !== null) {
 		hierarchy.push(currentNode.content.content);
-		currentNode = currentNode.parent;
+		currentNode = currentNode.parent || null;
 	}
 
 	return hierarchy;
@@ -1141,7 +1150,7 @@ function convertAttributesToCSS(
 			continue;
 		}
 
-		const value = attributes[attributeKey];
+		const value = attributes[attributeKey]!;
 		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
 
 		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {

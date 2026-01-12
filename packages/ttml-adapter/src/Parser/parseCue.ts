@@ -26,19 +26,19 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	for (let i = 0; i < node.children.length; i++) {
 		const children = node.children[i];
 
-		if (children.content.content === "span") {
+		if (children?.content.content === "span") {
 			cues = cues.concat(getCuesFromSpan(children, attributes["xml:id"] || `unk-par-${i}`));
 			continue;
 		}
 
-		if (children.content.content === "br" && cues.length) {
+		if (children?.content.content === "br" && cues.length) {
 			processLineBreak(cues[cues.length - 1]);
 			continue;
 		}
 
-		if (children.content.type === TokenType.STRING) {
-			if (cues.length && cues[cues.length - 1].content === "") {
-				cues[cues.length - 1].content += children.content.content;
+		if (children?.content.type === TokenType.STRING) {
+			if (cues.length && cues[cues.length - 1]!.content === "") {
+				cues[cues.length - 1]!.content += children.content.content;
 				continue;
 			}
 
@@ -78,17 +78,17 @@ function getCuesFromSpan(
 	for (let i = 0; i < node.children.length; i++) {
 		const children = node.children[i];
 
-		if (children.content.content === "span") {
+		if (children?.content.content === "span") {
 			cues = cues.concat(getCuesFromSpan(children, parentId));
 			continue;
 		}
 
-		if (children.content.content === "br") {
+		if (children?.content.content === "br") {
 			processLineBreak(cues[cues.length - 1]);
 			continue;
 		}
 
-		if (children.content.type === TokenType.STRING) {
+		if (children?.content.type === TokenType.STRING) {
 			if (!cues.length) {
 				cues = cues.concat(
 					createCueFromAnonymousSpan(
@@ -100,7 +100,7 @@ function getCuesFromSpan(
 				continue;
 			}
 
-			cues[cues.length - 1].content += children.content.content;
+			cues[cues.length - 1]!.content += children.content.content;
 
 			continue;
 		}
@@ -153,7 +153,7 @@ function createCueFromAnonymousSpan(
 				content,
 				startTime,
 				endTime,
-				region: attrs & TemporalAttributes.REGION ? temporalActiveContext.region : undefined,
+				region: attrs & TemporalAttributes.REGION ? temporalActiveContext?.region : undefined,
 				entities,
 			}),
 		);
@@ -178,7 +178,7 @@ type TemporalIntervalList = [startTime: number, endTime: number, attrs: number][
  * time shift.
  */
 function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): TemporalIntervalList {
-	const cueTimeContext = readScopeTimeContext(scope);
+	const cueTimeContext = readScopeTimeContext(scope)!;
 	const tac = readScopeTemporalActiveContext(scope);
 	const region = tac?.region;
 
@@ -196,7 +196,8 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 			scope,
 			createTimeContext(region.timingAttributes),
 		);
-		const regionTimeContext = isolateContext(readScopeTimeContext(regionScope));
+
+		const regionTimeContext = isolateContext(readScopeTimeContext(regionScope))!;
 
 		timeItemsIntervals.push([regionTimeContext.startTime, regionTimeContext.endTime]);
 	}
@@ -232,7 +233,7 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 		 * remove it.
 		 */
 
-		return [[timeItemsIntervals[0][0], timeItemsIntervals[0][1], TemporalAttributes.CUE]];
+		return [[timeItemsIntervals[0]![0], timeItemsIntervals[0]![1], TemporalAttributes.CUE]];
 	}
 
 	return activeCueTimeIntervals;
@@ -278,8 +279,8 @@ function getTimeSegments(
 	const timeIntervals: [number, number, number][] = [];
 
 	for (let i = 0; i < timeBreakpoints.length - 1; i++) {
-		const t0 = timeBreakpoints[i];
-		const t1 = timeBreakpoints[i + 1];
+		const t0 = timeBreakpoints[i]!;
+		const t1 = timeBreakpoints[i + 1]!;
 
 		timeIntervals.push([t0, t1, 0]);
 	}
@@ -304,20 +305,20 @@ function categorizeTimeSegments(
 ): TemporalIntervalList {
 	const timeItemsAttributes = [TemporalAttributes.CUE, TemporalAttributes.REGION] as const;
 
-	if (baseTimeIntervals.length > timeItemsAttributes.length) {
+	if (baseTimeIntervals.length > intervals.length) {
 		throw new Error(
 			"Not all the baseTimeIntervals have a matching attribute. One interval should be associated with one attribute.",
 		);
 	}
 
 	for (let i = 0; i < baseTimeIntervals.length; i++) {
-		const [itemStartTime, itemEndTime] = baseTimeIntervals[i];
+		const [itemStartTime, itemEndTime] = baseTimeIntervals[i]!;
 
 		for (const interval of intervals) {
 			const [start, end] = interval;
 
 			if (start >= itemStartTime && end <= itemEndTime) {
-				interval[2] |= timeItemsAttributes[i];
+				interval[2] |= timeItemsAttributes[i]!;
 			}
 		}
 	}

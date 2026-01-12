@@ -40,14 +40,18 @@ const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME_REGE
 
 /**
  * @definition
- * wallclock(" \<lwsp>? (    date    ) \<lwsp>? ")
- * wallclock(" \<lwsp>? ( YYYY-MM-DD ) \<lwsp>? ")
+ * ```
+ * 	wallclock(" \<lwsp>? (    date    ) \<lwsp>? ")
+ * 	wallclock(" \<lwsp>? ( YYYY-MM-DD ) \<lwsp>? ")
+ * ```
  *
  * @testcases
- * wallclock("2023-08-13")
- * wallclock(" 2023-08-13")
- * wallclock("2023-08-13 ")
- * wallclock(" 2023-08-13 ")
+ * ```
+ * 	wallclock("2023-08-13")
+ * 	wallclock(" 2023-08-13")
+ * 	wallclock("2023-08-13 ")
+ * 	wallclock(" 2023-08-13 ")
+ * ```
  */
 
 const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
@@ -82,8 +86,8 @@ function createWallClockDateTimeUnit(match: RegExpMatchArray): WallClockUnit {
 	const [, year, month, day, hours, minutes, seconds, fraction] = match;
 
 	const summedTimestamps =
-		toWallClockDateMatch([year, month, day]).getTime() +
-		toWallClockWallTimeMatch([hours, minutes, seconds, fraction]).getTime();
+		toWallClockDateMatch([year!, month!, day!]).getTime() +
+		toWallClockWallTimeMatch([hours!, minutes!, seconds!, fraction]).getTime();
 
 	return createUnit(summedTimestamps, "date");
 }
@@ -105,13 +109,13 @@ export function matchWallClockTimeExpression(content: string): WallClockUnit | n
 
 	if ((match = content.match(WALLCLOCK_WALLTIME_REGEX))) {
 		return createUnit(
-			toWallClockWallTimeMatch([match[1], match[2], match[3], match[4]]).getTime(),
+			toWallClockWallTimeMatch([match[1]!, match[2]!, match[3]!, match[4]!]).getTime(),
 			"date",
 		);
 	}
 
 	if ((match = content.match(WALLCLOCK_DATE_REGEX))) {
-		return createUnit(toWallClockDateMatch([match[1], match[2], match[3]]).getTime(), "date");
+		return createUnit(toWallClockDateMatch([match[1]!, match[2]!, match[3]!]).getTime(), "date");
 	}
 
 	return null;

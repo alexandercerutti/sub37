@@ -31,22 +31,22 @@ export class Token {
 		return new Token(TokenType.END_TAG, tagName, undefined);
 	}
 
-	public static CData(content: string): Token {
+	public static CData(_content: string): Token {
 		/** This data type is currently ignored. We don't need it (yet) */
 		return new Token(TokenType.CDATA, "CDATA Tag", undefined);
 	}
 
-	public static Comment(content: string): Token {
+	public static Comment(_content: string): Token {
 		/** This data type is currently ignored. We don't need it (yet) */
 		return new Token(TokenType.COMMENT, "Comment Tag", undefined);
 	}
 
-	public static ProcessingInstruction(content: string): Token {
+	public static ProcessingInstruction(_content: string): Token {
 		/** This data type is currently ignored. We don't need it (yet) */
 		return new Token(TokenType.PROCESSING_INSTRUCTION, "ProcessingInstruction", undefined);
 	}
 
-	public static ValidationEntity(content: string): Token {
+	public static ValidationEntity(_content: string): Token {
 		/** This data type is currently ignored. We don't need it (yet) */
 		return new Token(TokenType.VALIDATION_ENTITY, "ValidationEntity", undefined);
 	}

@@ -48,8 +48,8 @@ export function cssTransform(
 	}
 
 	return [
-		["text-emphasis-style", style],
-		["text-emphasis-color", color],
-		["text-emphasis-position", position],
+		["text-emphasis-style", style || ""],
+		["text-emphasis-color", color || ""],
+		["text-emphasis-position", position || ""],
 	];
 }

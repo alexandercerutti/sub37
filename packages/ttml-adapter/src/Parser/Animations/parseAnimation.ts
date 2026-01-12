@@ -52,7 +52,7 @@ interface Animation<CM extends CalcMode> {
 
 export const createAnimationParser = memoizationFactory(function animationParser(
 	animationStorage: Map<string, unknown>,
-	scope: Scope | undefined,
+	scope: Scope,
 	attributes: MetaAnimation,
 ): Animation<CalcMode> | undefined {
 	const styleParser = createStyleParser(scope);
@@ -99,7 +99,7 @@ export const createAnimationParser = memoizationFactory(function animationParser
  * @see https://w3c.github.io/ttml2/#animation-value-repeat-count
  */
 
-function getRepeatCount(value: "indefinite" | string): number {
+function getRepeatCount(value: "indefinite" | string | undefined): number {
 	if (!value) {
 		return 1;
 	}
@@ -113,7 +113,7 @@ function getRepeatCount(value: "indefinite" | string): number {
 	return Math.max(1, parsed);
 }
 
-function getFill(value: string): "freeze" | "remove" {
+function getFill(value: string | undefined): "freeze" | "remove" {
 	if (!value) {
 		return "remove";
 	}
@@ -147,16 +147,16 @@ type AnimationValue = string[];
  */
 type AnimationValueList = string;
 
-type AnimationValueListMap = Map<string, AnimationValueList>;
+export type AnimationValueListMap = Map<string, AnimationValueList>;
 
 /**
  * <animation-value-list>
  *
  * @see https://w3c.github.io/ttml2/#animation-value-animation-value-list
  */
-function getAnimationValueLists(attributes: MetaAnimation): AnimationValueListMap {
+function getAnimationValueLists(attributes: MetaAnimation): Map<string, AnimationValue> {
 	const styles = Object.entries(attributes) as [string, string][];
-	const lists: AnimationValueListMap = new Map();
+	const lists: Map<string, AnimationValue> = new Map();
 
 	for (const [key, value] of styles) {
 		if (!isStyleAttribute(key)) {
@@ -261,7 +261,7 @@ function splitAnimationValueList(animationValue: AnimationValueList): AnimationV
  */
 function getStylesFrameListMap(
 	animatableStyle: "discrete" | "continuous",
-	animationValueLists: AnimationValueListMap,
+	animationValueLists: Map<string, AnimationValue>,
 	styleParser: StyleParser,
 ): Map<string, TTMLStyle[]> {
 	const styleMap = new Map<string, TTMLStyle[]>();
@@ -294,14 +294,16 @@ function getStylesFrameListMap(
 			styleMap.set(name, []);
 		}
 
-		const styleList = styleMap.get(name);
+		const styleList = styleMap.get(name)!;
 
 		for (const animationValue of animationValueList) {
 			const style = styleParser.process({
 				[name]: animationValue,
 			});
 
-			styleList.push(style);
+			if (style) {
+				styleList.push(style);
+			}
 		}
 	}
 
@@ -437,7 +439,12 @@ function createSplineAnimation(
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
 
-	const keySplines = getKeySplines(attributes.keySplines, keyTimes);
+	const keySplines = getKeySplines(attributes["keySplines"], keyTimes);
+
+	/**
+	 * @TODO validate keySplines, if they are not provided correctly
+	 */
+
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {

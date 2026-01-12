@@ -9,7 +9,7 @@ type OperationSymbols = KleeneOperationSymbols | "&";
 export type DestinationFactory<T extends Matchable = Matchable> = () => T[];
 
 interface MatchableNode {
-	nodeName: string;
+	nodeName: string | null;
 	matches(nodeName: string): unknown;
 }
 
@@ -65,7 +65,7 @@ export function oneOrMore<const T extends Matchable>(node: T): KleeneMatchable<"
 				const matches = node.matches(nodeName);
 
 				if (this[usagesSymbol] < 1 && !matches) {
-					throw new MinimumElementViolationError(node.nodeName);
+					throw new MinimumElementViolationError(node.nodeName!);
 				}
 
 				this[usagesSymbol] += Number(matches);

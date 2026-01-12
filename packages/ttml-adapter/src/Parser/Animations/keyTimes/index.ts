@@ -13,7 +13,14 @@ import type { AnimationValueListMap } from "../parseAnimation";
  * @param styles
  * @returns
  */
-export function getKeyTimes(value: string, animationValueLists: AnimationValueListMap): number[] {
+export function getKeyTimes(
+	value: string | undefined,
+	animationValueLists: AnimationValueListMap,
+): number[] {
+	if (!value) {
+		return [];
+	}
+
 	const splittedKeyTimes = value.split(";").map((kt) => parseFloat(kt)) || [];
 
 	if (splittedKeyTimes.length) {
@@ -111,14 +118,14 @@ function assertAllKeyTimesWithinBoundaries(values: number[]): void {
  *
  * @see https://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#KeyTimesAttribute
  */
-export function assertKeyTimesBeginIsZero(value: number): void {
+export function assertKeyTimesBeginIsZero(value: number | undefined): void {
 	if (value !== 0) {
 		throw new KeyTimesFirstValueNotZeroError();
 	}
 }
 
-export function assertKeyTimesEndIsOne(value: number): void {
-	if (value !== 0) {
+export function assertKeyTimesEndIsOne(value: number | undefined): void {
+	if (value !== 1) {
 		throw new KeyTimesLastValueNotOneError();
 	}
 }

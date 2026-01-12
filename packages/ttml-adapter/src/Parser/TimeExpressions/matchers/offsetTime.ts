@@ -20,8 +20,9 @@ const OFFSET_TIME_REGEX = new RegExp(
 );
 
 export type OffsetTimeUnit = Unit<"h" | "m" | "s" | "ms" | "f" | "t">;
+type MatchedOffsetTime = RegExpMatchArray & [unknown, string, OffsetTimeUnit["metric"] | undefined];
 
-function createOffsetTimeUnit(match: RegExpMatchArray): OffsetTimeUnit {
+function createOffsetTimeUnit(match: MatchedOffsetTime): OffsetTimeUnit {
 	const [, timeCount, metric = "s"] = match;
 
 	assertRecognizedMetric(metric);
@@ -37,10 +38,14 @@ function assertRecognizedMetric(metric: string): asserts metric is OffsetTimeUni
 	}
 }
 
-export function matchOffsetTimeExpression(content: string): OffsetTimeUnit | null {
-	let match: RegExpMatchArray | null = null;
+function matchedOffsetTimeExpression(match: RegExpMatchArray | null): match is MatchedOffsetTime {
+	return match !== null;
+}
 
-	if (!(match = content.match(OFFSET_TIME_REGEX))) {
+export function matchOffsetTimeExpression(content: string): OffsetTimeUnit | null {
+	const match = content.match(OFFSET_TIME_REGEX);
+
+	if (!matchedOffsetTimeExpression(match)) {
 		return null;
 	}
 

@@ -1,13 +1,13 @@
 import type { DestinationFactory, Matchable } from "../../structure/kleene";
 
 export type NodeRepresentation<T extends string> = Matchable<{
-	nodeName: T;
+	nodeName: T | null;
 	matches(nodeName: string): boolean;
 	matchesAttribute(attribute: string): boolean;
 }>;
 
 export function createNode<const T extends string>(
-	nodeName: T,
+	nodeName: T | null,
 	attributes: Set<string> = new Set<string>(),
 	destinationFactory: DestinationFactory<NodeRepresentation<T>> = () => [],
 ): NodeRepresentation<T> {

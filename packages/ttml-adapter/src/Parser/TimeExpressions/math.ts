@@ -37,11 +37,11 @@ export function getHHMMSSUnitsToSeconds(
 	const matchedWithContraints = [
 		hours,
 		Math.max(0, Math.min(minutes, 59)),
-		Math.max(0, Math.min(seconds, 59)),
+		Math.max(0, Math.min(seconds ?? 0, 59)),
 	];
 
 	for (let i = 0; i < 3; i++) {
-		const element = matchedWithContraints[i];
+		const element = matchedWithContraints[i]!;
 		// index: x, arr.length: y => 60^(y-1-x) => ...
 		// index: 0, arr.length: 3 => 60^(3-1-0) => 60^2 => number * 3600
 		// index: 1, arr.length: 3 => 60^(3-1-1) => 60^1 => number * 60

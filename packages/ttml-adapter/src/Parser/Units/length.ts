@@ -50,8 +50,10 @@ export function toLength(value: string): Length | null {
 		return null;
 	}
 
-	if (!match[2]) {
-		throw new Error("Cannot create a length representation without a specified unit");
+	if (!match[1] || !match[2]) {
+		throw new Error(
+			"Cannot create a length representation: malformed length string (missing unit or value).",
+		);
 	}
 
 	if (!(isPercentageUnit(match[2]) || isScalarUnit(match[2]))) {

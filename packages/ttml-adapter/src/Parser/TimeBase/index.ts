@@ -42,13 +42,13 @@ export function getTimeBaseProvider(
 }
 
 export interface TimeDetails {
-	"ttp:timeBase"?: "media" | "smpte" | "clock";
-	"ttp:frameRate"?: number;
-	"ttp:subFrameRate"?: number;
-	"ttp:frameRateMultiplier"?: number;
-	"ttp:tickRate"?: number;
-	"ttp:dropMode"?: "dropNTSC" | "dropPAL" | "nonDrop";
-	"ttp:markerMode"?: "continuous" | "discontinuous";
+	"ttp:timeBase": "media" | "smpte" | "clock";
+	"ttp:frameRate": number;
+	"ttp:subFrameRate": number;
+	"ttp:frameRateMultiplier": number;
+	"ttp:tickRate": number;
+	"ttp:dropMode": "dropNTSC" | "dropPAL" | "nonDrop";
+	"ttp:markerMode": "continuous" | "discontinuous";
 }
 
 /**

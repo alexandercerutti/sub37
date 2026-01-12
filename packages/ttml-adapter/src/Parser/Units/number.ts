@@ -9,14 +9,3 @@ export function preventZero(value: number, fallback: number): number | null {
 
 	return value;
 }
-
-/**
- * @param values
- * @param fallbacks an array with a fallback to be used if a zero is found
- * 									at a specific index of _values_
- * @returns
- */
-
-export function preventZeros(values: number[], fallbacks: number[]): number[] {
-	return values.map((element, index) => preventZero(element, fallbacks[index]));
-}

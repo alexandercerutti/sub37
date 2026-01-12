@@ -73,7 +73,7 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			}
 
 			const parentContext = parent?.getContextByIdentifier(context.identifier);
-			const targetContext = contextsMap.get(context.identifier);
+			const targetContext = contextsMap.get(context.identifier)!;
 
 			if (parentContext) {
 				if (parentContext !== targetContext) {
@@ -126,7 +126,7 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 			}
 
 			if (contextsMap.has(context.identifier)) {
-				contextsMap.get(context.identifier)[onMergeSymbol]?.(context);
+				contextsMap.get(context.identifier)![onMergeSymbol]?.(context);
 				return;
 			}
 
@@ -165,7 +165,7 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
  */
 
 export function isolateContext<CT extends Context>(
-	context: CT,
+	context: CT | undefined,
 ): (Omit<CT, "parent"> & { parent: undefined }) | undefined {
 	if (!context) {
 		return undefined;

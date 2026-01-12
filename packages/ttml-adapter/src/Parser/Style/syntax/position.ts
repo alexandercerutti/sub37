@@ -434,7 +434,7 @@ function isThreeComponentValue(
 
 function normalizeThreeComponentValue(
 	value: ThreeComponentValue & {},
-): ["left", Length, "top", Length] {
+): ["left", Length, "top", Length] | undefined {
 	const axes = mapThreeComponentValueAxes(value);
 
 	if (!axes) {
@@ -506,7 +506,10 @@ function mapThreeComponentValueAxes(
 			 * | `right <length> top`			|	`right <length> top 0%`		|	`left (100% - <length-h>) top <length-v>`	| `left (100% - <length-h>) top 0%`
 			 */
 			if (edge === "right") {
-				return [subtract(createUnit(100, "%"), offset), createUnit(scales[position], "%")];
+				return [
+					subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+					createUnit(scales[position], "%"),
+				];
 			}
 
 			return [offset, createUnit(scales[position], "%")];
@@ -528,7 +531,10 @@ function mapThreeComponentValueAxes(
 			 */
 
 			if (edge === "bottom") {
-				return [createUnit(scales[position], "%"), subtract(createUnit(100, "%"), offset)];
+				return [
+					createUnit(scales[position], "%"),
+					subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+				];
 			}
 
 			/**
@@ -557,7 +563,10 @@ function mapThreeComponentValueAxes(
 				 * | `left bottom <length>`		|	`left 0% bottom <length>`		|	`left <length-h> top (100% - <length-v>)` | `left 0% top (100% - <length-v>)`
 				 * | `right bottom <length>`	|	`left 100% bottom <length>`	|	`left <length-h> top (100% - <length-v>)` | `left 100% top (100% - <length-v>)`
 				 */
-				return [createUnit(scales[position], "%"), subtract(createUnit(100, "%"), offset)];
+				return [
+					createUnit(scales[position], "%"),
+					subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+				];
 			}
 
 			/**
@@ -578,7 +587,10 @@ function mapThreeComponentValueAxes(
 				 * | `bottom right \<length>`	|	`right \<length> top 100`	|	`left (100% - \<length-h>) top \<length-v>`	|	`left (100% - \<length-h>) top 100`
 				 * | `top right \<length>`		|	`right \<length> top 0`		|	`left (100% - \<length-h>) top \<length-v>`	|	`left (100% - \<length-h>) top 0`
 				 */
-				return [subtract(createUnit(100, "%"), offset), createUnit(scales[position], "%")];
+				return [
+					subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+					createUnit(scales[position], "%"),
+				];
 			}
 
 			/**
@@ -590,12 +602,18 @@ function mapThreeComponentValueAxes(
 
 		// | `center right \<length>`	|	`right \<length> top 50`	|	`left (100% - \<length-h>) top \<length-v>`	|	`left (100% - \<length-h>) top 50%`
 		if (edge === "right") {
-			return [subtract(createUnit(100, "%"), offset), createUnit(scales[position], "%")];
+			return [
+				subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+				createUnit(scales[position], "%"),
+			];
 		}
 
 		// | `center bottom \<length>`	|	`left 50% bottom \<length>`	|	`left \<length-h> top (100% - \<length-v>)` | `left 50% top (100% - \<length-v>)`
 		if (edge === "bottom") {
-			return [createUnit(scales[position], "%"), subtract(createUnit(100, "%"), offset)];
+			return [
+				createUnit(scales[position], "%"),
+				subtract(createUnit(100, "%"), offset) || createUnit(0, "%"),
+			];
 		}
 
 		// | `center top \<length>`		|	`left 50% top \<length>`
@@ -638,7 +656,12 @@ function normalizeFourComponentValue(
 
 		if (secondEdge === "right") {
 			// | `top \<length-v> right \<length-h>`	|	`left (100% - \<length-h>) top \<length-v>`
-			return ["left", subtract(createUnit(100, "%"), secondOffset), "top", firstOffset];
+			return [
+				"left",
+				subtract(createUnit(100, "%"), secondOffset) || createUnit(0, "%"),
+				"top",
+				firstOffset,
+			];
 		}
 
 		return undefined;
@@ -647,16 +670,21 @@ function normalizeFourComponentValue(
 	if (firstEdge === "bottom") {
 		if (secondEdge === "left") {
 			// | `bottom <length-v> left <length-h>`	|	`left <length-h> top (100% - <length-v>)`
-			return ["left", secondOffset, "top", subtract(createUnit(100, "%"), firstOffset)];
+			return [
+				"left",
+				secondOffset,
+				"top",
+				subtract(createUnit(100, "%"), firstOffset) || createUnit(0, "%"),
+			];
 		}
 
 		if (secondEdge === "right") {
 			// | `bottom <length-v> right <length-h>`	|	`left (100% - <length-h>) top (100% - <length-v>)`
 			return [
 				"left",
-				subtract(createUnit(100, "%"), secondOffset),
+				subtract(createUnit(100, "%"), secondOffset) || createUnit(0, "%"),
 				"top",
-				subtract(createUnit(100, "%"), firstOffset),
+				subtract(createUnit(100, "%"), firstOffset) || createUnit(0, "%"),
 			];
 		}
 
@@ -667,7 +695,12 @@ function normalizeFourComponentValue(
 	if (firstEdge === "left") {
 		if (secondEdge === "bottom") {
 			// | `left <length-h> bottom <length-v>`	|	`left <length-h> top (100% - <length-v>)`
-			return ["left", firstOffset, "top", subtract(createUnit(100, "%"), secondOffset)];
+			return [
+				"left",
+				firstOffset,
+				"top",
+				subtract(createUnit(100, "%"), secondOffset) || createUnit(0, "%"),
+			];
 		}
 
 		if (secondEdge === "top") {
@@ -682,15 +715,20 @@ function normalizeFourComponentValue(
 		// | `right <length-h> bottom <length-v>`	|	`left (100% - <length-h>) top (100% - <length-v>)`
 		return [
 			"left",
-			subtract(createUnit(100, "%"), firstOffset),
+			subtract(createUnit(100, "%"), firstOffset) || createUnit(0, "%"),
 			"top",
-			subtract(createUnit(100, "%"), secondOffset),
+			subtract(createUnit(100, "%"), secondOffset) || createUnit(0, "%"),
 		];
 	}
 
 	if (secondEdge === "top") {
 		// | `right <length-h> top <length-v>`	|	`left (100% - <length-h>) top <length-v>`
-		return ["left", subtract(createUnit(100, "%"), firstOffset), "top", secondOffset];
+		return [
+			"left",
+			subtract(createUnit(100, "%"), firstOffset) || createUnit(0, "%"),
+			"top",
+			secondOffset,
+		];
 	}
 
 	return undefined;

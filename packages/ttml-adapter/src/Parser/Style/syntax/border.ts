@@ -65,7 +65,7 @@ function validateBorderRadii(component: string): string {
 		return "";
 	}
 
-	const firstQuarterEllipseRadius = splittedSections[0].trim();
+	const firstQuarterEllipseRadius = splittedSections[0]!.trim();
 	const secondQuarterEllipseRadius = (splittedSections[1] || firstQuarterEllipseRadius).trim();
 
 	const fqerAsLength = toLength(firstQuarterEllipseRadius);

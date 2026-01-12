@@ -63,10 +63,10 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 	let cursor: number = startingIndex;
 
 	return {
-		get char() {
-			return content[cursor];
+		get char(): string {
+			return content[cursor]!;
 		},
-		get nextChar() {
+		get nextChar(): string | undefined {
 			return content[cursor + 1];
 		},
 		get cursor() {
@@ -111,7 +111,9 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 }
 
 enum TokenizerState {
-	UNKNOWN_CONTENT /** Starting point... */,
+	/** Starting point... */
+	UNKNOWN_CONTENT,
+
 	// UNRECOGNIZED_CONTENT /** ...but we didn't recognize what are we reading */,
 	HTML_CHARACTER_REFERENCE_ANNOTATION /** A sequence that starts with "&" */,
 
@@ -119,10 +121,15 @@ enum TokenizerState {
 	 * All the contents, to be valid, must start with "<".
 	 * Some requires just "<", others requires a difference precise sequence.
 	 */
-
 	START_TAG /** \<[a-zA-Z]\s+ */,
-	START_TAG_ANNOTATION /** After the name */,
+
+	/** All the other contents after the tag name */
+	START_TAG_ANNOTATION,
+
+	/** The begin of a specific attribute property name, before the "=" */
 	ATTRIBUTE_START,
+
+	/** The begin of a specific attribute value, after the "=" and '"' */
 	ATTRIBUTE_VALUE,
 	DATA,
 	END_TAG,
@@ -152,11 +159,11 @@ export class Tokenizer {
 		this.sourceWindow = createTextSlidingWindow(rawContent, 0);
 	}
 
-	public static isWhitespace(character: string) {
+	public static isWhitespace(character: string | undefined) {
 		return character === "\x20" || character === "\x09" || character === "\x0C";
 	}
 
-	public static isNewLine(character: string) {
+	public static isNewLine(character: string | undefined) {
 		return character === "\x0A";
 	}
 
@@ -224,6 +231,12 @@ export class Tokenizer {
 
 					if (this.sourceWindow.peekAdvance(VE_BEGIN_CHECKER)) {
 						const { nextChar } = this.sourceWindow;
+
+						if (!nextChar) {
+							console.warn("Unexpected end of content after '<!'");
+							return null;
+						}
+
 						const codePoint = nextChar.charCodeAt(0);
 						const isUppercaseCharacter = codePoint >= 65 && codePoint <= 90;
 
@@ -415,7 +428,8 @@ export class Tokenizer {
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
 						if (result.length) {
-							attributes[result] = undefined;
+							// Resetting any dangling attribute
+							attributes[result] = "";
 						}
 
 						this.sourceWindow.advance();
@@ -448,7 +462,8 @@ export class Tokenizer {
 					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
 						state = TokenizerState.START_TAG_ANNOTATION;
 
-						attributes[result] = undefined;
+						// Resetting any dangling attribute. We are going back to the annotation state
+						attributes[result] = "";
 						result = "";
 
 						this.sourceWindow.advance();
@@ -456,7 +471,8 @@ export class Tokenizer {
 					}
 
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
-						attributes[result] = undefined;
+						// Resetting any dangling attribute
+						attributes[result] = "";
 
 						/**
 						 * No need to advance, we need to recognize ">" to emit
@@ -466,7 +482,8 @@ export class Tokenizer {
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
-						attributes[result] = undefined;
+						// Resetting any dangling attribute
+						attributes[result] = "";
 
 						this.sourceWindow.advance();
 						return Token.StartTag(this.lastTagName, attributes);
@@ -561,7 +578,11 @@ export class Tokenizer {
 // 	return NAME_CHAR_REGEX.test(content);
 // }
 
-function isValidName(content: string): boolean {
+function isValidName(content: string | undefined): boolean {
+	if (!content) {
+		return false;
+	}
+
 	return NAME_REGEX.test(content);
 }
 

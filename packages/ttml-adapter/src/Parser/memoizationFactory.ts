@@ -5,7 +5,11 @@ interface MemoizationProtocol<
 	Argv extends unknown[],
 	StorageKeySource extends string = string,
 > {
-	(storage: Map<StorageKeySource, MemoizedData>, scope?: Scope, ...args: Argv): MemoizedData;
+	(
+		storage: Map<StorageKeySource, MemoizedData>,
+		scope: Scope,
+		...args: Argv
+	): MemoizedData | undefined;
 }
 
 export function memoizationFactory<
@@ -23,7 +27,7 @@ export function memoizationFactory<
 					storage.set(id, data);
 				}
 			},
-			process(...args: ProcessArgv) {
+			process(...args: ProcessArgv): MemoizedData | undefined {
 				return executor(storage, scope, ...args);
 			},
 			get(id: StorageKeySource): MemoizedData | undefined {

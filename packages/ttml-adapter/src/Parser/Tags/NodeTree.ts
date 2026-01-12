@@ -1,17 +1,13 @@
 export interface NodeWithRelationship<ContentType extends object> {
 	children: Array<NodeWithRelationship<ContentType>>;
-	parent?: NodeWithRelationship<ContentType> | undefined;
+	parent?: NodeWithRelationship<ContentType> | null;
 	content: ContentType;
 }
 
-interface Memory<ContentType extends object> {
-	currentNode: NodeWithRelationship<ContentType> | null;
-	storage: NodeWithRelationship<ContentType> | null;
-}
-
 export class NodeTree<NodeContentType extends object> {
-	private root: NodeWithRelationship<NodeContentType> = createNodeWithRelationshipShell(null, null);
-	private current: NodeWithRelationship<NodeContentType>;
+	private root: NodeWithRelationship<NodeContentType> =
+		createNodeWithRelationshipShell<NodeContentType>(null, null);
+	private current: NodeWithRelationship<NodeContentType> | null = null;
 
 	public track(value: NodeContentType): NodeWithRelationship<NodeContentType> {
 		const treeNode = createNodeWithRelationshipShell(value, this.current);
@@ -43,26 +39,18 @@ export class NodeTree<NodeContentType extends object> {
 		}
 
 		const out = this.current;
-		this.current = this.current.parent;
+		this.current = this.current.parent || null;
 
 		return out;
 	}
 
 	public get currentNode(): NodeWithRelationship<NodeContentType> {
-		return this.current;
-	}
-
-	public get tree(): Memory<NodeContentType>["storage"] {
-		return this.root.children[0];
-	}
-
-	public get parentNode(): NodeWithRelationship<NodeContentType> | null {
-		return this.currentNode?.parent;
+		return this.current!;
 	}
 }
 
 function createNodeWithRelationshipShell<ContentType extends object>(
-	content: ContentType,
+	content: ContentType | null,
 	parent: NodeWithRelationship<ContentType> | null,
 ): NodeWithRelationship<ContentType> {
 	return Object.create(null, {

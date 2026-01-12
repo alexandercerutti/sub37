@@ -11,7 +11,11 @@ import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControl
  * @param keyTimes
  * @returns
  */
-export function getKeySplines(value: string, keyTimes: number[]): number[][] {
+export function getKeySplines(value: string | undefined, keyTimes: number[]): number[][] {
+	if (value === undefined) {
+		return [];
+	}
+
 	const splineControls = value.split(";");
 	const splines: number[][] = [];
 

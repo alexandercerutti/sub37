@@ -20,7 +20,7 @@ declare module "./Scope" {
 
 export function createStyleContainerContext(
 	registeredStyles: StyleIndex,
-): ContextFactory<StyleContainerContext> | null {
+): ContextFactory<StyleContainerContext> {
 	return function (scope: Scope) {
 		/**
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
@@ -37,9 +37,7 @@ export function createStyleContainerContext(
 			[onAttachedSymbol]() {
 				const { args } = this;
 
-				for (const registeredStyle in args) {
-					const styleAttributes = args[registeredStyle];
-
+				for (const styleAttributes of Object.values(args)) {
 					if (!styleAttributes["xml:id"]) {
 						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
 						continue;
@@ -93,8 +91,8 @@ export function createStyleContainerContext(
 			[onMergeSymbol](context: StyleContainerContext): void {
 				const { args } = context;
 
-				for (const styleIDRef in args) {
-					stylesParser.process(args[styleIDRef]);
+				for (const style of Object.values(args)) {
+					stylesParser.process(style);
 				}
 			},
 			getStyleByIDRef(idref: string): TTMLStyle | undefined {
@@ -124,7 +122,7 @@ function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): st
 		return id;
 	}
 
-	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1]);
+	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1] ?? "");
 
 	if (Number.isNaN(styleConflictOverrideIdentifier)) {
 		return id;
