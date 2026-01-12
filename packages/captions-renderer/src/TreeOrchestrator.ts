@@ -128,14 +128,14 @@ export default class TreeOrchestrator {
 		let root: HTMLElement = this[rootElementSymbol];
 
 		while (!root.classList.contains(ROOT_CLASS_NAME)) {
-			root = root.parentElement;
+			root = root.parentElement!;
 		}
 
 		return root;
 	}
 
 	public wipeTree(): void {
-		for (let node: Node; (node = this[rootElementSymbol].firstChild); ) {
+		for (let node: Node | null; (node = this[rootElementSymbol].firstChild); ) {
 			this[rootElementSymbol].removeChild(node);
 		}
 	}
@@ -144,7 +144,7 @@ export default class TreeOrchestrator {
 		const cues: CueNode[] = [];
 
 		for (let i = 0; i < cueNodes.length; i++) {
-			const cueNode = cueNodes[i];
+			const cueNode = cueNodes[i]!;
 
 			if (!cueNode.content.length) {
 				continue;
@@ -154,11 +154,11 @@ export default class TreeOrchestrator {
 		}
 
 		let latestCueId = "";
-		let latestNode: HTMLElement = undefined;
+		let latestNode: HTMLElement | undefined = undefined;
 		let latestHeight: number = 0;
 
 		for (let i = 0; i < cues.length; i++) {
-			const cue = cues[i];
+			const cue = cues[i]!;
 
 			if (latestCueId !== cue.id) {
 				latestNode = undefined;
@@ -175,7 +175,8 @@ export default class TreeOrchestrator {
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
 			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
-			let line = latestNode || createLine(cue.entities.filter(Entities.isLineStyleEntity));
+			let line: HTMLElement =
+				latestNode || createLine(cue.entities.filter(Entities.isLineStyleEntity));
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
@@ -316,7 +317,7 @@ function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 }
 
 function shouldCueNodeBreak(cueNodeContent: string, currentIndex: number): boolean {
-	const char = cueNodeContent[currentIndex];
+	const char = cueNodeContent[currentIndex]!;
 
 	return isCharacterWhitespace(char) || isCueContentEnd(cueNodeContent, currentIndex);
 }
@@ -330,7 +331,7 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 }
 
 function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDepth: number): void {
-	getNodeAtDepth(diffDepth, lineRootNode.lastChild).appendChild(cueSubTreeRoot);
+	getNodeAtDepth(diffDepth, lineRootNode.lastChild!).appendChild(cueSubTreeRoot);
 }
 
 function createLine(lineEntities: Entities.LineStyleEntity[]) {
@@ -411,7 +412,7 @@ function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.All
 	 */
 
 	for (let i = tagEntities.length - 1; i >= 0; i--) {
-		const entity = tagEntities[i];
+		const entity = tagEntities[i]!;
 
 		const node = getHTMLElementByEntity(entity);
 
@@ -436,7 +437,7 @@ const TAG_TYPE_ENTITY_DOM_MAP = {
 	[Entities.TagType.SPAN]: (_entity: Entities.TagEntity) => document.createElement("span"),
 } as const;
 
-function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement {
+function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undefined {
 	const elementProcessor =
 		TAG_TYPE_ENTITY_DOM_MAP[entity.tagType] || TAG_TYPE_ENTITY_DOM_MAP[Entities.TagType.SPAN];
 
@@ -495,8 +496,8 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 			break;
 		}
 
-		const currentCueEntity = currentEntities[i];
-		const previousCueEntity = previousEntities[i];
+		const currentCueEntity = currentEntities[i]!;
+		const previousCueEntity = previousEntities[i]!;
 
 		if (currentCueEntity !== previousCueEntity) {
 			break;

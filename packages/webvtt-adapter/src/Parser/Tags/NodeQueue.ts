@@ -6,7 +6,7 @@ import type Node from "./Node";
  */
 
 export default class NodeQueue {
-	private root: Node = null;
+	private root: Node | null = null;
 
 	public get current() {
 		return this.root;

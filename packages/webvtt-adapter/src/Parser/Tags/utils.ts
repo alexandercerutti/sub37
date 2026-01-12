@@ -17,7 +17,7 @@ export function createTagEntitiesFromUnpaired(
 	openTagsQueue: NodeQueue,
 	currentCue: CueParsedData,
 ): Entities.TagEntity[] {
-	let nodeCursor: Node = openTagsQueue.current;
+	let nodeCursor: Node | null = openTagsQueue.current;
 
 	if (!nodeCursor) {
 		return [];
@@ -50,7 +50,7 @@ export function createTagEntityByNode(tagStart: Node): Entities.TagEntity {
 			}
 
 			const attribute = annotation.split("=");
-			return [attribute[0], attribute[1]?.replace(/["']/g, "")];
+			return [attribute[0]!, attribute[1]?.replace(/["']/g, "")];
 		}),
 	);
 

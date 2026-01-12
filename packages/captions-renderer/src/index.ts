@@ -168,7 +168,7 @@ div.region div > p.line-block > span {
 		const nextActiveRegions: Renderer["activeRegions"] = {};
 
 		for (let i = 0; i < cueData.length; i++) {
-			const cue = cueData[i];
+			const cue = cueData[i]!;
 			const prevCue = cueData[i - 1];
 
 			const modifierId = getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers);
@@ -191,8 +191,8 @@ div.region div > p.line-block > span {
 			} else {
 				tree = new TreeOrchestrator(
 					this.container,
-					cues[0].region,
-					cues[0].renderingModifiers,
+					cues[0]!.region,
+					cues[0]!.renderingModifiers,
 					this.regionsProperties,
 				);
 			}
@@ -234,16 +234,15 @@ div.region div > p.line-block > span {
  * @returns
  */
 
-function getRegionModifierId(r1: RenderingModifiers, r2: RenderingModifiers): number {
-	if (!r1 && !r2) {
-		return undefined;
+function getRegionModifierId(
+	r1: RenderingModifiers | undefined,
+	r2: RenderingModifiers | undefined,
+): number | undefined {
+	if (!r1) {
+		return r2?.id || undefined;
 	}
 
-	if (!r1 && r2) {
-		return r2.id;
-	}
-
-	if (r1 && !r2) {
+	if (!r2) {
 		return r1.id;
 	}
 

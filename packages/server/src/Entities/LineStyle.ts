@@ -11,7 +11,9 @@ export interface LineStyleEntity extends EntityProtocol {
 	readonly styles: Record<string, string>;
 }
 
-export function createLineStyleEntity(stylesSource: string | Record<string, string>): LineStyleEntity {
+export function createLineStyleEntity(
+	stylesSource: string | Record<string, string>,
+): LineStyleEntity {
 	const styles = getKeyValueFromCSSRawDeclarations(stylesSource);
 
 	return {
@@ -40,6 +42,11 @@ function getKeyValueFromCSSRawDeclarations(
 		}
 
 		const [key, value] = declaration.split(/\s*:\s*/);
+
+		if (!key || !value) {
+			continue;
+		}
+
 		stylesObject[key] = value;
 	}
 

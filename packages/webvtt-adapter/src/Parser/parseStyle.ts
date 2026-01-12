@@ -72,12 +72,14 @@ const WEBVTT_CSS_SUPPORTED_PROPERTIES = [
 	// "line-height",
 ];
 
-export function parseStyle(rawStyleData: string): Style | undefined {
+export function parseStyle(rawStyleData: string | undefined): Style | undefined {
 	if (!rawStyleData) {
 		throw new MalformedStyleBlockError();
 	}
 
-	const styleBlockComponents = rawStyleData.match(CSS_RULESET_REGEX);
+	const styleBlockComponents = rawStyleData.match(CSS_RULESET_REGEX) as
+		| (RegExpMatchArray & [unknown, string, string, string])
+		| null;
 
 	if (!styleBlockComponents) {
 		throw new InvalidStyleDeclarationError();
@@ -125,7 +127,10 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 
 	const selectorComponents = getSelectorComponents(selector);
 
-	if (!selectorComponents.tagName && !selectorComponents.attributes.size && !classesChain.length) {
+	if (
+		!selectorComponents ||
+		(!selectorComponents.tagName && !selectorComponents.attributes.size && !classesChain.length)
+	) {
 		/** Invalid */
 		return undefined;
 	}
@@ -141,8 +146,8 @@ const SUPPORTED_STYLABLE_TAG_SELECTORS = ["b", "i", "u", "v", "lang", "c", "ruby
 
 function getSelectorComponents(
 	rawSelector: string,
-): Omit<SelectorTarget & { type: StyleDomain.TAG }, "type" | "classes"> {
-	let selector: string = undefined;
+): Omit<Extract<SelectorTarget, { type: StyleDomain.TAG }>, "type" | "classes"> | undefined {
+	let selector: string = "";
 	const attributes: [string, string][] = [];
 
 	/**
@@ -160,8 +165,12 @@ function getSelectorComponents(
 		}
 	}
 
+	if (!isSelectorSupported(selector)) {
+		return undefined;
+	}
+
 	return {
-		tagName: isSelectorSupported(selector) ? selector : undefined,
+		tagName: selector,
 		attributes: new Map(attributes),
 	};
 }
@@ -197,8 +206,8 @@ function filterUnsupportedStandardProperties(styleString: string) {
 	while (endCursor <= styleString.length) {
 		if (styleString[endCursor] === ";" || endCursor === styleString.length) {
 			const parsed = styleString.slice(startCursor, endCursor + 1).split(/\s*:\s*/);
-			const property = parsed[0].trim();
-			const value = parsed[1].trim();
+			const property = parsed[0]!.trim();
+			const value = parsed[1]!.trim();
 
 			if (property.length && value.length && WEBVTT_CSS_SUPPORTED_PROPERTIES.includes(property)) {
 				finalStyleString += `${property}:${value}`;

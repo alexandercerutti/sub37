@@ -30,13 +30,16 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 	override parse(rawContent: string): BaseAdapter.ParseResult {
 		if (!rawContent) {
-			return BaseAdapter.ParseResult(undefined, [
-				{
-					error: new MissingContentError(),
-					failedChunk: "",
-					isCritical: true,
-				},
-			]);
+			return BaseAdapter.ParseResult(
+				[],
+				[
+					{
+						error: new MissingContentError(),
+						failedChunk: "",
+						isCritical: true,
+					},
+				],
+			);
 		}
 
 		const cueIdsList: Set<string> = new Set();
@@ -194,7 +197,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 							renderingModifiers: parsedCue.renderingModifiers,
 						});
 
-						if (parsedCue.renderingModifiers.regionIdentifier) {
+						if (parsedCue.renderingModifiers?.regionIdentifier) {
 							cue.region = regions[parsedCue.renderingModifiers.regionIdentifier];
 						}
 
@@ -284,13 +287,16 @@ export default class WebVTTAdapter extends BaseAdapter {
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-				return BaseAdapter.ParseResult(undefined, [
-					{
-						error,
-						isCritical: true,
-						failedChunk: undefined,
-					},
-				]);
+				return BaseAdapter.ParseResult(
+					[],
+					[
+						{
+							error,
+							isCritical: true,
+							failedChunk: undefined,
+						},
+					],
+				);
 			}
 		} while (block.cursor <= content.length);
 
@@ -324,16 +330,26 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 	const contentSection = content.substring(start, end);
 	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
 
-	if (blockMatch?.groups["blocktype"]) {
+	if (blockMatch?.groups!["blocktype"]) {
 		switch (blockMatch.groups["blocktype"]) {
 			case "REGION": {
 				const payload = Parser.parseRegion(blockMatch.groups["payload"]);
+
+				if (!payload) {
+					return [BlockType.IGNORED, undefined];
+				}
+
 				return [BlockType.REGION, payload];
 			}
 
 			case "STYLE": {
 				try {
 					const payload = Parser.parseStyle(blockMatch.groups["payload"]);
+
+					if (!payload) {
+						return [BlockType.IGNORED, undefined];
+					}
+
 					return [BlockType.STYLE, payload];
 				} catch (err) {
 					/** Failing gracefully, not critical */

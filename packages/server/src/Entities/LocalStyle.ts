@@ -5,7 +5,9 @@ export interface LocalStyleEntity extends EntityProtocol {
 	readonly styles: Record<string, string>;
 }
 
-export function createLocalStyleEntity(stylesSource: string | Record<string, string>): LocalStyleEntity {
+export function createLocalStyleEntity(
+	stylesSource: string | Record<string, string>,
+): LocalStyleEntity {
 	const styles = getKeyValueFromCSSRawDeclarations(stylesSource);
 
 	return {
@@ -34,6 +36,11 @@ function getKeyValueFromCSSRawDeclarations(
 		}
 
 		const [key, value] = declaration.split(/\s*:\s*/);
+
+		if (!key || !value) {
+			continue;
+		}
+
 		stylesObject[key] = value;
 	}
 
