@@ -29,12 +29,12 @@ export class FakeHTMLVideoElement extends HTMLElement {
 		`;
 
 		console.log("controls:", this.getAttribute("controls"));
-		this.shadowRoot.append(style);
+		this.shadowRoot!.append(style);
 
 		this.updateControlsView(this.hasAttribute("controls"));
 	}
 
-	public attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+	public attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
 		if (name === "controls") {
 			this.updateControlsView(typeof newValue === "string");
 			return;
@@ -42,7 +42,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 	}
 
 	private updateControlsView(viewWillBecomeVisible: boolean) {
-		let controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+		let controlsView = this.shadowRoot!.querySelector("controls-skin") as Controls;
 
 		if (viewWillBecomeVisible) {
 			if (controlsView) {
@@ -50,7 +50,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 			}
 
 			controlsView = document.createElement("controls-skin") as Controls;
-			this.shadowRoot.appendChild(controlsView);
+			this.shadowRoot!.appendChild(controlsView);
 
 			controlsView.controllers = {
 				onPlaybackStatusChange: (status) => {
@@ -75,7 +75,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 			return;
 		}
 
-		controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+		controlsView = this.shadowRoot!.querySelector("controls-skin") as Controls;
 		controlsView?.remove();
 	}
 
@@ -84,7 +84,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 	}
 
 	public set currentTime(value: number) {
-		const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+		const controlsView = this.shadowRoot!.querySelector("controls-skin") as Controls;
 
 		this[currentTimeSymbol] = Math.min(Math.max(0, value), this[durationSymbol]);
 		const events: Event[] = [new Event("seeked"), new Event("timeupdate")];
@@ -126,7 +126,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 			}
 		}, 250);
 
-		const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+		const controlsView = this.shadowRoot!.querySelector("controls-skin") as Controls;
 		controlsView?.play();
 
 		const event = new Event("playing");
@@ -139,7 +139,7 @@ export class FakeHTMLVideoElement extends HTMLElement {
 			return;
 		}
 
-		const controlsView = this.shadowRoot.querySelector("controls-skin") as Controls;
+		const controlsView = this.shadowRoot!.querySelector("controls-skin") as Controls;
 		controlsView.pause();
 
 		window.clearInterval(this.playheadInterval);

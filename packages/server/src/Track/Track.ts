@@ -20,7 +20,7 @@ export default class Track implements Omit<TrackRecord, "content"> {
 		lang: string,
 		mimeType: SessionTrack["mimeType"],
 		adapter: BaseAdapter,
-		onSafeFailure?: (error: Error) => void,
+		onSafeFailure: (error: Error) => void,
 	) {
 		this.adapter = adapter;
 		this.timeline = new IntervalBinaryTree();
@@ -30,7 +30,7 @@ export default class Track implements Omit<TrackRecord, "content"> {
 	}
 
 	public getActiveCues(time: number): CueNode[] {
-		return this.timeline.getCurrentNodes(time);
+		return this.timeline.getCurrentNodes(time) || [];
 	}
 
 	public [addCuesSymbol](...cues: CueNode[]): void {

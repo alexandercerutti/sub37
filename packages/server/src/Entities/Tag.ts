@@ -22,7 +22,7 @@ export class Tag extends GenericEntity {
 	public tagType: TagType;
 	public attributes: Map<string, string | undefined>;
 	public classes: string[];
-	public styles?: { [key: string]: string };
+	public styles: { [key: string]: string };
 
 	public constructor(params: {
 		offset: number;
@@ -41,6 +41,10 @@ export class Tag extends GenericEntity {
 	}
 
 	public setStyles(styles: string | Tag["styles"]): void {
+		if (!styles) {
+			return;
+		}
+
 		const declarations = getKeyValueFromCSSRawDeclarations(styles);
 		Object.assign(this.styles, declarations);
 	}
@@ -64,6 +68,11 @@ function getKeyValueFromCSSRawDeclarations(declarationsRaw: string | object): ob
 		}
 
 		const [key, value] = declaration.split(/\s*:\s*/);
+
+		if (!key || !value) {
+			continue;
+		}
+
 		stylesObject[key] = value;
 	}
 

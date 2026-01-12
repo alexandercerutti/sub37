@@ -73,7 +73,7 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 	 * @param rawContent
 	 */
 
-	public parse(rawContent: unknown): ParseResult {
+	public parse(_rawContent: unknown): ParseResult {
 		throw new Error(
 			"Adapter doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
 		);
@@ -81,7 +81,10 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 };
 
 export class ParseResult {
-	public constructor(public data: CueNode[] = [], public errors: BaseAdapter.ParseError[] = []) {}
+	public constructor(
+		public data: CueNode[] = [],
+		public errors: BaseAdapter.ParseError[] = [],
+	) {}
 }
 
 export class ParseError {

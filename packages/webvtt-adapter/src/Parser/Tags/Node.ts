@@ -1,7 +1,7 @@
 import { Token } from "../../Token";
 
 export default class Node {
-	public parent: Node = null;
+	public parent: Node | null = null;
 
 	constructor(
 		/** Zero-based position of cue (or timestamp section) content */

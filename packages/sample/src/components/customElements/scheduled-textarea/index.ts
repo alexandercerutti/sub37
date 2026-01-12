@@ -1,7 +1,7 @@
 import { TrackScheduler } from "../../TrackScheduler";
 
 export class ScheduledTextArea extends HTMLElement {
-	private scheduler: TrackScheduler;
+	private scheduler: TrackScheduler | undefined;
 
 	constructor() {
 		super();
@@ -21,14 +21,14 @@ textarea {
 }
 `;
 
-		this.shadowRoot.appendChild(style);
+		this.shadowRoot!.appendChild(style);
 
 		const textArea = Object.assign(document.createElement("textarea"), {
 			placeholder: this.getAttribute("placeholder"),
 		});
 
 		textArea.addEventListener("input", ({ target }) => {
-			this.scheduler.schedule((target as HTMLInputElement).value);
+			this.scheduler!.schedule((target as HTMLInputElement).value);
 		});
 
 		/**
@@ -45,16 +45,16 @@ textarea {
 			});
 		}, 0);
 
-		this.shadowRoot.appendChild(textArea);
+		this.shadowRoot!.appendChild(textArea);
 	}
 
 	public set value(value: string) {
-		(this.shadowRoot.querySelector("textarea") as HTMLTextAreaElement).value = value;
-		this.scheduler.schedule(value);
+		(this.shadowRoot!.querySelector("textarea") as HTMLTextAreaElement).value = value;
+		this.scheduler!.schedule(value);
 	}
 
 	public get value(): string {
-		return (this.shadowRoot.querySelector("textarea") as HTMLTextAreaElement).value;
+		return (this.shadowRoot!.querySelector("textarea") as HTMLTextAreaElement).value;
 	}
 }
 

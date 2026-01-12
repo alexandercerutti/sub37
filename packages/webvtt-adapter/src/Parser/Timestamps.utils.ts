@@ -4,12 +4,12 @@ const TIME_REGEX =
 export function parseMs(timestring: string): number {
 	const timeMatch = timestring.match(TIME_REGEX);
 
-	if (!timeMatch) {
+	if (!timeMatch?.groups) {
 		throw new Error("Time format is not valid. Ignoring cue.");
 	}
 
 	const {
-		groups: { hours, minutes, seconds, milliseconds },
+		groups: { hours = "", minutes = "", seconds = "", milliseconds = "" },
 	} = timeMatch;
 
 	const hoursInSeconds = zeroFallback(parseInt(hours)) * 60 * 60;

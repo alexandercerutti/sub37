@@ -99,7 +99,7 @@ export class Controls extends HTMLElement {
 
 	public set duration(value: number) {
 		const valueString = String(value);
-		const [input, timeLabel] = this.shadowRoot.querySelectorAll(
+		const [input, timeLabel] = this.shadowRoot!.querySelectorAll(
 			"input, #durationTime",
 		) as unknown as [HTMLInputElement, HTMLSpanElement];
 
@@ -109,7 +109,7 @@ export class Controls extends HTMLElement {
 
 	public set currentTime(value: number) {
 		const valueString = String(value);
-		const [timeLabel, input] = this.shadowRoot.querySelectorAll(
+		const [timeLabel, input] = this.shadowRoot!.querySelectorAll(
 			"input, #currentTime",
 		) as unknown as [HTMLSpanElement, HTMLInputElement];
 
@@ -122,7 +122,7 @@ export class Controls extends HTMLElement {
 	}
 
 	public play(
-		playbackButton: HTMLImageElement = this.shadowRoot.getElementById(
+		playbackButton: HTMLImageElement = this.shadowRoot!.getElementById(
 			"playback-btn",
 		) as HTMLImageElement,
 	) {
@@ -131,7 +131,7 @@ export class Controls extends HTMLElement {
 	}
 
 	public pause(
-		playbackButton: HTMLImageElement = this.shadowRoot.getElementById(
+		playbackButton: HTMLImageElement = this.shadowRoot!.getElementById(
 			"playback-btn",
 		) as HTMLImageElement,
 	) {
@@ -140,7 +140,7 @@ export class Controls extends HTMLElement {
 	}
 
 	private onPlaybackStatusChange() {
-		const playbackButton: HTMLImageElement = this.shadowRoot.getElementById(
+		const playbackButton: HTMLImageElement = this.shadowRoot!.getElementById(
 			"playback-btn",
 		) as HTMLImageElement;
 
