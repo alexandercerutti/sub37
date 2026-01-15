@@ -31,19 +31,13 @@ export function cssTransform(
 	];
 
 	const values = value.slice();
-	const buffer: Partial<DerivedValue>[] = [];
+	const buffer: (Partial<DerivedValue> | undefined)[] = [];
 	const shadows: DerivedShadow[] = [];
 
 	while (values.length) {
 		const token = values.shift();
 
-		if (!token) {
-			shadows.push(buffer.slice() as DerivedShadow);
-			buffer.length = 0;
-			continue;
-		}
-
-		if (token.value === ",") {
+		if (token?.value === ",") {
 			shadows.push(buffer.slice() as DerivedShadow);
 			buffer.length = 0;
 			continue;
