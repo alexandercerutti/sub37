@@ -1196,13 +1196,13 @@ function convertAttributesToCSS(
 export function parseAttributeValue(
 	syntaxModuleDefinition: SyntaxModuleDefinition,
 	value: string,
-): DerivedValue[] | null {
+): (DerivedValue | undefined)[] | null {
 	const tokens =
 		typeof syntaxModuleDefinition.tokenizer === "function"
 			? syntaxModuleDefinition.tokenizer(value)
 			: value.split(/\s+/g);
 
-	const collectedValues: DerivedValue[] = [];
+	let collectedValues: (DerivedValue | undefined)[] = [];
 	let nextGrammar: Derivable = syntaxModuleDefinition.Grammar;
 
 	while (tokens.length) {
@@ -1221,7 +1221,7 @@ export function parseAttributeValue(
 
 		if (isDerived(tokenDerivationResult)) {
 			nextGrammar = tokenDerivationResult.nextNode;
-			collectedValues.push(tokenDerivationResult.values[0]);
+			collectedValues = collectedValues.concat(tokenDerivationResult.values);
 			continue;
 		}
 
@@ -1230,7 +1230,7 @@ export function parseAttributeValue(
 			return null;
 		}
 
-		collectedValues.push(tokenDerivationResult.values[0]);
+		collectedValues = collectedValues.concat(tokenDerivationResult.values);
 	}
 
 	return collectedValues;
