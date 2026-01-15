@@ -24,10 +24,10 @@ export function cssTransform(
 	}
 
 	type DerivedShadow = [
-		DerivedValue<string, Length>, // offset-x
-		DerivedValue<string, Length>, // offset-y
-		DerivedValue<string, Length> | undefined, // blur-radius
-		DerivedValue<string, string> | undefined, // color
+		offsetX: DerivedValue<string, Length>,
+		offsetY: DerivedValue<string, Length>,
+		blurRadius: DerivedValue<string, Length> | undefined,
+		color: DerivedValue<string, string> | undefined,
 	];
 
 	let values = value.slice();
