@@ -5,6 +5,15 @@ import type { TextShadowGrammar } from "../syntax/text-shadow.js";
 
 export { TextShadowGrammar as Grammar } from "../syntax/text-shadow.js";
 
+/**
+ * TextShadow allows splitting by commas to separate multiple shadows
+ * @param input
+ * @returns 
+ */
+export function tokenizer(input: string): string[] {
+	return input.split(/\s*(,)\s*|\s+/).filter(Boolean);
+}
+
 export function cssTransform(
 	_scope: Scope,
 	value: InferDerivableValue<typeof TextShadowGrammar>,
