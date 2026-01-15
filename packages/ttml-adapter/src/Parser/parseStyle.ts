@@ -1164,9 +1164,7 @@ function convertAttributesToCSS(
 			continue;
 		}
 
-		let definitionGrammar = definition.syntax.Grammar;
-
-		const collectedValues = parseAttributeValue(definitionGrammar, value);
+		const collectedValues = parseAttributeValue(definition.syntax, value);
 
 		if (collectedValues === null) {
 			continue;
