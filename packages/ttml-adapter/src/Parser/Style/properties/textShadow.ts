@@ -30,7 +30,7 @@ export function cssTransform(
 		color: DerivedValue<string, string> | undefined,
 	];
 
-	let values = value.slice();
+	const values = value.slice();
 	const buffer: Partial<DerivedValue>[] = [];
 	const shadows: DerivedShadow[] = [];
 
