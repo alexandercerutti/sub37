@@ -39,10 +39,12 @@ export type DerivationResult<RR = unknown> =
 			values?: never;
 	  };
 
-type Flatten<T> = T extends readonly any[]
+type Flatten<T> = T extends any[]
 	? T extends readonly [infer Head, ...infer Tail]
 		? [...Flatten<Head>, ...Flatten<Tail>]
-		: []
+		: T extends DerivedValue[]
+			? T
+			: [T]
 	: [T];
 
 export type InferDerivableValue<D extends Derivable> =
@@ -95,13 +97,15 @@ export function zeroOrOne<RR>(
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function zeroOrMore<RR>(node: Derivable<string, RR>): Derivable<"*", RR[] | undefined> {
+export function zeroOrMore<RR>(
+	node: Derivable<string, RR>,
+): Derivable<"*", Flatten<RR> | undefined> {
 	return Object.create(null, {
 		type: {
 			value: "*",
 		},
 		derive: {
-			value(token: string): DerivationResult<RR | undefined> {
+			value(token: string): DerivationResult<Flatten<RR>[] | undefined> {
 				const derivationResult = node.derive(token);
 
 				if (isRejected(derivationResult)) {
