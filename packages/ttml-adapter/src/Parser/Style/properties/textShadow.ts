@@ -38,13 +38,13 @@ export function cssTransform(
 		const token = values.shift();
 
 		if (!token) {
-			shadows.push(buffer as DerivedShadow);
+			shadows.push(buffer.slice() as DerivedShadow);
 			buffer.length = 0;
 			continue;
 		}
 
 		if (token.value === ",") {
-			shadows.push(buffer as DerivedShadow);
+			shadows.push(buffer.slice() as DerivedShadow);
 			buffer.length = 0;
 			continue;
 		}
