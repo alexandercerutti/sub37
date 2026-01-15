@@ -141,6 +141,13 @@ interface SyntaxModuleDefinition<DestinationProperties extends string[] = string
 		value: unknown,
 		elementAppliesTo: string,
 	): PropertiesCollection<DestinationProperties> | null;
+
+	/**
+	 * Optional tokenizer for pre-processing input strings.
+	 * This can be used to split or clean the input before parsing
+	 * when some specific format is required.
+	 */
+	tokenizer?(input: string): string[];
 }
 
 function createAttributeDefinition<
@@ -1187,15 +1194,16 @@ function convertAttributesToCSS(
  * @returns
  */
 export function parseAttributeValue(
-	definitionGrammar: Derivable,
+	syntaxModuleDefinition: SyntaxModuleDefinition,
 	value: string,
 ): DerivedValue[] | null {
-	/**
-	 * All the properties are space-separated tokens, so derivation is built
-	 * upon this principle.
-	 */
-	const tokens = value.split(/\s+/g);
+	const tokens =
+		typeof syntaxModuleDefinition.tokenizer === "function"
+			? syntaxModuleDefinition.tokenizer(value)
+			: value.split(/\s+/g);
+
 	const collectedValues: DerivedValue[] = [];
+	let nextGrammar: Derivable = syntaxModuleDefinition.Grammar;
 
 	while (tokens.length) {
 		const token = tokens.shift();
@@ -1204,7 +1212,7 @@ export function parseAttributeValue(
 			break;
 		}
 
-		const tokenDerivationResult = definitionGrammar.derive(token);
+		const tokenDerivationResult = nextGrammar.derive(token);
 
 		if (isRejected(tokenDerivationResult)) {
 			// A token couldn't be derived, skip entire attribute
@@ -1212,7 +1220,7 @@ export function parseAttributeValue(
 		}
 
 		if (isDerived(tokenDerivationResult)) {
-			definitionGrammar = tokenDerivationResult.nextNode;
+			nextGrammar = tokenDerivationResult.nextNode;
 			collectedValues.push(tokenDerivationResult.values[0]);
 			continue;
 		}
