@@ -188,28 +188,38 @@ function getValidAnimationParsedStyles(
 		}
 
 		const animationValue = splitAnimationValueList(animationValueList);
+
+		/**
+		 * @TODO should we receive keyTimes and check here the amount or
+		 * should we do that outside?
+		 */
+
+		const keyframes: DerivedValue[] = [];
 		const attribute = resolveStyleDefinitionByName(name);
-		const Grammar = attribute.syntax.Grammar;
+		const Syntax = attribute.syntax;
 
 		for (const value of animationValue) {
-			const parsingOutcome = parseAttributeValue(Grammar, value);
+			const parsingOutcome = parseAttributeValue(Syntax, value);
 
 			if (parsingOutcome === null) {
 				// Attribute is invalid. Skip entire style.
 				continue animationValueListsLoop;
 			}
 
-			/**
-			 * @TODO get parsing outcome and ship it to animation validator for each property,
-			 * along with `attribute.syntax.Grammar`, to ensure the parsed value is valid
-			 * according to the property definition.
-			 */
-
-			const existingStyles = stylesMap.get(name) || [];
-			existingStyles.push(...parsingOutcome);
-
-			stylesMap.set(name, existingStyles);
+			keyframes.push(...parsingOutcome.filter((v): v is DerivedValue => Boolean(v)));
 		}
+
+		if (typeof Syntax.validateAnimation === "function") {
+			const isAnimationValid = Syntax.validateAnimation(keyframes, animatableStyle);
+
+			if (!isAnimationValid) {
+				// Attribute is invalid. Skip entire style.
+				continue animationValueListsLoop;
+			}
+		}
+
+		const existingStyles = stylesMap.get(name) || [];
+		existingStyles.push(...keyframes);
 	}
 
 	return stylesMap;

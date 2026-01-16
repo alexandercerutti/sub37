@@ -148,6 +148,11 @@ interface SyntaxModuleDefinition<DestinationProperties extends string[] = string
 	 * when some specific format is required.
 	 */
 	tokenizer?(input: string): string[];
+
+	/**
+	 * Validates animation keyframes for this syntax among each other.
+	 */
+	validateAnimation?(keyframes: DerivedValue[], animationType: "discrete" | "continuous"): boolean;
 }
 
 function createAttributeDefinition<
