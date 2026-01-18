@@ -180,8 +180,8 @@ function getValidAnimationParsedStyles(
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
 	// scope: Scope,
-): Map<string, DerivedValue[]> {
-	const stylesMap = new Map<string, DerivedValue[]>();
+): Map<string, DerivedValue[][]> {
+	const stylesMap = new Map<string, DerivedValue[][]>();
 
 	animationValueListsLoop: for (const [name, animationValueList] of animationValueListByStyleName) {
 		if (!isStyleAnimationCompatible(animatableStyle, name)) {
@@ -195,7 +195,7 @@ function getValidAnimationParsedStyles(
 		 * should we do that outside?
 		 */
 
-		const keyframes: DerivedValue[] = [];
+		const keyframes: DerivedValue[][] = [];
 		const attribute = resolveStyleDefinitionByName(name);
 		const Syntax = attribute.syntax;
 
@@ -207,7 +207,7 @@ function getValidAnimationParsedStyles(
 				continue animationValueListsLoop;
 			}
 
-			keyframes.push(...parsingOutcome.filter((v): v is DerivedValue => Boolean(v)));
+			keyframes.push(parsingOutcome.filter((v): v is DerivedValue => Boolean(v)));
 		}
 
 		if (typeof Syntax.validateAnimation === "function") {

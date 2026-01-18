@@ -152,7 +152,10 @@ interface SyntaxModuleDefinition<DestinationProperties extends string[] = string
 	/**
 	 * Validates animation keyframes for this syntax among each other.
 	 */
-	validateAnimation?(keyframes: DerivedValue[], animationType: "discrete" | "continuous"): boolean;
+	validateAnimation?(
+		keyframes: DerivedValue[][],
+		animationType: "discrete" | "continuous",
+	): boolean;
 }
 
 function createAttributeDefinition<
