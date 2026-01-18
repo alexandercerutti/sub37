@@ -5,7 +5,7 @@ import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError
 import { KeyTimesInferredMinimumUnmatchedError } from "./KeyTimesInferredMinimumUnmatchedError";
 import { KeyTimesInferredUnmatchedAnimationValueError } from "./KeyTimesInferredUnmatchedAnimationValueError";
 import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError";
-import type { AnimationValueListMap } from "../parseAnimation";
+import type { AnimationValueListByStyleName } from "../parseAnimation";
 
 /**
  *
@@ -15,7 +15,7 @@ import type { AnimationValueListMap } from "../parseAnimation";
  */
 export function getKeyTimes(
 	value: string | undefined,
-	animationValueLists: AnimationValueListMap,
+	animationValueListByStyleName: AnimationValueListByStyleName,
 ): number[] {
 	if (!value) {
 		return [];
@@ -26,12 +26,15 @@ export function getKeyTimes(
 	if (splittedKeyTimes.length) {
 		assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
 		assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
-		assertKeyTimesAmountMatchingAnimationValueLists(splittedKeyTimes, animationValueLists);
+		assertKeyTimesAmountMatchingAnimationValueLists(
+			splittedKeyTimes,
+			animationValueListByStyleName,
+		);
 
 		return splittedKeyTimes;
 	}
 
-	const keyTimesFound = getKeyTimesAmountFromAnimationValueLists(animationValueLists);
+	const keyTimesFound = getKeyTimesAmountFromAnimationValueLists(animationValueListByStyleName);
 
 	const keyTimes = new Array<number>(keyTimesFound).fill(0.0);
 	const factor = 1 / (keyTimesFound - 1);
@@ -44,11 +47,11 @@ export function getKeyTimes(
 }
 
 function getKeyTimesAmountFromAnimationValueLists(
-	animationValueLists: AnimationValueListMap,
+	animationValueListByStyleName: AnimationValueListByStyleName,
 ): number {
 	let keyTimesAmount = 0;
 
-	for (const list of animationValueLists) {
+	for (const list of animationValueListByStyleName) {
 		const animationValueList = list[1];
 
 		if (animationValueList.length < 2) {
@@ -75,9 +78,9 @@ function getKeyTimesAmountFromAnimationValueLists(
 
 function assertKeyTimesAmountMatchingAnimationValueLists(
 	keyTimes: number[],
-	animationValueLists: AnimationValueListMap,
+	animationValueListByStyleName: AnimationValueListByStyleName,
 ): void {
-	for (const [styleName, animationValueList] of animationValueLists) {
+	for (const [styleName, animationValueList] of animationValueListByStyleName) {
 		if (animationValueList.length === keyTimes.length) {
 			continue;
 		}

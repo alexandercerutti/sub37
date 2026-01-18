@@ -133,10 +133,12 @@ function isValidFillValue(value: string): value is "freeze" | "remove" {
  * \<animation-value>
  *
  * A list of one or more values that were separated by semicolons.
+ * An array of this, should be interpreted as the list of keyframes
+ * processed as splitted by semicolons.
  *
  * @see https://w3c.github.io/ttml2/#animation-value-animation-value
  */
-type AnimationValue = string[];
+type AnimationValue = string;
 
 /**
  * \<animation-value-list>
@@ -147,42 +149,41 @@ type AnimationValue = string[];
  */
 type AnimationValueList = string;
 
-export type AnimationValueListMap = Map<string, AnimationValueList>;
+export type AnimationValueListByStyleName = Map<`tts:${string}`, AnimationValueList>;
 
-/**
- * <animation-value-list>
- *
- * @see https://w3c.github.io/ttml2/#animation-value-animation-value-list
- */
-function getAnimationValueLists(attributes: MetaAnimation): Map<string, AnimationValue> {
-	const styles = Object.entries(attributes) as [string, string][];
-	const lists: Map<string, AnimationValue> = new Map();
+function getAnimationValueListByStyleName(
+	attributes: MetaAnimation,
+): AnimationValueListByStyleName {
+	const animationValueListByStyleName: AnimationValueListByStyleName = new Map();
 
-	for (const [key, value] of styles) {
-		if (!isStyleAttribute(key)) {
+	for (const [attributeName, attributeValue] of Object.entries(attributes)) {
+		if (!isStyleAttribute(attributeName)) {
 			continue;
 		}
 
-		// <animation-value>
-		const animationValues = value.split(";");
-		lists.set(key, animationValues);
+		animationValueListByStyleName.set(attributeName, attributeValue);
 	}
 
-	return lists;
+	return animationValueListByStyleName;
 }
 
+/**
+ * Splits and validates animations for styles. Discards invalid animations
+ * for styles that are not animatable or not compatible with the specified
+ * animatable style.
+ *
+ * @param animatableStyle
+ * @param animationValueListByStyleName
+ * @returns
+ */
 function getValidAnimationParsedStyles(
 	animatableStyle: "discrete" | "continuous",
-	animationValueLists: AnimationValueListMap,
-	scope: Scope,
+	animationValueListByStyleName: AnimationValueListByStyleName,
+	// scope: Scope,
 ): Map<string, DerivedValue[]> {
 	const stylesMap = new Map<string, DerivedValue[]>();
 
-	animationValueListsLoop: for (const [name, animationValueList] of animationValueLists) {
-		if (!isStyleAttribute(name)) {
-			continue;
-		}
-
+	animationValueListsLoop: for (const [name, animationValueList] of animationValueListByStyleName) {
 		if (!isStyleAnimationCompatible(animatableStyle, name)) {
 			continue;
 		}
@@ -227,7 +228,7 @@ function getValidAnimationParsedStyles(
 
 function isStyleAnimationCompatible(
 	animatableStyle: "discrete" | "continuous",
-	styleName: string,
+	styleName: `tts:${string}`,
 ): boolean {
 	const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(styleName);
 	const isAnimatableContinuously = isPropertyContinuouslyAnimatable(styleName);
@@ -257,67 +258,8 @@ function isStyleAnimationCompatible(
 	return true;
 }
 
-function splitAnimationValueList(animationValue: AnimationValueList): AnimationValue {
+function splitAnimationValueList(animationValue: AnimationValueList): AnimationValue[] {
 	return animationValue.split(/\s*;\s*/);
-}
-
-/**
- * Verifies if a property is animatable and converts the
- * <animation-value> into a list of TTMLStyles.
- *
- * @param animationValueLists
- * @param styleParser
- * @returns
- */
-function getStylesFrameListMap(
-	animatableStyle: "discrete" | "continuous",
-	animationValueLists: Map<string, AnimationValue>,
-	styleParser: StyleParser,
-): Map<string, TTMLStyle[]> {
-	const styleMap = new Map<string, TTMLStyle[]>();
-
-	for (const [name, animationValueList] of animationValueLists) {
-		const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(name);
-		const isAnimatableContinuously = isPropertyContinuouslyAnimatable(name);
-
-		const isAnimatable = isAnimatableDiscretely || isAnimatableContinuously;
-
-		if (!isAnimatable) {
-			/**
-			 * "Targeting a non-animatable style is considered an error and
-			 * must be ignored for the purpose of presentation processing."
-			 */
-			console.warn(
-				`Style '${name}' was specified as animation-value, but is not animatable. Ignored.`,
-			);
-			continue;
-		}
-
-		if (animatableStyle === "discrete" && !isAnimatableDiscretely) {
-			console.warn(
-				`Style '${name}' was specified as animation-value with a continuous animatable style, but is not discretely animatable. Ignored.`,
-			);
-			continue;
-		}
-
-		if (!styleMap.has(name)) {
-			styleMap.set(name, []);
-		}
-
-		const styleList = styleMap.get(name)!;
-
-		for (const animationValue of animationValueList) {
-			const style = styleParser.process({
-				[name]: animationValue,
-			});
-
-			if (style) {
-				styleList.push(style);
-			}
-		}
-	}
-
-	return styleMap;
 }
 
 // region calcMode:discrete
@@ -347,9 +289,10 @@ function createDiscreteAnimation(
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap("discrete", animationValueLists, styleParser);
-	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueLists);
+	const animationValueList = getAnimationValueListByStyleName(attributes);
+	const animationStyles = getValidAnimationParsedStyles("discrete", animationValueList);
+
+	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueList);
 
 	const timingAttributes = extractTimingAttributes(attributes);
 
@@ -380,9 +323,10 @@ function createLinearAnimation(
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
-	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
+	const animationValueList = getAnimationValueListByStyleName(attributes);
+	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
+
+	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
 
@@ -411,8 +355,9 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
+	const animationValueList = getAnimationValueListByStyleName(attributes);
+	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
+
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -442,10 +387,10 @@ function createSplineAnimation(
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
-	const animationValueLists = getAnimationValueLists(attributes);
-	const stylesFrameListMap = getStylesFrameListMap("continuous", animationValueLists, styleParser);
+	const animationValueList = getAnimationValueListByStyleName(attributes);
+	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
 
-	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueLists);
+	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
 
