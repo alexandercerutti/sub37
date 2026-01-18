@@ -221,6 +221,7 @@ function getValidAnimationParsedStyles(
 
 		const existingStyles = stylesMap.get(name) || [];
 		existingStyles.push(...keyframes);
+		stylesMap.set(name, existingStyles);
 	}
 
 	return stylesMap;
