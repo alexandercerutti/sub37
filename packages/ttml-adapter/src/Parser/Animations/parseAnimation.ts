@@ -224,6 +224,10 @@ function getValidAnimationParsedStyles(
 
 		const animationValue = splitAnimationValueList(animationValueList);
 
+		if (animationValue.length <= 1) {
+			continue animationValueListsLoop;
+		}
+
 		/**
 		 * @TODO should we receive keyTimes and check here the amount or
 		 * should we do that outside?
