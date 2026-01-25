@@ -53,3 +53,56 @@ export function cssTransform(
 		["text-emphasis-position", position || ""],
 	];
 }
+
+export function validateAnimation(
+	keyframes: InferDerivableValue<typeof TextEmphasisGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	if (animationType === "discrete") {
+		return true;
+	}
+
+	let previousKeyframeStyle: string | undefined = undefined;
+	let previousKeyframePosition: string | undefined = undefined;
+
+	for (const keyframe of keyframes) {
+		let currentKeyframeStyle: string | undefined = undefined;
+		let currentKeyframePosition: string | undefined = undefined;
+
+		for (const item of keyframe) {
+			switch (item.type) {
+				case "text-emphasis-style": {
+					currentKeyframeStyle = item.value[0].value;
+
+					if (currentKeyframeStyle !== previousKeyframeStyle) {
+						return false;
+					}
+
+					break;
+				}
+
+				case "text-emphasis-position": {
+					currentKeyframePosition = item.value[0].value;
+
+					if (currentKeyframePosition !== previousKeyframePosition) {
+						return false;
+					}
+
+					break;
+				}
+			}
+		}
+
+		if (
+			(!currentKeyframeStyle && previousKeyframeStyle) ||
+			(!currentKeyframePosition && previousKeyframePosition)
+		) {
+			return false;
+		}
+
+		previousKeyframeStyle = currentKeyframeStyle;
+		previousKeyframePosition = currentKeyframePosition;
+	}
+
+	return true;
+}

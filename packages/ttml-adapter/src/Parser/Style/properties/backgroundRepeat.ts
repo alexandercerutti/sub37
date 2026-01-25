@@ -27,3 +27,10 @@ export function cssTransform(
 		}
 	}
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof BackgroundRepeatGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

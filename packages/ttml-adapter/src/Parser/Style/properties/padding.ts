@@ -14,3 +14,10 @@ export function cssTransform(
 		["padding", paddingValues.map(({ value }) => value.toString()).join(" ")],
 	];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof PaddingGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

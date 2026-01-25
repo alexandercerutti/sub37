@@ -22,3 +22,9 @@ export function cssTransform(
 		["top", normalizedValue[3].toString()],
 	];
 }
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof PositionGrammar>[],
+	_animationType: "discrete" | "continuous",
+): boolean {
+	return true;
+}

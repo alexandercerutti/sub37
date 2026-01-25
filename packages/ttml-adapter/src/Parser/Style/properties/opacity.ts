@@ -11,3 +11,10 @@ export function cssTransform(
 ): PropertiesCollection<["opacity"]> {
 	return [["opacity", String(value[0].value)]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof OpacityGrammar>[],
+	_animationType: "discrete" | "continuous",
+): boolean {
+	return true;
+}

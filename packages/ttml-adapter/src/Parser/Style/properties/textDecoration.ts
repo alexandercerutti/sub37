@@ -51,3 +51,10 @@ export function cssTransform(
 	// See note above
 	return null;
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof TextDecorationGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

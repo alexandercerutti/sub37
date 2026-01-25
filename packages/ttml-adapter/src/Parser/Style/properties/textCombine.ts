@@ -11,3 +11,10 @@ export function cssTransform(
 ): PropertiesCollection<["text-combine-upright"]> {
 	return [["text-combine-upright", value[0].value]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof TextCombineGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

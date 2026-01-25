@@ -35,3 +35,10 @@ export function cssTransform(
 
 	return null;
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof DisplayGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

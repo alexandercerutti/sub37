@@ -24,3 +24,10 @@ export function cssTransform(
 
 	return [["text-orientation", value[0].value]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof TextOrientationGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

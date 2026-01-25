@@ -102,3 +102,10 @@ function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: 
 		"px",
 	);
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof FontSizeGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

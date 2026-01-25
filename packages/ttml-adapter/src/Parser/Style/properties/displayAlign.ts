@@ -47,3 +47,10 @@ export function cssTransform(
 		}
 	}
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof DisplayAlignGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

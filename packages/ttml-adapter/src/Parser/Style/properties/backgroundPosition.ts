@@ -24,3 +24,10 @@ export function cssTransform(
 		],
 	];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof PositionGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

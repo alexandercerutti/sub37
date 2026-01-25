@@ -33,3 +33,10 @@ export function cssTransform(
 		["y", value[1].toString()],
 	];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof OriginGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

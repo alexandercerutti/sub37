@@ -11,3 +11,10 @@ export function cssTransform(
 ): PropertiesCollection<["color"]> {
 	return [["color", value[0].value]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof ColorGrammar>[],
+	_animationType: "discrete" | "continuous",
+): boolean {
+	return true;
+}

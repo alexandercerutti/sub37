@@ -11,3 +11,10 @@ export function cssTransform(
 ): PropertiesCollection<["text-align"]> | null {
 	return [["text-align", value[0].value]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof TextAlignGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}

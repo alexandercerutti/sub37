@@ -11,3 +11,11 @@ export function cssTransform(
 ): PropertiesCollection<["background-color"]> | null {
 	return [["background-color", value[0].value]];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof ColorGrammar>[],
+	_animationType: "discrete" | "continuous",
+): boolean {
+	// Color can be animated both continuously and discretely between any values
+	return true;
+}

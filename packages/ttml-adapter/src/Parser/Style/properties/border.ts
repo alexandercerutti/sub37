@@ -9,10 +9,10 @@ export function cssTransform(
 	_scope: Scope,
 	values: InferDerivableValue<typeof BorderGrammar>,
 ): PropertiesCollection<["border-width", "border-style", "border-color", "border-radius"]> {
-	let borderColor = "";
-	let borderStyle = "";
-	let borderWidth = "";
-	let borderRadius = "";
+	let borderColor = "currentColor";
+	let borderStyle = "none";
+	let borderWidth = "0px";
+	let borderRadius = "0px";
 
 	for (const output of values) {
 		if (isBorderColor(output)) {
@@ -71,4 +71,78 @@ function isBorderStyle(
 	value: InferDerivableValue<typeof BorderGrammar>[number],
 ): value is BorderStyle {
 	return value.type === "border-style";
+}
+
+export function validateAnimation(
+	keyframes: InferDerivableValue<typeof BorderGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	if (animationType === "discrete") {
+		return true;
+	}
+
+	/**
+	 * Border properties can be animated countinuously only for color.
+	 * The other properties must not change or not be defined.
+	 */
+
+	let previousBorderWidth: string | undefined = undefined;
+	let previousBorderStyle: string | undefined = undefined;
+	let previousBorderRadius: string | undefined = undefined;
+
+	for (const keyframe of keyframes) {
+		let borderStyle: string | undefined;
+		let borderWidth: string | undefined;
+		let borderRadius: string | undefined;
+
+		for (const output of keyframe) {
+			switch (true) {
+				case isBorderStyle(output): {
+					const nakedValue = output.value[0].value;
+					borderStyle = nakedValue;
+
+					if (borderStyle !== previousBorderStyle) {
+						return false;
+					}
+
+					break;
+				}
+
+				case isBorderWidth(output): {
+					const nakedValue = output.value[0].value;
+					borderWidth = nakedValue.toString();
+
+					if (borderWidth !== previousBorderWidth) {
+						return false;
+					}
+
+					break;
+				}
+
+				case isBorderRadius(output): {
+					borderRadius = output.value;
+
+					if (borderRadius !== previousBorderRadius) {
+						return false;
+					}
+
+					break;
+				}
+			}
+		}
+
+		if (
+			(!borderWidth && previousBorderWidth) ||
+			(!borderStyle && previousBorderStyle) ||
+			(!borderRadius && previousBorderRadius)
+		) {
+			return false;
+		}
+
+		previousBorderWidth = borderWidth;
+		previousBorderStyle = borderStyle;
+		previousBorderRadius = borderRadius;
+	}
+
+	return true;
 }

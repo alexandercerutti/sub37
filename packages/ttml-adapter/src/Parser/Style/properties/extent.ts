@@ -93,3 +93,10 @@ export function cssTransform(
 		["height", heightLength.toString()],
 	];
 }
+
+export function validateAnimation(
+	_keyframes: InferDerivableValue<typeof ExtentGrammar>[],
+	animationType: "discrete" | "continuous",
+): boolean {
+	return animationType === "discrete";
+}
