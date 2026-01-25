@@ -7,7 +7,6 @@ import {
 	parseAttributeValue,
 	resolveStyleDefinitionByName,
 } from "../parseStyle.js";
-import type { TTMLStyle } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import type { TimeContextData } from "../Scope/TimeContext.js";
 import type { DerivedValue } from "../Style/structure/operators.js";
@@ -16,8 +15,6 @@ import { KeySplinesNotAllowedError } from "./keySplines/KeySplinesNotAllowedErro
 import { KeySplinesRequiredError } from "./keySplines/KeySplinesRequiredError.js";
 import { assertKeyTimesEndIsOne, getKeyTimes } from "./keyTimes/index.js";
 import { KeyTimesPacedNotAllowedError } from "./keyTimes/KeyTimesNotAllowedError.js";
-
-type StyleParser = ReturnType<typeof createStyleParser>;
 
 interface MetaAnimation extends Record<`tts:${string}`, string> {
 	/**
@@ -53,33 +50,32 @@ interface Animation<CM extends CalcMode> {
 
 export const createAnimationParser = memoizationFactory(function animationParser(
 	animationStorage: Map<string, unknown>,
-	scope: Scope,
+	_scope: Scope,
 	attributes: MetaAnimation,
 ): Animation<CalcMode> | undefined {
-	const styleParser = createStyleParser(scope);
 	const calcMode = attributes["calcMode"] || "linear";
 
 	switch (true) {
 		case isDiscreteAnimation(calcMode): {
-			const animation = createDiscreteAnimation(attributes, styleParser);
+			const animation = createDiscreteAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousLinearAnimation(calcMode): {
-			const animation = createLinearAnimation(attributes, styleParser);
+			const animation = createLinearAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousPacedAnimation(calcMode): {
-			const animation = createPacedAnimation(attributes, styleParser);
+			const animation = createPacedAnimation(attributes);
 
 			break;
 		}
 
 		case isContinuousSplineAnimation(calcMode): {
-			const animation = createSplineAnimation(attributes, styleParser);
+			const animation = createSplineAnimation(attributes);
 
 			break;
 		}
@@ -216,7 +212,6 @@ function getValidAnimationParsedStylesFrames(
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
 	expectedKeytimes: number,
-	// scope: Scope,
 ): Map<string, DerivedValue[][]> {
 	const stylesMap = new Map<string, DerivedValue[][]>();
 
@@ -326,10 +321,7 @@ function isDiscreteAnimation(calcMode: string): calcMode is DiscreteCalcMode {
 	return calcMode === "discrete";
 }
 
-function createDiscreteAnimation(
-	attributes: MetaAnimation,
-	styleParser: StyleParser,
-): DiscreteAnimation {
+function createDiscreteAnimation(attributes: MetaAnimation): DiscreteAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -364,10 +356,7 @@ function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
 	return calcMode === "linear";
 }
 
-function createLinearAnimation(
-	attributes: MetaAnimation,
-	styleParser: StyleParser,
-): LinearAnimation {
+function createLinearAnimation(attributes: MetaAnimation): LinearAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -402,7 +391,7 @@ function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
 	return calcMode === "paced";
 }
 
-function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParser): PacedAnimation {
+function createPacedAnimation(attributes: MetaAnimation): PacedAnimation {
 	assertKeySplinesMissing(attributes);
 	assertKeyTimesMissing(attributes);
 
@@ -433,10 +422,7 @@ function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
 	return calcMode === "spline";
 }
 
-function createSplineAnimation(
-	attributes: MetaAnimation,
-	styleParser: StyleParser,
-): SplineAnimation {
+function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
 	assertKeySplineRequired(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
