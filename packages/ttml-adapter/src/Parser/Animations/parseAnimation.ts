@@ -208,11 +208,13 @@ function getAnimationValueListByStyleName(
  *
  * @param animatableStyle
  * @param animationValueListByStyleName
+ * @param expectedKeytimes
  * @returns
  */
 function getValidAnimationParsedStyles(
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
+	expectedKeytimes: number,
 	// scope: Scope,
 ): Map<string, DerivedValue[][]> {
 	const stylesMap = new Map<string, DerivedValue[][]>();
@@ -228,10 +230,13 @@ function getValidAnimationParsedStyles(
 			continue animationValueListsLoop;
 		}
 
-		/**
-		 * @TODO should we receive keyTimes and check here the amount or
-		 * should we do that outside?
-		 */
+		if (expectedKeytimes > 0 && expectedKeytimes !== animationValue.length) {
+			console.warn(
+				`Style '${name}' was specified as animation-value, but the amount of keyTimes (${expectedKeytimes}) does not match the amount of specified animation values (${animationValue.length}). Ignored.`,
+			);
+
+			continue animationValueListsLoop;
+		}
 
 		const keyframes: DerivedValue[][] = [];
 		const attribute = resolveStyleDefinitionByName(name);
@@ -329,9 +334,12 @@ function createDiscreteAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const animationStyles = getValidAnimationParsedStyles("discrete", animationValueList);
-
 	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueList);
+	const animationStyles = getValidAnimationParsedStyles(
+		"discrete",
+		animationValueList,
+		keyTimes.length,
+	);
 
 	const timingAttributes = extractTimingAttributes(attributes);
 
@@ -363,9 +371,12 @@ function createLinearAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
-
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
+	const animationStyles = getValidAnimationParsedStyles(
+		"continuous",
+		animationValueList,
+		keyTimes.length,
+	);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
 
@@ -395,7 +406,7 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
+	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList, 0);
 
 	const timingAttributes = extractTimingAttributes(attributes);
 
@@ -427,9 +438,12 @@ function createSplineAnimation(
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList);
-
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
+	const animationStyles = getValidAnimationParsedStyles(
+		"continuous",
+		animationValueList,
+		keyTimes.length,
+	);
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
 
