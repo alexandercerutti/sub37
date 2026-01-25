@@ -48,6 +48,7 @@ interface Animation<CM extends CalcMode> {
 		end?: string;
 		dur?: string;
 	};
+	stylesFrames: Map<string, DerivedValue<string, unknown>[][]>;
 }
 
 export const createAnimationParser = memoizationFactory(function animationParser(
@@ -211,7 +212,7 @@ function getAnimationValueListByStyleName(
  * @param expectedKeytimes
  * @returns
  */
-function getValidAnimationParsedStyles(
+function getValidAnimationParsedStylesFrames(
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
 	expectedKeytimes: number,
@@ -335,7 +336,7 @@ function createDiscreteAnimation(
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
 	const keyTimes = getKeyTimes(attributes["keyTimes"], animationValueList);
-	const animationStyles = getValidAnimationParsedStyles(
+	const stylesFrames = getValidAnimationParsedStylesFrames(
 		"discrete",
 		animationValueList,
 		keyTimes.length,
@@ -349,6 +350,7 @@ function createDiscreteAnimation(
 		repeatCount,
 		fill,
 		timingAttributes,
+		stylesFrames,
 	};
 }
 
@@ -372,7 +374,7 @@ function createLinearAnimation(
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
-	const animationStyles = getValidAnimationParsedStyles(
+	const stylesFrames = getValidAnimationParsedStylesFrames(
 		"continuous",
 		animationValueList,
 		keyTimes.length,
@@ -388,6 +390,7 @@ function createLinearAnimation(
 		repeatCount,
 		fill,
 		timingAttributes,
+		stylesFrames,
 	};
 }
 
@@ -406,7 +409,7 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const animationStyles = getValidAnimationParsedStyles("continuous", animationValueList, 0);
+	const stylesFrames = getValidAnimationParsedStylesFrames("continuous", animationValueList, 0);
 
 	const timingAttributes = extractTimingAttributes(attributes);
 
@@ -415,6 +418,7 @@ function createPacedAnimation(attributes: MetaAnimation, styleParser: StyleParse
 		repeatCount,
 		fill,
 		timingAttributes,
+		stylesFrames,
 	};
 }
 
@@ -439,7 +443,7 @@ function createSplineAnimation(
 	const fill = getFill(attributes["fill"]);
 	const animationValueList = getAnimationValueListByStyleName(attributes);
 	const keyTimes = getKeyTimes(attributes.keyTimes, animationValueList);
-	const animationStyles = getValidAnimationParsedStyles(
+	const stylesFrames = getValidAnimationParsedStylesFrames(
 		"continuous",
 		animationValueList,
 		keyTimes.length,
@@ -462,6 +466,7 @@ function createSplineAnimation(
 		repeatCount,
 		fill,
 		timingAttributes,
+		stylesFrames,
 	};
 }
 
