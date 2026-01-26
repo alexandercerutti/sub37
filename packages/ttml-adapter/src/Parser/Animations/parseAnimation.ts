@@ -20,6 +20,7 @@ import {
 import { KeyTimesPacedNotAllowedError } from "./keyTimes/KeyTimesNotAllowedError.js";
 
 interface MetaAnimation extends Record<`tts:${string}`, string> {
+	"xml:id": string;
 	/**
 	 * CalcMode is also used for <set> when we register
 	 * discrete animations, in order to understand how
@@ -58,38 +59,57 @@ export const createAnimationParser = memoizationFactory(function animationParser
 	attributes: MetaAnimation,
 ): Animation<CalcMode> | undefined {
 	const calcMode = attributes["calcMode"] || "linear";
+	const animationId = attributes["xml:id"] || `animation__${Math.random() * (1000 - 10) + 10}`;
 
-	switch (true) {
-		case isDiscreteAnimation(calcMode): {
-			const animation = createDiscreteAnimation(attributes);
-
-			break;
-		}
-
-		case isContinuousLinearAnimation(calcMode): {
-			const animation = createLinearAnimation(attributes);
-
-			break;
-		}
-
-		case isContinuousPacedAnimation(calcMode): {
-			const animation = createPacedAnimation(attributes);
-
-			break;
-		}
-
-		case isContinuousSplineAnimation(calcMode): {
-			const animation = createSplineAnimation(attributes);
-
-			break;
-		}
+	if (animationStorage.has(animationId)) {
+		return undefined;
 	}
 
-	console.warn(
-		"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. Set is automatically considered as 'discrete'. Animation ignored.",
-	);
+	let animation: Animation<CalcMode> | undefined;
 
-	return undefined;
+	try {
+		switch (true) {
+			case isDiscreteAnimation(calcMode): {
+				animation = createDiscreteAnimation(attributes);
+				break;
+			}
+
+			case isContinuousLinearAnimation(calcMode): {
+				animation = createLinearAnimation(attributes);
+				break;
+			}
+
+			case isContinuousPacedAnimation(calcMode): {
+				animation = createPacedAnimation(attributes);
+				break;
+			}
+
+			case isContinuousSplineAnimation(calcMode): {
+				animation = createSplineAnimation(attributes);
+				break;
+			}
+
+			default: {
+				console.warn(
+					"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. Set is automatically considered as 'discrete'. Animation ignored.",
+				);
+			}
+		}
+	} catch (err) {
+		console.warn(
+			`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
+		);
+
+		return undefined;
+	}
+
+	if (!animation?.stylesFrames.size) {
+		return undefined;
+	}
+
+	animationStorage.set(animationId, animation);
+
+	return animation;
 });
 
 /**
