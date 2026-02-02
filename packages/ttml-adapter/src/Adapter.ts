@@ -758,10 +758,13 @@ function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean
 }
 
 function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
-	const { parent, content } = currentNode;
-	const parentNode = parent!.content.content;
+	if (!isRegionElement(currentNode)) {
+		return false;
+	}
 
-	return isBlockClassElement(parentNode) && content.content === "region";
+	const parentNode = currentNode.parent!.content.content;
+
+	return isBlockClassElement(parentNode);
 }
 
 function getInlineRegionFromCloseTag(
@@ -802,6 +805,10 @@ function getInlineRegionFromCloseTag(
 	};
 }
 
+function isRegionElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "region";
+}
+
 function isLayoutElement(currentNode: NodeWithRelationship<Token>): boolean {
 	return currentNode.content.content === "layout";
 }
@@ -817,10 +824,12 @@ function extractOutOfLineRegions(
 
 	const regions: RegionContainerContextState[] = [];
 
-	for (const { content: tokenContent, children: regionChildren } of children) {
-		if (tokenContent.content !== "region") {
+	for (const child of children) {
+		if (!isRegionElement(child)) {
 			continue;
 		}
+
+		const { content: tokenContent, children: regionChildren } = child;
 
 		regions.push({ attributes: tokenContent.attributes, children: regionChildren });
 	}
