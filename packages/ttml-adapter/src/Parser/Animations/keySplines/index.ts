@@ -36,7 +36,7 @@ export function getKeySplines(value: string | undefined, keyTimes: number[]): nu
 
 	for (const control of splineControls) {
 		const coordinates = getSplittedLinearWhitespaceValues(control);
-		const splineCoordinates = [];
+		const splineCoordinates: number[] = [];
 
 		if (coordinates.length !== 4) {
 			throw new KeySplinesInvalidControlsAmountError(control);
@@ -52,7 +52,7 @@ export function getKeySplines(value: string | undefined, keyTimes: number[]): nu
 			splineCoordinates.push(coordinateNumber);
 		}
 
-		splineCoordinates.push(splineCoordinates);
+		splines.push(splineCoordinates);
 	}
 
 	return splines;
