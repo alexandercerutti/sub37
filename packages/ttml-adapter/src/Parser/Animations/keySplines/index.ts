@@ -23,7 +23,7 @@ export function getKeySplines(value: string, keyTimes: number[]): number[][] {
 	 *: x1 <lwsp> y1 <lwsp> x2 <lwsp> y2
 	 * ```
 	 */
-	const splineControls = value.trim().split(/\s?;\s*/);
+	const splineControls = value.trim().split(/\s*;\s*/);
 	const splines: number[][] = [];
 
 	if (splineControls.length !== keyTimes.length - 1) {
