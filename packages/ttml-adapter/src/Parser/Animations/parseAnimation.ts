@@ -354,8 +354,6 @@ function createDiscreteAnimation(attributes: MetaAnimation): Animation<DiscreteC
 		keyTimes.length,
 	);
 
-	const timingAttributes = extractTimingAttributes(attributes);
-
 	if (!keyTimes.length) {
 		const [stylesToDiscard, keyTimesAmount] =
 			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
@@ -371,6 +369,8 @@ function createDiscreteAnimation(attributes: MetaAnimation): Animation<DiscreteC
 	}
 
 	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
+
+	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		calcMode: "discrete",
@@ -489,8 +489,6 @@ function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
 		keyTimes.length,
 	);
 
-	const timingAttributes = extractTimingAttributes(attributes);
-
 	if (!keyTimes.length) {
 		const [stylesToDiscard, keyTimesAmount] =
 			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
@@ -512,6 +510,8 @@ function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
 	/**
 	 * @TODO validate keySplines, if they are not provided correctly
 	 */
+
+	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		calcMode: "spline",
