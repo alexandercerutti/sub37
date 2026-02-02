@@ -926,11 +926,14 @@ function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined 
 }
 
 function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
-	const { parent, content } = currentNode;
-	const parentNode = parent!.content.content;
+	const { content } = currentNode;
+
+	const isCurrentNodeAllowedToContainInlineAnimation =
+		isBlockClassElement(currentNode.parent!.content.content) ||
+		isLayoutClassElement(currentNode.parent!.content.content);
 
 	return (
-		isBlockClassElement(parentNode) &&
+		isCurrentNodeAllowedToContainInlineAnimation &&
 		(content.content === "animation" || content.content === "set")
 	);
 }
