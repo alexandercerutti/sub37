@@ -2,7 +2,6 @@ import { KeyTimesAscendingOrderViolationError } from "./KeyTimesAscendingOrderVi
 import { KeyTimesComponentOutOfBoundaryError } from "./KeyTimesComponentOutOfBoundaryError";
 import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError";
 import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError";
-import type { DerivedValue } from "../../Style/structure/operators";
 
 /**
  *
