@@ -16,6 +16,17 @@ export function getKeySplines(value: string | undefined, keyTimes: number[]): nu
 		return [];
 	}
 
+	/**
+	 * @syntax
+	 *
+	 * ```
+	 * <key-splines>
+	 * : control ( <lwsp>? ";" <lwsp>? control )*
+	 *
+	 *	control
+	 *: x1 <lwsp> y1 <lwsp> x2 <lwsp> y2
+	 * ```
+	 */
 	const splineControls = value.trim().split(/\s?;\s*/);
 	const splines: number[][] = [];
 
