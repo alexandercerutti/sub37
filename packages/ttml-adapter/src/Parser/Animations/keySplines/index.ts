@@ -11,11 +11,7 @@ import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControl
  * @param keyTimes
  * @returns
  */
-export function getKeySplines(value: string | undefined, keyTimes: number[]): number[][] {
-	if (value === undefined) {
-		return [];
-	}
-
+export function getKeySplines(value: string, keyTimes: number[]): number[][] {
 	/**
 	 * @syntax
 	 *

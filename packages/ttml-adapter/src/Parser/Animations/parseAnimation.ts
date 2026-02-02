@@ -507,10 +507,6 @@ function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
 
 	const keySplines = getKeySplines(attributes["keySplines"], keyTimes);
 
-	/**
-	 * @TODO validate keySplines, if they are not provided correctly
-	 */
-
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -565,7 +561,7 @@ function assertKeyTimesMissing(
 
 function assertKeySplineRequired(
 	attributes: MetaAnimation,
-): asserts attributes is Omit<MetaAnimation, "keyTimes"> {
+): asserts attributes is MetaAnimation & { keySplines: string } {
 	if (!attributes.keySplines) {
 		throw new KeySplinesRequiredError();
 	}
