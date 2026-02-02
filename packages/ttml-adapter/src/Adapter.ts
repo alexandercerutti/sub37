@@ -287,8 +287,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isLayoutClassElement(token.content)) {
 						const { currentNode } = nodeTree;
-						const currentTagName = currentNode.content.content;
-						const isParentLayout = currentTagName === "layout";
+						const isParentLayout = isLayoutElement(currentNode);
 
 						if (isParentLayout) {
 							if (shouldIgnoreOutOfLineRegion(token)) {
