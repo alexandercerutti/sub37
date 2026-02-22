@@ -20,13 +20,7 @@ import {
 import { KeyTimesPacedNotAllowedError } from "./keyTimes/KeyTimesNotAllowedError.js";
 
 interface MetaAnimation extends Record<`tts:${string}`, string> {
-	"xml:id": string;
-	/**
-	 * CalcMode is also used for <set> when we register
-	 * discrete animations, in order to understand how
-	 * to behave.
-	 */
-	calcMode: string;
+	"xml:id"?: string;
 	keyTimes?: string;
 	keySplines?: string;
 	fill?: string;
@@ -38,7 +32,8 @@ interface MetaAnimation extends Record<`tts:${string}`, string> {
 
 type DiscreteCalcMode = "discrete";
 type ContinuousCalcMode = "linear" | "paced" | "spline";
-type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
+
+export type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
 
 interface Animation<CM extends CalcMode> {
 	calcMode: CM;
@@ -54,11 +49,16 @@ interface Animation<CM extends CalcMode> {
 }
 
 export const createAnimationParser = memoizationFactory(function animationParser(
-	animationStorage: Map<string, unknown>,
+	animationStorage: Map<string, Animation<CalcMode>>,
 	_scope: Scope,
-	attributes: MetaAnimation,
+	/**
+	 * CalcMode is also used for <set> when we register
+	 * discrete animations, in order to understand how
+	 * to behave.
+	 */
+	calcMode: CalcMode,
+	attributes: Record<string, string>,
 ): Animation<CalcMode> | undefined {
-	const calcMode = attributes["calcMode"] || "linear";
 	const animationId = attributes["xml:id"] || `animation__${Math.random() * (1000 - 10) + 10}`;
 
 	if (animationStorage.has(animationId)) {
