@@ -541,16 +541,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					 */
 
 					if (isInlineRegion(nodeTree.currentNode)) {
-						const inlineRegion = getInlineRegionFromCloseTag(nodeTree.currentNode);
-
-						/**
-						 * if the `[attributes]` information item property of R does not include
-						 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
-						 * generated value _ID_ that is unique within the scope of the TTML
-						 * document instance;
-						 *
-						 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;
-						 */
+						const inlineRegion = getInlineRegionFromOpeningTag(nodeTree.currentNode);
 
 						treeScope = createScope(
 							treeScope,
@@ -775,15 +766,21 @@ function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
  * > document instance;
  * >
  * > otherwise, let _ID_ be the value of the `xml:id` attribute of R'
+ *
+ * ---
+ *
+ * This function is called when we receive the closing tag of an inline region.
+ * This means that we have all the information about the region itself in the
+ * opening tag.
  */
-function getInlineRegionFromCloseTag(
-	currentNode: NodeWithRelationship<Token>,
+function getInlineRegionFromOpeningTag(
+	openingTag: NodeWithRelationship<Token>,
 ): RegionContainerContextState {
 	const {
 		content: { attributes: regionAttributes },
 		parent,
 		children,
-	} = currentNode;
+	} = openingTag;
 
 	const {
 		content: { attributes: parentAttributes },
