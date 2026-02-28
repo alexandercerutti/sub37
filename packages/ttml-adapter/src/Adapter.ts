@@ -28,6 +28,10 @@ import type { Visitor } from "./Parser/structure/visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 import { createStyleParser } from "./Parser/parseStyle.js";
+import {
+	AnimationContainerContextState,
+	createAnimationContainerContext,
+} from "./Parser/Scope/AnimationContainerContext.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -517,12 +521,41 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (isInlineAnimation(nodeTree.currentNode)) {
-						/**
-						 * @TODO add this animation to a new scope and
-						 * 			generate it an id
-						 * @TODO add the id to a temporal active context
-						 */
+						const animation = getInlineAnimationFromOpeningTag(nodeTree.currentNode);
+						const temporalActiveContext = readScopeTemporalActiveContext(treeScope!);
 
+						/**
+						 * There may be multiple inline animations inside the same element.
+						 * If any have been already added, let's merge the contexts.
+						 */
+						if (temporalActiveContext) {
+							/**
+							 * @TODO this is quite ugly. Maybe we can add multiple contexts together?
+							 * Can we somehow automatically create a scope without understanding
+							 * if the temporal active context is already there or not?
+							 */
+
+							treeScope!.addContext(
+								createTemporalActiveContext({
+									animationsIDRefs: [animation.attributes["xml:id"]!],
+								}),
+							);
+
+							treeScope!.addContext(
+								//
+								createAnimationContainerContext([animation]),
+							);
+						} else {
+							treeScope = createScope(
+								treeScope,
+								createAnimationContainerContext([animation]),
+								createTemporalActiveContext({
+									animationsIDRefs: [animation.attributes["xml:id"]!],
+								}),
+							);
+						}
+
+						nodeTree.pop();
 						break;
 					}
 
@@ -950,4 +983,32 @@ function extractOutOfLineAnimations(
 	}
 
 	return animations;
+}
+
+function getInlineAnimationFromOpeningTag(
+	openingTag: NodeWithRelationship<Token>,
+): AnimationContainerContextState {
+	const {
+		content: { attributes: animationAttributes },
+		parent,
+	} = openingTag;
+
+	const {
+		content: { attributes: parentAttributes },
+	} = parent!;
+
+	const INLINE_ANIMATION_PREFIX = "in:animation";
+	const animationId =
+		animationAttributes["xml:id"] ||
+		parentAttributes["xml:id"] ||
+		Math.floor(Math.random() * (500 - 100) + 100);
+
+	return {
+		attributes: Object.create(animationAttributes, {
+			"xml:id": {
+				value: `${INLINE_ANIMATION_PREFIX}-${animationId}`,
+			},
+		}),
+		calcMode: openingTag.content.content === "set" ? "discrete" : animationAttributes["calcMode"],
+	};
 }
