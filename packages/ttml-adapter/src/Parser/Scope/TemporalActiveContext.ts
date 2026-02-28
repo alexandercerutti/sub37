@@ -34,9 +34,9 @@ export type ActiveStyle = TTMLStyle & {
 };
 
 interface TemporalActiveInitParams {
-	regionIDRef: string;
-	styles: ActiveStyle[];
-	animationsIDRefs: string[];
+	regionIDRef?: string;
+	styles?: ActiveStyle[];
+	animationsIDRefs?: string[];
 }
 
 type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
@@ -45,12 +45,12 @@ export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
 	return function (scope: Scope) {
-		const store: TemporalActiveInitParams = Object.assign(
+		const store: Required<TemporalActiveInitParams> = Object.assign(
 			{
 				styles: [],
 				regionIDRef: "",
 				animationsIDRefs: [],
-			} satisfies TemporalActiveInitParams,
+			} satisfies Required<TemporalActiveInitParams>,
 			initParams,
 		);
 
@@ -102,7 +102,7 @@ export function createTemporalActiveContext(
 					}
 				}
 
-				if (animationsIDRefs.length) {
+				if (animationsIDRefs?.length) {
 					/**
 					 * @TODO query the animation context and check
 					 * for any available

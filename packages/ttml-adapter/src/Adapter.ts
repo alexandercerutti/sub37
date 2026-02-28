@@ -394,8 +394,6 @@ export default class TTMLAdapter extends BaseAdapter {
 							contextsList.push(
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
-									styles: [],
-									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -429,9 +427,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (inlineStyles) {
 							contextsList.push(
 								createTemporalActiveContext({
-									regionIDRef: "",
 									styles: [inlineStyles],
-									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -443,9 +439,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (outOfLineStyle) {
 							contextsList.push(
 								createTemporalActiveContext({
-									regionIDRef: "",
 									styles: [outOfLineStyle],
-									animationsIDRefs: [],
 								}),
 							);
 						}
@@ -462,8 +456,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (animationsIDRefs.length) {
 							contextsList.push(
 								createTemporalActiveContext({
-									regionIDRef: "",
-									styles: [],
 									animationsIDRefs,
 								}),
 							);
@@ -548,8 +540,6 @@ export default class TTMLAdapter extends BaseAdapter {
 							createRegionContainerContext([inlineRegion]),
 							createTemporalActiveContext({
 								regionIDRef: inlineRegion.attributes["xml:id"]!,
-								styles: [],
-								animationsIDRefs: [],
 							}),
 						);
 
