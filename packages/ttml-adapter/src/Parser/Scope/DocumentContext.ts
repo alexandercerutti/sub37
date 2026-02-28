@@ -27,10 +27,13 @@ declare module "./Scope" {
 }
 
 /**
- * "For the purpose of determining inherited styles, the element
- * hierarchy of an intermediate synchronic document form of a
- * document instance must" be used, where such intermediate forms
- * are defined by 11.3.1.3 Intermediate Synchronic Document Construction."
+ * @param nodeTree
+ *	 > For the purpose of determining inherited styles, the element
+ *	 > hierarchy of an intermediate synchronic document form of a
+ *	 > document instance must" be used, where such intermediate forms
+ *	 > are defined by 11.3.1.3 Intermediate Synchronic Document Construction."
+ *
+ * @param rawAttributes Attributes from the <tt> element
  */
 
 export function createDocumentContext(
