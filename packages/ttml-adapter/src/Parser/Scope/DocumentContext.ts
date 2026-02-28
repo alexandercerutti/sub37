@@ -61,7 +61,7 @@ export function createDocumentContext(
 		 *
 		 * ```js
 		 * if (attributes["tts:extent"]) {
-		 * 	scope.addContext(
+		 * 	scope.addContexts(
 		 * 		createStyleContext({
 		 * 			"tts:extent": rawAttributes["tts:extent"],
 		 * 		}),

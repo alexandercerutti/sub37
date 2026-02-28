@@ -9,7 +9,7 @@ export interface Scope {
 	getContextByIdentifier<const ID extends keyof ContextDictionary>(
 		identifier: ID,
 	): ContextDictionary[ID] | undefined;
-	addContext(context: ContextFactory): void;
+	addContexts(...contextFactories: ContextFactory[]): void;
 }
 
 export type ContextFactory<ContextObject extends Context = Context> = (
@@ -114,42 +114,44 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 		): ContextDictionary[ID] | undefined {
 			return contextsMap.get(identifier) || undefined;
 		},
-		addContext(contextFactory: ContextFactory): void {
-			if (!contextFactory) {
-				return;
-			}
+		addContexts(...contextFactories: ContextFactory[]): void {
+			for (const contextFactory of contextFactories) {
+				if (!contextFactory) {
+					continue;
+				}
 
-			const context = contextFactory(this);
+				const context = contextFactory(this);
 
-			if (!context) {
-				return;
-			}
+				if (!context) {
+					return;
+				}
 
-			if (contextsMap.has(context.identifier)) {
-				contextsMap.get(context.identifier)![onMergeSymbol]?.(context);
-				return;
-			}
+				if (contextsMap.has(context.identifier)) {
+					contextsMap.get(context.identifier)![onMergeSymbol]?.(context);
+					return;
+				}
 
-			contextsMap.set(context.identifier, context);
+				contextsMap.set(context.identifier, context);
 
-			if (!parent) {
+				if (!parent) {
+					if (typeof context[onAttachedSymbol] === "function") {
+						context[onAttachedSymbol]();
+					}
+
+					return;
+				}
+
+				const parentContext = parent.getContextByIdentifier(context.identifier);
+
+				if (!parentContext) {
+					return;
+				}
+
+				context.parent = parentContext;
+
 				if (typeof context[onAttachedSymbol] === "function") {
 					context[onAttachedSymbol]();
 				}
-
-				return;
-			}
-
-			const parentContext = parent.getContextByIdentifier(context.identifier);
-
-			if (!parentContext) {
-				return;
-			}
-
-			context.parent = parentContext;
-
-			if (typeof context[onAttachedSymbol] === "function") {
-				context[onAttachedSymbol]();
 			}
 		},
 	});

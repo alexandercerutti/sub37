@@ -101,7 +101,7 @@ describe("Scope and contexts", () => {
 			const contexts = [mockedContext(["a", "b", "c", "d"]), mockedContext(["e", "f", "g", "h"])];
 			const scope = createScope(undefined, contexts[0]);
 
-			scope.addContext(contexts[1]);
+			scope.addContexts(contexts[1]);
 
 			expect(scope.getAllContexts().length).toBe(1);
 			expect(

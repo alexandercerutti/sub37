@@ -246,8 +246,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.content === "tt") {
-						rootScope.addContext(createDocumentContext(nodeTree, token.attributes || {}));
-						rootScope.addContext(
+						rootScope.addContexts(
+							createDocumentContext(nodeTree, token.attributes || {}),
 							createTimeContext({
 								// Default data. Will result in an infinite duration.
 								begin: "0s",
@@ -529,20 +529,10 @@ export default class TTMLAdapter extends BaseAdapter {
 						 * If any have been already added, let's merge the contexts.
 						 */
 						if (temporalActiveContext) {
-							/**
-							 * @TODO this is quite ugly. Maybe we can add multiple contexts together?
-							 * Can we somehow automatically create a scope without understanding
-							 * if the temporal active context is already there or not?
-							 */
-
-							treeScope!.addContext(
+							treeScope!.addContexts(
 								createTemporalActiveContext({
 									animationsIDRefs: [animation.attributes["xml:id"]!],
 								}),
-							);
-
-							treeScope!.addContext(
-								//
 								createAnimationContainerContext([animation]),
 							);
 						} else {
@@ -591,7 +581,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						const outOfLineRegions = extractOutOfLineRegions(closingElement);
 
 						if (outOfLineRegions.length) {
-							rootScope.addContext(createRegionContainerContext(outOfLineRegions));
+							rootScope.addContexts(createRegionContainerContext(outOfLineRegions));
 						}
 
 						break;
@@ -599,7 +589,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isStylingElement(closingElement)) {
 						const styles = extractOutOfLineStyles(closingElement);
-						rootScope.addContext(createStyleContainerContext(styles));
+						rootScope.addContexts(createStyleContainerContext(styles));
 
 						break;
 					}
