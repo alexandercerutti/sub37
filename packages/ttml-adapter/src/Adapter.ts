@@ -766,18 +766,19 @@ function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
 	return isBlockClassElement(parentNode);
 }
 
+/**
+ * From "[process inline regions]" procedure:
+ *
+ * > If the `[attributes]` information item property of R' does not include
+ * > an `xml:id` attribute, then add an implied `xml:id` attribute with a
+ * > generated value _ID_ that is unique within the scope of the TTML
+ * > document instance;
+ * >
+ * > otherwise, let _ID_ be the value of the `xml:id` attribute of R'
+ */
 function getInlineRegionFromCloseTag(
 	currentNode: NodeWithRelationship<Token>,
 ): RegionContainerContextState {
-	/**
-	 * "if the `[attributes]` information item property of R does not include
-	 * an `xml:id` attribute, then add an implied `xml:id` attribute with a
-	 * generated value _ID_ that is unique within the scope of the TTML
-	 * document instance;
-	 *
-	 * otherwise, let _ID_ be the value of the `xml:id` attribute of R;"
-	 */
-
 	const {
 		content: { attributes: regionAttributes },
 		parent,
