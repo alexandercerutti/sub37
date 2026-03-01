@@ -35,7 +35,7 @@ type ContinuousCalcMode = "linear" | "paced" | "spline";
 
 export type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
 
-interface Animation<CM extends CalcMode> {
+export interface Animation<CM extends CalcMode> {
 	calcMode: CM;
 	fill: "freeze" | "remove";
 	repeatCount: number;
