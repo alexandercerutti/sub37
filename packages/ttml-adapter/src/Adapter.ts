@@ -596,9 +596,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isAnimationElement(closingElement)) {
 						const animations = extractOutOfLineAnimations(closingElement);
-						/**
-						 * @TODO add children to animation context
-						 */
 
 						break;
 					}
@@ -955,21 +952,23 @@ function isAnimationElement(currentNode: NodeWithRelationship<Token>): boolean {
 
 function extractOutOfLineAnimations(
 	currentNode: NodeWithRelationship<Token>,
-): Record<string, string>[] {
+): AnimationContainerContextState[] {
 	const { children } = currentNode;
 
 	if (!children.length) {
 		return [];
 	}
 
-	const animations: Record<string, string>[] = [];
+	const animations: AnimationContainerContextState[] = [];
 
 	for (const { content: tokenContent } of children) {
 		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
 			continue;
 		}
 
-		animations.push(tokenContent.attributes);
+		const animationId = getInlineAnimationId(tokenContent, currentNode.content);
+
+		animations.push(getInlineAnimationFromToken(animationId, tokenContent));
 	}
 
 	return animations;
@@ -978,27 +977,35 @@ function extractOutOfLineAnimations(
 function getInlineAnimationFromOpeningTag(
 	openingTag: NodeWithRelationship<Token>,
 ): AnimationContainerContextState {
-	const {
-		content: { attributes: animationAttributes },
-		parent,
-	} = openingTag;
+	const { content, parent } = openingTag;
 
-	const {
-		content: { attributes: parentAttributes },
-	} = parent!;
+	const animationId = getInlineAnimationId(content, parent?.content);
 
-	const INLINE_ANIMATION_PREFIX = "in:animation";
-	const animationId =
-		animationAttributes["xml:id"] ||
-		parentAttributes["xml:id"] ||
-		Math.floor(Math.random() * (500 - 100) + 100);
+	return getInlineAnimationFromToken(animationId, content);
+}
+
+function getInlineAnimationFromToken(
+	animationId: string,
+	token: Token,
+): AnimationContainerContextState {
+	const tokenAttributes = token.attributes;
 
 	return {
-		attributes: Object.create(animationAttributes, {
+		attributes: Object.create(tokenAttributes, {
 			"xml:id": {
-				value: `${INLINE_ANIMATION_PREFIX}-${animationId}`,
+				value: animationId,
 			},
 		}),
-		calcMode: openingTag.content.content === "set" ? "discrete" : animationAttributes["calcMode"],
+		calcMode: token.content === "set" ? "discrete" : tokenAttributes["calcMode"],
 	};
+}
+
+function getInlineAnimationId(token: Token, parent?: Token): string {
+	const INLINE_ANIMATION_PREFIX = "in:animation";
+	const animationIdBody =
+		token.attributes["xml:id"] ||
+		parent?.attributes["xml:id"] ||
+		String(Math.floor(Math.random() * (500 - 100) + 100));
+
+	return `${INLINE_ANIMATION_PREFIX}-${animationIdBody}`;
 }
