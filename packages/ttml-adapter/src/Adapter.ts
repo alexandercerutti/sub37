@@ -597,6 +597,11 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (isAnimationElement(closingElement)) {
 						const animations = extractOutOfLineAnimations(closingElement);
 
+						rootScope.addContexts(
+							//
+							createAnimationContainerContext(animations),
+						);
+
 						break;
 					}
 
