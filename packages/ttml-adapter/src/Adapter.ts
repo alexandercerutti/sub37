@@ -31,6 +31,7 @@ import { createStyleParser } from "./Parser/parseStyle.js";
 import {
 	AnimationContainerContextState,
 	createAnimationContainerContext,
+	readScopeAnimationContext,
 } from "./Parser/Scope/AnimationContainerContext.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
@@ -450,7 +451,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.attributes["animate"] && destinationMatch.matchesAttribute("animate")) {
-						const animationsIDRefs: string[] = [];
+						const animationsIDRefs = getOutOfLineAnimationsIdsByIDREFS(token, treeScope);
 
 						if (animationsIDRefs.length) {
 							contextsList.push(
@@ -907,7 +908,7 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 
 	if (!styleContext) {
 		console.warn(
-			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
+			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style(s) '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
 		);
 
 		return [];
@@ -1014,4 +1015,43 @@ function getInlineAnimationId(token: Token, parent?: Token): string {
 		String(Math.floor(Math.random() * (500 - 100) + 100));
 
 	return `${INLINE_ANIMATION_PREFIX}-${animationIdBody}`;
+}
+
+/**
+ * Given a token having an "animate" attribute, look for the corresponding animation
+ * definitions and hence validates the animations themselves. Then, returns the list
+ * of valid animation IDs to be added to the temporal active context.
+ *
+ * @param token
+ * @param scope
+ * @returns
+ */
+function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[] {
+	const { attributes } = token;
+	const animationContext = readScopeAnimationContext(scope);
+
+	if (!animationContext) {
+		console.warn(
+			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation(s) '${attributes["animate"]}', but no out-of-line animations were defined in this document. Ignored.`,
+		);
+
+		return [];
+	}
+
+	const idrefsAnimationList = attributes["animate"]!.split(/\s+/);
+	const validAnimationIDs: string[] = [];
+
+	for (const idref of idrefsAnimationList) {
+		if (!animationContext.getAnimationById(idref)) {
+			console.warn(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}', but no such out-of-line animation was defined in this document. Ignored.`,
+			);
+
+			continue;
+		}
+
+		validAnimationIDs.push(idref);
+	}
+
+	return validAnimationIDs;
 }
