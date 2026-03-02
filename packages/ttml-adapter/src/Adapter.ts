@@ -437,7 +437,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					if (destinationMatch.matchesAttribute("style") && token.attributes["style"]) {
+					if (token.attributes["style"] && destinationMatch.matchesAttribute("style")) {
 						const outOfLineStyle = getOutOfLineStyle(token, treeScope);
 
 						if (outOfLineStyle) {
@@ -449,12 +449,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						}
 					}
 
-					if (destinationMatch.matchesAttribute("animate") && token.attributes["animate"]) {
-						/**
-						 * @TODO Check the animation context, retrieve the IDREFS in this attribute
-						 * and add them to the TemporalActiveContext.
-						 */
-
+					if (token.attributes["animate"] && destinationMatch.matchesAttribute("animate")) {
 						const animationsIDRefs: string[] = [];
 
 						if (animationsIDRefs.length) {
