@@ -438,12 +438,12 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.attributes["style"] && destinationMatch.matchesAttribute("style")) {
-						const outOfLineStyle = getOutOfLineStyle(token, treeScope);
+						const outOfLineStyle = getOutOfLineStylesByIDREFS(token, treeScope);
 
-						if (outOfLineStyle) {
+						if (outOfLineStyle.length) {
 							contextsList.push(
 								createTemporalActiveContext({
-									styles: [outOfLineStyle],
+									styles: outOfLineStyle,
 								}),
 							);
 						}
@@ -901,36 +901,42 @@ function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle |
 	}) as ActiveStyle;
 }
 
-function getOutOfLineStyle(token: Token, scope: Scope): ActiveStyle | undefined {
+function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 	const { attributes } = token;
 	const styleContext = readScopeStyleContainerContext(scope);
 
 	if (!styleContext) {
-		const tokenId = `${token.content}#${attributes["xml:id"] || "(n/a)"}`;
-
 		console.warn(
-			`'${tokenId}' referenced style '${attributes["style"]}', but no out-of-line style was defined in this document. Ignored.`,
+			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
 		);
 
-		return undefined;
+		return [];
 	}
 
-	const style = styleContext.getStyleByIDRef(attributes["style"]!);
+	const idrefsStyleList = attributes["style"]!.split(/\s+/);
+	const referencialStyles: ActiveStyle[] = [];
 
-	if (!style) {
-		const tokenId = `${token.content}#${attributes["xml:id"] || "(n/a)"}`;
-		console.warn(
-			`'${tokenId}' referenced style '${attributes["style"]}', but this out-of-line style was not defined or was ignored. Ignored.`,
+	for (const idref of idrefsStyleList) {
+		const style = styleContext.getStyleByIDRef(idref);
+
+		if (!style) {
+			console.warn(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${idref}', but no such out-of-line style was defined in this document. Ignored.`,
+			);
+
+			continue;
+		}
+
+		referencialStyles.push(
+			Object.create(style, {
+				kind: {
+					value: "referential",
+				},
+			}),
 		);
-
-		return undefined;
 	}
 
-	return Object.create(style, {
-		kind: {
-			value: "referential",
-		},
-	});
+	return referencialStyles;
 }
 
 function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
