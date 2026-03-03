@@ -39,54 +39,46 @@ interface TemporalActiveInitParams {
 	animationsIDRefs?: string[];
 }
 
-type StylesContainer = Record<"inline" | "nested" | "referential", TTMLStyle[]>;
-
 export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
 	return function (scope: Scope) {
-		const store: Required<TemporalActiveInitParams> = Object.assign(
-			{
-				styles: [],
-				regionIDRef: "",
-				animationsIDRefs: [],
-			} satisfies Required<TemporalActiveInitParams>,
-			initParams,
-		);
+		const store: Required<TemporalActiveInitParams> = {
+			styles: [],
+			regionIDRef: "",
+			animationsIDRefs: [],
+		};
 
-		const stylesContainer: StylesContainer = {
-			inline: [],
-			nested: [],
-			referential: [],
+		const stylesFilter = {
+			get inline(): ActiveStyle[] {
+				return store.styles.filter(({ kind }) => kind === "inline");
+			},
+			get nested(): ActiveStyle[] {
+				return store.styles.filter(({ kind }) => kind === "nested");
+			},
+			get referential(): ActiveStyle[] {
+				return store.styles.filter(({ kind }) => kind === "referential");
+			},
 		};
 
 		return {
 			parent: undefined,
 			identifier: temporalActiveContextSymbol,
 			get args() {
-				return store;
+				return initParams;
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, styles, animationsIDRefs } = this.args;
+				const { regionIDRef, styles = [], animationsIDRefs } = this.args;
 
 				if (regionIDRef) {
-					const { nested, inline } = extractActiveStylesFromRegion(scope, regionIDRef);
-
-					stylesContainer.nested = stylesContainer.nested.concat(nested);
-					stylesContainer.inline = stylesContainer.inline.concat(inline);
+					const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
+					store.styles = store.styles.concat(stylesFromRegion);
+					store.regionIDRef = regionIDRef;
 				}
 
-				if (styles?.length) {
-					for (const style of styles) {
-						if (!(style.kind in stylesContainer)) {
-							console.log(
-								`Unknown style kind (received '${style.kind}'). Additional style ignored.`,
-							);
-							continue;
-						}
-
-						stylesContainer[style.kind].push(style);
-					}
+				if (styles.length) {
+					const recognizedStyles = extractActiveStylesFromStyleStore(styles);
+					store.styles = store.styles.concat(recognizedStyles);
 				}
 
 				if (animationsIDRefs?.length) {
@@ -96,28 +88,27 @@ export function createTemporalActiveContext(
 					 */
 				}
 			},
-			[onMergeSymbol](context: TemporalActiveContext): void {
-				const { regionIDRef, styles } = context.args;
+			[onMergeSymbol](incomingContext: TemporalActiveContext): void {
+				const { regionIDRef: incomingRegionIDRef, styles: incomingStyles = [] } =
+					incomingContext.args;
 
-				if (regionIDRef && !store.regionIDRef) {
-					store.regionIDRef = regionIDRef;
+				if (incomingRegionIDRef && !store.regionIDRef) {
+					store.regionIDRef = incomingRegionIDRef;
 
-					const { nested, inline } = extractActiveStylesFromRegion(scope, regionIDRef);
-
-					stylesContainer.nested = stylesContainer.nested.concat(nested);
-					stylesContainer.inline = stylesContainer.inline.concat(inline);
+					const stylesFromRegion = extractActiveStylesFromRegion(scope, incomingRegionIDRef);
+					store.styles = store.styles.concat(stylesFromRegion);
 				}
 
-				if (styles?.length) {
+				if (incomingStyles.length) {
 					const currentStylesIds = new Set(store.styles.map(({ id }) => id));
+					const recognizedStyles = extractActiveStylesFromStyleStore(incomingStyles);
 
-					for (const style of styles) {
+					for (const style of recognizedStyles) {
 						if (currentStylesIds.has(style.id)) {
 							continue;
 						}
 
 						store.styles.push(style);
-						stylesContainer[style.kind].push(style);
 					}
 				}
 			},
@@ -129,10 +120,10 @@ export function createTemporalActiveContext(
 				const parentComputedStyles = this.parent?.computeStylesForElement(element) || {};
 
 				const {
-					referential: referentialStyles = [],
-					nested: nestedStyles = [],
-					inline: inlineStyles = [],
-				} = stylesContainer;
+					referential: referentialStyles,
+					nested: nestedStyles,
+					inline: inlineStyles,
+				} = stylesFilter;
 
 				/**
 				 * Processing in the order defined by the standard
@@ -170,38 +161,66 @@ export function readScopeTemporalActiveContext(scope: Scope): TemporalActiveCont
 	return scope.getContextByIdentifier(temporalActiveContextSymbol);
 }
 
-function extractActiveStylesFromRegion(
-	scope: Scope,
-	idref: string,
-): Pick<StylesContainer, "inline" | "nested"> {
-	const stylesContainer: Pick<StylesContainer, "inline" | "nested"> = {
-		inline: [],
-		nested: [],
-	};
-
+function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle[] {
 	const regionContext = readScopeRegionContext(scope);
 
 	if (!regionContext) {
-		return stylesContainer;
+		return [];
 	}
 
 	const regionStyles = regionContext.getStylesByRegionId(idref);
 
 	if (!regionStyles.length) {
-		return stylesContainer;
+		return [];
 	}
 
+	const styles: ActiveStyle[] = [];
 	const inlineStyles = regionStyles.find(({ id }) => id === "inline");
 
 	if (inlineStyles) {
-		stylesContainer.inline.push(inlineStyles);
+		styles.push(
+			Object.create(inlineStyles, {
+				kind: {
+					value: "inline",
+				},
+			}),
+		);
 	}
 
 	const nestedStyles = regionStyles.find(({ id }) => id === "nested");
 
 	if (nestedStyles) {
-		stylesContainer.nested.push(nestedStyles);
+		styles.push(
+			Object.create(nestedStyles, {
+				kind: {
+					value: "nested",
+				},
+			}),
+		);
 	}
 
-	return stylesContainer;
+	return styles;
+}
+
+function extractActiveStylesFromStyleStore(storeStyles: ActiveStyle[]): ActiveStyle[] {
+	if (!storeStyles?.length) {
+		return [];
+	}
+
+	const styles: ActiveStyle[] = [];
+	const allowedKinds = ["inline", "nested", "referential"] as const;
+
+	for (const style of storeStyles) {
+		if (!allowedKinds.includes(style.kind)) {
+			console.log(
+				`Style with not recognized kind ('${style.kind}') received. Additional style ignored.`,
+			);
+
+			continue;
+		}
+
+		styles.push(style);
+	}
+
+	return styles;
 }
