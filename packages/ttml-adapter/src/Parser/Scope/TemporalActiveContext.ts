@@ -69,24 +69,11 @@ export function createTemporalActiveContext(
 			[onAttachedSymbol](): void {
 				const { regionIDRef, styles, animationsIDRefs } = this.args;
 
-				const regionContext = readScopeRegionContext(scope);
+				if (regionIDRef) {
+					const { nested, inline } = extractActiveStylesFromRegion(scope, regionIDRef);
 
-				if (regionContext && regionIDRef) {
-					const regionStyles = regionContext.getStylesByRegionId(regionIDRef);
-
-					if (regionStyles.length) {
-						const inlineStyles = regionStyles.find(({ id }) => id === "inline");
-
-						if (inlineStyles) {
-							stylesContainer.inline.push(inlineStyles);
-						}
-
-						const nestedStyles = regionStyles.find(({ id }) => id === "nested");
-
-						if (nestedStyles) {
-							stylesContainer.nested.push(nestedStyles);
-						}
-					}
+					stylesContainer.nested = stylesContainer.nested.concat(nested);
+					stylesContainer.inline = stylesContainer.inline.concat(inline);
 				}
 
 				if (styles?.length) {
@@ -114,25 +101,11 @@ export function createTemporalActiveContext(
 
 				if (regionIDRef && !store.regionIDRef) {
 					store.regionIDRef = regionIDRef;
-					const regionContext = readScopeRegionContext(scope);
 
-					if (regionContext) {
-						const regionStyles = regionContext.getStylesByRegionId(regionIDRef);
+					const { nested, inline } = extractActiveStylesFromRegion(scope, regionIDRef);
 
-						if (regionStyles.length) {
-							const inlineStyles = regionStyles.find(({ id }) => id === "inline");
-
-							if (inlineStyles) {
-								stylesContainer.inline.push(inlineStyles);
-							}
-
-							const nestedStyles = regionStyles.find(({ id }) => id === "nested");
-
-							if (nestedStyles) {
-								stylesContainer.nested.push(nestedStyles);
-							}
-						}
-					}
+					stylesContainer.nested = stylesContainer.nested.concat(nested);
+					stylesContainer.inline = stylesContainer.inline.concat(inline);
 				}
 
 				if (styles?.length) {
@@ -195,4 +168,40 @@ export function createTemporalActiveContext(
 
 export function readScopeTemporalActiveContext(scope: Scope): TemporalActiveContext | undefined {
 	return scope.getContextByIdentifier(temporalActiveContextSymbol);
+}
+
+function extractActiveStylesFromRegion(
+	scope: Scope,
+	idref: string,
+): Pick<StylesContainer, "inline" | "nested"> {
+	const stylesContainer: Pick<StylesContainer, "inline" | "nested"> = {
+		inline: [],
+		nested: [],
+	};
+
+	const regionContext = readScopeRegionContext(scope);
+
+	if (!regionContext) {
+		return stylesContainer;
+	}
+
+	const regionStyles = regionContext.getStylesByRegionId(idref);
+
+	if (!regionStyles.length) {
+		return stylesContainer;
+	}
+
+	const inlineStyles = regionStyles.find(({ id }) => id === "inline");
+
+	if (inlineStyles) {
+		stylesContainer.inline.push(inlineStyles);
+	}
+
+	const nestedStyles = regionStyles.find(({ id }) => id === "nested");
+
+	if (nestedStyles) {
+		stylesContainer.nested.push(nestedStyles);
+	}
+
+	return stylesContainer;
 }
