@@ -10,6 +10,7 @@ import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 import type { Animation, CalcMode } from "../Animations/parseAnimation.js";
+import { readScopeAnimationContext } from "./AnimationContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
@@ -91,10 +92,8 @@ export function createTemporalActiveContext(
 				}
 
 				if (animationsIDRefs?.length) {
-					/**
-					 * @TODO query the animation context and check
-					 * for any available
-					 */
+					const animations = extractActiveAnimationsByIdRefs(scope, animationsIDRefs);
+					store.animations = store.animations.concat(animations);
 				}
 			},
 			[onMergeSymbol](incomingContext: TemporalActiveContext): void {
@@ -122,6 +121,19 @@ export function createTemporalActiveContext(
 						}
 
 						store.styles.push(style);
+					}
+				}
+
+				if (incomingAnimationsIDRefs?.length) {
+					const animations = extractActiveAnimationsByIdRefs(scope, incomingAnimationsIDRefs);
+					const currentAnimationsIds = new Set(store.animations.map(({ id }) => id));
+
+					for (const animation of animations) {
+						if (currentAnimationsIds.has(animation.id)) {
+							continue;
+						}
+
+						store.animations.push(animation);
 					}
 				}
 			},
@@ -235,4 +247,25 @@ function extractActiveStylesFromStyleStore(storeStyles: ActiveStyle[]): ActiveSt
 	}
 
 	return styles;
+}
+
+function extractActiveAnimationsByIdRefs(scope: Scope, idrefs: string[]): Animation<CalcMode>[] {
+	const animations: Animation<CalcMode>[] = [];
+	const animationContext = readScopeAnimationContext(scope);
+
+	for (const idref of idrefs) {
+		const recognizedAnimation = animationContext?.getAnimationById(idref);
+
+		if (!recognizedAnimation) {
+			console.warn(
+				`Animation with id '${idref}' referenced in temporal active context was not found in the document. Ignored.`,
+			);
+
+			continue;
+		}
+
+		animations.push(recognizedAnimation);
+	}
+
+	return animations;
 }

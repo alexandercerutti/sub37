@@ -36,6 +36,7 @@ type ContinuousCalcMode = "linear" | "paced" | "spline";
 export type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
 
 export interface Animation<CM extends CalcMode> {
+	id: string;
 	calcMode: CM;
 	fill: "freeze" | "remove";
 	repeatCount: number;
@@ -70,22 +71,22 @@ export const createAnimationParser = memoizationFactory(function animationParser
 	try {
 		switch (true) {
 			case isDiscreteAnimation(calcMode): {
-				animation = createDiscreteAnimation(attributes);
+				animation = createDiscreteAnimation(animationId, attributes);
 				break;
 			}
 
 			case isContinuousLinearAnimation(calcMode): {
-				animation = createLinearAnimation(attributes);
+				animation = createLinearAnimation(animationId, attributes);
 				break;
 			}
 
 			case isContinuousPacedAnimation(calcMode): {
-				animation = createPacedAnimation(attributes);
+				animation = createPacedAnimation(animationId, attributes);
 				break;
 			}
 
 			case isContinuousSplineAnimation(calcMode): {
-				animation = createSplineAnimation(attributes);
+				animation = createSplineAnimation(animationId, attributes);
 				break;
 			}
 
@@ -341,7 +342,10 @@ function isDiscreteAnimation(calcMode: string): calcMode is DiscreteCalcMode {
 	return calcMode === "discrete";
 }
 
-function createDiscreteAnimation(attributes: MetaAnimation): Animation<DiscreteCalcMode> {
+function createDiscreteAnimation(
+	animationId: string,
+	attributes: MetaAnimation,
+): Animation<DiscreteCalcMode> {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -373,6 +377,7 @@ function createDiscreteAnimation(attributes: MetaAnimation): Animation<DiscreteC
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
+		id: animationId,
 		calcMode: "discrete",
 		keyTimes,
 		repeatCount,
@@ -388,7 +393,10 @@ function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
 	return calcMode === "linear";
 }
 
-function createLinearAnimation(attributes: MetaAnimation): Animation<"linear"> {
+function createLinearAnimation(
+	animationId: string,
+	attributes: MetaAnimation,
+): Animation<"linear"> {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -420,6 +428,7 @@ function createLinearAnimation(attributes: MetaAnimation): Animation<"linear"> {
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
+		id: animationId,
 		calcMode: "linear",
 		keyTimes,
 		repeatCount,
@@ -435,7 +444,7 @@ function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
 	return calcMode === "paced";
 }
 
-function createPacedAnimation(attributes: MetaAnimation): Animation<"paced"> {
+function createPacedAnimation(animationId: string, attributes: MetaAnimation): Animation<"paced"> {
 	assertKeySplinesMissing(attributes);
 	assertKeyTimesMissing(attributes);
 
@@ -457,6 +466,7 @@ function createPacedAnimation(attributes: MetaAnimation): Animation<"paced"> {
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
+		id: animationId,
 		calcMode: "paced",
 		keyTimes: getInferredPacedKeyTimesByAmount(keyTimesAmount),
 		repeatCount,
@@ -476,7 +486,7 @@ function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
 	return calcMode === "spline";
 }
 
-function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
+function createSplineAnimation(animationId: string, attributes: MetaAnimation): SplineAnimation {
 	assertKeySplineRequired(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -510,6 +520,7 @@ function createSplineAnimation(attributes: MetaAnimation): SplineAnimation {
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
+		id: animationId,
 		calcMode: "spline",
 		keySplines,
 		keyTimes,
