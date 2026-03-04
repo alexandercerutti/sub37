@@ -22,7 +22,6 @@ interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalA
 	computeStylesForElement(element: string): ComputedCssProperties;
 	get region(): TTMLRegion | undefined;
 	get regionIdRef(): string;
-	get stylesIDRefs(): string[];
 	get animations(): Animation<CalcMode>[];
 }
 
@@ -167,9 +166,6 @@ export function createTemporalActiveContext(
 			},
 			get regionIdRef(): string {
 				return store.region?.id || "";
-			},
-			get stylesIDRefs(): string[] {
-				return store.styles.map(({ id }) => id);
 			},
 			get region(): TTMLRegion | undefined {
 				if (!store.region) {
