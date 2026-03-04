@@ -23,6 +23,7 @@ interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalA
 	get region(): TTMLRegion | undefined;
 	get regionIdRef(): string;
 	get stylesIDRefs(): string[];
+	get animations(): Animation<CalcMode>[];
 }
 
 declare module "./Scope" {
@@ -176,6 +177,9 @@ export function createTemporalActiveContext(
 				}
 
 				return store.region;
+			},
+			get animations(): Animation<CalcMode>[] {
+				return store.animations;
 			},
 		};
 	};
