@@ -674,7 +674,7 @@ function isInlineRegionConflicting(scope: Scope): boolean {
 		return false;
 	}
 
-	return Boolean(temporalActiveContext.regionIdRef);
+	return Boolean(temporalActiveContext.region?.id);
 }
 
 /**
@@ -717,11 +717,11 @@ function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope):
 		return false;
 	}
 
-	if (!temporalActiveContext.regionIdRef) {
+	if (!temporalActiveContext.region) {
 		return false;
 	}
 
-	return temporalActiveContext.regionIdRef !== targetRegionId;
+	return temporalActiveContext.region.id !== targetRegionId;
 }
 
 /**
@@ -755,7 +755,7 @@ function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean
 
 	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 
-	return Boolean(temporalActiveContext?.regionIdRef || isDefaultRegionActive(scope));
+	return Boolean(temporalActiveContext?.region?.id || isDefaultRegionActive(scope));
 }
 
 function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {

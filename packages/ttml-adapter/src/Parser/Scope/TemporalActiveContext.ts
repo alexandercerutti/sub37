@@ -21,7 +21,6 @@ type ComputedCssProperties = {
 interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
 	computeStylesForElement(element: string): ComputedCssProperties;
 	get region(): TTMLRegion | undefined;
-	get regionIdRef(): string;
 	get animations(): Animation<CalcMode>[];
 }
 
@@ -164,14 +163,7 @@ export function createTemporalActiveContext(
 
 				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
-			get regionIdRef(): string {
-				return store.region?.id || "";
-			},
 			get region(): TTMLRegion | undefined {
-				if (!store.region) {
-					return undefined;
-				}
-
 				return store.region;
 			},
 			get animations(): Animation<CalcMode>[] {
