@@ -9,6 +9,7 @@ import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
+import type { Animation, CalcMode } from "../Animations/parseAnimation.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
@@ -39,14 +40,20 @@ interface TemporalActiveInitParams {
 	animationsIDRefs?: string[];
 }
 
+interface TemporalActiveContextState {
+	region: TTMLRegion | undefined;
+	styles: ActiveStyle[];
+	animations: Animation<CalcMode>[];
+}
+
 export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
 	return function (scope: Scope) {
-		const store: Required<TemporalActiveInitParams> = {
+		const store: TemporalActiveContextState = {
 			styles: [],
-			regionIDRef: "",
-			animationsIDRefs: [],
+			region: undefined,
+			animations: [],
 		};
 
 		const stylesFilter = {
@@ -73,7 +80,9 @@ export function createTemporalActiveContext(
 				if (regionIDRef) {
 					const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
 					store.styles = store.styles.concat(stylesFromRegion);
-					store.regionIDRef = regionIDRef;
+
+					const regionContext = readScopeRegionContext(scope);
+					store.region = regionContext?.getRegionById(regionIDRef);
 				}
 
 				if (styles.length) {
@@ -89,11 +98,15 @@ export function createTemporalActiveContext(
 				}
 			},
 			[onMergeSymbol](incomingContext: TemporalActiveContext): void {
-				const { regionIDRef: incomingRegionIDRef, styles: incomingStyles = [] } =
-					incomingContext.args;
+				const {
+					regionIDRef: incomingRegionIDRef,
+					styles: incomingStyles = [],
+					animationsIDRefs: incomingAnimationsIDRefs = [],
+				} = incomingContext.args;
 
-				if (incomingRegionIDRef && !store.regionIDRef) {
-					store.regionIDRef = incomingRegionIDRef;
+				if (incomingRegionIDRef && !store.region) {
+					const regionContext = readScopeRegionContext(scope);
+					store.region = regionContext?.getRegionById(incomingRegionIDRef);
 
 					const stylesFromRegion = extractActiveStylesFromRegion(scope, incomingRegionIDRef);
 					store.styles = store.styles.concat(stylesFromRegion);
@@ -140,18 +153,17 @@ export function createTemporalActiveContext(
 				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
 			get regionIdRef(): string {
-				return store.regionIDRef;
+				return store.region?.id || "";
 			},
 			get stylesIDRefs(): string[] {
 				return store.styles.map(({ id }) => id);
 			},
 			get region(): TTMLRegion | undefined {
-				if (!store.regionIDRef) {
+				if (!store.region) {
 					return undefined;
 				}
 
-				const regionContext = readScopeRegionContext(scope);
-				return regionContext?.getRegionById(store.regionIDRef);
+				return store.region;
 			},
 		};
 	};
