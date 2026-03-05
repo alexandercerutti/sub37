@@ -713,11 +713,7 @@ function isDefaultRegionActive(scope: Scope): boolean {
 function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope): boolean {
 	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 
-	if (!temporalActiveContext) {
-		return false;
-	}
-
-	if (!temporalActiveContext.region) {
+	if (!temporalActiveContext?.region) {
 		return false;
 	}
 
