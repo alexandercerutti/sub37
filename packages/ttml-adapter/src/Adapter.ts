@@ -287,7 +287,8 @@ export default class TTMLAdapter extends BaseAdapter {
 					 * we would end up with the span to get pruned because parent doesn't have
 					 * a region and would therefore get pruned itself.
 					 *
-					 * Region completion will happen in the END_TAG, if not ignored.
+					 * Region completion will happen in the END_TAG, if not ignored. There, it
+					 * is explained how we did make it work.
 					 */
 
 					if (isLayoutClassElement(token.content)) {
@@ -332,7 +333,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
 						if (
 							isDefaultRegionActive(treeScope) ||
-							isFlowingTargetRegionConflicting(token.attributes["region"], treeScope)
+							flowingIntoRegionConflicts(token.attributes["region"], treeScope)
 						) {
 							nodeTree.push(
 								createNodeWithAttributes(
@@ -678,9 +679,12 @@ function isInlineRegionConflicting(scope: Scope): boolean {
 }
 
 /**
- * "Furthermore, if no out-of-line region is specified,
- * then the region attribute must not be specified on
- * any content element in the document instance."
+ * Default region is active when no out-of-line region is defined in the document.
+ * TTML specifies that:
+ *
+ * > Furthermore, if no out-of-line region is specified,
+ * > then the region attribute must not be specified on
+ * > any content element in the document instance.
  *
  * @TODO this is marked as a must, so should we throw an error?
  */
@@ -695,22 +699,32 @@ function isDefaultRegionActive(scope: Scope): boolean {
 }
 
 /**
- * @example (out-of-line regions definitions in head omitted)
- * Inspecting <p region="r2">, but
+ * By TTML specification, "flowing into a region" means that an element gets
+ * associated with that specific region.
  *
- * ```
+ * Flowing into a region is allowed only if the Default Region is active (not the
+ * case here), if an element doesn't have a region associated yet (which is required if the
+ * default region is not active) or if the region associated is the same as the parent one.
+ *
+ * In the example below, out-of-line regions definitions are omitted.
+ *
+ * @example
+ * ```xml
  * <div region="r1">
  * 	<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
  * 	<!-- Same would be valid with a different region on a span inside the `p` -->
  * 	<p region="r2">...</p>
  * </div>
- *
- * <!-- next div will get pruned as previous sibling
- * 		 has a region but default region is not active (implict in code). -->
- * <div>...</div>
+ * <!--
+ * 	This div will get pruned as well, as the previous sibling
+ * 	has a region, but default region is not active.
+ * -->
+ * <div>
+ *     <!-- ... -->
+ * </div>
  * ```
  */
-function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope): boolean {
+function flowingIntoRegionConflicts(targetRegionId: string, scope: Scope): boolean {
 	const temporalActiveContext = readScopeTemporalActiveContext(scope);
 
 	if (!temporalActiveContext?.region) {
@@ -733,8 +747,8 @@ function isFlowingTargetRegionConflicting(targetRegionId: string, scope: Scope):
  * get ignored if none of its children have a region associated (if any defined in
  * the document - default region is fine then).
  *
- * However, a parent can get ignored as well if it has no children because all
- * of them have been already pruned. And **this** is where we act.
+ * This also means that a parent can get ignored as well if it has no children at all,
+ * because they have been already pruned. And **this** is where we act.
  *
  * Linear tree parsing, without doing multiple iterations back and forth through
  * the elements hierarchy and without building an actualy ISD, prevents us to
