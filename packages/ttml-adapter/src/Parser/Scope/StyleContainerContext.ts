@@ -88,8 +88,8 @@ export function createStyleContainerContext(
 					);
 				}
 			},
-			[onMergeSymbol](context: StyleContainerContext): void {
-				const { args } = context;
+			[onMergeSymbol](incomingContext: StyleContainerContext): void {
+				const { args } = incomingContext;
 
 				for (const style of Object.values(args)) {
 					stylesParser.process(style);

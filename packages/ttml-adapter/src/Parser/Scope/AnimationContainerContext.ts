@@ -47,8 +47,8 @@ export function createAnimationContainerContext(
 					animationParser.process(calcMode as CalcMode, attributes);
 				}
 			},
-			[onMergeSymbol](context: AnimationContainerContext): void {
-				const { args } = context;
+			[onMergeSymbol](incomingContext: AnimationContainerContext): void {
+				const { args } = incomingContext;
 
 				for (const { calcMode = "linear", attributes } of args) {
 					animationParser.process(calcMode as CalcMode, attributes);

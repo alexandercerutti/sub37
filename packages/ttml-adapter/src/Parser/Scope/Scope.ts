@@ -20,7 +20,7 @@ export interface Context<ParentType extends object = object, ArgsType = unknown>
 	readonly identifier: symbol;
 	parent?: ParentType | undefined;
 	get args(): ArgsType;
-	[onMergeSymbol]?(context: Context): void;
+	[onMergeSymbol]?(incomingContext: Context): void;
 	[onAttachedSymbol]?(): void;
 }
 

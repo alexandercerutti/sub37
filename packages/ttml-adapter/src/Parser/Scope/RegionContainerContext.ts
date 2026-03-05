@@ -54,8 +54,8 @@ export function createRegionContainerContext(
 					regionParser.process(attributes, children);
 				}
 			},
-			[onMergeSymbol](context: RegionContainerContext): void {
-				const { args } = context;
+			[onMergeSymbol](incomingContext: RegionContainerContext): void {
+				const { args } = incomingContext;
 
 				for (const { attributes, children } of args) {
 					regionParser.process(attributes, children);

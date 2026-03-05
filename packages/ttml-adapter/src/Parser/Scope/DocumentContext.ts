@@ -79,7 +79,7 @@ export function createDocumentContext(
 			get args() {
 				return rawAttributes;
 			},
-			[onMergeSymbol](_context) {
+			[onMergeSymbol](_incomingContext) {
 				throw new Error(
 					"A document context is already existing. One document (context) can exists per TTML track. Merging is not allowed",
 				);

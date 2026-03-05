@@ -100,8 +100,8 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			get args() {
 				return contextInput;
 			},
-			[onMergeSymbol](context: TimeContext): void {
-				Object.assign(state, context[currentStateSymbol] || {});
+			[onMergeSymbol](incomingContext: TimeContext): void {
+				Object.assign(state, incomingContext[currentStateSymbol] || {});
 			},
 			/**
 			 * The begin of a cue can be inherited from parents.

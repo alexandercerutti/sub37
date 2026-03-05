@@ -88,11 +88,11 @@ describe("Scope and contexts", () => {
 
 						/**
 						 *
-						 * @param {MockedContextExtension<string[]>} context
+						 * @param {MockedContextExtension<string[]>} incomingContext
 						 */
 
-						[onMergeSymbol](context) {
-							contents.push(...context.content);
+						[onMergeSymbol](incomingContext) {
+							contents.push(...incomingContext.content);
 						},
 					};
 				};
@@ -127,12 +127,12 @@ describe("Scope and contexts", () => {
 
 						/**
 						 *
-						 * @param {MockedContextExtension<string[]>} context
+						 * @param {MockedContextExtension<string[]>} incomingContext
 						 */
 
-						[onMergeSymbol](context) {
+						[onMergeSymbol](incomingContext) {
 							// @ts-ignore
-							contents.push(...context.content);
+							contents.push(...incomingContext.content);
 						},
 					};
 				};
