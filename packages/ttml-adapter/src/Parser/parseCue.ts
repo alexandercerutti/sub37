@@ -165,6 +165,7 @@ function createCueFromAnonymousSpan(
 const TemporalAttributes = {
 	CUE: /*********/ 0b001,
 	REGION: /******/ 0b010,
+	ANIMATION: /***/ 0b100,
 } as const;
 
 type TemporalIntervalList = [startTime: number, endTime: number, attrs: number][];
@@ -181,13 +182,14 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 	const cueTimeContext = readScopeTimeContext(scope)!;
 	const tac = readScopeTemporalActiveContext(scope);
 	const region = tac?.region;
+	const animations = tac?.animations || [];
 
 	/**
 	 * This array order is linked to the
 	 * one in the categorizeTimeSegments.
 	 */
-	const timeItemsIntervals: [number, number][] = [
-		[cueTimeContext.startTime, cueTimeContext.endTime],
+	const unlinkedTimeIntervals: TemporalIntervalList = [
+		[cueTimeContext.startTime, cueTimeContext.endTime, TemporalAttributes.CUE],
 	];
 
 	if (region?.timingAttributes) {
@@ -199,16 +201,38 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 
 		const regionTimeContext = isolateContext(readScopeTimeContext(regionScope))!;
 
-		timeItemsIntervals.push([regionTimeContext.startTime, regionTimeContext.endTime]);
+		unlinkedTimeIntervals.push([
+			regionTimeContext.startTime,
+			regionTimeContext.endTime,
+			TemporalAttributes.REGION,
+		]);
 	}
 
-	/**
-	 * @TODO add check on animation timing attributes
-	 */
+	if (animations.length) {
+		for (const animation of animations) {
+			if (!animation.timingAttributes) {
+				continue;
+			}
 
-	const timeIntervals = categorizeTimeSegments(
-		timeItemsIntervals,
-		getTimeSegments(timeItemsIntervals),
+			const animationScope = createScope(
+				//
+				scope,
+				createTimeContext(animation.timingAttributes),
+			);
+
+			const animationTimeContext = isolateContext(readScopeTimeContext(animationScope))!;
+
+			unlinkedTimeIntervals.push([
+				animationTimeContext.startTime,
+				animationTimeContext.endTime,
+				TemporalAttributes.ANIMATION,
+			]);
+		}
+	}
+
+	const timeIntervals = categorizeTimelineSegments(
+		unlinkedTimeIntervals,
+		getTimelineSegments(unlinkedTimeIntervals),
 	);
 
 	const activeCueTimeIntervals = timeIntervals.filter(
@@ -228,59 +252,73 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 		 * Probably just the fact that it could get debugged
 		 * and inspected and nothing else.
 		 *
-		 * For this reason, if this case, we are returning
-		 * the [0s,0s]. But one day we might decide to
+		 * For this reason, in this case we are returning
+		 * the [0s, 0s]. But one day we might decide to
 		 * remove it.
 		 */
 
-		return [[timeItemsIntervals[0]![0], timeItemsIntervals[0]![1], TemporalAttributes.CUE]];
+		return [[unlinkedTimeIntervals[0]![0], unlinkedTimeIntervals[0]![1], TemporalAttributes.CUE]];
 	}
 
 	return activeCueTimeIntervals;
 }
 
 /**
- * Given a set of `[start, end]` intervals, expands all
- * the possible time intervals.
+ * Given a set of `[start, end, attrs]` intervals, produces
+ * a set of (possibly overlapping) segments for a timeline.
  *
  * @example
  *
- * Not intersecting, (2 segments)
- * ==============================================
- * ||	rst							ret cst							 cet ||
- * ||	 | ////////////// |	 |								|  ||
- * ||	 |								|	 | ////////////// |  ||
- * ==============================================
+ * - `cst`: cue start time
+ * - `cet`: cue end time
+ * - `rst`: region start time
+ * - `ret`: region end time
  *
- * Intersecting, region ends before cue end (3 segments)
- * =====================================
- * ||	rst				 cst	 ret				cet ||
- * ||	 | ////////////// |	 				 |	||
- * ||	 |					| ////////////// |	||
- * =====================================
+ * **Not intersecting, (2 segments)**
  *
- * Intersecting (opposite, 3 segments)
- * =====================================
- * ||	cst				 rst	 cet				ret ||
- * ||	 |					| ////////////// |	||
- * ||	 | ////////////// |	 				 |	||
- * =====================================
+ * ```text
+ *  rst         ret cst        cet
+ *   | ///////// |	 |           |
+ *   |           |	 | ///////// |
+ * ------------------------------------>
+ *             timeline
+ * ```
  *
  *
- * @param intervals
+ * **Intersecting, region ends before cue end (3 segments)**
+ *
+ * ```text
+ *  rst        cst   ret        cet
+ *   | ////////////// |          |
+ *   |          | ////////////// |
+ * ------------------------------------>
+ *             timeline
+ * ```
+ *
+ * **Intersecting (opposite, 3 segments)**
+ *
+ * ```text
+ *  cst        rst   cet        ret
+ *   |          | ////////////// |
+ *   | ////////////// |          |
+ * ------------------------------------>
+ *              timeline
+ * ```
+ *
+ * @param unlinkedIntervals
  * @returns
  */
 
-function getTimeSegments(
-	intervals: [start: number, end: number][],
-): [t0: number, t1: number, attrs: number][] {
-	const timeBreakpoints = Array.from(new Set(intervals.flat())).sort((a, b) => a - b);
+function getTimelineSegments(unlinkedIntervals: TemporalIntervalList): TemporalIntervalList {
+	const timelineCuepoints = Array.from(
+		new Set(unlinkedIntervals.flatMap(([start, end]) => [start, end])),
+	).sort((a, b) => a - b);
 
-	const timeIntervals: [number, number, number][] = [];
+	const timeIntervals: TemporalIntervalList = [];
 
-	for (let i = 0; i < timeBreakpoints.length - 1; i++) {
-		const t0 = timeBreakpoints[i]!;
-		const t1 = timeBreakpoints[i + 1]!;
+	for (let i = 0; i < timelineCuepoints.length - 1; i++) {
+		const t0 = timelineCuepoints[i]!;
+		const t1 = timelineCuepoints[i + 1]!;
 
 		timeIntervals.push([t0, t1, 0]);
 	}
@@ -295,33 +333,25 @@ function getTimeSegments(
  * with a region, or just the region but not the
  * cue.
  *
- * @param intervals
+ * @param timelineSegments
  * @returns
  */
 
-function categorizeTimeSegments(
-	baseTimeIntervals: [startTime: number, endTime: number][],
-	intervals: TemporalIntervalList,
+function categorizeTimelineSegments(
+	unlinkedTimeIntervals: TemporalIntervalList,
+	timelineSegments: TemporalIntervalList,
 ): TemporalIntervalList {
-	const timeItemsAttributes = [TemporalAttributes.CUE, TemporalAttributes.REGION] as const;
+	for (let i = 0; i < unlinkedTimeIntervals.length; i++) {
+		const [itemStartTime, itemEndTime, attribute] = unlinkedTimeIntervals[i]!;
 
-	if (baseTimeIntervals.length > intervals.length) {
-		throw new Error(
-			"Not all the baseTimeIntervals have a matching attribute. One interval should be associated with one attribute.",
-		);
-	}
-
-	for (let i = 0; i < baseTimeIntervals.length; i++) {
-		const [itemStartTime, itemEndTime] = baseTimeIntervals[i]!;
-
-		for (const interval of intervals) {
-			const [start, end] = interval;
+		for (const segment of timelineSegments) {
+			const [start, end] = segment;
 
 			if (start >= itemStartTime && end <= itemEndTime) {
-				interval[2] |= timeItemsAttributes[i]!;
+				segment[2] |= attribute;
 			}
 		}
 	}
 
-	return intervals;
+	return timelineSegments;
 }
