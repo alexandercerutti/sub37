@@ -153,7 +153,7 @@ interface SyntaxModuleDefinition<DestinationProperties extends string[] = string
 	 * Validates animation keyframes for this syntax among each other.
 	 */
 	validateAnimation?(
-		keyframes: DerivedValue[][],
+		keyframes: (DerivedValue | undefined)[][],
 		animationType: "discrete" | "continuous",
 	): boolean;
 }
