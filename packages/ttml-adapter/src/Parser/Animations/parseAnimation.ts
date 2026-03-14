@@ -531,6 +531,14 @@ function createSplineAnimation(animationId: string, attributes: MetaAnimation): 
 	};
 }
 
+/**
+ * Takes the first style and uses it as reference for the other
+ * styles, which should have the same amount of keyframes. If some styles
+ * do not have the same amount of keyframes, they are discarded.
+ *
+ * @param stylesFrames
+ * @returns
+ */
 function collectPropertiesWithIncoherentInferredKeyTimesAmount(
 	stylesFrames: Map<string, DerivedValue[][]>,
 ): [properties: string[], keyTimes: number] {
