@@ -479,7 +479,7 @@ function createPacedAnimation(animationId: string, attributes: MetaAnimation): A
 // region calcMode:spline
 
 interface SplineAnimation extends Animation<"spline"> {
-	keySplines: number[][];
+	keySplines: [x1: number, y1: number, x2: number, y2: number][];
 }
 
 function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {

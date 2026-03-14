@@ -7,11 +7,14 @@ import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControl
  * <key-splines>
  * @see https://w3c.github.io/ttml2/#animation-value-key-splines
  *
- * @param value
- * @param keyTimes
- * @returns
+ * @param rawValue raw key-splines values from the attribute
+ * @param keyTimes key times corresponding to the key splines
+ * @returns an array of key spline coordinates, one per keyTime.
  */
-export function getKeySplines(value: string, keyTimes: number[]): number[][] {
+export function getKeySplines(
+	rawValue: string,
+	keyTimes: number[],
+): [x1: number, y1: number, x2: number, y2: number][] {
 	/**
 	 * @syntax
 	 *
@@ -23,29 +26,29 @@ export function getKeySplines(value: string, keyTimes: number[]): number[][] {
 	 *: x1 <lwsp> y1 <lwsp> x2 <lwsp> y2
 	 * ```
 	 */
-	const splineControls = value.trim().split(/\s*;\s*/);
-	const splines: number[][] = [];
+	const controlsList = rawValue.trim().split(/\s*;\s*/);
+	const splines: [x1: number, y1: number, x2: number, y2: number][] = [];
 
-	if (splineControls.length !== keyTimes.length - 1) {
-		throw new KeySplinesAmountNotMatchingKeyTimesError(splineControls.length, keyTimes.length);
+	if (controlsList.length !== keyTimes.length - 1) {
+		throw new KeySplinesAmountNotMatchingKeyTimesError(controlsList.length, keyTimes.length);
 	}
 
-	for (const control of splineControls) {
-		const coordinates = getSplittedLinearWhitespaceValues(control);
-		const splineCoordinates: number[] = [];
+	for (const control of controlsList) {
+		const controlCoordinates = getSplittedLinearWhitespaceValues(control);
+		const splineCoordinates: [x1: number, y1: number, x2: number, y2: number] = [0, 0, 0, 0];
 
-		if (coordinates.length !== 4) {
+		if (controlCoordinates.length !== 4) {
 			throw new KeySplinesInvalidControlsAmountError(control);
 		}
 
-		for (const coordinate of coordinates) {
-			const coordinateNumber = parseFloat(coordinate);
+		for (let i = 0; i < controlCoordinates.length; i++) {
+			const coordinateNumber = parseFloat(controlCoordinates[i]!);
 
 			if (Number.isNaN(coordinateNumber) || coordinateNumber < 0 || coordinateNumber > 1) {
 				throw new KeySplinesCoordinateOutOfBoundaryError(control, coordinateNumber);
 			}
 
-			splineCoordinates.push(coordinateNumber);
+			splineCoordinates[i] = coordinateNumber;
 		}
 
 		splines.push(splineCoordinates);
