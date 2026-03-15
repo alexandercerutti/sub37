@@ -106,8 +106,39 @@ export const createAnimationParser = memoizationFactory(function animationParser
 		return undefined;
 	}
 
-	if (!animation?.stylesFrames.size) {
+	if (!animation) {
 		return undefined;
+	}
+
+	const animationValueList = getAnimationValueListByStyleName(attributes);
+	const stylesFrames = getValidAnimationParsedStylesFrames(
+		calcMode === "discrete" ? "discrete" : "continuous",
+		animationValueList,
+		animation.keyTimes.length,
+	);
+
+	if (!animation.keyTimes.length) {
+		const [stylesToDiscard, keyTimesAmount] =
+			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
+
+		for (const discardedStyle of stylesToDiscard) {
+			stylesFrames.delete(discardedStyle);
+			console.warn(
+				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in the animation. Ignored.`,
+			);
+		}
+
+		animation.keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
+	}
+
+	assertKeyTimesEndIsOne(animation.keyTimes[animation.keyTimes.length - 1]);
+
+	if (!stylesFrames.size) {
+		return undefined;
+	}
+
+	for (const [styleName, frames] of stylesFrames) {
+		animation.stylesFrames.set(styleName, frames);
 	}
 
 	animationStorage.set(animationId, animation);
@@ -354,43 +385,16 @@ function createDiscreteAnimation(
 	attributes: MetaAnimation,
 ): DiscreteAnimation {
 	assertKeySplinesMissing(attributes);
-
-	const repeatCount = getRepeatCount(attributes["repeatCount"]);
-	const fill = getFill(attributes["fill"]);
-	const animationValueList = getAnimationValueListByStyleName(attributes);
-	let keyTimes = getKeyTimes(attributes["keyTimes"]);
-	const stylesFrames = getValidAnimationParsedStylesFrames(
-		"discrete",
-		animationValueList,
-		keyTimes.length,
-	);
-
-	if (!keyTimes.length) {
-		const [stylesToDiscard, keyTimesAmount] =
-			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
-
-		for (const discardedStyle of stylesToDiscard) {
-			stylesFrames.delete(discardedStyle);
-			console.warn(
-				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in a paced / implicit animation. Ignored.`,
-			);
-		}
-
-		keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
-	}
-
-	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
-
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		id: animationId,
 		calcMode: "discrete",
-		keyTimes,
-		repeatCount,
-		fill,
+		keyTimes: getKeyTimes(attributes["keyTimes"]),
+		repeatCount: getRepeatCount(attributes["repeatCount"]),
+		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames,
+		stylesFrames: new Map(),
 		keySplines: [],
 	};
 }
@@ -413,43 +417,19 @@ function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
 function createLinearAnimation(animationId: string, attributes: MetaAnimation): LinearAnimation {
 	assertKeySplinesMissing(attributes);
 
-	const repeatCount = getRepeatCount(attributes["repeatCount"]);
-	const fill = getFill(attributes["fill"]);
-	const animationValueList = getAnimationValueListByStyleName(attributes);
-	let keyTimes = getKeyTimes(attributes.keyTimes);
-	const stylesFrames = getValidAnimationParsedStylesFrames(
-		"continuous",
-		animationValueList,
-		keyTimes.length,
-	);
-
-	if (!keyTimes.length) {
-		const [stylesToDiscard, keyTimesAmount] =
-			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
-
-		for (const discardedStyle of stylesToDiscard) {
-			stylesFrames.delete(discardedStyle);
-			console.warn(
-				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in a paced / implicit animation. Ignored.`,
-			);
-		}
-
-		keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
-	}
-
-	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
-
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		id: animationId,
 		calcMode: "linear",
-		keyTimes,
-		repeatCount,
-		fill,
+		keyTimes: getKeyTimes(attributes.keyTimes),
+		repeatCount: getRepeatCount(attributes["repeatCount"]),
+		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames,
-		keySplines: keyTimes.map(() => [0, 0, 1, 1]),
+		stylesFrames: new Map(),
+		get keySplines() {
+			return this.keyTimes.map(() => [0, 0, 1, 1]) as Spline[];
+		},
 	};
 }
 
@@ -472,33 +452,25 @@ function createPacedAnimation(animationId: string, attributes: MetaAnimation): P
 	assertKeySplinesMissing(attributes);
 	assertKeyTimesMissing(attributes);
 
-	const repeatCount = getRepeatCount(attributes["repeatCount"]);
-	const fill = getFill(attributes["fill"]);
-	const animationValueList = getAnimationValueListByStyleName(attributes);
-	const stylesFrames = getValidAnimationParsedStylesFrames("continuous", animationValueList, 0);
-
-	const [stylesToDiscard, keyTimesAmount] =
-		collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
-
-	for (const discardedStyle of stylesToDiscard) {
-		stylesFrames.delete(discardedStyle);
-		console.warn(
-			`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in a paced / implicit animation. Ignored.`,
-		);
-	}
-
 	const timingAttributes = extractTimingAttributes(attributes);
-	const keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
 
 	return {
 		id: animationId,
 		calcMode: "paced",
-		keyTimes,
-		repeatCount,
-		fill,
+
+		/**
+		 * Will get inferred later.
+		 * This is the reason for the getter for keySplines.
+		 */
+		keyTimes: [],
+
+		repeatCount: getRepeatCount(attributes["repeatCount"]),
+		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames,
-		keySplines: keyTimes.map(() => [0, 0, 1, 1]),
+		stylesFrames: new Map(),
+		get keySplines() {
+			return this.keyTimes.map(() => [0, 0, 1, 1]) as Spline[];
+		},
 	};
 }
 
@@ -516,45 +488,19 @@ function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {
 function createSplineAnimation(animationId: string, attributes: MetaAnimation): SplineAnimation {
 	assertKeySplineRequired(attributes);
 
-	const repeatCount = getRepeatCount(attributes["repeatCount"]);
-	const fill = getFill(attributes["fill"]);
-	const animationValueList = getAnimationValueListByStyleName(attributes);
-	let keyTimes = getKeyTimes(attributes.keyTimes);
-	const stylesFrames = getValidAnimationParsedStylesFrames(
-		"continuous",
-		animationValueList,
-		keyTimes.length,
-	);
-
-	if (!keyTimes.length) {
-		const [stylesToDiscard, keyTimesAmount] =
-			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
-
-		for (const discardedStyle of stylesToDiscard) {
-			stylesFrames.delete(discardedStyle);
-			console.warn(
-				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in a paced / implicit animation. Ignored.`,
-			);
-		}
-
-		keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
-	}
-
-	assertKeyTimesEndIsOne(keyTimes[keyTimes.length - 1]);
-
+	const keyTimes = getKeyTimes(attributes.keyTimes);
 	const keySplines = getKeySplines(attributes["keySplines"], keyTimes);
-
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
 		id: animationId,
 		calcMode: "spline",
-		keySplines,
 		keyTimes,
-		repeatCount,
-		fill,
+		repeatCount: getRepeatCount(attributes["repeatCount"]),
+		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames,
+		stylesFrames: new Map(),
+		keySplines,
 	};
 }
 
