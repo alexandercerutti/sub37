@@ -35,9 +35,8 @@ type ContinuousCalcMode = "linear" | "paced" | "spline";
 
 export type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
 
-export interface Animation<CM extends CalcMode> {
+interface BaseAnimation {
 	id: string;
-	calcMode: CM;
 	fill: "freeze" | "remove";
 	repeatCount: number;
 	timingAttributes: {
@@ -49,8 +48,10 @@ export interface Animation<CM extends CalcMode> {
 	stylesFrames: Map<string, DerivedValue<string, unknown>[][]>;
 }
 
+export type Animation = DiscreteAnimation | LinearAnimation | PacedAnimation | SplineAnimation;
+
 export const createAnimationParser = memoizationFactory(function animationParser(
-	animationStorage: Map<string, Animation<CalcMode>>,
+	animationStorage: Map<string, Animation>,
 	_scope: Scope,
 	/**
 	 * CalcMode is also used for <set> when we register
@@ -59,14 +60,14 @@ export const createAnimationParser = memoizationFactory(function animationParser
 	 */
 	calcMode: CalcMode,
 	attributes: Record<string, string>,
-): Animation<CalcMode> | undefined {
+): Animation | undefined {
 	const animationId = attributes["xml:id"] || `animation__${Math.random() * (1000 - 10) + 10}`;
 
 	if (animationStorage.has(animationId)) {
 		return undefined;
 	}
 
-	let animation: Animation<CalcMode> | undefined;
+	let animation: Animation | undefined;
 
 	try {
 		switch (true) {
@@ -329,6 +330,11 @@ function splitAnimationValueList(animationValue: AnimationValueList): AnimationV
 
 // region calcMode:discrete
 
+interface DiscreteAnimation extends BaseAnimation {
+	calcMode: "discrete";
+	keySplines: [];
+}
+
 /**
  * Discrete value will happen exclusively
  * when animation is defined through `<animate>`
@@ -345,7 +351,7 @@ function isDiscreteAnimation(calcMode: string): calcMode is DiscreteCalcMode {
 function createDiscreteAnimation(
 	animationId: string,
 	attributes: MetaAnimation,
-): Animation<DiscreteCalcMode> {
+): DiscreteAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -384,19 +390,26 @@ function createDiscreteAnimation(
 		fill,
 		timingAttributes,
 		stylesFrames,
+		keySplines: [],
 	};
 }
 
 // region calcMode:linear
 
+/**
+ * keySplines in a linear animation are just a linear sequence of numbers
+ * to be remapped to a cubic-bezier function.
+ */
+interface LinearAnimation extends BaseAnimation {
+	calcMode: "linear";
+	keySplines: [x1: number, y1: number, x2: number, y2: number][];
+}
+
 function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
 	return calcMode === "linear";
 }
 
-function createLinearAnimation(
-	animationId: string,
-	attributes: MetaAnimation,
-): Animation<"linear"> {
+function createLinearAnimation(animationId: string, attributes: MetaAnimation): LinearAnimation {
 	assertKeySplinesMissing(attributes);
 
 	const repeatCount = getRepeatCount(attributes["repeatCount"]);
@@ -435,16 +448,26 @@ function createLinearAnimation(
 		fill,
 		timingAttributes,
 		stylesFrames,
+		keySplines: keyTimes.map(() => [0, 0, 1, 1]),
 	};
 }
 
 // region calcMode:paced
 
+/**
+ * keySplines in a paced animation are just a linear sequence of numbers
+ * to be remapped to a cubic-bezier function, which is valid for linear animations as well.
+ */
+interface PacedAnimation extends BaseAnimation {
+	calcMode: "paced";
+	keySplines: [x1: number, y1: number, x2: number, y2: number][];
+}
+
 function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
 	return calcMode === "paced";
 }
 
-function createPacedAnimation(animationId: string, attributes: MetaAnimation): Animation<"paced"> {
+function createPacedAnimation(animationId: string, attributes: MetaAnimation): PacedAnimation {
 	assertKeySplinesMissing(attributes);
 	assertKeyTimesMissing(attributes);
 
@@ -464,21 +487,24 @@ function createPacedAnimation(animationId: string, attributes: MetaAnimation): A
 	}
 
 	const timingAttributes = extractTimingAttributes(attributes);
+	const keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
 
 	return {
 		id: animationId,
 		calcMode: "paced",
-		keyTimes: getInferredPacedKeyTimesByAmount(keyTimesAmount),
+		keyTimes,
 		repeatCount,
 		fill,
 		timingAttributes,
 		stylesFrames,
+		keySplines: keyTimes.map(() => [0, 0, 1, 1]),
 	};
 }
 
 // region calcMode:spline
 
-interface SplineAnimation extends Animation<"spline"> {
+interface SplineAnimation extends BaseAnimation {
+	calcMode: "spline";
 	keySplines: [x1: number, y1: number, x2: number, y2: number][];
 }
 

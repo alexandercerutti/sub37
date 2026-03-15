@@ -17,7 +17,7 @@ interface AnimationContainerContext extends Context<
 	AnimationContainerContext,
 	AnimationContainerContextState[]
 > {
-	getAnimationById(id: string | undefined): Animation<CalcMode> | undefined;
+	getAnimationById(id: string | undefined): Animation | undefined;
 }
 
 declare module "./Scope" {
@@ -57,14 +57,14 @@ export function createAnimationContainerContext(
 			get [animationParserGetterSymbol]() {
 				return animationParser;
 			},
-			getAnimationById(id: string | undefined): Animation<CalcMode> | undefined {
+			getAnimationById(id: string | undefined): Animation | undefined {
 				if (!id?.length) {
 					return undefined;
 				}
 
 				return animationParser.get(id);
 			},
-			get animations(): Animation<CalcMode>[] {
+			get animations(): Animation[] {
 				return Object.values(animationParser.getAll());
 			},
 		};

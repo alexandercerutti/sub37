@@ -9,7 +9,7 @@ import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
-import type { Animation, CalcMode } from "../Animations/parseAnimation.js";
+import type { Animation } from "../Animations/parseAnimation.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
@@ -21,7 +21,7 @@ type ComputedCssProperties = {
 interface TemporalActiveContext extends Context<TemporalActiveContext, TemporalActiveInitParams> {
 	computeStylesForElement(element: string): ComputedCssProperties;
 	get region(): TTMLRegion | undefined;
-	get animations(): Animation<CalcMode>[];
+	get animations(): Animation[];
 }
 
 declare module "./Scope" {
@@ -43,7 +43,7 @@ interface TemporalActiveInitParams {
 interface TemporalActiveContextState {
 	region: TTMLRegion | undefined;
 	styles: ActiveStyle[];
-	animations: Animation<CalcMode>[];
+	animations: Animation[];
 }
 
 export function createTemporalActiveContext(
@@ -166,7 +166,7 @@ export function createTemporalActiveContext(
 			get region(): TTMLRegion | undefined {
 				return store.region;
 			},
-			get animations(): Animation<CalcMode>[] {
+			get animations(): Animation[] {
 				return store.animations;
 			},
 		};
@@ -241,8 +241,8 @@ function extractActiveStylesFromStyleStore(storeStyles: ActiveStyle[]): ActiveSt
 	return styles;
 }
 
-function extractActiveAnimationsByIdRefs(scope: Scope, idrefs: string[]): Animation<CalcMode>[] {
-	const animations: Animation<CalcMode>[] = [];
+function extractActiveAnimationsByIdRefs(scope: Scope, idrefs: string[]): Animation[] {
+	const animations: Animation[] = [];
 	const animationContext = readScopeAnimationContext(scope);
 
 	for (const idref of idrefs) {
