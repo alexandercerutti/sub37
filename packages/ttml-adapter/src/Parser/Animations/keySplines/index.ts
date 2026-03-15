@@ -29,6 +29,20 @@ export function getKeySplines(
 	const controlsList = rawValue.trim().split(/\s*;\s*/);
 	const splines: [x1: number, y1: number, x2: number, y2: number][] = [];
 
+	/**
+	 * Every control, corresponds to a transition between two key times
+	 * (from x1,y1 to x2,y2), so the number of control points must be
+	 * exactly one less than the number of key times.
+	 *
+	 * @example
+	 *
+	 * ```
+	 *  keyTimes:    [  0  ]──────[  0.3  ]────────[  0.7  ]──────[  1  ]
+	 *  controls:      [x1,y1, x2,y2]   [x1,y1, x2,y2]   [x1,y1, x2,y2]
+	 *                       [0]              [1]             [2]
+	 * ```
+	 */
+
 	if (controlsList.length !== keyTimes.length - 1) {
 		throw new KeySplinesAmountNotMatchingKeyTimesError(controlsList.length, keyTimes.length);
 	}
