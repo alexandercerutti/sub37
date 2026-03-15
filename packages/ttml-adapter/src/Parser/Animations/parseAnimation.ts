@@ -10,6 +10,7 @@ import type { Scope } from "../Scope/Scope";
 import type { TimeContextData } from "../Scope/TimeContext.js";
 import type { DerivedValue } from "../Style/structure/operators.js";
 import { getKeySplines } from "./keySplines/index.js";
+import type { Spline } from "./keySplines/index.js";
 import { KeySplinesNotAllowedError } from "./keySplines/KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "./keySplines/KeySplinesRequiredError.js";
 import {
@@ -402,7 +403,7 @@ function createDiscreteAnimation(
  */
 interface LinearAnimation extends BaseAnimation {
 	calcMode: "linear";
-	keySplines: [x1: number, y1: number, x2: number, y2: number][];
+	keySplines: Spline[];
 }
 
 function isContinuousLinearAnimation(calcMode: string): calcMode is "linear" {
@@ -460,7 +461,7 @@ function createLinearAnimation(animationId: string, attributes: MetaAnimation): 
  */
 interface PacedAnimation extends BaseAnimation {
 	calcMode: "paced";
-	keySplines: [x1: number, y1: number, x2: number, y2: number][];
+	keySplines: Spline[];
 }
 
 function isContinuousPacedAnimation(calcMode: string): calcMode is "paced" {
@@ -505,7 +506,7 @@ function createPacedAnimation(animationId: string, attributes: MetaAnimation): P
 
 interface SplineAnimation extends BaseAnimation {
 	calcMode: "spline";
-	keySplines: [x1: number, y1: number, x2: number, y2: number][];
+	keySplines: Spline[];
 }
 
 function isContinuousSplineAnimation(calcMode: string): calcMode is "spline" {

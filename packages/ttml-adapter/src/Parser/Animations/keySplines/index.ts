@@ -3,6 +3,8 @@ import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotM
 import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError";
 import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError";
 
+export type Spline = [x1: number, y1: number, x2: number, y2: number];
+
 /**
  * <key-splines>
  * @see https://w3c.github.io/ttml2/#animation-value-key-splines
@@ -11,10 +13,7 @@ import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControl
  * @param keyTimes key times corresponding to the key splines
  * @returns an array of key spline coordinates, one per keyTime.
  */
-export function getKeySplines(
-	rawValue: string,
-	keyTimes: number[],
-): [x1: number, y1: number, x2: number, y2: number][] {
+export function getKeySplines(rawValue: string, keyTimes: number[]): Spline[] {
 	/**
 	 * @syntax
 	 *
@@ -27,7 +26,7 @@ export function getKeySplines(
 	 * ```
 	 */
 	const controlsList = rawValue.trim().split(/\s*;\s*/);
-	const splines: [x1: number, y1: number, x2: number, y2: number][] = [];
+	const splines: Spline[] = [];
 
 	/**
 	 * Every control, corresponds to a transition between two key times
@@ -49,7 +48,7 @@ export function getKeySplines(
 
 	for (const control of controlsList) {
 		const controlCoordinates = getSplittedLinearWhitespaceValues(control);
-		const splineCoordinates: [x1: number, y1: number, x2: number, y2: number] = [0, 0, 0, 0];
+		const splineCoordinates: Spline = [0, 0, 0, 0];
 
 		if (controlCoordinates.length !== 4) {
 			throw new KeySplinesInvalidControlsAmountError(control);
