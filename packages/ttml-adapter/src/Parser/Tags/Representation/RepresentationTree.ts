@@ -106,6 +106,7 @@ function LayoutClass() {
 		TIMING_ATTRIBUTES.dur,
 		TIMING_ATTRIBUTES.end,
 		TIMING_ATTRIBUTES.timeContainer,
+		ANIMATION_ATTRIBUTES.animate,
 	] as const);
 
 	return createNode("region", REGION_ATTRIBUTES, () => [
