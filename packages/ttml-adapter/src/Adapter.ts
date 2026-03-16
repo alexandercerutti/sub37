@@ -967,7 +967,7 @@ function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
 
 	return (
 		isCurrentNodeAllowedToContainInlineAnimation &&
-		(content.content === "animation" || content.content === "set")
+		(content.content === "animate" || content.content === "set")
 	);
 }
 
