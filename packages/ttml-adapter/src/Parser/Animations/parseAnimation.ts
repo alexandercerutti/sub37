@@ -129,7 +129,7 @@ export const createAnimationParser = memoizationFactory(function animationParser
 		animation.keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
 	}
 
-	assertKeyTimesEndIsOne(animation.keyTimes[animation.keyTimes.length - 1]);
+	assertKeyTimesEndIsOne(animation.keyTimes);
 
 	if (!stylesFrames.size) {
 		return undefined;

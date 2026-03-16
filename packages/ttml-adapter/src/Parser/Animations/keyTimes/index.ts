@@ -20,8 +20,8 @@ export function getKeyTimes(value: string | undefined): number[] {
 		return [];
 	}
 
-	assertAllKeyTimesWithinBoundaries(splittedKeyTimes);
-	assertKeyTimesBeginIsZero(splittedKeyTimes[0]);
+	assertKeyTimesProgressiveWithinBoundaries(splittedKeyTimes);
+	assertKeyTimesBeginIsZero(splittedKeyTimes);
 
 	return splittedKeyTimes;
 }
@@ -47,19 +47,17 @@ export function getInferredPacedKeyTimesByAmount(amount: number): number[] {
 	return keyTimes;
 }
 
-function assertAllKeyTimesWithinBoundaries(values: number[]): void {
-	let lastKeyTime = 0;
+function assertKeyTimesProgressiveWithinBoundaries(keyTimes: number[]): void {
+	for (let i = 0; i < keyTimes.length; i++) {
+		const keyTime = keyTimes[i]!;
 
-	for (const keyTime of values) {
 		if (keyTime < 0 || keyTime > 1) {
 			throw new KeyTimesComponentOutOfBoundaryError(keyTime);
 		}
 
-		if (keyTime < lastKeyTime) {
+		if (keyTimes[i - 1] !== undefined && keyTime < keyTimes[i - 1]!) {
 			throw new KeyTimesAscendingOrderViolationError(keyTime);
 		}
-
-		lastKeyTime = keyTime;
 	}
 }
 
@@ -79,14 +77,14 @@ function assertAllKeyTimesWithinBoundaries(values: number[]): void {
  *
  * @see https://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#KeyTimesAttribute
  */
-export function assertKeyTimesBeginIsZero(value: number | undefined): void {
-	if (value !== 0) {
+export function assertKeyTimesBeginIsZero(keyTimes: number[]): void {
+	if (keyTimes[0] !== 0) {
 		throw new KeyTimesFirstValueNotZeroError();
 	}
 }
 
-export function assertKeyTimesEndIsOne(value: number | undefined): void {
-	if (value !== 1) {
+export function assertKeyTimesEndIsOne(keyTimes: number[]): void {
+	if (keyTimes[keyTimes.length - 1] !== 1) {
 		throw new KeyTimesLastValueNotOneError();
 	}
 }
