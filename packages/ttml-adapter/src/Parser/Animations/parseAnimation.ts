@@ -68,7 +68,7 @@ export const createAnimationParser = memoizationFactory(function animationParser
 		return undefined;
 	}
 
-	let animation: Animation | undefined;
+	let animation: Animation;
 
 	try {
 		switch (true) {
@@ -96,6 +96,8 @@ export const createAnimationParser = memoizationFactory(function animationParser
 				console.warn(
 					"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. Set is automatically considered as 'discrete'. Animation ignored.",
 				);
+
+				return undefined;
 			}
 		}
 	} catch (err) {
@@ -103,10 +105,6 @@ export const createAnimationParser = memoizationFactory(function animationParser
 			`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
 		);
 
-		return undefined;
-	}
-
-	if (!animation) {
 		return undefined;
 	}
 
