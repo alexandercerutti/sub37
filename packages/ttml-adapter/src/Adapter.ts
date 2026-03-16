@@ -958,15 +958,16 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 	return referencialStyles;
 }
 
-function isInlineAnimation(currentNode: NodeWithRelationship<Token>): boolean {
+function isInlineAnimation(
+	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
+): boolean {
 	const { content } = currentNode;
 
-	const isCurrentNodeAllowedToContainInlineAnimation =
-		isBlockClassElement(currentNode.parent!.content.content) ||
-		isLayoutClassElement(currentNode.parent!.content.content);
+	const isParentAllowedToContainInlineAnimation =
+		currentNode.parent?.content[nodeMatchSymbol]?.matchesAttribute("animate") || false;
 
 	return (
-		isCurrentNodeAllowedToContainInlineAnimation &&
+		isParentAllowedToContainInlineAnimation &&
 		(content.content === "animate" || content.content === "set")
 	);
 }
