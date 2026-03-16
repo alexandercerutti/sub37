@@ -487,7 +487,6 @@ function createSplineAnimation(animationId: string, attributes: MetaAnimation): 
 	assertKeySplineRequired(attributes);
 
 	const keyTimes = getKeyTimes(attributes.keyTimes);
-	const keySplines = getKeySplines(attributes["keySplines"], keyTimes);
 	const timingAttributes = extractTimingAttributes(attributes);
 
 	return {
@@ -498,7 +497,9 @@ function createSplineAnimation(animationId: string, attributes: MetaAnimation): 
 		fill: getFill(attributes["fill"]),
 		timingAttributes,
 		stylesFrames: new Map(),
-		keySplines,
+		get keySplines() {
+			return getKeySplines(attributes["keySplines"], this.keyTimes);
+		},
 	};
 }
 
