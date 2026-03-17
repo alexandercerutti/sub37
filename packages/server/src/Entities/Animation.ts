@@ -26,7 +26,7 @@ export type AnimationEntity = (DiscreteAnimation | ContinuousAnimation) & {
 	id: string;
 	duration: number;
 	delay: number;
-	fill: "forwards" | "backwards";
+	fill: "forwards" | "none";
 	keyTimes: number[];
 	styles: Record<string, string[]>;
 };
@@ -36,7 +36,7 @@ interface InputAnimationData {
 	kind: "discrete" | "continuous";
 	duration: number;
 	delay?: number;
-	fill?: "forwards" | "backwards";
+	fill?: "forwards" | "none";
 	keyTimes: number[];
 	splines?: Spline[];
 
