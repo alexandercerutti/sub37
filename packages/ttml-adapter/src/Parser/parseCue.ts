@@ -1,10 +1,12 @@
-import { CueNode, Entities } from "@sub37/server";
+import { CueNode, Entities, Region } from "@sub37/server";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
+import type { Animation } from "./Animations/parseAnimation.js";
+import { TTMLRegion } from "./parseRegion.js";
 
 export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): CueNode[] {
 	if (!node.children.length) {
@@ -131,9 +133,9 @@ function createCueFromAnonymousSpan(
 
 	if (temporalActiveContext) {
 		/**
-		 * "For the purpose of determining the applicability of a style property,
-		 * if the style property is defined so as to apply to a span element,
-		 * then it also applies to anonymous span elements."
+		 * > For the purpose of determining the applicability of a style property,
+		 * > if the style property is defined so as to apply to a span element,
+		 * > then it also applies to anonymous span elements.
 		 */
 		const styles = temporalActiveContext.computeStylesForElement("span");
 
@@ -146,15 +148,41 @@ function createCueFromAnonymousSpan(
 
 	const cues: CueNode[] = [];
 
-	for (const [startTime, endTime, attrs] of timeIntervals) {
+	for (const [startTime, endTime, attrs, activeEntities] of timeIntervals) {
+		let region: TTMLRegion | undefined;
+		let activeAnimations: ResolvedAnimation[] = [];
+
+		if (attrs & ActiveTemporalEntities.ANIMATION) {
+			activeAnimations = activeAnimations.concat(
+				activeEntities.filter((entity): entity is ResolvedAnimation => "startTime" in entity),
+			);
+		}
+
+		if (attrs & ActiveTemporalEntities.REGION) {
+			region = activeEntities.find((entity) => entity instanceof TTMLRegion);
+		}
+
+		const animationEntities = activeAnimations.map((animation) =>
+			Entities.createAnimationEntity({
+				id: animation.id,
+				duration: animation.duration,
+				keyTimes: animation.keyTimes,
+				fill: animation.fill === "freeze" ? "forwards" : "none",
+				splines: animation.keySplines,
+				kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
+				delay: animation.startTime - startTime,
+				styles: animation.apply("span"),
+			}),
+		);
+
 		cues.push(
 			new CueNode({
 				id: parentId,
 				content,
 				startTime,
 				endTime,
-				region: attrs & TemporalAttributes.REGION ? temporalActiveContext?.region : undefined,
-				entities,
+				region,
+				entities: entities.concat(animationEntities),
 			}),
 		);
 	}
@@ -162,13 +190,35 @@ function createCueFromAnonymousSpan(
 	return cues;
 }
 
-const TemporalAttributes = {
+const ActiveTemporalEntities = {
 	CUE: /*********/ 0b001,
 	REGION: /******/ 0b010,
 	ANIMATION: /***/ 0b100,
 } as const;
 
-type TemporalIntervalList = [startTime: number, endTime: number, attrs: number][];
+/**
+ * Describes a temporal interval in which some specific entities are active.
+ */
+type TemporalInterval = [startTime: number, endTime: number, activeEntities: number];
+
+type ResolvedAnimation = Omit<Animation, "timingAttributes"> & {
+	duration: number;
+	/**
+	 * When splitting an animation across different cues, we cannot restart it
+	 * for each cue. We have to resume it.
+	 */
+	startTime: number;
+};
+
+/**
+ * Describes a temporal interval specifically associated with one entity.
+ */
+type AssociatedTemporalInterval = [...TemporalInterval, entity?: ResolvedAnimation | Region];
+
+type TemporalIntervalWithEntities = [
+	...TemporalInterval,
+	entitiesList: (ResolvedAnimation | Region)[],
+];
 
 /**
  * A region can specify timing attributes for which
@@ -178,18 +228,16 @@ type TemporalIntervalList = [startTime: number, endTime: number, attrs: number][
  * in order to make them activate only in that specific
  * time shift.
  */
-function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): TemporalIntervalList {
+function getCuesTimeIntervalsFromRegionTemporalSegmentation(
+	scope: Scope,
+): TemporalIntervalWithEntities[] {
 	const cueTimeContext = readScopeTimeContext(scope)!;
 	const tac = readScopeTemporalActiveContext(scope);
 	const region = tac?.region;
 	const animations = tac?.animations || [];
 
-	/**
-	 * This array order is linked to the
-	 * one in the categorizeTimeSegments.
-	 */
-	const unlinkedTimeIntervals: TemporalIntervalList = [
-		[cueTimeContext.startTime, cueTimeContext.endTime, TemporalAttributes.CUE],
+	const associatedTimeIntervals: AssociatedTemporalInterval[] = [
+		[cueTimeContext.startTime, cueTimeContext.endTime, ActiveTemporalEntities.CUE],
 	];
 
 	if (region?.timingAttributes) {
@@ -201,10 +249,11 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 
 		const regionTimeContext = isolateContext(readScopeTimeContext(regionScope))!;
 
-		unlinkedTimeIntervals.push([
+		associatedTimeIntervals.push([
 			regionTimeContext.startTime,
 			regionTimeContext.endTime,
-			TemporalAttributes.REGION,
+			ActiveTemporalEntities.REGION,
+			region,
 		]);
 	}
 
@@ -222,21 +271,33 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 
 			const animationTimeContext = isolateContext(readScopeTimeContext(animationScope))!;
 
-			unlinkedTimeIntervals.push([
+			const resolvedAnimation: ResolvedAnimation = Object.create(animation, {
+				duration: {
+					value: animationTimeContext.endTime - animationTimeContext.startTime,
+					enumerable: true,
+				},
+				startTime: {
+					value: animationTimeContext.startTime,
+					enumerable: true,
+				},
+			});
+
+			associatedTimeIntervals.push([
 				animationTimeContext.startTime,
 				animationTimeContext.endTime,
-				TemporalAttributes.ANIMATION,
+				ActiveTemporalEntities.ANIMATION,
+				resolvedAnimation,
 			]);
 		}
 	}
 
 	const timeIntervals = categorizeTimelineSegments(
-		unlinkedTimeIntervals,
-		getTimelineSegments(unlinkedTimeIntervals),
+		associatedTimeIntervals,
+		getTimelineSegments(associatedTimeIntervals),
 	);
 
 	const activeCueTimeIntervals = timeIntervals.filter(
-		([, , attr]) => attr & TemporalAttributes.CUE,
+		([, , attr]) => attr & ActiveTemporalEntities.CUE,
 	);
 
 	if (!activeCueTimeIntervals.length) {
@@ -257,7 +318,14 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
 		 * remove it.
 		 */
 
-		return [[unlinkedTimeIntervals[0]![0], unlinkedTimeIntervals[0]![1], TemporalAttributes.CUE]];
+		return [
+			[
+				associatedTimeIntervals[0]![0],
+				associatedTimeIntervals[0]![1],
+				ActiveTemporalEntities.CUE,
+				[],
+			],
+		];
 	}
 
 	return activeCueTimeIntervals;
@@ -274,7 +342,7 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
  * - `rst`: region start time
  * - `ret`: region end time
  *
- * **Not intersecting, (2 segments)**
+ * **Not intersecting (2 segments)**
  *
  * ```text
  *  rst         ret cst        cet
@@ -305,16 +373,18 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(scope: Scope): Tempo
  *              timeline
  * ```
  *
- * @param unlinkedIntervals
+ * @param associatedTemporalIntervals
  * @returns
  */
 
-function getTimelineSegments(unlinkedIntervals: TemporalIntervalList): TemporalIntervalList {
+function getTimelineSegments(
+	associatedTemporalIntervals: AssociatedTemporalInterval[],
+): TemporalInterval[] {
 	const timelineCuepoints = Array.from(
-		new Set(unlinkedIntervals.flatMap(([start, end]) => [start, end])),
+		new Set(associatedTemporalIntervals.flatMap(([start, end]) => [start, end])),
 	).sort((a, b) => a - b);
 
-	const timeIntervals: TemporalIntervalList = [];
+	const timeIntervals: TemporalInterval[] = [];
 
 	for (let i = 0; i < timelineCuepoints.length - 1; i++) {
 		const t0 = timelineCuepoints[i]!;
@@ -338,20 +408,29 @@ function getTimelineSegments(unlinkedIntervals: TemporalIntervalList): TemporalI
  */
 
 function categorizeTimelineSegments(
-	unlinkedTimeIntervals: TemporalIntervalList,
-	timelineSegments: TemporalIntervalList,
-): TemporalIntervalList {
-	for (let i = 0; i < unlinkedTimeIntervals.length; i++) {
-		const [itemStartTime, itemEndTime, attribute] = unlinkedTimeIntervals[i]!;
+	associatedTemporalIntervals: AssociatedTemporalInterval[],
+	timelineSegments: TemporalInterval[],
+): TemporalIntervalWithEntities[] {
+	const segments: TemporalIntervalWithEntities[] = [];
 
-		for (const segment of timelineSegments) {
-			const [start, end] = segment;
+	for (const [start, end] of timelineSegments) {
+		let activeFlags = 0;
+		const activeEntitiesList: TemporalIntervalWithEntities[3] = [];
+
+		for (const interval of associatedTemporalIntervals) {
+			const [itemStartTime, itemEndTime, activeEntities, entity] = interval;
 
 			if (start >= itemStartTime && end <= itemEndTime) {
-				segment[2] |= attribute;
+				activeFlags |= activeEntities;
+
+				if (entity !== undefined) {
+					activeEntitiesList.push(entity);
+				}
 			}
 		}
+
+		segments.push([start, end, activeFlags, activeEntitiesList]);
 	}
 
-	return timelineSegments;
+	return segments;
 }
