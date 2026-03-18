@@ -1092,7 +1092,7 @@ function isMappedKey(key: string): key is keyof TTML_CSS_ATTRIBUTES_MAP {
 	return TTML_CSS_ATTRIBUTES_MAP.hasOwnProperty(key);
 }
 
-function styleAppliesToElement(
+export function styleAppliesToElement(
 	style: AttributeDefinition,
 	scope: Scope,
 	element?: string | undefined,

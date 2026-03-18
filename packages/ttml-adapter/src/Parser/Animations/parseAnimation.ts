@@ -5,6 +5,7 @@ import {
 	isStyleAttribute,
 	parseAttributeValue,
 	resolveStyleDefinitionByName,
+	styleAppliesToElement,
 } from "../parseStyle.js";
 import type { Scope } from "../Scope/Scope";
 import type { TimeContextData } from "../Scope/TimeContext.js";
@@ -46,14 +47,15 @@ interface BaseAnimation {
 		dur?: string;
 	};
 	keyTimes: number[];
-	stylesFrames: Map<string, DerivedValue<string, unknown>[][]>;
 }
 
-export type Animation = DiscreteAnimation | LinearAnimation | PacedAnimation | SplineAnimation;
+export type Animation = (DiscreteAnimation | LinearAnimation | PacedAnimation | SplineAnimation) & {
+	apply(element: string): Record<string, string[]>;
+};
 
 export const createAnimationParser = memoizationFactory(function animationParser(
 	animationStorage: Map<string, Animation>,
-	_scope: Scope,
+	scope: Scope,
 	/**
 	 * CalcMode is also used for <set> when we register
 	 * discrete animations, in order to understand how
@@ -68,7 +70,7 @@ export const createAnimationParser = memoizationFactory(function animationParser
 		return undefined;
 	}
 
-	let animation: Animation;
+	let animation: Omit<Animation, "apply">;
 
 	try {
 		switch (true) {
@@ -135,13 +137,17 @@ export const createAnimationParser = memoizationFactory(function animationParser
 		return undefined;
 	}
 
-	for (const [styleName, frames] of stylesFrames) {
-		animation.stylesFrames.set(styleName, frames);
-	}
+	const animationWithStyles: Animation = Object.create(animation, {
+		apply: {
+			value(element: string) {
+				return convertAnimationStylesToCSS(stylesFrames, scope, element);
+			},
+		},
+	});
 
-	animationStorage.set(animationId, animation);
+	animationStorage.set(animationId, animationWithStyles);
 
-	return animation;
+	return animationWithStyles;
 });
 
 /**
@@ -354,6 +360,40 @@ function isStyleAnimationCompatible(
 	return true;
 }
 
+function convertAnimationStylesToCSS(
+	stylesFrames: Map<string, DerivedValue[][]>,
+	scope: Scope,
+	sourceElementName: string,
+): Record<string, string[]> {
+	const result: Record<string, string[]> = {};
+
+	for (const [ttmlProperty, keyframes] of stylesFrames) {
+		const definition = resolveStyleDefinitionByName(ttmlProperty);
+
+		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
+			continue;
+		}
+
+		for (const derivedValues of keyframes) {
+			const mapped = definition.toCSS(scope, derivedValues, sourceElementName);
+
+			if (mapped === null) {
+				continue;
+			}
+
+			for (const [cssKey, cssValue] of mapped) {
+				if (!result[cssKey]) {
+					result[cssKey] = [];
+				}
+
+				result[cssKey].push(cssValue);
+			}
+		}
+	}
+
+	return result;
+}
+
 function splitAnimationValueList(animationValue: AnimationValueList): AnimationValue[] {
 	return animationValue.split(/\s*;\s*/);
 }
@@ -392,7 +432,6 @@ function createDiscreteAnimation(
 		repeatCount: getRepeatCount(attributes["repeatCount"]),
 		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames: new Map(),
 		keySplines: [],
 	};
 }
@@ -424,7 +463,6 @@ function createLinearAnimation(animationId: string, attributes: MetaAnimation): 
 		repeatCount: getRepeatCount(attributes["repeatCount"]),
 		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames: new Map(),
 		get keySplines() {
 			return this.keyTimes.map(() => [0, 0, 1, 1]) as Spline[];
 		},
@@ -465,7 +503,6 @@ function createPacedAnimation(animationId: string, attributes: MetaAnimation): P
 		repeatCount: getRepeatCount(attributes["repeatCount"]),
 		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames: new Map(),
 		get keySplines() {
 			return this.keyTimes.map(() => [0, 0, 1, 1]) as Spline[];
 		},
@@ -496,7 +533,6 @@ function createSplineAnimation(animationId: string, attributes: MetaAnimation): 
 		repeatCount: getRepeatCount(attributes["repeatCount"]),
 		fill: getFill(attributes["fill"]),
 		timingAttributes,
-		stylesFrames: new Map(),
 		get keySplines() {
 			return getKeySplines(attributes["keySplines"], this.keyTimes);
 		},
