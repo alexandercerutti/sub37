@@ -2,16 +2,14 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
-import type { Token } from "./Token.js";
+import type { Token, UniquelyAnnotatedNode } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
 import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
 
 type StyleAttributeString = `tts:${string}`;
 
-export interface TTMLStyle {
-	id: string;
-
+export interface TTMLStyle extends UniquelyAnnotatedNode {
 	/**
 	 * Retrieves actualy styles for an element
 	 *
@@ -29,12 +27,12 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	scope: Scope,
 	attributes: Record<string, string>,
 ): TTMLStyle | undefined {
-	if (!attributes["xml:id"]) {
+	if (!isUniquelyAnnotatedNode(attributes)) {
 		return undefined;
 	}
 
 	const style = {
-		id: attributes["xml:id"],
+		"xml:id": attributes["xml:id"],
 		styleAttributes: extractStyleAttributes(attributes),
 		apply(element: string): SupportedCSSProperties {
 			return convertAttributesToCSS(this.styleAttributes, scope, element);
@@ -42,7 +40,7 @@ export const createStyleParser = memoizationFactory(function styleParserExecutor
 	};
 
 	/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
-	stylesIDREFSStorage.set(style.id, style);
+	stylesIDREFSStorage.set(style["xml:id"], style);
 
 	return style;
 });

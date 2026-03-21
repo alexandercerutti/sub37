@@ -1,3 +1,18 @@
+export type IDREF = string;
+
+/**
+ * @see https://www.w3.org/TR/2005/REC-xml-id-20050909
+ */
+export interface UniquelyAnnotatedNode {
+	"xml:id": IDREF;
+}
+
+export function isUniquelyAnnotatedNode(
+	node: Record<string, string>,
+): node is Record<string, string> & UniquelyAnnotatedNode {
+	return "xml:id" in node;
+}
+
 export enum TokenType {
 	CDATA,
 	COMMENT,

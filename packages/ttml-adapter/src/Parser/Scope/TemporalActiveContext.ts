@@ -111,11 +111,11 @@ export function createTemporalActiveContext(
 				}
 
 				if (incomingStyles.length) {
-					const currentStylesIds = new Set(store.styles.map(({ id }) => id));
+					const currentStylesIds = new Set(store.styles.map(({ "xml:id": id }) => id));
 					const recognizedStyles = extractActiveStylesFromStyleStore(incomingStyles);
 
 					for (const style of recognizedStyles) {
-						if (currentStylesIds.has(style.id)) {
+						if (currentStylesIds.has(style["xml:id"])) {
 							continue;
 						}
 
@@ -191,7 +191,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 	}
 
 	const styles: ActiveStyle[] = [];
-	const inlineStyles = regionStyles.find(({ id }) => id === "inline");
+	const inlineStyles = regionStyles.find(({ "xml:id": id }) => id === "inline");
 
 	if (inlineStyles) {
 		styles.push(
@@ -203,7 +203,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 		);
 	}
 
-	const nestedStyles = regionStyles.find(({ id }) => id === "nested");
+	const nestedStyles = regionStyles.find(({ "xml:id": id }) => id === "nested");
 
 	if (nestedStyles) {
 		styles.push(

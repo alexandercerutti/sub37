@@ -15,7 +15,8 @@ import {
 } from "./Parser/Scope/RegionContainerContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
-import { Token, TokenType } from "./Parser/Token.js";
+import { isUniquelyAnnotatedNode, Token, TokenType } from "./Parser/Token.js";
+import type { UniquelyAnnotatedNode } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
 import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 import type { ActiveStyle } from "./Parser/Scope/TemporalActiveContext.js";
@@ -668,7 +669,7 @@ function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
  * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
  */
 function shouldIgnoreOutOfLineRegion(token: Token): boolean {
-	return !("xml:id" in token.attributes);
+	return !isUniquelyAnnotatedNode(token.attributes);
 }
 
 /**

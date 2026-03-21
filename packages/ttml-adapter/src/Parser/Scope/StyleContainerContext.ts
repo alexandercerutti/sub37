@@ -1,4 +1,5 @@
 import { TTMLStyle, createStyleParser } from "../parseStyle.js";
+import type { UniquelyAnnotatedNode } from "../Token.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
@@ -6,7 +7,7 @@ const styleContextSymbol = Symbol("style");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
 type StyleIDRef = string;
-type StyleIndex = Record<StyleIDRef, Record<string, string>>;
+type StyleIndex = UniquelyAnnotatedNode & Record<StyleIDRef, Record<string, string>>;
 
 interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;

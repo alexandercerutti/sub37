@@ -1,5 +1,6 @@
 import type { Region } from "@sub37/server";
 import type { Token } from "./Token";
+import { isUniquelyAnnotatedNode } from "./Token";
 import type { TTMLStyle } from "./parseStyle";
 import { createStyleParser, isStyleAttribute } from "./parseStyle.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree";
@@ -17,7 +18,7 @@ export const createRegionParser = memoizationFactory(function regionParserExecut
 	attributes: Record<string, string>,
 	children: NodeWithRelationship<Token>[],
 ): TTMLRegion | undefined {
-	if (attributes["xml:id"] && regionStorage.has(attributes["xml:id"])) {
+	if (!isUniquelyAnnotatedNode(attributes) || regionStorage.has(attributes["xml:id"])) {
 		/**
 		 * Region is ignored if the id is not unique in the document
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-inline-regions
