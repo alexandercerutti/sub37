@@ -28,12 +28,12 @@ import { createVisitor } from "./Parser/structure/visitor.js";
 import type { Visitor } from "./Parser/structure/visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
 import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
-import { createStyleParser } from "./Parser/parseStyle.js";
 import {
 	AnimationContainerContextState,
 	createAnimationContainerContext,
 	readScopeAnimationContext,
 } from "./Parser/Scope/AnimationContainerContext.js";
+import { isStyleAttribute } from "./Parser/parseStyle.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -461,24 +461,25 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (destinationMatch.matchesAttribute("tts:*")) {
-						const inlineStyles = extractInlineStylesFromToken(token, treeScope);
+						const inlineStyles = extractInlineStylesFromToken(token);
 
 						if (inlineStyles) {
 							contextsList.push(
+								createStyleContainerContext([inlineStyles]),
 								createTemporalActiveContext({
-									styles: [inlineStyles],
+									stylesIDRefs: [inlineStyles["xml:id"]],
 								}),
 							);
 						}
 					}
 
 					if (token.attributes["style"] && destinationMatch.matchesAttribute("style")) {
-						const outOfLineStyle = getOutOfLineStylesByIDREFS(token, treeScope);
+						const outOfLineStyles = getOutOfLineStylesByIDREFS(token, treeScope);
 
-						if (outOfLineStyle.length) {
+						if (outOfLineStyles.length) {
 							contextsList.push(
 								createTemporalActiveContext({
-									styles: outOfLineStyle,
+									stylesIDRefs: outOfLineStyles.map(({ "xml:id": id }) => id),
 								}),
 							);
 						}
@@ -868,32 +869,35 @@ function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
 	return currentNode.content.content === "styling";
 }
 
-function extractOutOfLineStyles(currentNode: NodeWithRelationship<Token>) {
+function extractOutOfLineStyles(
+	currentNode: NodeWithRelationship<Token>,
+): (Record<`tts:${string}`, string> & UniquelyAnnotatedNode)[] {
 	const { children } = currentNode;
 
-	const styles: Record<string, Record<string, string>> = {};
+	const styles: (Record<`tts:${string}`, string> & UniquelyAnnotatedNode)[] = [];
 
 	for (const { content } of children) {
 		if (content.content !== "style") {
 			continue;
 		}
 
-		if (!content.attributes["xml:id"]) {
+		if (!isUniquelyAnnotatedNode(content.attributes)) {
 			continue;
 		}
 
-		const id = content.attributes["xml:id"];
-		styles[id] = content.attributes;
+		styles.push(content.attributes);
 	}
 
 	return styles;
 }
 
-function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle | undefined {
+function extractInlineStylesFromToken(
+	token: Token,
+): (Record<`tts:${string}`, string> & UniquelyAnnotatedNode & { kind: "inline" }) | undefined {
 	const { attributes } = token;
 
-	const styles = Object.keys(attributes).reduce<Record<string, string>>((acc, key) => {
-		if (key.startsWith("tts:")) {
+	const styles = Object.keys(attributes).reduce<Record<`tts:${string}`, string>>((acc, key) => {
+		if (isStyleAttribute(key)) {
 			acc[key] = attributes[key]!;
 		}
 
@@ -904,21 +908,15 @@ function extractInlineStylesFromToken(token: Token, scope: Scope): ActiveStyle |
 		return undefined;
 	}
 
-	const styleParser = createStyleParser(scope);
-	styleParser.process(
-		Object.create(styles, {
-			"xml:id": {
-				value: "inline",
-				enumerable: true,
-			},
-		}),
-	);
-
-	return Object.create(styleParser.get("inline")!, {
+	return Object.create(styles, {
+		"xml:id": {
+			value: `in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+			enumerable: true,
+		},
 		kind: {
 			value: "inline",
 		},
-	}) as ActiveStyle;
+	});
 }
 
 function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {

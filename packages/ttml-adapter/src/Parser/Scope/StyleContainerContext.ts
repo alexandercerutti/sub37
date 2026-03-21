@@ -1,4 +1,5 @@
 import { TTMLStyle, createStyleParser } from "../parseStyle.js";
+import type { StyleAttributeString } from "../parseStyle.js";
 import type { UniquelyAnnotatedNode } from "../Token.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
@@ -6,10 +7,17 @@ import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 const styleContextSymbol = Symbol("style");
 
 type StyleParser = ReturnType<typeof createStyleParser>;
-type StyleIDRef = string;
-type StyleIndex = UniquelyAnnotatedNode & Record<StyleIDRef, Record<string, string>>;
 
-interface StyleContainerContext extends Context<StyleContainerContext, StyleIndex> {
+type ReferentialStyleChain = Partial<Record<"style", string>>;
+
+type StyleContainerContextState = UniquelyAnnotatedNode &
+	ReferentialStyleChain &
+	Record<StyleAttributeString, string>;
+
+interface StyleContainerContext extends Context<
+	StyleContainerContext,
+	StyleContainerContextState[]
+> {
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
 }
 
@@ -20,7 +28,7 @@ declare module "./Scope" {
 }
 
 export function createStyleContainerContext(
-	registeredStyles: StyleIndex,
+	registeredStyles: StyleContainerContextState[],
 ): ContextFactory<StyleContainerContext> {
 	return function (scope: Scope) {
 		/**
@@ -38,7 +46,7 @@ export function createStyleContainerContext(
 			[onAttachedSymbol]() {
 				const { args } = this;
 
-				for (const styleAttributes of Object.values(args)) {
+				for (const styleAttributes of args) {
 					if (!styleAttributes["xml:id"]) {
 						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
 						continue;
@@ -92,7 +100,7 @@ export function createStyleContainerContext(
 			[onMergeSymbol](incomingContext: StyleContainerContext): void {
 				const { args } = incomingContext;
 
-				for (const style of Object.values(args)) {
+				for (const style of args) {
 					stylesParser.process(style);
 				}
 			},

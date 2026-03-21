@@ -8,9 +8,11 @@ import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
+import type { IDREF } from "../Token.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 import type { Animation } from "../Animations/parseAnimation.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";
+import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
@@ -35,9 +37,9 @@ export type ActiveStyle = TTMLStyle & {
 };
 
 interface TemporalActiveInitParams {
-	regionIDRef?: string;
-	styles?: ActiveStyle[];
-	animationsIDRefs?: string[];
+	regionIDRef?: IDREF;
+	stylesIDRefs?: IDREF[];
+	animationsIDRefs?: IDREF[];
 }
 
 interface TemporalActiveContextState {
@@ -75,7 +77,7 @@ export function createTemporalActiveContext(
 				return initParams;
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, styles = [], animationsIDRefs } = this.args;
+				const { regionIDRef, stylesIDRefs = [], animationsIDRefs } = this.args;
 
 				if (regionIDRef) {
 					const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
@@ -85,9 +87,9 @@ export function createTemporalActiveContext(
 					store.region = regionContext?.getRegionById(regionIDRef);
 				}
 
-				if (styles.length) {
-					const recognizedStyles = extractActiveStylesFromStyleStore(styles);
-					store.styles = store.styles.concat(recognizedStyles);
+				if (stylesIDRefs?.length) {
+					const styles = extractActiveStylesFromStyleStore(scope, stylesIDRefs);
+					store.styles = store.styles.concat(styles);
 				}
 
 				if (animationsIDRefs?.length) {
@@ -98,7 +100,7 @@ export function createTemporalActiveContext(
 			[onMergeSymbol](incomingContext: TemporalActiveContext): void {
 				const {
 					regionIDRef: incomingRegionIDRef,
-					styles: incomingStyles = [],
+					stylesIDRefs: incomingStylesIDRefs = [],
 					animationsIDRefs: incomingAnimationsIDRefs = [],
 				} = incomingContext.args;
 
@@ -110,11 +112,11 @@ export function createTemporalActiveContext(
 					store.styles = store.styles.concat(stylesFromRegion);
 				}
 
-				if (incomingStyles.length) {
+				if (incomingStylesIDRefs.length) {
+					const styles = extractActiveStylesFromStyleStore(scope, incomingStylesIDRefs);
 					const currentStylesIds = new Set(store.styles.map(({ "xml:id": id }) => id));
-					const recognizedStyles = extractActiveStylesFromStyleStore(incomingStyles);
 
-					for (const style of recognizedStyles) {
+					for (const style of styles) {
 						if (currentStylesIds.has(style["xml:id"])) {
 							continue;
 						}
@@ -218,24 +220,35 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 	return styles;
 }
 
-function extractActiveStylesFromStyleStore(storeStyles: ActiveStyle[]): ActiveStyle[] {
-	if (!storeStyles?.length) {
+function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): ActiveStyle[] {
+	if (!idrefs?.length) {
 		return [];
 	}
 
 	const styles: ActiveStyle[] = [];
 	const allowedKinds = ["inline", "nested", "referential"] as const;
+	const styleContext = readScopeStyleContainerContext(scope);
 
-	for (const style of storeStyles) {
-		if (!allowedKinds.includes(style.kind)) {
-			console.log(
-				`Style with not recognized kind ('${style.kind}') received. Additional style ignored.`,
+	for (const style of idrefs) {
+		const recognizedStyle = styleContext?.getStyleByIDRef(style) as ActiveStyle;
+
+		if (!recognizedStyle) {
+			console.warn(
+				`Style with id '${style}' referenced in temporal active context was not found in the document. Ignored.`,
 			);
 
 			continue;
 		}
 
-		styles.push(style);
+		if (!allowedKinds.includes(recognizedStyle.kind)) {
+			console.log(
+				`Style with not recognized kind ('${recognizedStyle.kind}') received. Additional style ignored.`,
+			);
+
+			continue;
+		}
+
+		styles.push(recognizedStyle);
 	}
 
 	return styles;
