@@ -7,9 +7,9 @@ export interface UniquelyAnnotatedNode {
 	"xml:id": IDREF;
 }
 
-export function isUniquelyAnnotatedNode(
-	node: Record<string, string>,
-): node is Record<string, string> & UniquelyAnnotatedNode {
+export function isUniquelyAnnotatedNode<T extends Record<string, string>>(
+	node: T,
+): node is T & UniquelyAnnotatedNode {
 	return "xml:id" in node;
 }
 

@@ -2,21 +2,13 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import { memoizationFactory } from "./memoizationFactory.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
-import { isUniquelyAnnotatedNode, type Token, type UniquelyAnnotatedNode } from "./Token.js";
+import { isUniquelyAnnotatedNode, type Token } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
 import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
+import type { TTMLStyle } from "./Scope/StyleContainerContext.js";
 
 export type StyleAttributeString = `tts:${string}`;
-
-export interface TTMLStyle extends UniquelyAnnotatedNode {
-	/**
-	 * Retrieves actualy styles for an element
-	 *
-	 * @param element
-	 */
-	apply(element: string): SupportedCSSProperties;
-}
 
 export const createStyleParser = memoizationFactory(function styleParserExecutor(
 	/**

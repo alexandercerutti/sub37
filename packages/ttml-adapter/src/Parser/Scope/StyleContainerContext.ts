@@ -1,18 +1,22 @@
-import { TTMLStyle, createStyleParser } from "../parseStyle.js";
-import type { StyleAttributeString } from "../parseStyle.js";
+import { isUniquelyAnnotatedNode } from "../Token.js";
 import type { UniquelyAnnotatedNode } from "../Token.js";
+import type { StyleAttributeString, SupportedCSSProperties } from "../parseStyle.js";
+import {
+	isStyleAttribute,
+	parseAttributeValue,
+	resolveStyleDefinitionByName,
+	styleAppliesToElement,
+} from "../parseStyle.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");
 
-type StyleParser = ReturnType<typeof createStyleParser>;
-
 type ReferentialStyleChain = Partial<Record<"style", string>>;
 
 type StyleContainerContextState = UniquelyAnnotatedNode &
 	ReferentialStyleChain &
-	Record<StyleAttributeString, string>;
+	Record<string, string>;
 
 interface StyleContainerContext extends Context<
 	StyleContainerContext,
@@ -35,7 +39,6 @@ export function createStyleContainerContext(
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
 		 */
 		const stylesIDREFSStorage = new Map<string, TTMLStyle>();
-		const stylesParser: StyleParser = createStyleParser(scope, stylesIDREFSStorage);
 
 		return {
 			parent: undefined,
@@ -87,36 +90,52 @@ export function createStyleContainerContext(
 					const currentStyleId = styleAttributes["xml:id"];
 					const resolvedStyleId = resolveIDREFConflict(stylesIDREFSStorage, currentStyleId);
 
-					stylesParser.process(
-						Object.create(finalAttributes, {
-							"xml:id": {
-								value: resolvedStyleId,
-								enumerable: true,
-							},
-						}),
-					);
+					const style = Object.create(finalAttributes, {
+						"xml:id": {
+							value: resolvedStyleId,
+							enumerable: true,
+						},
+					});
+
+					const ttmlStyle = createTTMLStyle(style, scope);
+
+					if (!ttmlStyle) {
+						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+						continue;
+					}
+
+					stylesIDREFSStorage.set(resolvedStyleId, ttmlStyle);
 				}
 			},
 			[onMergeSymbol](incomingContext: StyleContainerContext): void {
 				const { args } = incomingContext;
 
 				for (const style of args) {
-					stylesParser.process(style);
+					const ttmlStyle = createTTMLStyle(style, scope);
+
+					if (!ttmlStyle) {
+						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+						continue;
+					}
+
+					stylesIDREFSStorage.set(ttmlStyle["xml:id"], ttmlStyle);
 				}
 			},
 			getStyleByIDRef(idref: string): TTMLStyle | undefined {
-				if (!stylesIDREFSStorage.has(idref)) {
-					const styleFromParent = this.parent?.getStyleByIDRef(idref);
+				const styleFromStorage = stylesIDREFSStorage.get(idref);
 
-					if (!styleFromParent) {
-						console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
-						return undefined;
-					}
-
-					return styleFromParent;
+				if (styleFromStorage) {
+					return styleFromStorage;
 				}
 
-				return stylesParser.get(idref);
+				const styleFromParent = this.parent?.getStyleByIDRef(idref);
+
+				if (!styleFromParent) {
+					console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
+					return undefined;
+				}
+
+				return styleFromParent;
 			},
 		};
 	};
@@ -125,6 +144,23 @@ export function createStyleContainerContext(
 export function readScopeStyleContainerContext(scope: Scope): StyleContainerContext | undefined {
 	return scope.getContextByIdentifier(styleContextSymbol);
 }
+
+/**
+ * > If the same IDREF, _ID1_, appears more than one time in the value of a style attribute,
+ * > then there should be an intervening IDREF, _ID2_, where _ID2_ is not equal to _ID1_.
+ *
+ * > This constraint is intended to discourage the use of redundant referential styling
+ * > while still allowing the same style to be referenced multiple times in order to
+ * > potentially override prior referenced styles, e.g., when an intervening, distinct
+ * > style is referenced in the IDREFS list.
+ *
+ * @TODO this is out of standard. I didn't understand correctly what the text was intending
+ * to say. This should be re-visited and potentially removed.
+ *
+ * @param idrefsMap
+ * @param id
+ * @returns
+ */
 
 function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
 	if (!idrefsMap.has(id)) {
@@ -145,4 +181,95 @@ function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): st
 		`--${styleConflictOverrideIdentifier}`,
 		`--${styleConflictOverrideIdentifier + 1}`,
 	);
+}
+
+export interface TTMLStyle extends UniquelyAnnotatedNode {
+	/**
+	 * Retrieves actualy styles for an element
+	 *
+	 * @param element
+	 */
+	apply(element: string): SupportedCSSProperties;
+}
+
+function createTTMLStyle(attributes: Record<string, string>, scope: Scope): TTMLStyle | undefined {
+	if (!isUniquelyAnnotatedNode(attributes)) {
+		return undefined;
+	}
+
+	const style = {
+		"xml:id": attributes["xml:id"],
+		styleAttributes: extractStyleAttributes(attributes),
+		apply(element: string): SupportedCSSProperties {
+			return convertAttributesToCSS(this.styleAttributes, scope, element);
+		},
+	};
+
+	return style;
+}
+
+function extractStyleAttributes(
+	attributes: Record<string, string>,
+): Record<StyleAttributeString, string> {
+	const validAttributes: Record<StyleAttributeString, string> = {};
+
+	for (const [attrName, attr] of Object.entries(attributes)) {
+		if (!isStyleAttribute(attrName)) {
+			continue;
+		}
+
+		validAttributes[attrName] = attr;
+	}
+
+	return validAttributes;
+}
+
+/**
+ * Converts TTML attributes to CSS properties for a specific element.
+ *
+ * @param attributes
+ * @param scope
+ * @param sourceElementName
+ * @returns
+ */
+function convertAttributesToCSS(
+	attributes: Record<string, string>,
+	scope: Scope,
+	sourceElementName: string,
+): SupportedCSSProperties {
+	const convertedAttributes: SupportedCSSProperties = {};
+
+	/**
+	 * Not using Object.entries or "for..of" because they are not
+	 * able to detect enumerable keys in prototype chain, and we
+	 * are using them
+	 */
+
+	for (const attributeKey in attributes) {
+		const definition = resolveStyleDefinitionByName(attributeKey);
+
+		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
+			continue;
+		}
+
+		const value = attributes[attributeKey]!;
+
+		const collectedValues = parseAttributeValue(definition.syntax, value);
+
+		if (collectedValues === null) {
+			continue;
+		}
+
+		const mapped = definition.toCSS(scope, collectedValues, sourceElementName);
+
+		if (mapped === null) {
+			continue;
+		}
+
+		for (const [mappedKey, mappedValue] of mapped) {
+			convertedAttributes[mappedKey] = mappedValue;
+		}
+	}
+
+	return convertedAttributes;
 }

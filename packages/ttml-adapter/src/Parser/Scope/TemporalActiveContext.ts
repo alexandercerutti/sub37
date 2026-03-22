@@ -7,12 +7,13 @@
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import type { SupportedCSSProperties, TTMLStyle } from "../parseStyle.js";
+import type { SupportedCSSProperties } from "../parseStyle.js";
 import type { IDREF } from "../Token.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 import type { Animation } from "../Animations/parseAnimation.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
+import type { TTMLStyle } from "./StyleContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
