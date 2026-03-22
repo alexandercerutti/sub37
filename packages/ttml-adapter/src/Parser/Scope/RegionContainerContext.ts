@@ -1,6 +1,7 @@
 import { Region } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree";
 import type { Token } from "../Token";
+import { isUniquelyAnnotatedNode } from "../Token";
 import { createRegionParser } from "../parseRegion.js";
 import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope";
@@ -51,6 +52,10 @@ export function createRegionContainerContext(
 			},
 			[onAttachedSymbol](): void {
 				for (const { attributes, children } of contextState) {
+					if (!isUniquelyAnnotatedNode(attributes)) {
+						continue;
+					}
+
 					regionParser.process(attributes, children);
 				}
 			},
@@ -58,6 +63,10 @@ export function createRegionContainerContext(
 				const { args } = incomingContext;
 
 				for (const { attributes, children } of args) {
+					if (!isUniquelyAnnotatedNode(attributes)) {
+						continue;
+					}
+
 					regionParser.process(attributes, children);
 				}
 			},
