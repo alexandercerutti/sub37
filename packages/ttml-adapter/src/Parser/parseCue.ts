@@ -6,7 +6,7 @@ import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js"
 import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Animations/parseAnimation.js";
-import { TTMLRegion } from "./parseRegion.js";
+import { TTMLRegion } from "./Scope/RegionContainerContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): CueNode[] {
 	if (!node.children.length) {

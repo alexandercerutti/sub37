@@ -4,12 +4,12 @@
  * the same scope.
  */
 
-import type { TTMLRegion } from "../parseRegion.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { SupportedCSSProperties } from "../parseStyle.js";
 import type { IDREF } from "../Token.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
+import type { TTMLRegion } from "./RegionContainerContext.js";
 import type { Animation } from "../Animations/parseAnimation.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
