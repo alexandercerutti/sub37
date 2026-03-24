@@ -51,69 +51,27 @@ export function createRegionContainerContext(
 				return contextState;
 			},
 			[onAttachedSymbol](): void {
-				for (const { attributes, children } of contextState) {
-					if (!isUniquelyAnnotatedNode(attributes)) {
+				for (const region of contextState) {
+					if (!isUniquelyAnnotatedNode(region.attributes)) {
 						continue;
 					}
 
-					const regionTimingAttributes =
-						(hasTimingAttributes(attributes) && {
-							begin: attributes["begin"],
-							dur: attributes["dur"],
-							end: attributes["end"],
-							timeContainer: attributes["timeContainer"],
-						}) ||
-						undefined;
+					const ttmlRegion = createTTMLRegion(region);
 
-					const subscope = createScope(
-						undefined,
-						createStyleContainerContext([
-							extractInlineStyles(attributes),
-							extractNestedStylesChildren(children),
-						]),
-					);
-
-					const region = new TTMLRegion(
-						attributes["xml:id"] || "inline",
-						regionTimingAttributes,
-						subscope,
-					);
-
-					regionsIDREFSStorage.set(region.id, region);
+					regionsIDREFSStorage.set(ttmlRegion.id, ttmlRegion);
 				}
 			},
 			[onMergeSymbol](incomingContext: RegionContainerContext): void {
 				const { args } = incomingContext;
 
-				for (const { attributes, children } of args) {
-					if (!isUniquelyAnnotatedNode(attributes)) {
+				for (const incomingRegion of args) {
+					if (!isUniquelyAnnotatedNode(incomingRegion.attributes)) {
 						continue;
 					}
 
-					const regionTimingAttributes =
-						(hasTimingAttributes(attributes) && {
-							begin: attributes["begin"],
-							dur: attributes["dur"],
-							end: attributes["end"],
-							timeContainer: attributes["timeContainer"],
-						}) ||
-						undefined;
+					const incomingTTMLRegion = createTTMLRegion(incomingRegion);
 
-					const subscope = createScope(
-						undefined,
-						createStyleContainerContext([
-							extractInlineStyles(attributes),
-							extractNestedStylesChildren(children),
-						]),
-					);
-
-					const region = new TTMLRegion(
-						attributes["xml:id"] || "inline",
-						regionTimingAttributes,
-						subscope,
-					);
-
-					regionsIDREFSStorage.set(region.id, region);
+					regionsIDREFSStorage.set(incomingTTMLRegion.id, incomingTTMLRegion);
 				}
 			},
 			getRegionById(id: string | undefined): TTMLRegion | undefined {
@@ -202,6 +160,29 @@ function extractNestedStylesChildren(
 			enumerable: true,
 		},
 	});
+}
+
+function createTTMLRegion(regionContextState: RegionContainerContextState): TTMLRegion {
+	const { attributes, children } = regionContextState;
+
+	const regionTimingAttributes =
+		(hasTimingAttributes(attributes) && {
+			begin: attributes["begin"],
+			dur: attributes["dur"],
+			end: attributes["end"],
+			timeContainer: attributes["timeContainer"],
+		}) ||
+		undefined;
+
+	const subscope = createScope(
+		undefined,
+		createStyleContainerContext([
+			extractInlineStyles(attributes),
+			extractNestedStylesChildren(children),
+		]),
+	);
+
+	return new TTMLRegion(attributes["xml:id"] || "inline", regionTimingAttributes, subscope);
 }
 
 export class TTMLRegion implements Region {
