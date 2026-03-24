@@ -22,7 +22,7 @@ export interface CueParsedData {
 	regionName?: string;
 	tags: Entities.Tag[];
 	text: string;
-	renderingModifiers: RenderingModifiers;
+	renderingModifiers?: RenderingModifiers | undefined;
 
 	/**
 	 * Grouping identifier allows us to skip
@@ -38,7 +38,7 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 	const hsCues: CueParsedData[] = [];
 	const tokenizer = new Tokenizer(text);
 
-	let token: Token = null;
+	let token: Token | null = null;
 	let currentCue = createCue(
 		Timestamps.parseMs(starttime),
 		Timestamps.parseMs(endtime),
@@ -70,12 +70,12 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					 */
 
 					if (token.content === "ruby" && openTagsQueue.current.token.content === "rt") {
-						const out = openTagsQueue.pop();
+						const out = openTagsQueue.pop()!;
 						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 
 					if (openTagsQueue.current.token.content === token.content) {
-						const out = openTagsQueue.pop();
+						const out = openTagsQueue.pop()!;
 						addCueEntities(currentCue, [Tags.createTagEntity(currentCue, out)]);
 					}
 				}

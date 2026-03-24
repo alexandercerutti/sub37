@@ -43,7 +43,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 						positionAlignment = posAlignment;
 					}
 
-					if (pos !== "auto") {
+					if (pos && pos !== "auto") {
 						const integerPosition = (pos.endsWith("%") && parseInt(pos)) || NaN;
 
 						if (!Number.isNaN(integerPosition)) {
@@ -157,7 +157,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 
 	private position?: number = 50;
 	private positionAlignment?: "line-left" | "center" | "line-right" = "center";
-	private align?: "start" | "left" | "center" | "right" | "end" = "center";
+	private align: "start" | "left" | "center" | "right" | "end" = "center";
 	private region?: string;
 
 	/**
@@ -173,6 +173,12 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 	}
 
 	public get width(): number {
+		if (!this.positionAlignment) {
+			return 100;
+		}
+
+		const position = this.position || 0;
+
 		/**
 		 * Width, and hence cuebox left offset, calculation is
 		 * highly influenced by the alignment.
@@ -203,7 +209,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * |----|----|----|----|----|----|----|----|----|----|
 				 */
 
-				return Math.min(this.size, 100 - this.position);
+				return Math.min(this.size, 100 - position);
 			}
 
 			case "center": {
@@ -228,8 +234,8 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * |----|----|----|----|----|----|----|----|----|----|
 				 */
 
-				if (this.position <= 50) {
-					return Math.min(this.size, this.position * 2);
+				if (position <= 50) {
+					return Math.min(this.size, position * 2);
 				}
 
 				/**
@@ -246,7 +252,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * |----|----|----|----|----|----|----|----|----|----|
 				 */
 
-				return Math.min(this.size, (100 - this.position) * 2);
+				return Math.min(this.size, (100 - position) * 2);
 			}
 
 			case "line-right": {
@@ -268,12 +274,14 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * |----|----|----|----|----|----|----|----|----|----|
 				 */
 
-				return Math.min(this.size, this.position);
+				return Math.min(this.size, position);
 			}
 		}
 	}
 
 	public get leftOffset(): number {
+		const position = this.position || 0;
+
 		/**
 		 * Width, and hence cuebox left offset, calculation is
 		 * highly influenced by the alignment.
@@ -293,7 +301,7 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * For schemas, refer to width on "line-left" case.
 				 */
 
-				return this.position;
+				return position;
 			}
 
 			case "center": {
@@ -309,11 +317,11 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				 * For schemas, refer to width on "center" case.
 				 */
 
-				if (this.position <= 50) {
+				if (position <= 50) {
 					return 0;
 				}
 
-				const width = (100 - this.position) * 2;
+				const width = (100 - position) * 2;
 				return 100 - width;
 			}
 
@@ -329,31 +337,38 @@ export class WebVTTRenderingModifiers implements RenderingModifiers {
 				return 0;
 			}
 		}
+
+		return 0;
 	}
 
 	public get textAlignment(): typeof this.align {
 		return this.align;
 	}
 
-	public get regionIdentifier(): string {
+	public get regionIdentifier(): string | undefined {
 		return this.region;
 	}
 }
 
+type PositionAlignment = "line-left" | "center" | "line-right";
+
 function isPositionAlignmentStandard(
-	alignment: string,
-): alignment is "line-left" | "center" | "line-right" {
-	return ["line-left", "center", "line-right"].includes(alignment);
+	alignment: string | undefined,
+): alignment is PositionAlignment {
+	return ["line-left", "center", "line-right"].includes(alignment as PositionAlignment);
 }
 
-function isTextAlignmentStandard(
-	alignment: string,
-): alignment is "start" | "left" | "center" | "right" | "end" {
-	return ["start", "left", "center", "right", "end"].includes(alignment);
+type TextAlignment = "start" | "left" | "center" | "right" | "end";
+
+function isTextAlignmentStandard(alignment: string | undefined): alignment is TextAlignment {
+	return ["start", "left", "center", "right", "end"].includes(alignment as TextAlignment);
 }
 
+//
+// type VerticalWritingMode = HORIZONTAL | GROWING_LEFT | GROWING_RIGHT;
+//
 // function isVerticalStandard(
 // 	vertical: string,
-// ): vertical is HORIZONTAL | GROWING_LEFT | GROWING_RIGHT {
-// 	return [HORIZONTAL, GROWING_LEFT, GROWING_RIGHT].includes(vertical);
+// ): vertical is VerticalWritingMode {
+// 	return [HORIZONTAL, GROWING_LEFT, GROWING_RIGHT].includes(vertical as VerticalWritingMode);
 // }

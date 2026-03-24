@@ -128,14 +128,14 @@ export default class TreeOrchestrator {
 		let root: HTMLElement = this[rootElementSymbol];
 
 		while (!root.classList.contains(ROOT_CLASS_NAME)) {
-			root = root.parentElement;
+			root = root.parentElement!;
 		}
 
 		return root;
 	}
 
 	public wipeTree(): void {
-		for (let node: Node; (node = this[rootElementSymbol].firstChild); ) {
+		for (let node: Node | null; (node = this[rootElementSymbol].firstChild); ) {
 			this[rootElementSymbol].removeChild(node);
 		}
 	}
@@ -144,7 +144,7 @@ export default class TreeOrchestrator {
 		const cues: CueNode[] = [];
 
 		for (let i = 0; i < cueNodes.length; i++) {
-			const cueNode = cueNodes[i];
+			const cueNode = cueNodes[i]!;
 
 			if (!cueNode.content.length) {
 				continue;
@@ -153,18 +153,18 @@ export default class TreeOrchestrator {
 			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
 
 			for (let i = 0; i < cueNode.entities.length; i++) {
-				entitiesTree.addNode(cueNode.entities[i]);
+				entitiesTree.addNode(cueNode.entities[i]!);
 			}
 
 			cues.push(...splitCueNodeByBreakpoints(cueNode, entitiesTree));
 		}
 
 		let latestCueId = "";
-		let latestNode: HTMLElement = undefined;
+		let latestNode: HTMLElement | undefined = undefined;
 		let latestHeight: number = 0;
 
 		for (let i = 0; i < cues.length; i++) {
-			const cue = cues[i];
+			const cue = cues[i]!;
 
 			if (latestCueId !== cue.id) {
 				latestNode = undefined;
@@ -174,7 +174,7 @@ export default class TreeOrchestrator {
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
 			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
 
-			let line = latestNode || createLine();
+			let line: HTMLElement = latestNode || createLine();
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
@@ -338,7 +338,7 @@ function shouldCueNodeBreak(
 	entitiesAtCoordinates: Entities.GenericEntity[],
 	currentIndex: number,
 ): boolean {
-	const char = cueNodeContent[currentIndex];
+	const char = cueNodeContent[currentIndex]!;
 
 	return (
 		isCharacterWhitespace(char) ||
@@ -371,7 +371,7 @@ function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]
 		return false;
 	}
 
-	const lastEntity = entities[entities.length - 1];
+	const lastEntity = entities[entities.length - 1]!;
 	return lastEntity.offset + lastEntity.length === index;
 }
 
@@ -380,7 +380,7 @@ function isCueContentEnd(cueNodeContent: string, index: number): boolean {
 }
 
 function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDepth: number): void {
-	getNodeAtDepth(diffDepth, lineRootNode.lastChild).appendChild(cueSubTreeRoot);
+	getNodeAtDepth(diffDepth, lineRootNode.lastChild!).appendChild(cueSubTreeRoot);
 }
 
 function createLine() {
@@ -423,7 +423,7 @@ function wrapIntoEntitiesDocumentFragment(
 	 */
 
 	for (let i = entities.length - 1; i >= 0; i--) {
-		const entity = entities[i];
+		const entity = entities[i]!;
 
 		const node = getNodeFromEntity(entity);
 
@@ -543,8 +543,8 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 			break;
 		}
 
-		const currentCueEntity = currentEntities[i];
-		const previousCueEntity = previousEntities[i];
+		const currentCueEntity = currentEntities[i]!;
+		const previousCueEntity = previousEntities[i]!;
 
 		if (
 			currentCueEntity.length !== previousCueEntity.length ||

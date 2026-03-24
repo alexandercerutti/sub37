@@ -8,10 +8,9 @@
 		"build": "pnpm vite build"
 	},
 	"devDependencies": {
-		"typescript": "^5.9.2",
-		"vite": "^5.4.20",
+		"vite": "^5.4.21",
 		"vite-plugin-checker": "^0.6.4",
-		"vite-tsconfig-paths": "^4.3.1"
+		"vite-tsconfig-paths": "^4.3.2"
 	},
 	"dependencies": {
 		"@sub37/captions-renderer": "workspace:^",

@@ -18,9 +18,7 @@ export default defineConfig({
 			root: "../..",
 		}),
 		checker({
-			typescript: {
-				root: "../..",
-			},
+			typescript: true,
 		}),
 	],
 	server: {

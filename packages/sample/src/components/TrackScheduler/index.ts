@@ -4,7 +4,7 @@ const LOCAL_STORAGE_KEY = "latest-track-text";
 const schedulerOperation = Symbol("schedulerOperation");
 
 export class TrackScheduler {
-	private [schedulerOperation]: DebouncedOperation;
+	private [schedulerOperation]: DebouncedOperation | undefined;
 
 	constructor(private onCommit: (text: string) => void) {
 		const latestTrack = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -15,7 +15,7 @@ export class TrackScheduler {
 	}
 
 	private set operation(fn: Function) {
-		DebouncedOperation.clear(this[schedulerOperation]);
+		DebouncedOperation.clear(this[schedulerOperation]!);
 		this[schedulerOperation] = DebouncedOperation.create(fn);
 	}
 

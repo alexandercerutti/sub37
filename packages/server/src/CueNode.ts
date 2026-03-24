@@ -17,7 +17,7 @@ interface CueProps {
 }
 
 export class CueNode implements CueProps, Leafable<CueNode> {
-	static from(cueNode: CueNode, data: CueProps): CueNode {
+	static from(cueNode: CueNode | undefined, data: CueProps): CueNode {
 		if (!cueNode) {
 			return new CueNode(data);
 		}
@@ -71,7 +71,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 		this[entitiesSymbol] = value.sort(reorderEntitiesComparisonFn);
 	}
 
-	public set region(value: Region) {
+	public set region(value: Region | undefined) {
 		if (value) {
 			this[regionSymbol] = value;
 		}

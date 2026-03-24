@@ -4,12 +4,16 @@ import type { Region } from "@sub37/server";
  * @param rawRegionData
  */
 
-export function parseRegion(rawRegionData: string): Region {
+export function parseRegion(rawRegionData: string | undefined): Region | undefined {
+	if (!rawRegionData) {
+		return undefined;
+	}
+
 	const region = new WebVTTRegion();
 	const attributes = rawRegionData.split(/[\n\t\s]+/);
 
 	for (let i = 0; i < attributes.length; i++) {
-		const [key, value] = attributes[i].split(":") as [keyof WebVTTRegion, string];
+		const [key, value] = attributes[i]!.split(":") as [keyof WebVTTRegion, string];
 
 		if (!value || !key) {
 			continue;
@@ -87,7 +91,7 @@ export function parseRegion(rawRegionData: string): Region {
 const VH_LINE_HEIGHT = 5.33;
 
 class WebVTTRegion implements Region {
-	public id: string;
+	public id: string = "";
 	/**
 	 * Region width expressed in percentage
 	 */
