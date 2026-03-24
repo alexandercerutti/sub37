@@ -1,13 +1,10 @@
 {
 	"compilerOptions": {
 		"target": "esnext",
-		"module": "es2022",
-		"moduleResolution": "node",
+		"module": "esnext",
+		"moduleResolution": "bundler",
 		"declaration": true,
-		"esModuleInterop": true,
 		"sourceMap": true,
-		"forceConsistentCasingInFileNames": true,
-		"strict": true,
 		"noUnusedLocals": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,

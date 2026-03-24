@@ -2,9 +2,8 @@
 	"extends": "./tsconfig.build.json",
 	"compilerOptions": {
 		"noEmit": true,
-		"baseUrl": ".",
 		"paths": {
-			"@sub37/*": ["packages/*/src"]
+			"@sub37/*": ["./packages/*/src"]
 		}
 	}
 }
