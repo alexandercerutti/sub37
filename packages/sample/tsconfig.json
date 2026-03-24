@@ -5,6 +5,7 @@
 		"useDefineForClassFields": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"noEmit": true
+		"noEmit": true,
+		"rootDir": "./src",
 	}
 }

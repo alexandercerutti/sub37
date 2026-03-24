@@ -17,7 +17,7 @@
 	"scripts": {
 		"build": "pnpm lerna run build",
 		"test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" pnpm jest -c jest.config.mjs --silent",
-		"sample:serve": "pnpm --prefix packages/sample run dev"
+		"sample:serve": "pnpm -C packages/sample dev"
 	},
 	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
 	"license": "MIT",
@@ -30,8 +30,12 @@
 		"@types/jest": "^29.5.14",
 		"jest": "^29.4.3",
 		"jest-environment-jsdom": "^29.7.0",
-		"lerna": "^8.2.3",
-		"prettier": "^3.6.2",
-		"typescript": "^5.9.2"
+		"@lerna-lite/cli": "^4.11.5",
+		"@lerna-lite/run": "^4.11.5",
+		"@lerna-lite/core": "^4.11.5",
+		"@lerna-lite/publish": "4.11.5",
+		"@lerna-lite/version": "4.11.5",
+		"prettier": "^3.8.1",
+		"typescript": "^6.0.2"
 	}
 }

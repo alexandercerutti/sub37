@@ -8,7 +8,7 @@
 		"@sub37/server": "workspace:^"
 	},
 	"scripts": {
-		"build": "rm -rf lib && npx tsc -p tsconfig.build.json",
+		"build": "rm -rf lib && npx tsc --build --force",
 		"test": "npm run build && npm --prefix ../.. run test",
 		"prepublishOnly": "npm run build"
 	},
