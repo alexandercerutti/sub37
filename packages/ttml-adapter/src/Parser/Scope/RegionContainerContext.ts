@@ -1,11 +1,15 @@
 import { Region } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree";
-import type { Token } from "../Token";
+import type { Token, UniquelyAnnotatedNode } from "../Token";
 import { isUniquelyAnnotatedNode } from "../Token";
 import type { Context, ContextFactory, Scope } from "./Scope";
-import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { createStyleParser, isStyleAttribute } from "../parseStyle";
-import { TTMLStyle } from "./StyleContainerContext";
+import { createScope, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
+import { isStyleAttribute } from "../parseStyle";
+import {
+	createStyleContainerContext,
+	readScopeStyleContainerContext,
+	TTMLStyle,
+} from "./StyleContainerContext";
 import type { TimeContextData } from "./TimeContext";
 
 const regionContextSymbol = Symbol("region");
@@ -39,11 +43,6 @@ export function createRegionContainerContext(
 		}
 
 		const regionsIDREFSStorage = new Map<string, TTMLRegion>();
-		const styleParser = createStyleParser(scope);
-
-		function stylesRetriever(): TTMLStyle[] {
-			return [styleParser.get("inline"), styleParser.get("nested")].filter(Boolean) as TTMLStyle[];
-		}
 
 		return {
 			parent: undefined,
@@ -66,42 +65,21 @@ export function createRegionContainerContext(
 						}) ||
 						undefined;
 
+					const subscope = createScope(
+						undefined,
+						createStyleContainerContext([
+							extractInlineStyles(attributes),
+							extractNestedStylesChildren(children),
+						]),
+					);
+
 					const region = new TTMLRegion(
 						attributes["xml:id"] || "inline",
 						regionTimingAttributes,
-						stylesRetriever,
+						subscope,
 					);
 
 					regionsIDREFSStorage.set(region.id, region);
-
-					if (Object.keys(attributes).some(isStyleAttribute)) {
-						styleParser.process(
-							Object.create(attributes, {
-								/**
-								 * If attributes contains an xml:id, it is the region id.
-								 * However, we want to define the id for the styles.
-								 *
-								 * The attributes will be filtered once the style will be
-								 * processed when attributes getter in styleParser is accessed.
-								 */
-								"xml:id": {
-									value: "inline",
-									enumerable: true,
-								},
-							}),
-						);
-					}
-
-					if (children.length) {
-						styleParser.process(
-							Object.create(extractNestedStylesChildren(children), {
-								"xml:id": {
-									value: "nested",
-									enumerable: true,
-								},
-							}),
-						);
-					}
 				}
 			},
 			[onMergeSymbol](incomingContext: RegionContainerContext): void {
@@ -121,42 +99,21 @@ export function createRegionContainerContext(
 						}) ||
 						undefined;
 
+					const subscope = createScope(
+						undefined,
+						createStyleContainerContext([
+							extractInlineStyles(attributes),
+							extractNestedStylesChildren(children),
+						]),
+					);
+
 					const region = new TTMLRegion(
 						attributes["xml:id"] || "inline",
 						regionTimingAttributes,
-						stylesRetriever,
+						subscope,
 					);
 
 					regionsIDREFSStorage.set(region.id, region);
-
-					if (Object.keys(attributes).some(isStyleAttribute)) {
-						styleParser.process(
-							Object.create(attributes, {
-								/**
-								 * If attributes contains an xml:id, it is the region id.
-								 * However, we want to define the id for the styles.
-								 *
-								 * The attributes will be filtered once the style will be
-								 * processed when attributes getter in styleParser is accessed.
-								 */
-								"xml:id": {
-									value: "inline",
-									enumerable: true,
-								},
-							}),
-						);
-					}
-
-					if (children.length) {
-						styleParser.process(
-							Object.create(extractNestedStylesChildren(children), {
-								"xml:id": {
-									value: "nested",
-									enumerable: true,
-								},
-							}),
-						);
-					}
 				}
 			},
 			getRegionById(id: string | undefined): TTMLRegion | undefined {
@@ -203,9 +160,30 @@ function hasTimingAttributes(attributes: Record<string, string>): boolean {
 	);
 }
 
+function extractInlineStyles(
+	regionAttributes: Record<string, string>,
+): Record<string, string> & UniquelyAnnotatedNode {
+	const inlineStyles: Record<string, string> = {};
+
+	for (const [ttsKey, ttsValue] of Object.entries(regionAttributes)) {
+		if (!isStyleAttribute(ttsKey)) {
+			continue;
+		}
+
+		inlineStyles[ttsKey] = ttsValue;
+	}
+
+	return Object.create(inlineStyles, {
+		"xml:id": {
+			value: "inline",
+			enumerable: true,
+		},
+	});
+}
+
 function extractNestedStylesChildren(
 	regionChildren: NodeWithRelationship<Token>[],
-): Record<string, string> {
+): Record<string, string> & UniquelyAnnotatedNode {
 	const nestedStyles: Record<string, string> = {};
 
 	for (const styleToken of regionChildren) {
@@ -218,24 +196,24 @@ function extractNestedStylesChildren(
 		Object.assign(nestedStyles, attributes);
 	}
 
-	return nestedStyles;
+	return Object.create(nestedStyles, {
+		"xml:id": {
+			value: "nested",
+			enumerable: true,
+		},
+	});
 }
 
 export class TTMLRegion implements Region {
 	public id: string;
 	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
+	public scope: Scope;
 
-	public stylesRetriever: () => TTMLStyle[];
-
-	public constructor(
-		id: string,
-		timingAttributes: TimeContextData | undefined,
-		stylesRetriever: TTMLRegion["stylesRetriever"],
-	) {
+	public constructor(id: string, timingAttributes: TimeContextData | undefined, scope: Scope) {
 		this.id = id;
 		this.timingAttributes = timingAttributes;
-		this.stylesRetriever = stylesRetriever;
+		this.scope = scope;
 	}
 
 	public getOrigin(): [x: number, y: number] {
@@ -247,6 +225,14 @@ export class TTMLRegion implements Region {
 	}
 
 	public get styles(): TTMLStyle[] {
-		return this.stylesRetriever() || [];
+		const styleContext = readScopeStyleContainerContext(this.scope);
+
+		if (!styleContext) {
+			return [];
+		}
+
+		return [styleContext.getStyleByIDRef("inline"), styleContext.getStyleByIDRef("nested")].filter(
+			Boolean,
+		) as TTMLStyle[];
 	}
 }
