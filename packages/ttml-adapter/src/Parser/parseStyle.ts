@@ -1,57 +1,12 @@
 import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
-import { memoizationFactory } from "./memoizationFactory.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
-import { isUniquelyAnnotatedNode, type Token } from "./Token.js";
+import type { Token } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
 import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
-import type { TTMLStyle } from "./Scope/StyleContainerContext.js";
 
 export type StyleAttributeString = `tts:${string}`;
-
-export const createStyleParser = memoizationFactory(function styleParserExecutor(
-	/**
-	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-attribute-style
-	 * @see https://www.w3.org/TR/xmlschema-2/#IDREFS
-	 */
-	stylesIDREFSStorage: Map<string, TTMLStyle>,
-	scope: Scope,
-	attributes: Record<string, string>,
-): TTMLStyle | undefined {
-	if (!isUniquelyAnnotatedNode(attributes)) {
-		return undefined;
-	}
-
-	const style = {
-		"xml:id": attributes["xml:id"],
-		styleAttributes: extractStyleAttributes(attributes),
-		apply(element: string): SupportedCSSProperties {
-			return convertAttributesToCSS(this.styleAttributes, scope, element);
-		},
-	};
-
-	/** @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential */
-	stylesIDREFSStorage.set(style["xml:id"], style);
-
-	return style;
-});
-
-function extractStyleAttributes(
-	attributes: Record<string, string>,
-): Record<StyleAttributeString, string> {
-	const validAttributes: Record<StyleAttributeString, string> = {};
-
-	for (const [attrName, attr] of Object.entries(attributes)) {
-		if (!isStyleAttribute(attrName)) {
-			continue;
-		}
-
-		validAttributes[attrName] = attr;
-	}
-
-	return validAttributes;
-}
 
 export function isStyleAttribute(attribute: string): attribute is StyleAttributeString {
 	return attribute.startsWith("tts:");
@@ -1135,51 +1090,6 @@ function getElementsHierarchyFromScope(scope: Scope): string[] {
 	}
 
 	return hierarchy;
-}
-
-function convertAttributesToCSS(
-	attributes: Record<string, string>,
-	scope: Scope,
-	sourceElementName: string,
-): SupportedCSSProperties {
-	const convertedAttributes: SupportedCSSProperties = {};
-
-	/**
-	 * Not using Object.entries or "for..of" because they are not
-	 * able to detect enumerable keys in prototype chain, and we
-	 * are using them
-	 */
-
-	for (const attributeKey in attributes) {
-		if (!isMappedKey(attributeKey)) {
-			continue;
-		}
-
-		const value = attributes[attributeKey]!;
-		const definition = TTML_CSS_ATTRIBUTES_MAP[attributeKey];
-
-		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
-			continue;
-		}
-
-		const collectedValues = parseAttributeValue(definition.syntax, value);
-
-		if (collectedValues === null) {
-			continue;
-		}
-
-		const mapped = definition.toCSS(scope, collectedValues, sourceElementName);
-
-		if (mapped === null) {
-			continue;
-		}
-
-		for (const [mappedKey, mappedValue] of mapped) {
-			convertedAttributes[mappedKey] = mappedValue;
-		}
-	}
-
-	return convertedAttributes;
 }
 
 /**
