@@ -10,8 +10,8 @@ import type { SupportedCSSProperties } from "../parseStyle.js";
 import type { IDREF } from "../Token.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 import type { TTMLRegion } from "./RegionContainerContext.js";
-import type { Animation } from "../Animations/parseAnimation.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";
+import type { Animation } from "./AnimationContainerContext.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import type { TTMLStyle } from "./StyleContainerContext.js";
 
