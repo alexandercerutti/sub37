@@ -33,7 +33,6 @@ import {
 	createAnimationContainerContext,
 	readScopeAnimationContext,
 } from "./Parser/Scope/AnimationContainerContext.js";
-import { isStyleAttribute } from "./Parser/parseStyle.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -665,6 +664,11 @@ function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
 	return createVisitor(lastDestinationMatched);
 }
 
+// ******************************************** //
+// *** REGIONS EXTRACTION AND PREPROCESSING *** //
+// ******************************************** //
+// region region extraction
+
 /**
  * We cannot use an out-of-line region element if
  * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
@@ -865,16 +869,28 @@ function extractOutOfLineRegions(
 	return regions;
 }
 
+// ******************************************* //
+// *** STYLES EXTRACTION AND PREPROCESSING *** //
+// ******************************************* //
+// region styles extraction
+
 function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
 	return currentNode.content.content === "styling";
 }
 
+/**
+ * Prepares style nodes to be fed into the Style context, which
+ * will filter the attributes.
+ *
+ * @param currentNode
+ * @returns
+ */
 function extractOutOfLineStyles(
 	currentNode: NodeWithRelationship<Token>,
-): (Record<`tts:${string}`, string> & UniquelyAnnotatedNode)[] {
+): (Record<string, string> & UniquelyAnnotatedNode)[] {
 	const { children } = currentNode;
 
-	const styles: (Record<`tts:${string}`, string> & UniquelyAnnotatedNode)[] = [];
+	const styles: (Record<string, string> & UniquelyAnnotatedNode)[] = [];
 
 	for (const { content } of children) {
 		if (content.content !== "style") {
@@ -891,26 +907,21 @@ function extractOutOfLineStyles(
 	return styles;
 }
 
+/**
+ * Perpares all the inline styles to be added to the Style context,
+ * which will filter the attributes.
+ *
+ * @param token
+ * @returns
+ */
 function extractInlineStylesFromToken(
 	token: Token,
-): (Record<`tts:${string}`, string> & UniquelyAnnotatedNode & { kind: "inline" }) | undefined {
+): (Record<string, string> & UniquelyAnnotatedNode & { kind: "inline" }) | undefined {
 	const { attributes } = token;
 
-	const styles = Object.keys(attributes).reduce<Record<`tts:${string}`, string>>((acc, key) => {
-		if (isStyleAttribute(key)) {
-			acc[key] = attributes[key]!;
-		}
-
-		return acc;
-	}, {});
-
-	if (!Object.keys(styles).length) {
-		return undefined;
-	}
-
-	return Object.create(styles, {
+	return Object.create(attributes, {
 		"xml:id": {
-			value: `in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+			value: attributes["xml:id"] || `in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
 			enumerable: true,
 		},
 		kind: {
@@ -956,6 +967,11 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 
 	return referencialStyles;
 }
+
+// ********************************************** //
+// *** ANIMATION EXTRACTION AND PREPROCESSING *** //
+// ********************************************** //
+// region animation extraction
 
 function isInlineAnimation(
 	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
