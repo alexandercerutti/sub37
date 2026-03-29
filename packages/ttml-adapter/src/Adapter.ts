@@ -976,10 +976,19 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 function isInlineAnimation(
 	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
 ): boolean {
-	const { content } = currentNode;
+	const { content, parent } = currentNode;
+	const parentNode = parent!.content;
+
+	if (isLayoutClassElement(parentNode.content)) {
+		/**
+		 * Inline animations within regions are applied through the region context
+		 * itself.
+		 */
+		return false;
+	}
 
 	const isParentAllowedToContainInlineAnimation =
-		currentNode.parent?.content[nodeMatchSymbol]?.matchesAttribute("animate") || false;
+		parentNode[nodeMatchSymbol]?.matchesAttribute("animate") || false;
 
 	return (
 		isParentAllowedToContainInlineAnimation &&
