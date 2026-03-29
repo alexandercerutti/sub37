@@ -137,6 +137,83 @@ export function readScopeStyleContainerContext(scope: Scope): StyleContainerCont
 // ********************************************* //
 // region style topology
 
+interface StyleDependencyGraph {
+	/**
+	 * A counter map of how many local (same-`<styling>`) dependencies each style
+	 * still has pending. Starts at the number of local IDREFs and is decremented
+	 * by the notify-dependents step as each dependency is resolved. When it
+	 * reaches zero the style is ready to be enqueued.
+	 *
+	 * Only styles that have at least one local IDREF appear here; styles with no
+	 * local deps are seeded directly into the queue.
+	 */
+	inDegreeNodes: Map<string, number>;
+
+	/**
+	 * A map that contains the reversed list of dependencies
+	 * between styles, hence which styles are waiting for
+	 * another style.
+	 *
+	 * This will contain something like:
+	 *
+	 * `['s1', ['s2', 's3']]`
+	 *
+	 * meaning that s2 and s3 are waiting for s1 to be processed,
+	 * so when s1 will be processed we can directly know which styles are
+	 * waiting for it without iterating on the whole list of styles and
+	 * their dependencies.
+	 */
+	reverseDependencyList: Map<string, string[]>;
+}
+
+function buildStylesTopology(
+	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
+): StyleDependencyGraph {
+	const inDegreeNodes = new Map<string, number>();
+	const reverseDependencyList = new Map<string, string[]>();
+
+	for (const [xmlId, { styleIDREFs }] of stylesIDREFSQueuedStorage) {
+		if (!styleIDREFs.length) {
+			continue;
+		}
+
+		/**
+		 * A style might reference to a style that is not in the same
+		 * `<styling>` element. We filter those out — they are resolved
+		 * via `retrieveExternalStyle` during processing, not tracked here.
+		 */
+		const localIDREFsEdges = styleIDREFs.filter((edge) => stylesIDREFSQueuedStorage.has(edge));
+
+		if (localIDREFsEdges.length) {
+			inDegreeNodes.set(xmlId, localIDREFsEdges.length);
+		}
+
+		for (const edge of localIDREFsEdges) {
+			const reverseDependencies = reverseDependencyList.get(edge) ?? [];
+
+			/**
+			 * Guard against registering the same dependent more than once for the same edge.
+			 *
+			 * A style may legally list the same local IDREF multiple times with an intervening
+			 * distinct style, e.g. `style="s1 s2 s1"`. In that case `s3` appears twice in
+			 * `localIDREFsEdges` for edge `s1`, so without this check `s3` would be enqueued
+			 * twice when `s1` is resolved — causing it to be processed twice and its
+			 * resolved attributes to be overwritten with a stale merge.
+			 */
+			if (!reverseDependencies.includes(xmlId)) {
+				reverseDependencies.push(xmlId);
+			}
+
+			reverseDependencyList.set(edge, reverseDependencies);
+		}
+	}
+
+	return {
+		inDegreeNodes,
+		reverseDependencyList,
+	};
+}
+
 function processStylesByTopology(
 	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
 	retrieveExternalStyle: (idref: string) => Record<string, string> | undefined,
@@ -224,83 +301,6 @@ function processStylesByTopology(
 	}
 
 	return resolvedStyles;
-}
-
-interface StyleDependencyGraph {
-	/**
-	 * A counter map of how many local (same-`<styling>`) dependencies each style
-	 * still has pending. Starts at the number of local IDREFs and is decremented
-	 * by the notify-dependents step as each dependency is resolved. When it
-	 * reaches zero the style is ready to be enqueued.
-	 *
-	 * Only styles that have at least one local IDREF appear here; styles with no
-	 * local deps are seeded directly into the queue.
-	 */
-	inDegreeNodes: Map<string, number>;
-
-	/**
-	 * A map that contains the reversed list of dependencies
-	 * between styles, hence which styles are waiting for
-	 * another style.
-	 *
-	 * This will contain something like:
-	 *
-	 * `['s1', ['s2', 's3']]`
-	 *
-	 * meaning that s2 and s3 are waiting for s1 to be processed,
-	 * so when s1 will be processed we can directly know which styles are
-	 * waiting for it without iterating on the whole list of styles and
-	 * their dependencies.
-	 */
-	reverseDependencyList: Map<string, string[]>;
-}
-
-function buildStylesTopology(
-	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
-): StyleDependencyGraph {
-	const inDegreeNodes = new Map<string, number>();
-	const reverseDependencyList = new Map<string, string[]>();
-
-	for (const [xmlId, { styleIDREFs }] of stylesIDREFSQueuedStorage) {
-		if (!styleIDREFs.length) {
-			continue;
-		}
-
-		/**
-		 * A style might reference to a style that is not in the same
-		 * `<styling>` element. We filter those out — they are resolved
-		 * via `retrieveExternalStyle` during processing, not tracked here.
-		 */
-		const localIDREFsEdges = styleIDREFs.filter((edge) => stylesIDREFSQueuedStorage.has(edge));
-
-		if (localIDREFsEdges.length) {
-			inDegreeNodes.set(xmlId, localIDREFsEdges.length);
-		}
-
-		for (const edge of localIDREFsEdges) {
-			const reverseDependencies = reverseDependencyList.get(edge) ?? [];
-
-			/**
-			 * Guard against registering the same dependent more than once for the same edge.
-			 *
-			 * A style may legally list the same local IDREF multiple times with an intervening
-			 * distinct style, e.g. `style="s1 s2 s1"`. In that case `s3` appears twice in
-			 * `localIDREFsEdges` for edge `s1`, so without this check `s3` would be enqueued
-			 * twice when `s1` is resolved — causing it to be processed twice and its
-			 * resolved attributes to be overwritten with a stale merge.
-			 */
-			if (!reverseDependencies.includes(xmlId)) {
-				reverseDependencies.push(xmlId);
-			}
-
-			reverseDependencyList.set(edge, reverseDependencies);
-		}
-	}
-
-	return {
-		inDegreeNodes,
-		reverseDependencyList,
-	};
 }
 
 // *************************** //
