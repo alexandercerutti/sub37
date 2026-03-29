@@ -11,6 +11,12 @@ import {
 	TTMLStyle,
 } from "./StyleContainerContext";
 import type { TimeContextData } from "./TimeContext";
+import {
+	Animation,
+	AnimationContainerContextState,
+	createAnimationContainerContext,
+	readScopeAnimationContext,
+} from "./AnimationContainerContext";
 
 const regionContextSymbol = Symbol("region");
 
@@ -24,8 +30,9 @@ interface RegionContainerContext extends Context<
 	RegionContainerContextState[]
 > {
 	regions: Region[];
-	getRegionById(id: string | undefined): TTMLRegion | undefined;
-	getStylesByRegionId(id: string | undefined): TTMLStyle[];
+	getRegionById(idref: string | undefined): TTMLRegion | undefined;
+	getStylesByRegionId(idref: string | undefined): TTMLStyle[];
+	getAnimationsByRegionId(idref: string | undefined): Animation[];
 }
 
 declare module "./Scope" {
@@ -74,19 +81,22 @@ export function createRegionContainerContext(
 					regionsIDREFSStorage.set(incomingTTMLRegion.id, incomingTTMLRegion);
 				}
 			},
-			getRegionById(id: string | undefined): TTMLRegion | undefined {
-				if (!id?.length) {
+			getRegionById(idref: string | undefined): TTMLRegion | undefined {
+				if (!idref?.length) {
 					return undefined;
 				}
 
-				return regionsIDREFSStorage.get(id) ?? this.parent?.getRegionById(id);
+				return regionsIDREFSStorage.get(idref) ?? this.parent?.getRegionById(idref);
 			},
-			getStylesByRegionId(id: string): TTMLStyle[] {
-				if (!id?.length) {
+			getStylesByRegionId(idref: string): TTMLStyle[] {
+				if (!idref?.length) {
 					throw new Error("Cannot retrieve styles for a region with an unknown name.");
 				}
 
-				return regionsIDREFSStorage.get(id)?.styles || [];
+				return regionsIDREFSStorage.get(idref)?.styles || [];
+			},
+			getAnimationsByRegionId(idref: string): Animation[] {
+				return regionsIDREFSStorage.get(idref)?.animations || [];
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
@@ -100,6 +110,11 @@ export function createRegionContainerContext(
 export function readScopeRegionContext(scope: Scope): RegionContainerContext | undefined {
 	return scope.getContextByIdentifier(regionContextSymbol);
 }
+
+// ************************* //
+// *** TIMING EXTRACTION *** //
+// ************************* //
+// region timing extraction
 
 /**
  * Checks if the element is suitable for
@@ -117,6 +132,11 @@ function hasTimingAttributes(attributes: Record<string, string>): boolean {
 		"timeContainer" in attributes
 	);
 }
+
+// ************************* //
+// *** STYLES EXTRACTION *** //
+// ************************* //
+// region styles
 
 function extractInlineStyles(
 	regionAttributes: Record<string, string>,
@@ -162,6 +182,47 @@ function extractNestedStylesChildren(
 	});
 }
 
+// ***************************** //
+// *** ANIMATIONS EXTRACTION *** //
+// ***************************** //
+// region nested animations
+
+function extractNestedAnimationsChildren(
+	regionChildren: NodeWithRelationship<Token>[],
+): AnimationContainerContextState[] {
+	if (!regionChildren.length) {
+		return [];
+	}
+
+	const animations: AnimationContainerContextState[] = [];
+
+	for (const { content: tokenContent } of regionChildren) {
+		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+			continue;
+		}
+
+		const animationId =
+			tokenContent.attributes["xml:id"] ||
+			`region-animation:${Math.floor(Math.random() * (500 - 100) + 100)}`;
+
+		animations.push({
+			attributes: Object.create(tokenContent.attributes, {
+				"xml:id": {
+					value: animationId,
+				},
+			}),
+			calcMode: tokenContent.content === "set" ? "discrete" : tokenContent.attributes["calcMode"],
+		});
+	}
+
+	return animations;
+}
+
+// **************************** //
+// *** TTML REGION CREATION *** //
+// **************************** //
+// region TTML Region
+
 function createTTMLRegion(regionContextState: RegionContainerContextState): TTMLRegion {
 	const { attributes, children } = regionContextState;
 
@@ -180,6 +241,10 @@ function createTTMLRegion(regionContextState: RegionContainerContextState): TTML
 			extractInlineStyles(attributes),
 			extractNestedStylesChildren(children),
 		]),
+		createAnimationContainerContext(
+			//
+			extractNestedAnimationsChildren(children),
+		),
 	);
 
 	return new TTMLRegion(attributes["xml:id"] || "inline", regionTimingAttributes, subscope);
@@ -215,5 +280,15 @@ export class TTMLRegion implements Region {
 		return [styleContext.getStyleByIDRef("inline"), styleContext.getStyleByIDRef("nested")].filter(
 			Boolean,
 		) as TTMLStyle[];
+	}
+
+	public get animations(): Animation[] {
+		const animationContext = readScopeAnimationContext(this.scope);
+
+		if (!animationContext) {
+			return [];
+		}
+
+		return animationContext.animations;
 	}
 }
