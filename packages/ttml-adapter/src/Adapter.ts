@@ -1082,7 +1082,7 @@ function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[]
 	}
 
 	const idrefsAnimationList = attributes["animate"]!.split(/\s+/);
-	const validAnimationIDs: string[] = [];
+	const seenAnimationIDRefs = new Set<string>();
 
 	for (const idref of idrefsAnimationList) {
 		if (!animationContext.getAnimationById(idref)) {
@@ -1093,8 +1093,20 @@ function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[]
 			continue;
 		}
 
-		validAnimationIDs.push(idref);
+		/**
+		 * @see §13.2.1
+		 * > A given IDREF must not appear more than one time in the value of an animate attribute.
+		 */
+		if (seenAnimationIDRefs.has(idref)) {
+			console.warn(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}' multiple times. Duplicated references are not allowed.`,
+			);
+
+			continue;
+		}
+
+		seenAnimationIDRefs.add(idref);
 	}
 
-	return validAnimationIDs;
+	return Array.from(seenAnimationIDRefs);
 }
