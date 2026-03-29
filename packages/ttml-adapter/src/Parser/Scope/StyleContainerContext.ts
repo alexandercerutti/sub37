@@ -309,7 +309,11 @@ function processStylesByTopology(
 // region TTMLStyle
 
 export interface TTMLStyle extends UniquelyAnnotatedNode {
+	/**
+	 * Filtered list of tts:* attributes
+	 */
 	styleAttributes: Record<string, string>;
+
 	/**
 	 * Retrieves actualy styles for an element
 	 *
