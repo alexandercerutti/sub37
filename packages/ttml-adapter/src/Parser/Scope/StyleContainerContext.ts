@@ -18,6 +18,11 @@ type StyleContainerContextState = UniquelyAnnotatedNode &
 	ReferentialStyleChain &
 	Record<string, string>;
 
+interface QueuedStorageValues {
+	attributes: Record<string, string> & UniquelyAnnotatedNode;
+	styleIDREFs: string[];
+}
+
 interface StyleContainerContext extends Context<
 	StyleContainerContext,
 	StyleContainerContextState[]
@@ -40,6 +45,53 @@ export function createStyleContainerContext(
 		 */
 		const stylesIDREFSStorage = new Map<string, TTMLStyle>();
 
+		function processStyles(
+			stylesAttributesList: (Record<string, string> & UniquelyAnnotatedNode)[],
+			scope: Scope,
+			retriveExternalStyle: (idref: string) => Record<string, string> | undefined,
+		): void {
+			const stylesIDREFSQueuedStorage = new Map<string, QueuedStorageValues>();
+
+			/**
+			 * Preregister all the provided styles in order to be accessible later
+			 * as referential styles, even if they are not processed yet.
+			 */
+			for (const styleAttributes of stylesAttributesList) {
+				if (!isUniquelyAnnotatedNode(styleAttributes)) {
+					console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+					continue;
+				}
+
+				stylesIDREFSQueuedStorage.set(styleAttributes["xml:id"], {
+					attributes: styleAttributes,
+					styleIDREFs: styleAttributes["style"]?.split("\x20") || [],
+				});
+			}
+
+			const stylesByTopology = processStylesByTopology(
+				stylesIDREFSQueuedStorage,
+				retriveExternalStyle,
+			);
+
+			for (const [id, styleAttributes] of stylesByTopology) {
+				const style = Object.create(styleAttributes, {
+					"xml:id": {
+						value: id,
+						enumerable: true,
+					},
+				});
+
+				const ttmlStyle = createTTMLStyle(style, scope);
+
+				if (!ttmlStyle) {
+					console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+					continue;
+				}
+
+				stylesIDREFSStorage.set(id, ttmlStyle);
+			}
+		}
+
 		return {
 			parent: undefined,
 			identifier: styleContextSymbol,
@@ -47,79 +99,14 @@ export function createStyleContainerContext(
 				return registeredStyles;
 			},
 			[onAttachedSymbol]() {
-				const { args } = this;
-
-				for (const styleAttributes of args) {
-					if (!styleAttributes["xml:id"]) {
-						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
-						continue;
-					}
-
-					const finalAttributes = Object.assign({}, styleAttributes);
-
-					if (styleAttributes["style"]?.length) {
-						const chainedReferentialStylesIDRefs = new Set(styleAttributes["style"].split("\x20"));
-
-						for (const idref of chainedReferentialStylesIDRefs) {
-							/**
-							 * A loop in a sequence of chained style references must be considered an error.
-							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
-							 *
-							 * However, if this check of checking if an idref already exists will
-							 * get removed, we'll have to find out a different way to track
-							 * already used styles. Right now we save ourselves by blocking current
-							 */
-
-							/**
-							 * @see https://w3c.github.io/ttml2/#semantics-style-association-chained-referential
-							 */
-							const chainedReferentialStyle =
-								stylesIDREFSStorage.get(idref) || this.parent?.getStyleByIDRef(idref) || undefined;
-
-							if (!chainedReferentialStyle) {
-								console.warn(
-									`Chained Style Referential: style '${idref}' not found or not yet defined. Will be ignored.`,
-								);
-								continue;
-							}
-
-							Object.assign(finalAttributes, chainedReferentialStyle);
-						}
-					}
-
-					const currentStyleId = styleAttributes["xml:id"];
-					const resolvedStyleId = resolveIDREFConflict(stylesIDREFSStorage, currentStyleId);
-
-					const style = Object.create(finalAttributes, {
-						"xml:id": {
-							value: resolvedStyleId,
-							enumerable: true,
-						},
-					});
-
-					const ttmlStyle = createTTMLStyle(style, scope);
-
-					if (!ttmlStyle) {
-						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
-						continue;
-					}
-
-					stylesIDREFSStorage.set(resolvedStyleId, ttmlStyle);
-				}
+				processStyles(this.args, scope, (idref) => {
+					return this.getStyleByIDRef(idref)?.styleAttributes;
+				});
 			},
 			[onMergeSymbol](incomingContext: StyleContainerContext): void {
-				const { args } = incomingContext;
-
-				for (const style of args) {
-					const ttmlStyle = createTTMLStyle(style, scope);
-
-					if (!ttmlStyle) {
-						console.warn("Style with unknown 'xml:id' attribute, got ignored.");
-						continue;
-					}
-
-					stylesIDREFSStorage.set(ttmlStyle["xml:id"], ttmlStyle);
-				}
+				processStyles(incomingContext.args, scope, (idref) => {
+					return this.getStyleByIDRef(idref)?.styleAttributes;
+				});
 			},
 			getStyleByIDRef(idref: string): TTMLStyle | undefined {
 				const styleFromStorage = stylesIDREFSStorage.get(idref);
@@ -145,45 +132,184 @@ export function readScopeStyleContainerContext(scope: Scope): StyleContainerCont
 	return scope.getContextByIdentifier(styleContextSymbol);
 }
 
-/**
- * > If the same IDREF, _ID1_, appears more than one time in the value of a style attribute,
- * > then there should be an intervening IDREF, _ID2_, where _ID2_ is not equal to _ID1_.
- *
- * > This constraint is intended to discourage the use of redundant referential styling
- * > while still allowing the same style to be referenced multiple times in order to
- * > potentially override prior referenced styles, e.g., when an intervening, distinct
- * > style is referenced in the IDREFS list.
- *
- * @TODO this is out of standard. I didn't understand correctly what the text was intending
- * to say. This should be re-visited and potentially removed.
- *
- * @param idrefsMap
- * @param id
- * @returns
- */
+// ********************************************* //
+// *** STYLE TOPOLOGY BUILDING AND RESOLVING *** //
+// ********************************************* //
+// region style topology
 
-function resolveIDREFConflict(idrefsMap: Map<string, TTMLStyle>, id: string): string {
-	if (!idrefsMap.has(id)) {
-		return id;
+function processStylesByTopology(
+	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
+	retrieveExternalStyle: (idref: string) => Record<string, string> | undefined,
+) {
+	const { inDegreeNodes, reverseDependencyList } = buildStylesTopology(stylesIDREFSQueuedStorage);
+
+	const queue: string[] = [];
+
+	/**
+	 * Nodes that have no local incoming edges (no `style` attribute referencing
+	 * another style in this block) get enqueued immediately.
+	 */
+	for (const styleID of stylesIDREFSQueuedStorage.keys()) {
+		if (!inDegreeNodes.has(styleID)) {
+			queue.push(styleID);
+		}
 	}
 
-	let styleConflictOverrideIdentifier = parseInt(id.match(/--(\d{1,})/)?.[1] ?? "");
+	const resolvedStyles = new Map<string, Record<StyleAttributeString, string>>();
 
-	if (Number.isNaN(styleConflictOverrideIdentifier)) {
-		return id;
+	while (queue.length) {
+		const id = queue.shift()!;
+		const { attributes, styleIDREFs } = stylesIDREFSQueuedStorage.get(id)!;
+
+		const finalStyleAttributes: Record<StyleAttributeString, string> = {};
+
+		/**
+		 * Iterate the original IDREF list to preserve the TTML2 §10.4.4.2 merge
+		 * order — local and external refs interleaved exactly as written in the
+		 * style attribute. Local deps are guaranteed resolved by Kahn's invariant.
+		 */
+		for (const idref of styleIDREFs) {
+			const localResolvedDependency = resolvedStyles.get(idref);
+
+			if (localResolvedDependency) {
+				Object.assign(finalStyleAttributes, localResolvedDependency);
+				continue;
+			}
+
+			const external = retrieveExternalStyle(idref);
+
+			if (external) {
+				Object.assign(finalStyleAttributes, external);
+				continue;
+			}
+
+			console.warn(
+				`Style '${id}' has a dependency on style '${idref}' that cannot be resolved. It will be ignored.`,
+			);
+		}
+
+		resolvedStyles.set(
+			id,
+			Object.assign(
+				//
+				finalStyleAttributes,
+				extractStyleAttributes(attributes),
+			),
+		);
+
+		for (const dependent of reverseDependencyList.get(id) ?? []) {
+			const remaining = inDegreeNodes.get(dependent)! - 1;
+			inDegreeNodes.set(dependent, remaining);
+
+			if (remaining === 0) {
+				queue.push(dependent);
+			}
+		}
 	}
 
-	while (idrefsMap.has(`${id}--${styleConflictOverrideIdentifier}`)) {
-		styleConflictOverrideIdentifier++;
+	/**
+	 * Per TTML2 spec:
+	 * > A loop in a sequence of chained style references must
+	 * > be considered an error.
+	 *
+	 * Any style still in `inDegreeNodes` with a count > 0 after the queue
+	 * empties is definitively part of a cycle.
+	 */
+	for (const [id, remaining] of inDegreeNodes) {
+		if (remaining === 0) {
+			continue;
+		}
+
+		console.warn(`Style '${id}' forms a cyclic reference. Will be ignored.`);
 	}
 
-	return id.replace(
-		`--${styleConflictOverrideIdentifier}`,
-		`--${styleConflictOverrideIdentifier + 1}`,
-	);
+	return resolvedStyles;
 }
 
+interface StyleDependencyGraph {
+	/**
+	 * A counter map of how many local (same-`<styling>`) dependencies each style
+	 * still has pending. Starts at the number of local IDREFs and is decremented
+	 * by the notify-dependents step as each dependency is resolved. When it
+	 * reaches zero the style is ready to be enqueued.
+	 *
+	 * Only styles that have at least one local IDREF appear here; styles with no
+	 * local deps are seeded directly into the queue.
+	 */
+	inDegreeNodes: Map<string, number>;
+
+	/**
+	 * A map that contains the reversed list of dependencies
+	 * between styles, hence which styles are waiting for
+	 * another style.
+	 *
+	 * This will contain something like:
+	 *
+	 * `['s1', ['s2', 's3']]`
+	 *
+	 * meaning that s2 and s3 are waiting for s1 to be processed,
+	 * so when s1 will be processed we can directly know which styles are
+	 * waiting for it without iterating on the whole list of styles and
+	 * their dependencies.
+	 */
+	reverseDependencyList: Map<string, string[]>;
+}
+
+function buildStylesTopology(
+	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
+): StyleDependencyGraph {
+	const inDegreeNodes = new Map<string, number>();
+	const reverseDependencyList = new Map<string, string[]>();
+
+	for (const [xmlId, { styleIDREFs }] of stylesIDREFSQueuedStorage) {
+		if (!styleIDREFs.length) {
+			continue;
+		}
+
+		/**
+		 * A style might reference to a style that is not in the same
+		 * `<styling>` element. We filter those out — they are resolved
+		 * via `retrieveExternalStyle` during processing, not tracked here.
+		 */
+		const localIDREFsEdges = styleIDREFs.filter((edge) => stylesIDREFSQueuedStorage.has(edge));
+
+		if (localIDREFsEdges.length) {
+			inDegreeNodes.set(xmlId, localIDREFsEdges.length);
+		}
+
+		for (const edge of localIDREFsEdges) {
+			const reverseDependencies = reverseDependencyList.get(edge) ?? [];
+
+			/**
+			 * Guard against registering the same dependent more than once for the same edge.
+			 *
+			 * A style may legally list the same local IDREF multiple times with an intervening
+			 * distinct style, e.g. `style="s1 s2 s1"`. In that case `s3` appears twice in
+			 * `localIDREFsEdges` for edge `s1`, so without this check `s3` would be enqueued
+			 * twice when `s1` is resolved — causing it to be processed twice and its
+			 * resolved attributes to be overwritten with a stale merge.
+			 */
+			if (!reverseDependencies.includes(xmlId)) {
+				reverseDependencies.push(xmlId);
+			}
+
+			reverseDependencyList.set(edge, reverseDependencies);
+		}
+	}
+
+	return {
+		inDegreeNodes,
+		reverseDependencyList,
+	};
+}
+
+// *************************** //
+// *** TTML STYLE CREATION *** //
+// *************************** //
+// region TTMLStyle
+
 export interface TTMLStyle extends UniquelyAnnotatedNode {
+	styleAttributes: Record<string, string>;
 	/**
 	 * Retrieves actualy styles for an element
 	 *
@@ -199,7 +325,7 @@ function createTTMLStyle(attributes: Record<string, string>, scope: Scope): TTML
 
 	const style = {
 		"xml:id": attributes["xml:id"],
-		styleAttributes: extractStyleAttributes(attributes),
+		styleAttributes: attributes,
 		apply(element: string): SupportedCSSProperties {
 			return convertAttributesToCSS(this.styleAttributes, scope, element);
 		},
