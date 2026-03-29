@@ -1,5 +1,3 @@
-import type { Entities } from "@sub37/server";
-import { EntitiesTokenMap } from "./Tags/tokenEntities.js";
 import { MalformedStyleBlockError } from "../MalformedStyleBlockError.js";
 import { InvalidStyleDeclarationError } from "../InvalidStyleDeclarationError.js";
 
@@ -24,7 +22,7 @@ type SelectorTarget =
 	| { type: StyleDomain.ID; selector: string }
 	| {
 			type: StyleDomain.TAG;
-			tagName: Entities.TagType;
+			tagName: string;
 			classes: string[];
 			attributes: Map<string, string>;
 	  };
@@ -165,10 +163,21 @@ function getSelectorComponents(
 		}
 	}
 
+	if (!isSelectorSupported(selector)) {
+		return undefined;
+	}
+
 	return {
-		tagName: EntitiesTokenMap[selector]!,
+		tagName: selector,
 		attributes: new Map(attributes),
 	};
+}
+
+const SUPPORTED_STYLABLE_TAG_SELECTORS = ["b", "i", "u", "v", "lang", "c", "ruby", "rt"] as const;
+type SUPPORTED_STYLABLE_TAG_SELECTORS = (typeof SUPPORTED_STYLABLE_TAG_SELECTORS)[number];
+
+function isSelectorSupported(selector: string): selector is SUPPORTED_STYLABLE_TAG_SELECTORS {
+	return SUPPORTED_STYLABLE_TAG_SELECTORS.includes(selector as SUPPORTED_STYLABLE_TAG_SELECTORS);
 }
 
 function normalizeCssString(cssData: string = "") {

@@ -76,6 +76,12 @@ importers:
 
   packages/server: {}
 
+  packages/ttml-adapter:
+    dependencies:
+      '@sub37/server':
+        specifier: workspace:^
+        version: link:../server
+
   packages/webvtt-adapter:
     dependencies:
       '@sub37/server':

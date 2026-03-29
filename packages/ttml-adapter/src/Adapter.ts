@@ -1,0 +1,1091 @@
+import { BaseAdapter, CueNode } from "@sub37/server";
+import { MissingContentError } from "./MissingContentError.js";
+import { Tokenizer } from "./Parser/Tokenizer.js";
+import { createScope } from "./Parser/Scope/Scope.js";
+import type { Scope, ContextFactory } from "./Parser/Scope/Scope.js";
+import { createTimeContext } from "./Parser/Scope/TimeContext.js";
+import {
+	createStyleContainerContext,
+	readScopeStyleContainerContext,
+} from "./Parser/Scope/StyleContainerContext.js";
+import type { RegionContainerContextState } from "./Parser/Scope/RegionContainerContext.js";
+import {
+	createRegionContainerContext,
+	readScopeRegionContext,
+} from "./Parser/Scope/RegionContainerContext.js";
+import { parseCue } from "./Parser/parseCue.js";
+import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
+import { isUniquelyAnnotatedNode, Token, TokenType } from "./Parser/Token.js";
+import type { UniquelyAnnotatedNode } from "./Parser/Token.js";
+import { NodeTree } from "./Parser/Tags/NodeTree.js";
+import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
+import type { ActiveStyle } from "./Parser/Scope/TemporalActiveContext.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Parser/Scope/TemporalActiveContext.js";
+import { createVisitor } from "./Parser/structure/visitor.js";
+import type { Visitor } from "./Parser/structure/visitor.js";
+import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
+import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
+import {
+	AnimationContainerContextState,
+	createAnimationContainerContext,
+	readScopeAnimationContext,
+} from "./Parser/Scope/AnimationContainerContext.js";
+
+const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
+export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
+const nodeMatchSymbol = Symbol("nodeMatchSymbol");
+
+enum NodeAttributes {
+	NO_ATTRS /***/ = 0b000,
+	IGNORED /****/ = 0b001,
+}
+
+interface NodeWithAttributes {
+	[nodeAttributesSymbol]: NodeAttributes;
+}
+
+export interface NodeWithScope {
+	[nodeScopeSymbol]: Scope;
+}
+
+interface NodeWithDestinationMatch {
+	[nodeMatchSymbol]?: NodeRepresentation<string>;
+}
+
+function isNodeIgnored(
+	node: NodeWithAttributes,
+): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.IGNORED } {
+	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.IGNORED);
+}
+
+function createNodeWithAttributes<NodeType extends object>(
+	node: NodeType,
+	attributes: NodeAttributes,
+): NodeType & NodeWithAttributes {
+	return Object.create(node, {
+		[nodeAttributesSymbol]: {
+			value: attributes,
+			writable: true,
+		},
+	});
+}
+
+function appendNodeAttributes<NodeType extends object>(
+	node: NodeType & NodeWithAttributes,
+	attributes: NodeAttributes,
+): NodeType & NodeWithAttributes {
+	if (typeof node[nodeAttributesSymbol] === "undefined") {
+		throw new Error("Cannot add attributes to node that has none.");
+	}
+
+	node[nodeAttributesSymbol] ^= attributes;
+	return node;
+}
+
+function createNodeWithScope<NodeType extends object>(
+	node: NodeType,
+	scope: Scope,
+): NodeType & NodeWithScope {
+	return Object.create(node, {
+		[nodeScopeSymbol]: {
+			value: scope,
+		},
+	});
+}
+
+function createNodeWithDestinationMatch<NodeType extends object>(
+	node: NodeType,
+	destination: NodeRepresentation<string>,
+): NodeType & NodeWithDestinationMatch {
+	return Object.create(node, {
+		[nodeMatchSymbol]: {
+			value: destination,
+		},
+	});
+}
+
+function isNodeMatched(node: object): boolean {
+	return nodeMatchSymbol in node;
+}
+
+/**
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#element-vocab-group-table
+ */
+
+const BLOCK_CLASS_ELEMENT = ["div", "p"] as const;
+type BLOCK_CLASS_ELEMENT = typeof BLOCK_CLASS_ELEMENT;
+
+function isBlockClassElement(content: string): content is BLOCK_CLASS_ELEMENT[number] {
+	return BLOCK_CLASS_ELEMENT.includes(content as BLOCK_CLASS_ELEMENT[number]);
+}
+
+const INLINE_CLASS_ELEMENT = ["span", "br"] as const;
+type INLINE_CLASS_ELEMENT = typeof INLINE_CLASS_ELEMENT;
+
+function isInlineClassElement(content: string): content is INLINE_CLASS_ELEMENT[number] {
+	return INLINE_CLASS_ELEMENT.includes(content as INLINE_CLASS_ELEMENT[number]);
+}
+
+// <br /> omitted on purpose, as it doesn't accept needed any property
+const CONTENT_MODULE_ELEMENTS = ["div", "p", "span", "body"] as const;
+type CONTENT_MODULE_ELEMENTS = typeof CONTENT_MODULE_ELEMENTS;
+
+function isContentModuleElement(content: string): content is CONTENT_MODULE_ELEMENTS[number] {
+	return CONTENT_MODULE_ELEMENTS.includes(content as CONTENT_MODULE_ELEMENTS[number]);
+}
+
+const LAYOUT_CLASS_ELEMENT = ["region"] as const;
+type LAYOUT_CLASS_ELEMENT = typeof LAYOUT_CLASS_ELEMENT;
+
+function isLayoutClassElement(content: string): content is LAYOUT_CLASS_ELEMENT[number] {
+	return LAYOUT_CLASS_ELEMENT.includes(content as LAYOUT_CLASS_ELEMENT[number]);
+}
+
+export default class TTMLAdapter extends BaseAdapter {
+	public static override get supportedType() {
+		return "application/ttml+xml";
+	}
+
+	public override parse(rawContent: string): BaseAdapter.ParseResult {
+		if (!rawContent) {
+			return BaseAdapter.ParseResult(
+				[],
+				[
+					{
+						error: new MissingContentError(),
+						failedChunk: "",
+						isCritical: true,
+					},
+				],
+			);
+		}
+
+		let cues: CueNode[] = [];
+		const rootScope: Scope = createScope(undefined);
+		let treeScope: Scope | undefined = rootScope;
+
+		const nodeTree = new NodeTree<
+			Token & NodeWithAttributes & NodeWithScope & NodeWithDestinationMatch
+		>();
+		const tokenizer = new Tokenizer(rawContent);
+
+		let token: Token | null = null;
+
+		while ((token = tokenizer.nextToken())) {
+			if (!treeScope) {
+				throw new Error(
+					"Tree scope became undefined. This is an internal error that should not happen. Please report it.",
+				);
+			}
+
+			switch (token.type) {
+				case TokenType.STRING: {
+					if (!nodeTree.currentNode) {
+						continue;
+					}
+
+					if (isNodeIgnored(nodeTree.currentNode.content)) {
+						continue;
+					}
+
+					// Treating strings as Anonymous spans
+					const destinationMatch = getNextVisitor(nodeTree).match("span");
+
+					if (!destinationMatch) {
+						continue;
+					}
+
+					/**
+					 * Creating a new scope to allow
+					 * anonymous spans to access to parents
+					 * `timeContainer`. On their own, they do
+					 * not specify any timing detail.
+					 */
+
+					const localScope = createScope(
+						treeScope,
+						createTimeContext({
+							timeContainer: undefined,
+						}),
+					);
+
+					nodeTree.track(
+						createNodeWithAttributes(
+							createNodeWithScope(token, localScope),
+							NodeAttributes.NO_ATTRS,
+						),
+					);
+					break;
+				}
+
+				case TokenType.START_TAG: {
+					if (nodeTree.currentNode && isNodeIgnored(nodeTree.currentNode.content)) {
+						continue;
+					}
+
+					const destinationMatch = getNextVisitor(nodeTree).match(token.content);
+
+					if (!destinationMatch) {
+						/**
+						 * Even if token does not respect it parent relatioship,
+						 * we still add it to the queue to mark its end later.
+						 *
+						 * We don't want to track it inside the tree, instead,
+						 * because we are going to ignore it.
+						 */
+
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(token, rootScope),
+								NodeAttributes.IGNORED,
+							),
+						);
+						continue;
+					}
+
+					if (token.content === "tt") {
+						rootScope.addContexts(
+							createDocumentContext(nodeTree, token.attributes || {}),
+							createTimeContext({
+								// Default data. Will result in an infinite duration.
+								begin: "0s",
+							}),
+						);
+
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									rootScope,
+								),
+								NodeAttributes.NO_ATTRS,
+							),
+						);
+
+						continue;
+					}
+
+					/**
+					 * Region completion will happen in the END_TAG, if not ignored.
+					 */
+					if (isLayoutClassElement(token.content)) {
+						const { currentNode } = nodeTree;
+						const isParentLayout = isLayoutElement(currentNode);
+
+						if (isParentLayout) {
+							if (shouldIgnoreOutOfLineRegion(token)) {
+								nodeTree.push(
+									createNodeWithAttributes(
+										createNodeWithScope(
+											createNodeWithDestinationMatch(token, destinationMatch),
+											rootScope,
+										),
+										NodeAttributes.IGNORED,
+									),
+								);
+								continue;
+							}
+						} else {
+							if (isInlineRegionConflicting(treeScope)) {
+								appendNodeAttributes(currentNode.content, NodeAttributes.IGNORED);
+								nodeTree.push(
+									createNodeWithAttributes(
+										createNodeWithScope(
+											createNodeWithDestinationMatch(token, destinationMatch),
+											rootScope,
+										),
+										NodeAttributes.IGNORED,
+									),
+								);
+								continue;
+							}
+						}
+					}
+
+					/**
+					 * *****************************************************************
+					 * *** IMPORTANT CONCEPT KNOWLEDGE AHEAD - PLEASE READ CAREFULLY ***
+					 * *****************************************************************
+					 *
+					 * ISD (Intermediary Synchronic Document) construction is a process TTML standard
+					 * defines as the duplication and replication of elements for each active region.
+					 *
+					 * [construct intermediate document] (11.3.1.3) procedure replicates the whole subtree
+					 * after <body> for each active region.
+					 *
+					 * This means that some elements are always shared.
+					 * We are not strictly following the ISD construction procedure, but achieving
+					 * the same result.
+					 *
+					 * ========
+					 *
+					 * [associate region] (11.3.1.3) procedure defines, on it's 3rd and 4th rules, how an
+					 * element should be associated with a region:
+					 *
+					 * > 3. if the element contains a descendant element that specifies a region attribute
+					 * > [...], then the element is associated with the region referenced by that attribute;
+					 * >
+					 * > 4. if a default region was implied (due to the absence of any region element),
+					 * > then the element is associated with the default region;
+					 *
+					 * The reason for the third point to exist, can be described with an example like follows:
+					 * imagine to have tree with a deep <span> that flows into a region and no parent above
+					 * flowing into a region.
+					 *
+					 * We would end up with the span to get pruned because parent doesn't have
+					 * a region and would therefore get pruned itself.
+					 *
+					 * This implementation uses linear tree parsing, one element after the other, without
+					 * building an actual ISD. This prevents us to understand if any element, except inline
+					 * elements (`span`s and `br`s), will get pruned or replicated under a certain region without
+					 * doing multiple iterations back and forth through the elements hierarchy.
+					 *
+					 * **HOWEVER**
+					 *
+					 * Rules 3 and 4 also implicitly mean that a parent can get ignored as well if it has no
+					 * children at all, because they have been already pruned. And **this** is where we act.
+					 *
+					 * We can only reach the bottom of each cue to have pruning details.
+					 * Pruning all the inline elements, will cause a parent to get pruned as well (which, in
+					 * our case, corresponds to ignoring the elements or not using it).
+					 *
+					 * I really hope this is clear, because it took me a while to figure it out and I reworked
+					 * this paragraph multiple times – yes, I couldn't understand it either when reading it again
+					 * after a while.
+					 */
+
+					/**
+					 * Checking if there's a region collision between a parent and a children.
+					 * Regions will be evaluated when its end tag is received.
+					 */
+
+					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
+						if (
+							isDefaultRegionActive(treeScope) ||
+							flowingIntoRegionConflicts(token.attributes["region"], treeScope)
+						) {
+							nodeTree.push(
+								createNodeWithAttributes(
+									createNodeWithScope(
+										createNodeWithDestinationMatch(token, destinationMatch),
+										rootScope,
+									),
+									NodeAttributes.IGNORED,
+								),
+							);
+
+							continue;
+						}
+					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									treeScope,
+								),
+								NodeAttributes.IGNORED,
+							),
+						);
+
+						continue;
+					}
+
+					// ************************************* //
+					// *** VALID NODE CONFIRMATION POINT *** //
+					// ************************************* //
+
+					/**
+					 * Checking this allows us to also
+					 * prevent adding new things to a new scope.
+					 * Regions and stylings > style are meant to
+					 * be set on the global scope.
+					 *
+					 * @TODO should we use regions and style contexts
+					 * to write on the document context instead
+					 * and only use them as processors?
+					 */
+
+					if (!isContentModuleElement(token.content)) {
+						nodeTree.push(
+							createNodeWithAttributes(
+								createNodeWithScope(
+									createNodeWithDestinationMatch(token, destinationMatch),
+									rootScope,
+								),
+								NodeAttributes.NO_ATTRS,
+							),
+						);
+
+						continue;
+					}
+
+					const contextsList: ContextFactory[] = [];
+
+					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
+						const regionContext = readScopeRegionContext(treeScope);
+						const flowedRegion = regionContext?.getRegionById(token.attributes["region"]);
+
+						if (flowedRegion) {
+							contextsList.push(
+								createTemporalActiveContext({
+									regionIDRef: token.attributes["region"],
+								}),
+							);
+						}
+					}
+
+					/**
+					 * Using "begin" because if an element supports it,
+					 * it must support "end", "dur" and "timeContainer" as well.
+					 *
+					 * A time context should always get created because we
+					 * might have an element with `timeContainer` attribute
+					 * that must be read by its children.
+					 *
+					 * @TODO animation elements support all but timeContainer.
+					 * How should we improve the check here?
+					 */
+					if (destinationMatch.matchesAttribute("begin")) {
+						contextsList.push(
+							createTimeContext({
+								begin: token.attributes["begin"],
+								end: token.attributes["end"],
+								dur: token.attributes["dur"],
+								timeContainer: token.attributes["timeContainer"],
+							}),
+						);
+					}
+
+					if (destinationMatch.matchesAttribute("tts:*")) {
+						const inlineStyles = extractInlineStylesFromToken(token);
+
+						if (inlineStyles) {
+							contextsList.push(
+								createStyleContainerContext([inlineStyles]),
+								createTemporalActiveContext({
+									stylesIDRefs: [inlineStyles["xml:id"]],
+								}),
+							);
+						}
+					}
+
+					if (token.attributes["style"] && destinationMatch.matchesAttribute("style")) {
+						const outOfLineStyles = getOutOfLineStylesByIDREFS(token, treeScope);
+
+						if (outOfLineStyles.length) {
+							contextsList.push(
+								createTemporalActiveContext({
+									stylesIDRefs: outOfLineStyles.map(({ "xml:id": id }) => id),
+								}),
+							);
+						}
+					}
+
+					if (token.attributes["animate"] && destinationMatch.matchesAttribute("animate")) {
+						const animationsIDRefs = getOutOfLineAnimationsIdsByIDREFS(token, treeScope);
+
+						if (animationsIDRefs.length) {
+							contextsList.push(
+								createTemporalActiveContext({
+									animationsIDRefs,
+								}),
+							);
+						}
+					}
+
+					treeScope = createScope(treeScope, ...contextsList);
+
+					nodeTree.push(
+						createNodeWithAttributes(
+							createNodeWithScope(
+								createNodeWithDestinationMatch(token, destinationMatch),
+								treeScope,
+							),
+							NodeAttributes.NO_ATTRS,
+						),
+					);
+
+					break;
+				}
+
+				case TokenType.END_TAG: {
+					if (!nodeTree.currentNode) {
+						continue;
+					}
+
+					if (nodeTree.currentNode.content.content !== token.content) {
+						continue;
+					}
+
+					if (isNodeMatched(nodeTree.currentNode.content)) {
+						// Pruned by rules, not by destination mismatching
+
+						const currentNode = nodeTree.currentNode.content;
+
+						if (currentNode[nodeScopeSymbol] !== rootScope) {
+							treeScope = treeScope.parent;
+						}
+
+						// const currentNode = nodeTree.currentNode.content;
+						// const parentNode = nodeTree.currentNode.parent?.content;
+						// const didScopeUpgrade = parentNode
+						// 	? currentNode[nodeScopeSymbol] !== parentNode[nodeScopeSymbol]
+						// 	: true;
+
+						// if (didScopeUpgrade && treeScope.parent) {
+						// 	treeScope = treeScope.parent;
+						// }
+					}
+
+					if (isNodeIgnored(nodeTree.currentNode.content)) {
+						nodeTree.pop();
+						break;
+					}
+
+					if (token.content === "tt") {
+						nodeTree.pop();
+						break;
+					}
+
+					if (isInlineAnimation(nodeTree.currentNode)) {
+						const animation = getInlineAnimationFromOpeningTag(nodeTree.currentNode);
+						const temporalActiveContext = readScopeTemporalActiveContext(treeScope!);
+
+						/**
+						 * There may be multiple inline animations inside the same element.
+						 * If any have been already added, let's merge the contexts.
+						 */
+						if (temporalActiveContext) {
+							treeScope!.addContexts(
+								createTemporalActiveContext({
+									animationsIDRefs: [animation.attributes["xml:id"]!],
+								}),
+								createAnimationContainerContext([animation]),
+							);
+						} else {
+							treeScope = createScope(
+								treeScope,
+								createAnimationContainerContext([animation]),
+								createTemporalActiveContext({
+									animationsIDRefs: [animation.attributes["xml:id"]!],
+								}),
+							);
+						}
+
+						nodeTree.pop();
+						break;
+					}
+
+					/**
+					 * Processing inline regions to be saved.
+					 * Remember: inline regions end before we
+					 * can process a cue (paragraph) content
+					 */
+
+					if (isInlineRegion(nodeTree.currentNode)) {
+						const inlineRegion = getInlineRegionFromOpeningTag(nodeTree.currentNode);
+
+						treeScope = createScope(
+							treeScope,
+							createRegionContainerContext([inlineRegion]),
+							createTemporalActiveContext({
+								regionIDRef: inlineRegion.attributes["xml:id"]!,
+							}),
+						);
+
+						nodeTree.pop();
+						break;
+					}
+
+					/**
+					 * Processing [out-of-line region]
+					 * @see https://w3c.github.io/ttml2/#terms-out-of-line-region
+					 */
+
+					const closingElement = nodeTree.pop()!;
+
+					if (isLayoutElement(closingElement)) {
+						const outOfLineRegions = extractOutOfLineRegions(closingElement);
+
+						if (outOfLineRegions.length) {
+							rootScope.addContexts(createRegionContainerContext(outOfLineRegions));
+						}
+
+						break;
+					}
+
+					if (isStylingElement(closingElement)) {
+						const styles = extractOutOfLineStyles(closingElement);
+						rootScope.addContexts(createStyleContainerContext(styles));
+
+						break;
+					}
+
+					if (isAnimationElement(closingElement)) {
+						const animations = extractOutOfLineAnimations(closingElement);
+
+						rootScope.addContexts(
+							//
+							createAnimationContainerContext(animations),
+						);
+
+						break;
+					}
+
+					if (closingElement.content.content === "p") {
+						cues = cues.concat(parseCue(closingElement));
+					}
+
+					break;
+				}
+			}
+		}
+
+		if (!readScopeDocumentContext(rootScope)) {
+			throw new Error(`Document failed to parse: <tt> element is apparently missing.`);
+		}
+
+		return BaseAdapter.ParseResult(cues, []);
+	}
+}
+
+function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
+	nodeTree: NodeTree<T>,
+): Visitor<NodeRepresentation<string>> {
+	if (!nodeTree.currentNode) {
+		return createVisitor(RepresentationTree);
+	}
+
+	const lastDestinationMatched = nodeTree.currentNode.content[nodeMatchSymbol]!;
+
+	return createVisitor(lastDestinationMatched);
+}
+
+// ******************************************** //
+// *** REGIONS EXTRACTION AND PREPROCESSING *** //
+// ******************************************** //
+// region region extraction
+
+/**
+ * We cannot use an out-of-line region element if
+ * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
+ */
+function shouldIgnoreOutOfLineRegion(token: Token): boolean {
+	return !isUniquelyAnnotatedNode(token.attributes);
+}
+
+/**
+ * Having two nested elements that flow into different regions is forbidden.
+ * The same is valid if a parent flows inside a out-of-line region
+ * while a child flows inside a different (inline) region.
+ *
+ * @example
+ * |--------------------------------|----------------------------------------------------|
+ * | Before [process inline region]	|	 After [process inline region]										 |
+ * | 																|	 (inline region gets moved)												 |
+ * |--------------------------------|----------------------------------------------------|
+ * | <tt>														| <tt>																							 |
+ * | 	<head>												| 	<head>																					 |
+ * | 		<region xml:id="r1" />			| 		<region xml:id="r1" />												 |
+ * | 																| 		<region xml:id="__custom_id__" />		<----			 |
+ * | 	</head>												| 	</head>																		|			 |
+ * | 	<body region="r1">						| 	<body region="r1">										 		|			 |
+ * | 		<div>												| 		<div region="__custom_id__">						|			 |
+ * | 			<region ... />						| 																				>----			 |
+ * | 			<p>...</p>								| 			<p>...</p>																	 |
+ * | 		</div>											| 		</div>																				 |
+ * | 	</body>												| 	</body>																					 |
+ * | </tt>													| </tt>																							 |
+ * |________________________________|____________________________________________________|
+ *
+ * Therefore, for the [associate region] procedure, the whole
+ * div will end up being pruned, because of a different region.
+ *
+ * @see https://w3c.github.io/ttml2/#procedure-process-inline-regions
+ */
+function isInlineRegionConflicting(scope: Scope): boolean {
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	if (!temporalActiveContext) {
+		return false;
+	}
+
+	return Boolean(temporalActiveContext.region?.id);
+}
+
+/**
+ * Default region is active when no out-of-line region is defined in the document.
+ * TTML specifies that:
+ *
+ * > Furthermore, if no out-of-line region is specified,
+ * > then the region attribute must not be specified on
+ * > any content element in the document instance.
+ *
+ * @TODO this is marked as a must, so should we throw an error?
+ */
+function isDefaultRegionActive(scope: Scope): boolean {
+	const regionContext = readScopeRegionContext(scope);
+
+	if (!regionContext) {
+		return true;
+	}
+
+	return !regionContext.regions.length;
+}
+
+/**
+ * By TTML specification, "flowing into a region" means that an element gets
+ * associated with that specific region.
+ *
+ * Flowing into a region is allowed only if the Default Region is active (not the
+ * case here), if an element doesn't have a region associated yet (which is required if the
+ * default region is not active) or if the region associated is the same as the parent one.
+ *
+ * In the example below, out-of-line regions definitions are omitted.
+ *
+ * @example
+ * ```xml
+ * <div region="r1">
+ * 	<!-- paragraph element will get pruned by the ISD associated with Region `r1` -->
+ * 	<!-- Same would be valid with a different region on a span inside the `p` -->
+ * 	<p region="r2">...</p>
+ * </div>
+ * <!--
+ * 	This div will get pruned as well, as the previous sibling
+ * 	has a region, but default region is not active.
+ * -->
+ * <div>
+ *     <!-- ... -->
+ * </div>
+ * ```
+ */
+function flowingIntoRegionConflicts(targetRegionId: string, scope: Scope): boolean {
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	if (!temporalActiveContext?.region) {
+		return false;
+	}
+
+	return temporalActiveContext.region.id !== targetRegionId;
+}
+
+function inlineClassElementFlowsInAnyRegion(token: Token, scope: Scope): boolean {
+	if (!isInlineClassElement(token.content)) {
+		return true;
+	}
+
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+
+	return Boolean(temporalActiveContext?.region?.id || isDefaultRegionActive(scope));
+}
+
+function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
+	if (!isRegionElement(currentNode)) {
+		return false;
+	}
+
+	const parentNode = currentNode.parent!.content.content;
+
+	return isBlockClassElement(parentNode);
+}
+
+/**
+ * From "[process inline regions]" procedure:
+ *
+ * > If the `[attributes]` information item property of R' does not include
+ * > an `xml:id` attribute, then add an implied `xml:id` attribute with a
+ * > generated value _ID_ that is unique within the scope of the TTML
+ * > document instance;
+ * >
+ * > otherwise, let _ID_ be the value of the `xml:id` attribute of R'
+ *
+ * ---
+ *
+ * This function is called when we receive the closing tag of an inline region.
+ * This means that we have all the information about the region itself in the
+ * opening tag.
+ */
+function getInlineRegionFromOpeningTag(
+	openingTag: NodeWithRelationship<Token>,
+): RegionContainerContextState {
+	const {
+		content: { attributes: regionAttributes },
+		parent,
+		children,
+	} = openingTag;
+
+	const {
+		content: { attributes: parentAttributes },
+	} = parent!;
+
+	const INLINE_REGION_PREFIX = "in:region";
+	const regionId =
+		regionAttributes["xml:id"] ||
+		parentAttributes["xml:id"] ||
+		Math.floor(Math.random() * (500 - 100) + 100);
+
+	return {
+		attributes: Object.create(regionAttributes, {
+			"xml:id": {
+				value: `${INLINE_REGION_PREFIX}-${regionId}`,
+			},
+		}),
+		children,
+	};
+}
+
+function isRegionElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "region";
+}
+
+function isLayoutElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "layout";
+}
+
+function extractOutOfLineRegions(
+	currentNode: NodeWithRelationship<Token>,
+): RegionContainerContextState[] {
+	const { children } = currentNode;
+
+	if (!children.length) {
+		return [];
+	}
+
+	const regions: RegionContainerContextState[] = [];
+
+	for (const child of children) {
+		if (!isRegionElement(child)) {
+			continue;
+		}
+
+		const { content: tokenContent, children: regionChildren } = child;
+
+		regions.push({ attributes: tokenContent.attributes, children: regionChildren });
+	}
+
+	return regions;
+}
+
+// ******************************************* //
+// *** STYLES EXTRACTION AND PREPROCESSING *** //
+// ******************************************* //
+// region styles extraction
+
+function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "styling";
+}
+
+/**
+ * Prepares style nodes to be fed into the Style context, which
+ * will filter the attributes.
+ *
+ * @param currentNode
+ * @returns
+ */
+function extractOutOfLineStyles(
+	currentNode: NodeWithRelationship<Token>,
+): (Record<string, string> & UniquelyAnnotatedNode)[] {
+	const { children } = currentNode;
+
+	const styles: (Record<string, string> & UniquelyAnnotatedNode)[] = [];
+
+	for (const { content } of children) {
+		if (content.content !== "style") {
+			continue;
+		}
+
+		if (!isUniquelyAnnotatedNode(content.attributes)) {
+			continue;
+		}
+
+		styles.push(content.attributes);
+	}
+
+	return styles;
+}
+
+/**
+ * Perpares all the inline styles to be added to the Style context,
+ * which will filter the attributes.
+ *
+ * @param token
+ * @returns
+ */
+function extractInlineStylesFromToken(
+	token: Token,
+): (Record<string, string> & UniquelyAnnotatedNode & { kind: "inline" }) | undefined {
+	const { attributes } = token;
+
+	return Object.create(attributes, {
+		"xml:id": {
+			value: attributes["xml:id"] || `in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+			enumerable: true,
+		},
+		kind: {
+			value: "inline",
+		},
+	});
+}
+
+function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
+	const { attributes } = token;
+	const styleContext = readScopeStyleContainerContext(scope);
+
+	if (!styleContext) {
+		console.warn(
+			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style(s) '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
+		);
+
+		return [];
+	}
+
+	const idrefsStyleList = attributes["style"]!.split(/\s+/);
+	const referencialStyles: ActiveStyle[] = [];
+
+	for (const idref of idrefsStyleList) {
+		const style = styleContext.getStyleByIDRef(idref);
+
+		if (!style) {
+			console.warn(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${idref}', but no such out-of-line style was defined in this document. Ignored.`,
+			);
+
+			continue;
+		}
+
+		referencialStyles.push(
+			Object.create(style, {
+				kind: {
+					value: "referential",
+				},
+			}),
+		);
+	}
+
+	return referencialStyles;
+}
+
+// ********************************************** //
+// *** ANIMATION EXTRACTION AND PREPROCESSING *** //
+// ********************************************** //
+// region animation extraction
+
+function isInlineAnimation(
+	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
+): boolean {
+	const { content } = currentNode;
+
+	const isParentAllowedToContainInlineAnimation =
+		currentNode.parent?.content[nodeMatchSymbol]?.matchesAttribute("animate") || false;
+
+	return (
+		isParentAllowedToContainInlineAnimation &&
+		(content.content === "animate" || content.content === "set")
+	);
+}
+
+function isAnimationElement(currentNode: NodeWithRelationship<Token>): boolean {
+	return currentNode.content.content === "animation";
+}
+
+function extractOutOfLineAnimations(
+	currentNode: NodeWithRelationship<Token>,
+): AnimationContainerContextState[] {
+	const { children } = currentNode;
+
+	if (!children.length) {
+		return [];
+	}
+
+	const animations: AnimationContainerContextState[] = [];
+
+	for (const { content: tokenContent } of children) {
+		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+			continue;
+		}
+
+		const animationId = getInlineAnimationId(tokenContent, currentNode.content);
+
+		animations.push(getInlineAnimationFromToken(animationId, tokenContent));
+	}
+
+	return animations;
+}
+
+function getInlineAnimationFromOpeningTag(
+	openingTag: NodeWithRelationship<Token>,
+): AnimationContainerContextState {
+	const { content, parent } = openingTag;
+
+	const animationId = getInlineAnimationId(content, parent?.content);
+
+	return getInlineAnimationFromToken(animationId, content);
+}
+
+function getInlineAnimationFromToken(
+	animationId: string,
+	token: Token,
+): AnimationContainerContextState {
+	const tokenAttributes = token.attributes;
+
+	return {
+		attributes: Object.create(tokenAttributes, {
+			"xml:id": {
+				value: animationId,
+			},
+		}),
+		calcMode: token.content === "set" ? "discrete" : tokenAttributes["calcMode"],
+	};
+}
+
+function getInlineAnimationId(token: Token, parent?: Token): string {
+	const INLINE_ANIMATION_PREFIX = "in:animation";
+	const animationIdBody =
+		token.attributes["xml:id"] ||
+		parent?.attributes["xml:id"] ||
+		String(Math.floor(Math.random() * (500 - 100) + 100));
+
+	return `${INLINE_ANIMATION_PREFIX}-${animationIdBody}`;
+}
+
+/**
+ * Given a token having an "animate" attribute, look for the corresponding animation
+ * definitions and hence validates the animations themselves. Then, returns the list
+ * of valid animation IDs to be added to the temporal active context.
+ *
+ * @param token
+ * @param scope
+ * @returns
+ */
+function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[] {
+	const { attributes } = token;
+	const animationContext = readScopeAnimationContext(scope);
+
+	if (!animationContext) {
+		console.warn(
+			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation(s) '${attributes["animate"]}', but no out-of-line animations were defined in this document. Ignored.`,
+		);
+
+		return [];
+	}
+
+	const idrefsAnimationList = attributes["animate"]!.split(/\s+/);
+	const validAnimationIDs: string[] = [];
+
+	for (const idref of idrefsAnimationList) {
+		if (!animationContext.getAnimationById(idref)) {
+			console.warn(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}', but no such out-of-line animation was defined in this document. Ignored.`,
+			);
+
+			continue;
+		}
+
+		validAnimationIDs.push(idref);
+	}
+
+	return validAnimationIDs;
+}
