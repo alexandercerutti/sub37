@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@sub37/captions-renderer": "workspace:^",
 		"@sub37/server": "workspace:^",
-		"@sub37/webvtt-adapter": "workspace:^"
+		"@sub37/webvtt-adapter": "workspace:^",
+		"@sub37/ttml-adapter": "workspace:^"
 	}
 }

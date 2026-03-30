@@ -60,6 +60,9 @@ importers:
       '@sub37/server':
         specifier: workspace:^
         version: link:../server
+      '@sub37/ttml-adapter':
+        specifier: workspace:^
+        version: link:../ttml-adapter
       '@sub37/webvtt-adapter':
         specifier: workspace:^
         version: link:../webvtt-adapter
