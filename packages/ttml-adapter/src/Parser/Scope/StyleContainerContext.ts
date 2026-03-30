@@ -12,14 +12,19 @@ import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");
 
+interface StyleTypology {
+	kind: "inline" | "referential" | "nested";
+}
+
 type ReferentialStyleChain = Partial<Record<"style", string>>;
 
-type StyleContainerContextState = UniquelyAnnotatedNode &
+export type StyleContainerContextState = UniquelyAnnotatedNode &
 	ReferentialStyleChain &
+	StyleTypology &
 	Record<string, string>;
 
 interface QueuedStorageValues {
-	attributes: Record<string, string> & UniquelyAnnotatedNode;
+	attributes: Record<string, string> & UniquelyAnnotatedNode & StyleTypology;
 	styleIDREFs: string[];
 }
 
@@ -46,7 +51,7 @@ export function createStyleContainerContext(
 		const stylesIDREFSStorage = new Map<string, TTMLStyle>();
 
 		function processStyles(
-			stylesAttributesList: (Record<string, string> & UniquelyAnnotatedNode)[],
+			stylesAttributesList: StyleContainerContextState[],
 			scope: Scope,
 			retriveExternalStyle: (idref: string) => Record<string, string> | undefined,
 		): void {
@@ -77,6 +82,13 @@ export function createStyleContainerContext(
 				const style = Object.create(styleAttributes, {
 					"xml:id": {
 						value: id,
+						enumerable: true,
+					},
+					// Rebuild the kind property on the final style object,
+					// as it is used to discriminate between inline, nested
+					// and referential styles during application
+					kind: {
+						value: stylesIDREFSQueuedStorage.get(id)!.attributes.kind,
 						enumerable: true,
 					},
 				});
@@ -309,6 +321,8 @@ function processStylesByTopology(
 // region TTMLStyle
 
 export interface TTMLStyle extends UniquelyAnnotatedNode {
+	kind: "inline" | "nested" | "referential";
+
 	/**
 	 * Filtered list of tts:* attributes
 	 */
@@ -322,13 +336,17 @@ export interface TTMLStyle extends UniquelyAnnotatedNode {
 	apply(element: string): SupportedCSSProperties;
 }
 
-function createTTMLStyle(attributes: Record<string, string>, scope: Scope): TTMLStyle | undefined {
+function createTTMLStyle(
+	attributes: Record<string, string> & UniquelyAnnotatedNode & StyleTypology,
+	scope: Scope,
+): TTMLStyle | undefined {
 	if (!isUniquelyAnnotatedNode(attributes)) {
 		return undefined;
 	}
 
 	const style = {
 		"xml:id": attributes["xml:id"],
+		kind: attributes["kind"],
 		styleAttributes: attributes,
 		apply(element: string): SupportedCSSProperties {
 			return convertAttributesToCSS(this.styleAttributes, scope, element);
@@ -343,12 +361,12 @@ function extractStyleAttributes(
 ): Record<StyleAttributeString, string> {
 	const validAttributes: Record<StyleAttributeString, string> = {};
 
-	for (const [attrName, attr] of Object.entries(attributes)) {
-		if (!isStyleAttribute(attrName)) {
+	for (const attributeKey in attributes) {
+		if (!isStyleAttribute(attributeKey)) {
 			continue;
 		}
 
-		validAttributes[attrName] = attr;
+		validAttributes[attributeKey] = attributes[attributeKey]!;
 	}
 
 	return validAttributes;

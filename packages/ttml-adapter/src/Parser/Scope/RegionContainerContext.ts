@@ -1,6 +1,6 @@
 import type { Entities, Region } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree";
-import type { Token, UniquelyAnnotatedNode } from "../Token";
+import type { Token } from "../Token";
 import { isUniquelyAnnotatedNode } from "../Token";
 import type { Context, ContextFactory, Scope } from "./Scope";
 import { createScope, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
@@ -8,8 +8,8 @@ import { isStyleAttribute } from "../parseStyle";
 import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
-	TTMLStyle,
 } from "./StyleContainerContext";
+import type { StyleContainerContextState, TTMLStyle } from "./StyleContainerContext";
 import type { TimeContextData } from "./TimeContext";
 import {
 	Animation,
@@ -138,9 +138,7 @@ function hasTimingAttributes(attributes: Record<string, string>): boolean {
 // ************************* //
 // region styles
 
-function extractInlineStyles(
-	regionAttributes: Record<string, string>,
-): Record<string, string> & UniquelyAnnotatedNode {
+function extractInlineStyles(regionAttributes: Record<string, string>): StyleContainerContextState {
 	const inlineStyles: Record<string, string> = {};
 
 	for (const [ttsKey, ttsValue] of Object.entries(regionAttributes)) {
@@ -153,6 +151,10 @@ function extractInlineStyles(
 
 	return Object.create(inlineStyles, {
 		"xml:id": {
+			value:
+				inlineStyles["xml:id"] || `region-inline:${Math.floor(Math.random() * (500 - 100) + 100)}`,
+		},
+		kind: {
 			value: "inline",
 			enumerable: true,
 		},
@@ -161,7 +163,7 @@ function extractInlineStyles(
 
 function extractNestedStylesChildren(
 	regionChildren: NodeWithRelationship<Token>[],
-): Record<string, string> & UniquelyAnnotatedNode {
+): StyleContainerContextState {
 	const nestedStyles: Record<string, string> = {};
 
 	for (const styleToken of regionChildren) {
@@ -176,6 +178,9 @@ function extractNestedStylesChildren(
 
 	return Object.create(nestedStyles, {
 		"xml:id": {
+			value: `region-nested:${Math.floor(Math.random() * (500 - 100) + 100)}`,
+		},
+		kind: {
 			value: "nested",
 			enumerable: true,
 		},

@@ -8,6 +8,10 @@ import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
 } from "./Parser/Scope/StyleContainerContext.js";
+import type {
+	StyleContainerContextState,
+	TTMLStyle,
+} from "./Parser/Scope/StyleContainerContext.js";
 import type { RegionContainerContextState } from "./Parser/Scope/RegionContainerContext.js";
 import {
 	createRegionContainerContext,
@@ -19,7 +23,6 @@ import { isUniquelyAnnotatedNode, Token, TokenType } from "./Parser/Token.js";
 import type { UniquelyAnnotatedNode } from "./Parser/Token.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
 import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
-import type { ActiveStyle } from "./Parser/Scope/TemporalActiveContext.js";
 import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
@@ -887,10 +890,10 @@ function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
  */
 function extractOutOfLineStyles(
 	currentNode: NodeWithRelationship<Token>,
-): (Record<string, string> & UniquelyAnnotatedNode)[] {
+): StyleContainerContextState[] {
 	const { children } = currentNode;
 
-	const styles: (Record<string, string> & UniquelyAnnotatedNode)[] = [];
+	const styles: StyleContainerContextState[] = [];
 
 	for (const { content } of children) {
 		if (content.content !== "style") {
@@ -901,7 +904,14 @@ function extractOutOfLineStyles(
 			continue;
 		}
 
-		styles.push(content.attributes);
+		styles.push(
+			Object.create(content.attributes, {
+				kind: {
+					value: "referential",
+					enumerable: true,
+				},
+			}),
+		);
 	}
 
 	return styles;
@@ -930,7 +940,7 @@ function extractInlineStylesFromToken(
 	});
 }
 
-function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
+function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): TTMLStyle[] {
 	const { attributes } = token;
 	const styleContext = readScopeStyleContainerContext(scope);
 
@@ -943,7 +953,7 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 	}
 
 	const idrefsStyleList = attributes["style"]!.split(/\s+/);
-	const referencialStyles: ActiveStyle[] = [];
+	const referencialStyles: TTMLStyle[] = [];
 
 	for (const idref of idrefsStyleList) {
 		const style = styleContext.getStyleByIDRef(idref);
@@ -956,13 +966,7 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): ActiveStyle[] {
 			continue;
 		}
 
-		referencialStyles.push(
-			Object.create(style, {
-				kind: {
-					value: "referential",
-				},
-			}),
-		);
+		referencialStyles.push(style);
 	}
 
 	return referencialStyles;

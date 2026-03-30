@@ -33,10 +33,6 @@ declare module "./Scope" {
 	}
 }
 
-export type ActiveStyle = TTMLStyle & {
-	kind: "inline" | "referential" | "nested";
-};
-
 interface TemporalActiveInitParams {
 	regionIDRef?: IDREF;
 	stylesIDRefs?: IDREF[];
@@ -45,7 +41,7 @@ interface TemporalActiveInitParams {
 
 interface TemporalActiveContextState {
 	region: TTMLRegion | undefined;
-	styles: ActiveStyle[];
+	styles: TTMLStyle[];
 	animations: Animation[];
 }
 
@@ -60,13 +56,13 @@ export function createTemporalActiveContext(
 		};
 
 		const stylesFilter = {
-			get inline(): ActiveStyle[] {
+			get inline() {
 				return store.styles.filter(({ kind }) => kind === "inline");
 			},
-			get nested(): ActiveStyle[] {
+			get nested() {
 				return store.styles.filter(({ kind }) => kind === "nested");
 			},
-			get referential(): ActiveStyle[] {
+			get referential() {
 				return store.styles.filter(({ kind }) => kind === "referential");
 			},
 		};
@@ -180,7 +176,7 @@ export function readScopeTemporalActiveContext(scope: Scope): TemporalActiveCont
 	return scope.getContextByIdentifier(temporalActiveContextSymbol);
 }
 
-function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle[] {
+function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[] {
 	const regionContext = readScopeRegionContext(scope);
 
 	if (!regionContext) {
@@ -193,7 +189,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 		return [];
 	}
 
-	const styles: ActiveStyle[] = [];
+	const styles: TTMLStyle[] = [];
 	const inlineStyles = regionStyles.find(({ "xml:id": id }) => id === "inline");
 
 	if (inlineStyles) {
@@ -201,6 +197,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 			Object.create(inlineStyles, {
 				kind: {
 					value: "inline",
+					enumerable: true,
 				},
 			}),
 		);
@@ -213,6 +210,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 			Object.create(nestedStyles, {
 				kind: {
 					value: "nested",
+					enumerable: true,
 				},
 			}),
 		);
@@ -221,17 +219,17 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): ActiveStyle
 	return styles;
 }
 
-function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): ActiveStyle[] {
+function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): TTMLStyle[] {
 	if (!idrefs?.length) {
 		return [];
 	}
 
-	const styles: ActiveStyle[] = [];
+	const styles: TTMLStyle[] = [];
 	const allowedKinds = ["inline", "nested", "referential"] as const;
 	const styleContext = readScopeStyleContainerContext(scope);
 
 	for (const style of idrefs) {
-		const recognizedStyle = styleContext?.getStyleByIDRef(style) as ActiveStyle;
+		const recognizedStyle = styleContext?.getStyleByIDRef(style);
 
 		if (!recognizedStyle) {
 			console.warn(
