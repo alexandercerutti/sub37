@@ -44,7 +44,7 @@ declare module "./Scope" {
 export function createRegionContainerContext(
 	contextState: RegionContainerContextState[],
 ): ContextFactory<RegionContainerContext> {
-	return function (scope: Scope) {
+	return function (_scope: Scope) {
 		if (!contextState.length) {
 			return null;
 		}
@@ -284,9 +284,7 @@ export class TTMLRegion implements Region {
 			return [];
 		}
 
-		return [styleContext.getStyleByIDRef("inline"), styleContext.getStyleByIDRef("nested")].filter(
-			Boolean,
-		) as TTMLStyle[];
+		return styleContext.styles;
 	}
 
 	public get animations(): Animation[] {

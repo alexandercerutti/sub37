@@ -32,6 +32,7 @@ interface StyleContainerContext extends Context<
 	StyleContainerContext,
 	StyleContainerContextState[]
 > {
+	get styles(): TTMLStyle[];
 	getStyleByIDRef(idref: string): TTMLStyle | undefined;
 }
 
@@ -122,6 +123,9 @@ export function createStyleContainerContext(
 				}
 
 				return styleFromParent;
+			},
+			get styles(): TTMLStyle[] {
+				return Array.from(stylesIDREFSStorage.values());
 			},
 		};
 	};
