@@ -1,4 +1,4 @@
-import { Region } from "@sub37/server";
+import type { Entities, Region } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree";
 import type { Token, UniquelyAnnotatedNode } from "../Token";
 import { isUniquelyAnnotatedNode } from "../Token";
@@ -255,6 +255,8 @@ export class TTMLRegion implements Region {
 	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
 	public scope: Scope;
+
+	public entities: Entities.AllEntities[] = [];
 
 	public constructor(id: string, timingAttributes: TimeContextData | undefined, scope: Scope) {
 		this.id = id;

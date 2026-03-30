@@ -1,3 +1,5 @@
+import type { AllEntities } from "./Entities/index.js";
+
 /**
  * BRING YOUR OWN REGION.
  * Each adapter should be able to define the properties
@@ -26,6 +28,11 @@ export interface Region {
 	height?: number;
 
 	lines: number;
+
+	/**
+	 * Entities to be directly applied directly to the region container.
+	 */
+	entities: AllEntities[];
 
 	/**
 	 * Allows each parser how to express

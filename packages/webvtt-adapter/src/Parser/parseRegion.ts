@@ -1,4 +1,4 @@
-import type { Region } from "@sub37/server";
+import type { Entities, Region } from "@sub37/server";
 
 /**
  * @param rawRegionData
@@ -92,6 +92,9 @@ const VH_LINE_HEIGHT = 5.33;
 
 class WebVTTRegion implements Region {
 	public id: string = "";
+
+	public entities: Entities.AllEntities[] = [];
+
 	/**
 	 * Region width expressed in percentage
 	 */
