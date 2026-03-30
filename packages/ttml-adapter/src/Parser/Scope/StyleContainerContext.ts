@@ -79,24 +79,11 @@ export function createStyleContainerContext(
 			);
 
 			for (const [id, styleAttributes] of stylesByTopology) {
-				const style = Object.create(styleAttributes, {
-					"xml:id": {
-						value: id,
-						enumerable: true,
-					},
-					// Rebuild the kind property on the final style object,
-					// as it is used to discriminate between inline, nested
-					// and referential styles during application
-					kind: {
-						value: stylesIDREFSQueuedStorage.get(id)!.attributes.kind,
-						enumerable: true,
-					},
-				});
+				const kind = stylesIDREFSQueuedStorage.get(id)!.attributes.kind;
 
-				const ttmlStyle = createTTMLStyle(style, scope);
+				const ttmlStyle = createTTMLStyle(id, kind, styleAttributes, scope);
 
 				if (!ttmlStyle) {
-					console.warn("Style with unknown 'xml:id' attribute, got ignored.");
 					continue;
 				}
 
@@ -337,16 +324,19 @@ export interface TTMLStyle extends UniquelyAnnotatedNode {
 }
 
 function createTTMLStyle(
-	attributes: Record<string, string> & UniquelyAnnotatedNode & StyleTypology,
+	id: string,
+	kind: "inline" | "referential" | "nested",
+	attributes: Record<string, string>,
 	scope: Scope,
 ): TTMLStyle | undefined {
-	if (!isUniquelyAnnotatedNode(attributes)) {
+	if (!id) {
+		console.warn("Style with unknown 'xml:id' attribute, got ignored.");
 		return undefined;
 	}
 
 	const style = {
-		"xml:id": attributes["xml:id"],
-		kind: attributes["kind"],
+		"xml:id": id,
+		kind,
 		styleAttributes: attributes,
 		apply(element: string): SupportedCSSProperties {
 			return convertAttributesToCSS(this.styleAttributes, scope, element);

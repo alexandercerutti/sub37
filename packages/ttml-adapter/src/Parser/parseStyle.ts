@@ -61,9 +61,7 @@ function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr):
 
 export function resolveStyleDefinitionByName(propName: string): AttributeDefinition {
 	if (!isMappedKey(propName)) {
-		throw new Error(
-			"Provided name is not a valid (mapped) style property. Cannot retrieve animation details.",
-		);
+		throw new Error(`Provided name ('${propName}') is not a valid (mapped) style property.`);
 	}
 
 	return TTML_CSS_ATTRIBUTES_MAP[propName];
