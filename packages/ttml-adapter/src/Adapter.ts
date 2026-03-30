@@ -279,7 +279,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						const isParentLayout = isLayoutElement(currentNode);
 
 						if (isParentLayout) {
-							if (shouldIgnoreOutOfLineRegion(token)) {
+							if (!isUniquelyAnnotatedNode(token.attributes)) {
+								console.log("Region element has no 'xml:id' attribute. Ignored.");
+
 								nodeTree.push(
 									createNodeWithAttributes(
 										createNodeWithScope(
@@ -293,6 +295,8 @@ export default class TTMLAdapter extends BaseAdapter {
 							}
 						} else {
 							if (isInlineRegionConflicting(treeScope)) {
+								console.warn("Found an inline region flowing into an out-of-line region. Ignored.");
+
 								appendNodeAttributes(currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(
 									createNodeWithAttributes(
@@ -370,6 +374,10 @@ export default class TTMLAdapter extends BaseAdapter {
 							isDefaultRegionActive(treeScope) ||
 							flowingIntoRegionConflicts(token.attributes["region"], treeScope)
 						) {
+							console.warn(
+								`Element '${token.content}' is assigned to region '${token.attributes["region"]}' but either default region is active or this element is already flowing in a different region. Ignored.`,
+							);
+
 							nodeTree.push(
 								createNodeWithAttributes(
 									createNodeWithScope(
@@ -383,6 +391,8 @@ export default class TTMLAdapter extends BaseAdapter {
 							continue;
 						}
 					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
+						console.warn(`Element '${token.content}' is not flowing into any region. Ignored.`);
+
 						nodeTree.push(
 							createNodeWithAttributes(
 								createNodeWithScope(
@@ -671,14 +681,6 @@ function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
 // *** REGIONS EXTRACTION AND PREPROCESSING *** //
 // ******************************************** //
 // region region extraction
-
-/**
- * We cannot use an out-of-line region element if
- * it doesn't have an id, isn't it? ¯\_(ツ)_/¯
- */
-function shouldIgnoreOutOfLineRegion(token: Token): boolean {
-	return !isUniquelyAnnotatedNode(token.attributes);
-}
 
 /**
  * Having two nested elements that flow into different regions is forbidden.
