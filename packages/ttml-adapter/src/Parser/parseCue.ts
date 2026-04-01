@@ -23,34 +23,7 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
 	 */
 
-	let cues: CueNode[] = [];
-
-	for (let i = 0; i < node.children.length; i++) {
-		const children = node.children[i];
-
-		if (children?.content.content === "span") {
-			cues = cues.concat(getCuesFromSpan(children, attributes["xml:id"] || `unk-par-${i}`));
-			continue;
-		}
-
-		if (children?.content.content === "br" && cues.length) {
-			processLineBreak(cues[cues.length - 1]);
-			continue;
-		}
-
-		if (children?.content.type === TokenType.STRING) {
-			if (cues.length && cues[cues.length - 1]!.content === "") {
-				cues[cues.length - 1]!.content += children.content.content;
-				continue;
-			}
-
-			cues = cues.concat(
-				createCueFromAnonymousSpan(children, node.content.attributes["xml:id"] || `unk-span-${i}`),
-			);
-
-			continue;
-		}
-	}
+	const cues = processChildren(node, attributes["xml:id"] || "unk-par");
 
 	const temporalActiveContext = readScopeTemporalActiveContext(node.content[nodeScopeSymbol]);
 
@@ -67,44 +40,40 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	return cues;
 }
 
-function getCuesFromSpan(
+function processChildren(
 	node: NodeWithRelationship<Token & NodeWithScope>,
 	parentId: string,
 ): CueNode[] {
-	if (!node.children.length) {
-		return [];
-	}
-
 	let cues: CueNode[] = [];
+	let lastScopeParent: Scope | undefined;
 
 	for (let i = 0; i < node.children.length; i++) {
-		const children = node.children[i];
+		const child = node.children[i];
 
-		if (children?.content.content === "span") {
-			cues = cues.concat(getCuesFromSpan(children, parentId));
+		if (!child) {
 			continue;
 		}
 
-		if (children?.content.content === "br") {
+		if (child.content.content === "span") {
+			cues = cues.concat(processChildren(child, child.content.attributes["xml:id"] || parentId));
+			lastScopeParent = undefined;
+			continue;
+		}
+
+		if (child.content.content === "br") {
 			processLineBreak(cues[cues.length - 1]);
 			continue;
 		}
 
-		if (children?.content.type === TokenType.STRING) {
-			if (!cues.length) {
-				cues = cues.concat(
-					createCueFromAnonymousSpan(
-						children,
-						node.content.attributes["xml:id"] || `unk-span-${i}`,
-					),
-				);
+		if (child.content.type === TokenType.STRING) {
+			const childScopeParent = child.content[nodeScopeSymbol].parent;
 
-				continue;
+			if (cues.length && childScopeParent === lastScopeParent) {
+				cues[cues.length - 1]!.content += child.content.content;
+			} else {
+				cues = cues.concat(createCueFromAnonymousSpan(child, parentId));
+				lastScopeParent = childScopeParent;
 			}
-
-			cues[cues.length - 1]!.content += children.content.content;
-
-			continue;
 		}
 	}
 
@@ -136,6 +105,9 @@ function createCueFromAnonymousSpan(
 		 * > For the purpose of determining the applicability of a style property,
 		 * > if the style property is defined so as to apply to a span element,
 		 * > then it also applies to anonymous span elements.
+		 *
+		 * Running this for `span` elements, will for sure duplicate the styles applied
+		 * to the above `<p>` element, but that doens't matter.
 		 */
 		const styles = temporalActiveContext.computeStylesForElement("span");
 

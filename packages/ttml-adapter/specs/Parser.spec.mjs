@@ -8,6 +8,9 @@ import { TokenType } from "../lib/Parser/Token.js";
 import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
 import { nodeScopeSymbol } from "../lib/Adapter.js";
+import { createRegionContainerContext } from "../lib/Parser/Scope/RegionContainerContext.js";
+import { createTemporalActiveContext } from "../lib/Parser/Scope/TemporalActiveContext.js";
+import { createAnimationContainerContext } from "../lib/Parser/Scope/AnimationContainerContext.js";
 
 /**
  * @param {import("../lib/Parser/Tags/NodeTree.js").NodeWithRelationship<import("./NodeTree.spec.mjs").Token & import("../lib/Adapter.js").NodeWithScope>} node
@@ -285,6 +288,225 @@ describe("parseCue", () => {
 			startTime: 3000,
 			endTime: 25000,
 		});
+	});
+
+	it("should merge adjacent sibling strings under the same parent into one cue", () => {
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+		);
+
+		const paragraphAttrs = { "xml:id": "par-01", begin: "0s", end: "5s" };
+		const paragraphScope = createScope(baseScope, createTimeContext(paragraphAttrs));
+
+		const Paragraph = {
+			content: {
+				[nodeScopeSymbol]: paragraphScope,
+				content: "p",
+				attributes: paragraphAttrs,
+				type: TokenType.START_TAG,
+			},
+			children: [
+				{
+					content: { type: TokenType.STRING, content: "Hello ", attributes: {} },
+					children: [],
+				},
+				{
+					content: { type: TokenType.STRING, content: "World", attributes: {} },
+					children: [],
+				},
+			],
+		};
+
+		linkChildrenAndParents(Paragraph);
+
+		/**
+		 * <p begin="0s" end="5s" xml:id="par-01">
+		 *   Hello World  <!-- two STRING tokens, same scope parent → merged into one cue -->
+		 * </p>
+		 */
+		const parsed = parseCue(Paragraph);
+
+		expect(parsed.length).toBe(1);
+		expect(parsed[0]).toMatchObject({ content: "Hello World" });
+	});
+
+	it("should not merge a string sibling with a cue produced inside a span", () => {
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+		);
+
+		const paragraphAttrs = { "xml:id": "par-01", begin: "0s", end: "5s" };
+		const paragraphScope = createScope(baseScope, createTimeContext(paragraphAttrs));
+
+		const Paragraph = {
+			content: {
+				[nodeScopeSymbol]: paragraphScope,
+				content: "p",
+				attributes: paragraphAttrs,
+				type: TokenType.START_TAG,
+			},
+			children: [
+				{
+					content: { type: TokenType.STRING, content: "Hello ", attributes: {} },
+					children: [],
+				},
+				{
+					content: { type: TokenType.START_TAG, content: "span", attributes: {} },
+					children: [
+						{
+							content: { type: TokenType.STRING, content: "Middle", attributes: {} },
+							children: [],
+						},
+					],
+				},
+				{
+					content: { type: TokenType.STRING, content: " World", attributes: {} },
+					children: [],
+				},
+			],
+		};
+
+		linkChildrenAndParents(Paragraph);
+
+		/**
+		 * <p begin="0s" end="5s" xml:id="par-01">
+		 *   Hello            <!-- own cue -->
+		 *   <span>Middle</span>  <!-- own cue -->
+		 *   World            <!-- own cue: must NOT merge with Middle despite same scope.parent as Hello -->
+		 * </p>
+		 */
+		const parsed = parseCue(Paragraph);
+
+		expect(parsed.length).toBe(3);
+		expect(parsed[0]).toMatchObject({ content: "Hello " });
+		expect(parsed[1]).toMatchObject({ content: "Middle" });
+		expect(parsed[2]).toMatchObject({ content: " World" });
+	});
+
+	it("should attach a region to cues that reference it", () => {
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+			createRegionContainerContext([
+				{ attributes: { "xml:id": "r1", begin: "0s", end: "5s" }, children: [] },
+			]),
+		);
+
+		const paragraphAttrs = { "xml:id": "par-01", begin: "0s", end: "5s" };
+		const paragraphScope = createScope(baseScope, createTimeContext(paragraphAttrs));
+
+		const stringScope = createScope(
+			paragraphScope,
+			createTimeContext({
+				begin: undefined,
+				end: undefined,
+				dur: undefined,
+				timeContainer: undefined,
+			}),
+			createTemporalActiveContext({ regionIDRef: "r1" }),
+		);
+
+		const Paragraph = {
+			content: {
+				[nodeScopeSymbol]: paragraphScope,
+				content: "p",
+				attributes: paragraphAttrs,
+				type: TokenType.START_TAG,
+			},
+			children: [
+				{
+					content: {
+						[nodeScopeSymbol]: stringScope,
+						type: TokenType.STRING,
+						content: "Hello",
+						attributes: {},
+					},
+					children: [],
+				},
+			],
+		};
+
+		Paragraph.children[0].parent = Paragraph;
+
+		/**
+		 * <p begin="0s" end="5s" xml:id="par-01">
+		 *   Hello  <!-- anonymous span, TAC references region r1 -->
+		 * </p>
+		 */
+		const parsed = parseCue(Paragraph);
+
+		expect(parsed.length).toBe(1);
+		expect(parsed[0].region?.id).toBe("r1");
+	});
+
+	it("should attach animation entities to cues that reference an animation", () => {
+		const baseScope = createScope(
+			undefined,
+			createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+			createAnimationContainerContext([
+				{
+					calcMode: "discrete",
+					attributes: {
+						"xml:id": "a1",
+						begin: "0s",
+						dur: "5s",
+						keyTimes: "0;1",
+						"tts:color": "red;blue",
+					},
+				},
+			]),
+		);
+
+		const paragraphAttrs = { "xml:id": "par-01", begin: "0s", end: "5s" };
+		const paragraphScope = createScope(baseScope, createTimeContext(paragraphAttrs));
+
+		const stringScope = createScope(
+			paragraphScope,
+			createTimeContext({
+				begin: undefined,
+				end: undefined,
+				dur: undefined,
+				timeContainer: undefined,
+			}),
+			createTemporalActiveContext({ animationsIDRefs: ["a1"] }),
+		);
+
+		const Paragraph = {
+			content: {
+				[nodeScopeSymbol]: paragraphScope,
+				content: "p",
+				attributes: paragraphAttrs,
+				type: TokenType.START_TAG,
+			},
+			children: [
+				{
+					content: {
+						[nodeScopeSymbol]: stringScope,
+						type: TokenType.STRING,
+						content: "Hello",
+						attributes: {},
+					},
+					children: [],
+				},
+			],
+		};
+
+		Paragraph.children[0].parent = Paragraph;
+
+		/**
+		 * <p begin="0s" end="5s" xml:id="par-01">
+		 *   <animate xml:id="a1" begin="0s" dur="5s" keyTimes="0;1" tts:color="red;blue" />
+		 *   Hello  <!-- anonymous span, TAC references animation a1 -->
+		 * </p>
+		 */
+		const parsed = parseCue(Paragraph);
+
+		expect(parsed.length).toBe(1);
+		const animEntity = parsed[0].entities.find((e) => e.kind === "discrete");
+		expect(animEntity).toBeDefined();
+		expect(animEntity.id).toBe("a1");
 	});
 });
 
