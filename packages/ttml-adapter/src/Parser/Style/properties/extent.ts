@@ -46,46 +46,28 @@ export function cssTransform(
 		}
 	}
 
-	let [{ value: width }, { value: height }] = value;
+	let [widthValue, heightValue] = value;
 	let widthLength: Length;
 	let heightLength: Length;
 
-	if (isLength(width)) {
-		widthLength = toClamped(width, 0, 100) || createUnit(0, "%");
+	if (widthValue && isLength(widthValue.value)) {
+		widthLength = toClamped(widthValue.value, 0, 100) || createUnit(0, "%");
 	} else {
-		if (
-			width === "auto" ||
-			width === "fitContent" ||
-			width === "maxContent" ||
-			width === "minContent"
-		) {
-			console.warn(
-				"Region extent width set to a value different from a Length is not yet supported. Will be treated as 100%",
-			);
+		console.warn(
+			"Region extent width set to a value different from a Length is not yet supported. Will be treated as 100%",
+		);
 
-			width = createUnit(100, "%");
-		}
-
-		widthLength = width;
+		widthLength = createUnit(100, "%");
 	}
 
-	if (isLength(height)) {
-		heightLength = toClamped(height, 0, 100) || createUnit(0, "%");
+	if (heightValue && isLength(heightValue.value)) {
+		heightLength = toClamped(heightValue.value, 0, 100) || createUnit(0, "%");
 	} else {
-		if (
-			height === "auto" ||
-			height === "fitContent" ||
-			height === "maxContent" ||
-			height === "minContent"
-		) {
-			console.warn(
-				"Region extent height set to a value different from a Length is not yet supported. Will be treated as 100%",
-			);
+		console.warn(
+			"Region extent height set to a value different from a Length is not yet supported. Will be treated as 100%",
+		);
 
-			height = createUnit(100, "%");
-		}
-
-		heightLength = height;
+		heightLength = createUnit(100, "%");
 	}
 
 	return [
