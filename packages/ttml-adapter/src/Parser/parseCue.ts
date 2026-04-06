@@ -212,7 +212,7 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(
 		[cueTimeContext.startTime, cueTimeContext.endTime, ActiveTemporalEntities.CUE],
 	];
 
-	if (region?.timingAttributes) {
+	if (region) {
 		const regionScope = createScope(
 			//
 			scope,
