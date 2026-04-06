@@ -163,7 +163,7 @@ export function createTemporalActiveContext(
 				return Object.assign({}, parentComputedStyles, computedStyles);
 			},
 			get region(): TTMLRegion | undefined {
-				return store.region;
+				return store.region ?? this.parent?.region;
 			},
 			get animations(): Animation[] {
 				return store.animations;
