@@ -28,9 +28,11 @@ export function cssTransform(
 		];
 	}
 
+	const [{ value: x }, { value: y }] = value;
+
 	return [
-		["x", value[0].toString()],
-		["y", value[1].toString()],
+		["x", x.toString()],
+		["y", y.toString()],
 	];
 }
 

@@ -553,6 +553,36 @@ describe("Adapter", () => {
 			adapter.parse(track);
 		}*/,
 		);
+
+		it("should read tts:origin and tts:extent from a region into getOrigin() and width", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<layout>
+							<region xml:id="r1"
+								tts:origin="10% 20%"
+								tts:extent="80% 60%"
+								begin="0s"
+								end="5s"
+							/>
+						</layout>
+					</head>
+					<body>
+						<div>
+							<p region="r1" begin="0s" end="5s">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+			const region = cues[0].region;
+
+			expect(region).toBeDefined();
+			expect(region.getOrigin()).toEqual(["10%", "20%"]);
+			expect(region.width).toBe(80);
+		});
 	});
 });
 

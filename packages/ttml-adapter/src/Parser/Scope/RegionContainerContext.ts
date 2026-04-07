@@ -269,12 +269,20 @@ export class TTMLRegion implements Region {
 		this.scope = scope;
 	}
 
-	public getOrigin(): [x: number, y: number] {
-		return [0, 0];
+	public getOrigin(
+		_viewportWidth?: number,
+		_viewportHeight?: number,
+	): [x: number | string, y: number | string] {
+		const styles = this.computeRegionStyles();
+
+		return [styles["x"] ?? 0, styles["y"] ?? 0];
 	}
 
 	public get width(): number {
-		return 100;
+		const styles = this.computeRegionStyles();
+		const value = styles["width"];
+
+		return value ? parseFloat(value) : 100;
 	}
 
 	public get styles(): TTMLStyle[] {
@@ -295,5 +303,21 @@ export class TTMLRegion implements Region {
 		}
 
 		return animationContext.animations;
+	}
+
+	private computeRegionStyles(): Record<string, string> {
+		const styleContext = readScopeStyleContainerContext(this.scope);
+
+		if (!styleContext) {
+			return {};
+		}
+
+		const { styles } = styleContext;
+		const nested = styles.filter((s) => s.kind === "nested");
+		const inline = styles.filter((s) => s.kind === "inline");
+
+		return nested.concat(inline).reduce<Record<string, string>>((acc, style) => {
+			return Object.assign(acc, style.apply("region"));
+		}, {});
 	}
 }
