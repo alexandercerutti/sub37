@@ -1025,6 +1025,8 @@ type GetCollectionKeys<Collection extends PropertiesCollection<string[]>> = Excl
 	null
 >[number][0];
 
+export type SupportedTTMLAttributes = keyof TTML_CSS_ATTRIBUTES_MAP;
+
 export type SupportedCSSProperties = {
 	-readonly [K in keyof TTML_CSS_ATTRIBUTES_MAP as GetCollectionKeys<
 		ReturnType<TTML_CSS_ATTRIBUTES_MAP[K]["toCSS"]>

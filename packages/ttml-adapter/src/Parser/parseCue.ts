@@ -7,6 +7,10 @@ import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Scope/AnimationContainerContext.js";
 import { TTMLRegion } from "./Scope/RegionContainerContext.js";
+import { isStyleAttribute } from "./parseStyle.js";
+import type { SupportedTTMLAttributes } from "./parseStyle.js";
+import { createStyleContainerContext } from "./Scope/StyleContainerContext.js";
+import type { StyleContainerContextState } from "./Scope/StyleContainerContext.js";
 
 export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): CueNode[] {
 	if (!node.children.length) {
@@ -132,6 +136,12 @@ function createCueFromAnonymousSpan(
 
 		if (attrs & ActiveTemporalEntities.REGION) {
 			region = activeEntities.find((entity) => entity instanceof TTMLRegion);
+
+			const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
+
+			if (region && Object.keys(specialSemanticsStyles).length) {
+				region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles);
+			}
 		}
 
 		const animationEntities = activeAnimations.map((animation) =>
@@ -405,4 +415,82 @@ function categorizeTimelineSegments(
 	}
 
 	return segments;
+}
+
+const SPECIAL_SEMANTICS_STYLES: SupportedTTMLAttributes[] = [
+	"tts:extent",
+	"tts:origin",
+	"tts:position",
+	"tts:disparity",
+];
+
+/**
+ * Filters out attributes belonging to standard point §11.1.2.1, "Special Semantics of Inline Animation",
+ * which says that certain styles assigned to "p" and "div" should be actually applied to the region
+ * they flow in.
+ *
+ * Walks up starting from a paragraph ("p") node, up to all the divs ancestors and collects all the
+ * styles attributes.
+ *
+ * We are not directly implementing a set animation, because - since the new region we have to create
+ * applies these styles only for the same time span as the cue, we can just apply these styles as
+ * inline styles on the cue itself.
+ *
+ * @param attributes
+ * @returns
+ */
+function getSpecialSemanticsStylesFromAnchestors(
+	node: NodeWithRelationship<Token & NodeWithScope>,
+): Record<string, string> {
+	const styles: Record<string, string> = {};
+
+	const allowedParents = ["p", "div", "span"];
+
+	let parent = node.parent;
+
+	while (parent && allowedParents.includes(parent.content.content)) {
+		if (parent.content.content === "span") {
+			/**
+			 * The special semantics (§11.1.2.1) only apply to "p" and "div" elements.
+			 */
+
+			parent = parent.parent;
+			continue;
+		}
+
+		const parentAttributes = parent.content.attributes;
+
+		for (const attr in parentAttributes) {
+			if (!isStyleAttribute(attr)) {
+				continue;
+			}
+
+			if (SPECIAL_SEMANTICS_STYLES.includes(attr as SupportedTTMLAttributes)) {
+				if (!(attr in styles)) {
+					styles[attr] = parentAttributes[attr]!;
+				}
+			}
+		}
+
+		parent = parent.parent;
+	}
+
+	return styles;
+}
+
+function createDerivedRegionWithSpecialSemanticsStyles(
+	baseRegion: TTMLRegion,
+	specialSemanticsStyles: Record<string, string>,
+): TTMLRegion {
+	const overriddenAttributes: StyleContainerContextState = Object.create(specialSemanticsStyles, {
+		"xml:id": { value: `derived:${baseRegion.id}` },
+		kind: { value: "inline", enumerable: true },
+	});
+
+	const newScope = createScope(
+		baseRegion.scope,
+		createStyleContainerContext([overriddenAttributes]),
+	);
+
+	return new TTMLRegion(baseRegion.id, baseRegion.timingAttributes, newScope);
 }

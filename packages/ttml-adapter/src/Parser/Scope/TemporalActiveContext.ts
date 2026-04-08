@@ -166,7 +166,7 @@ export function createTemporalActiveContext(
 				return store.region ?? this.parent?.region;
 			},
 			get animations(): Animation[] {
-				return store.animations;
+				return (this.parent?.animations ?? []).concat(store.animations);
 			},
 		};
 	};

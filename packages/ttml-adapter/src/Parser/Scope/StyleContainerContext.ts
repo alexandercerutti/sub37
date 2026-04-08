@@ -125,7 +125,7 @@ export function createStyleContainerContext(
 				return styleFromParent;
 			},
 			get styles(): TTMLStyle[] {
-				return Array.from(stylesIDREFSStorage.values());
+				return (this.parent?.styles ?? []).concat(Array.from(stylesIDREFSStorage.values()));
 			},
 		};
 	};
