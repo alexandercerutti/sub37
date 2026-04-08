@@ -10,7 +10,7 @@ const documentContextSymbol = Symbol("document");
 
 export interface DocumentAttributes extends TimeDetails {
 	"ttp:displayAspectRatio": number[];
-	"ttp:cellResolution": number[];
+	"ttp:cellResolution": [number, number];
 	"ttp:pixelAspectRatio"?: number[];
 	"tts:extent"?: number[];
 }
