@@ -338,8 +338,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:disparity": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
 		createAttributeDefinition(
+			//
 			"tts:disparity",
-			["region", "div", "p"],
+			["region"],
 			"0px",
 			undefined,
 			Syntaxes.Unavailable,
@@ -655,8 +656,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:origin": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:origin",
-			["region", "div", "p"],
+			["region"],
 			"auto",
 			undefined,
 			Syntaxes.Origin,
@@ -700,8 +702,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:position": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
 		createAttributeDefinition(
+			//
 			"tts:position",
-			["region", "div", "p"],
+			["region"],
 			"top left",
 			undefined,
 			Syntaxes.Position,
