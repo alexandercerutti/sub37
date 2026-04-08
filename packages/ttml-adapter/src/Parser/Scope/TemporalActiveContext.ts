@@ -190,7 +190,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[]
 	}
 
 	const styles: TTMLStyle[] = [];
-	const inlineStyles = regionStyles.find(({ "xml:id": id }) => id === "inline");
+	const inlineStyles = regionStyles.find(({ kind }) => kind === "inline");
 
 	if (inlineStyles) {
 		styles.push(
@@ -203,7 +203,7 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[]
 		);
 	}
 
-	const nestedStyles = regionStyles.find(({ "xml:id": id }) => id === "nested");
+	const nestedStyles = regionStyles.find(({ kind }) => kind === "nested");
 
 	if (nestedStyles) {
 		styles.push(
