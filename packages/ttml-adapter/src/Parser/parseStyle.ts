@@ -384,7 +384,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition<["width", "height"], string>(
 			"tts:extent",
-			["tt", "region", "image", "div", "p"],
+			["tt", "region", "image"],
 			"auto",
 			undefined,
 			Syntaxes.Extent,
