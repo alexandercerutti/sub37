@@ -29,6 +29,7 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 			if (cueNode[key] !== value) {
 				descriptors[key] = {
 					value,
+					writable: true,
 				};
 			}
 		}
