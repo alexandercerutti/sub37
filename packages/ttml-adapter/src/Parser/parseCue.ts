@@ -18,38 +18,57 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	}
 
 	const { attributes } = node.content;
+	const parentId = attributes["xml:id"] || "unk-par";
+	const scope = node.content[nodeScopeSymbol];
+
+	const temporalActiveContext = readScopeTemporalActiveContext(scope);
+	const lineEntity = temporalActiveContext
+		? Entities.createLineStyleEntity(temporalActiveContext.computeStylesForElement("p"))
+		: undefined;
 
 	/**
-	 * @TODO handle "tts:extent" and "tts:origin" applied on paragraph
-	 * element. They should be handled as an additional region, as per
-	 * this section 11.1.2.1 of the standard.
-	 *
-	 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
+	 * Build the root cue prototypes from <p>'s own timing/region segmentation.
+	 * All child fragments will be derived from these via CueNode.from, so they
+	 * can be merged in the same lines in the renderer.
 	 */
 
-	const cues = processChildren(node, attributes["xml:id"] || "unk-par");
+	const rootIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(scope);
+	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime, attrs, activeEntities]) => {
+		let region: TTMLRegion | undefined;
 
-	const temporalActiveContext = readScopeTemporalActiveContext(node.content[nodeScopeSymbol]);
+		if (attrs & ActiveTemporalEntities.REGION) {
+			region = activeEntities.find((entity) => entity instanceof TTMLRegion);
 
-	if (temporalActiveContext) {
-		const lineEntity = Entities.createLineStyleEntity(
-			temporalActiveContext.computeStylesForElement("p"),
-		);
+			const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
 
-		for (const cue of cues) {
-			cue.entities.push(lineEntity);
+			if (region && Object.keys(specialSemanticsStyles).length) {
+				region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles);
+			}
 		}
-	}
 
-	return cues;
+		const rootCue = new CueNode({
+			id: parentId,
+			content: "",
+			startTime,
+			endTime,
+			region,
+			entities: lineEntity ? [lineEntity] : [],
+		});
+
+		return rootCue;
+	});
+
+	return processChildren(node, parentId, node.content[nodeScopeSymbol], rootCues);
 }
 
 function processChildren(
 	node: NodeWithRelationship<Token & NodeWithScope>,
 	parentId: string,
+	lastScopeParent: Scope | undefined,
+	rootCues: CueNode[],
 ): CueNode[] {
 	let cues: CueNode[] = [];
-	let lastScopeParent: Scope | undefined;
+	let currentScopeParent: Scope | undefined = lastScopeParent;
 
 	for (let i = 0; i < node.children.length; i++) {
 		const child = node.children[i];
@@ -59,8 +78,16 @@ function processChildren(
 		}
 
 		if (child.content.content === "span") {
-			cues = cues.concat(processChildren(child, child.content.attributes["xml:id"] || parentId));
-			lastScopeParent = undefined;
+			cues = cues.concat(
+				processChildren(
+					child,
+					child.content.attributes["xml:id"] || parentId,
+					currentScopeParent,
+					rootCues,
+				),
+			);
+
+			currentScopeParent = undefined;
 			continue;
 		}
 
@@ -71,13 +98,40 @@ function processChildren(
 
 		if (child.content.type === TokenType.STRING) {
 			const childScopeParent = child.content[nodeScopeSymbol].parent;
+			const childScope = child.content[nodeScopeSymbol];
 
-			if (cues.length && childScopeParent === lastScopeParent) {
+			if (cues.length && childScopeParent === currentScopeParent) {
 				cues[cues.length - 1]!.content += child.content.content;
-			} else {
-				cues = cues.concat(createCueFromAnonymousSpan(child, parentId));
-				lastScopeParent = childScopeParent;
+				continue;
 			}
+
+			/**
+			 * We have a different scope, so we have to create a new CueNode
+			 * derived from the existing ones.
+			 */
+
+			const spanEntities = resolveSpanEntities(childScope);
+			const intervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(childScope);
+
+			for (const [startTime, endTime, attrs, activeEntities] of intervals) {
+				const rootCue =
+					rootCues.find((r) => r.startTime === startTime && r.endTime === endTime) ?? rootCues[0]!;
+
+				cues.push(
+					CueNode.from(rootCue, {
+						id: parentId,
+						content: child.content.content,
+						startTime,
+						endTime,
+						region: rootCue.region,
+						entities: spanEntities.concat(
+							resolveAnimationEntities(attrs, activeEntities, startTime),
+						),
+					}),
+				);
+			}
+
+			currentScopeParent = childScopeParent;
 		}
 	}
 
@@ -92,59 +146,30 @@ function processLineBreak(cue: CueNode | undefined): void {
 	cue.content += "\n";
 }
 
-function createCueFromAnonymousSpan(
-	node: NodeWithRelationship<Token & NodeWithScope>,
-	parentId: string,
-): CueNode[] {
-	const {
-		content: { content, [nodeScopeSymbol]: scope },
-	} = node;
+function resolveSpanEntities(scope: Scope): Entities.AllEntities[] {
+	const tac = readScopeTemporalActiveContext(scope);
 
-	const temporalActiveContext = readScopeTemporalActiveContext(scope);
-
-	const entities: Entities.AllEntities[] = [];
-
-	if (temporalActiveContext) {
-		/**
-		 * > For the purpose of determining the applicability of a style property,
-		 * > if the style property is defined so as to apply to a span element,
-		 * > then it also applies to anonymous span elements.
-		 *
-		 * Running this for `span` elements, will for sure duplicate the styles applied
-		 * to the above `<p>` element, but that doens't matter.
-		 */
-		const styles = temporalActiveContext.computeStylesForElement("span");
-
-		if (Object.keys(styles).length) {
-			entities.push(Entities.createLocalStyleEntity(styles));
-		}
+	if (!tac) {
+		return [];
 	}
 
-	const timeIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(scope);
+	const styles = tac.computeStylesForElement("span");
 
-	const cues: CueNode[] = [];
+	return [Entities.createLocalStyleEntity(styles)];
+}
 
-	for (const [startTime, endTime, attrs, activeEntities] of timeIntervals) {
-		let region: TTMLRegion | undefined;
-		let activeAnimations: ResolvedAnimation[] = [];
+function resolveAnimationEntities(
+	attrs: number,
+	activeEntities: (ResolvedAnimation | Region)[],
+	intervalStart: number,
+): Entities.AllEntities[] {
+	if (!(attrs & ActiveTemporalEntities.ANIMATION)) {
+		return [];
+	}
 
-		if (attrs & ActiveTemporalEntities.ANIMATION) {
-			activeAnimations = activeAnimations.concat(
-				activeEntities.filter((entity): entity is ResolvedAnimation => "startTime" in entity),
-			);
-		}
-
-		if (attrs & ActiveTemporalEntities.REGION) {
-			region = activeEntities.find((entity) => entity instanceof TTMLRegion);
-
-			const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
-
-			if (region && Object.keys(specialSemanticsStyles).length) {
-				region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles);
-			}
-		}
-
-		const animationEntities = activeAnimations.map((animation) =>
+	return activeEntities
+		.filter((entity): entity is ResolvedAnimation => "startTime" in entity)
+		.map((animation) =>
 			Entities.createAnimationEntity({
 				id: animation.id,
 				duration: animation.duration,
@@ -152,24 +177,10 @@ function createCueFromAnonymousSpan(
 				fill: animation.fill === "freeze" ? "forwards" : "none",
 				splines: animation.keySplines,
 				kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
-				delay: animation.startTime - startTime,
+				delay: animation.startTime - intervalStart,
 				styles: animation.apply("span"),
 			}),
 		);
-
-		cues.push(
-			new CueNode({
-				id: parentId,
-				content,
-				startTime,
-				endTime,
-				region,
-				entities: entities.concat(animationEntities),
-			}),
-		);
-	}
-
-	return cues;
 }
 
 const ActiveTemporalEntities = {
@@ -436,6 +447,8 @@ const SPECIAL_SEMANTICS_STYLES: SupportedTTMLAttributes[] = [
  * applies these styles only for the same time span as the cue, we can just apply these styles as
  * inline styles on the cue itself.
  *
+ * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#layout-vocabulary-region-special-inline-animation-semantics
+ *
  * @param attributes
  * @returns
  */
@@ -446,7 +459,7 @@ function getSpecialSemanticsStylesFromAnchestors(
 
 	const allowedParents = ["p", "div", "span"];
 
-	let parent = node.parent;
+	let parent: NodeWithRelationship<Token & NodeWithScope> | null = node;
 
 	while (parent && allowedParents.includes(parent.content.content)) {
 		if (parent.content.content === "span") {
@@ -454,7 +467,7 @@ function getSpecialSemanticsStylesFromAnchestors(
 			 * The special semantics (§11.1.2.1) only apply to "p" and "div" elements.
 			 */
 
-			parent = parent.parent;
+			parent = parent.parent ?? null;
 			continue;
 		}
 
@@ -472,7 +485,7 @@ function getSpecialSemanticsStylesFromAnchestors(
 			}
 		}
 
-		parent = parent.parent;
+		parent = parent.parent ?? null;
 	}
 
 	return styles;
