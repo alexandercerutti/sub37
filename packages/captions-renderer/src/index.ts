@@ -75,7 +75,7 @@ main#caption-window.active {
 	display: block;
 }
 
-div.region {
+sub37-region {
 	position: absolute;
 	overflow-y: hidden;
 	min-height: 1.5em;
@@ -83,22 +83,22 @@ div.region {
 	background-color: var(${CSSVAR_REGION_AREA_BG_COLOR}, transparent);
 }
 
-div.region > div.scroll-root {
+sub37-region > div.scroll-root {
 	background-color: var(${CSSVAR_REGION_BG_COLOR}, rgba(0,0,0,0.4));
 	scroll-behavior: smooth;
 }
 
-div.region div > p {
+sub37-region div > p {
 	margin: 0;
 	box-sizing: border-box;
 }
 
-div.region div > p.line-block {
+sub37-region div > p.line-block {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
 	--s37-int-bgcolor: rgba(0, 0, 0, 0.7);
 }
 	
-div.region div > p.line-block > span {
+sub37-region div > p.line-block > span {
 		/**
 		 * Giving priority to user customization, then to the internal color and
 		 * then to the default.

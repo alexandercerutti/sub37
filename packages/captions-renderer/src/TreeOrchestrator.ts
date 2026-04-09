@@ -1,6 +1,8 @@
 import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
 import { Entities } from "@sub37/server";
 import { CSSVAR_TEXT_COLOR } from "./constants";
+import type { Sub37Region } from "./RegionElement.js";
+import "./RegionElement.js";
 
 const rootElementSymbol = Symbol("to.root.element");
 
@@ -38,7 +40,7 @@ export interface OrchestratorSettings {
  */
 
 const LINES_TRANSITION_TIME_MS = 250;
-const ROOT_CLASS_NAME = "region";
+const ROOT_TAG_NAME = "sub37-region";
 
 const UNIT_REGEX = /\d+(?:\.\d+)?[a-zA-Z%]+$/;
 
@@ -59,9 +61,9 @@ export default class TreeOrchestrator {
 		trackRenderingModifiers?: RenderingModifiers,
 		settings?: Partial<OrchestratorSettings>,
 	) {
-		const root = Object.assign(document.createElement("div"), {
-			className: ROOT_CLASS_NAME,
-		});
+		const root = document.createElement(ROOT_TAG_NAME) as Sub37Region;
+
+		root.dataset["trackRegionId"] = trackRegionSettings?.id ?? "";
 
 		const regionScrollElement = document.createElement("div");
 		regionScrollElement.classList.add("scroll-root");
@@ -103,6 +105,7 @@ export default class TreeOrchestrator {
 		};
 
 		Object.assign(root.style, rootStyles);
+		root.applyEntities(trackRegionSettings?.entities ?? []);
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
@@ -127,7 +130,7 @@ export default class TreeOrchestrator {
 	public get root(): HTMLElement {
 		let root: HTMLElement = this[rootElementSymbol];
 
-		while (!root.classList.contains(ROOT_CLASS_NAME)) {
+		while (root.tagName.toLowerCase() !== ROOT_TAG_NAME) {
 			root = root.parentElement!;
 		}
 
