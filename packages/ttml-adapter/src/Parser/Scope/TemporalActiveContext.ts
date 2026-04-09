@@ -6,6 +6,7 @@
 
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
+import { isInheritableStyle, resolveStyleDefinitionByName } from "../parseStyle.js";
 import type { SupportedCSSProperties } from "../parseStyle.js";
 import type { IDREF } from "../Token.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
@@ -199,6 +200,10 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[]
 					value: "inline",
 					enumerable: true,
 				},
+				styleAttributes: {
+					value: filterStylesByInheritability(inlineStyles.styleAttributes),
+					enumerable: true,
+				},
 			}),
 		);
 	}
@@ -212,11 +217,29 @@ function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[]
 					value: "nested",
 					enumerable: true,
 				},
+				styleAttributes: {
+					value: filterStylesByInheritability(nestedStyles.styleAttributes),
+					enumerable: true,
+				},
 			}),
 		);
 	}
 
 	return styles;
+}
+
+function filterStylesByInheritability(styles: Record<string, string>): Record<string, string> {
+	const filteredStyles: Record<string, string> = {};
+
+	for (const styleName of Object.keys(styles)) {
+		if (!isInheritableStyle(resolveStyleDefinitionByName(styleName))) {
+			continue;
+		}
+
+		filteredStyles[styleName] = styles[styleName]!;
+	}
+
+	return filteredStyles;
 }
 
 function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): TTMLStyle[] {

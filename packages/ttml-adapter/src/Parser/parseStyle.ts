@@ -1056,8 +1056,12 @@ export function styleAppliesToElement(
 	return style.appliesTo.includes(element) || styleAppliesByInheritance(style, scope);
 }
 
+export function isInheritableStyle(styleDef: AttributeDefinition): boolean {
+	return Boolean(styleDef.flags & AttributeFlags.INHERITABLE);
+}
+
 function styleAppliesByInheritance(styleDef: AttributeDefinition, scope: Scope): boolean {
-	if (!(styleDef.flags & AttributeFlags.INHERITABLE)) {
+	if (!isInheritableStyle(styleDef)) {
 		return false;
 	}
 
