@@ -107,7 +107,10 @@ export default class TreeOrchestrator {
 		 * the document for the region. When not available, it fallbacks
 		 * to height derived by lines.
 		 */
-		const authoredHeight = trackRegionSettings?.height;
+		const authoredHeight =
+			typeof trackRegionSettings?.height === "number"
+				? `${trackRegionSettings.height}%`
+				: trackRegionSettings?.height;
 		let regionHeight = authoredHeight ?? `${this.settings.lines * DEFAULT_LINE_HEIGHT_EM}em`;
 
 		if (!authoredHeight && this.settings.roundRegionHeightLineFit) {
@@ -121,7 +124,10 @@ export default class TreeOrchestrator {
 		this.shiftDownFirstLine = shiftDownFirstLine;
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
-			width: trackRegionSettings?.width ?? "100%",
+			width:
+				typeof trackRegionSettings?.width === "number"
+					? `${trackRegionSettings.width}%`
+					: (trackRegionSettings?.width ?? "100%"),
 			height: regionHeight,
 			left: originX,
 			top: originY,
