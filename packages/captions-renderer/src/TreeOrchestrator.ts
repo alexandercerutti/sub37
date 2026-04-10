@@ -27,8 +27,19 @@ export interface OrchestratorSettings {
 	 * instead of cut.
 	 *
 	 * Defaults to `false`.
+	 * @deprecated Use `snapHeightToLineGrid` instead.
 	 */
 	roundRegionHeightLineFit?: boolean;
+
+	/**
+	 * After rendering, snaps the region height to the nearest whole
+	 * multiple of the actual line height (measured in px from the DOM).
+	 * Prevents partially-visible lines regardless of what unit the
+	 * authored region height uses (`%`, `px`, `em`, etc.).
+	 *
+	 * Defaults to `true`.
+	 */
+	snapHeightToLineGrid?: boolean;
 }
 
 /**
@@ -41,6 +52,7 @@ export interface OrchestratorSettings {
 
 const LINES_TRANSITION_TIME_MS = 250;
 const ROOT_TAG_NAME = "sub37-region";
+const DEFAULT_LINE_HEIGHT_EM = 1.5;
 
 const UNIT_REGEX = /\d+(?:\.\d+)?[a-zA-Z%]+$/;
 
@@ -49,11 +61,13 @@ export default class TreeOrchestrator {
 		lines: 2,
 		shiftDownFirstLine: false,
 		roundRegionHeightLineFit: false,
+		snapHeightToLineGrid: true,
 	};
 
 	private [rootElementSymbol]: HTMLDivElement;
 
 	private settings: OrchestratorSettings;
+	private shiftDownFirstLine: boolean = false;
 
 	public constructor(
 		parent: HTMLElement,
@@ -90,16 +104,33 @@ export default class TreeOrchestrator {
 			originY = `${originY}%`;
 		}
 
-		let lineHeightEM = 1.5;
-		let regionHeight = trackRegionSettings?.height || this.settings.lines * lineHeightEM;
+		/**
+		 * An authored height is an height expressed by
+		 * the document for the region. When not available, it fallbacks
+		 * to height derived by lines.
+		 */
+		const authoredHeight =
+			typeof trackRegionSettings?.height === "number"
+				? `${trackRegionSettings.height}%`
+				: trackRegionSettings?.height;
+		let regionHeight = authoredHeight ?? `${this.settings.lines * DEFAULT_LINE_HEIGHT_EM}em`;
 
-		if (regionHeight % lineHeightEM > 0 && this.settings.roundRegionHeightLineFit) {
-			regionHeight = Math.ceil(regionHeight / lineHeightEM) * lineHeightEM;
+		if (!authoredHeight && this.settings.roundRegionHeightLineFit) {
+			const em = parseFloat(regionHeight);
+			const rounded = Math.ceil(em / DEFAULT_LINE_HEIGHT_EM) * DEFAULT_LINE_HEIGHT_EM;
+			regionHeight = `${rounded}em`;
 		}
 
+		const shiftDownFirstLine = !authoredHeight && (this.settings.shiftDownFirstLine ?? false);
+
+		this.shiftDownFirstLine = shiftDownFirstLine;
+
 		const rootStyles: Partial<CSSStyleDeclaration> = {
-			width: `${trackRegionSettings?.width ?? 100}%`,
-			height: `${regionHeight}em`,
+			width:
+				typeof trackRegionSettings?.width === "number"
+					? `${trackRegionSettings.width}%`
+					: (trackRegionSettings?.width ?? "100%"),
+			height: regionHeight,
 			left: originX,
 			top: originY,
 		};
@@ -263,13 +294,25 @@ export default class TreeOrchestrator {
 			 */
 
 			const upperBoundLimit = Number(
-				this.settings.shiftDownFirstLine && childrenAmount === 1 && this.settings.lines > 1,
+				this.shiftDownFirstLine && childrenAmount === 1 && this.settings.lines > 1,
 			);
 			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + this.settings.lines);
 
-			this[rootElementSymbol].style.transform = `translateY(
-				${1.5 * linesToBeScrolled}em
-			)`;
+			const lineHeightPx =
+				(this[rootElementSymbol].firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
+
+			if (this.settings.snapHeightToLineGrid && lineHeightPx > 0) {
+				const wholeLines = Math.floor(this.root.offsetHeight / lineHeightPx);
+
+				if (wholeLines > 0) {
+					this.root.style.height = `${wholeLines * lineHeightPx}px`;
+				}
+			}
+
+			const translateStep =
+				lineHeightPx > 0 ? `${lineHeightPx * linesToBeScrolled}px` : `${1.5 * linesToBeScrolled}em`;
+
+			this[rootElementSymbol].style.transform = `translateY(${translateStep})`;
 
 			if (linesToBeScrolled <= 0) {
 				const transformCSS = `transform ${LINES_TRANSITION_TIME_MS}ms cubic-bezier(0.25, 0.46, 0.2, 1.0) 0s`;

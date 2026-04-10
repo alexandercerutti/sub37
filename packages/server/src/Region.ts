@@ -11,21 +11,17 @@ export interface Region {
 	id: string;
 
 	/**
-	 * Expressed in percentage
+	 * A length with unit (e.g. "100%", "192px", "10em").
+	 * Number signature is deprecated.
 	 */
-
-	width: number;
+	width: string | number;
 
 	/**
-	 * When not specified, region's height
-	 * equals to the max visible amount of
-	 * lines, specified through the property
-	 * 'lines' below.
-	 *
-	 * Expressed in `em`s
+	 * A length string with unit (e.g. "66px", "20%", "4.5em").
+	 * When absent, height is derived from `lines` by the renderer.
+	 * Number signature is deprecated.
 	 */
-
-	height?: number;
+	height?: string | number;
 
 	lines: number;
 

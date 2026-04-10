@@ -56,9 +56,13 @@ export function parseRegion(rawRegionData: string | undefined): Region | undefin
 				break;
 			}
 
-			case "lines":
-			case "width": {
+			case "lines": {
 				region[key] = parseInt(value);
+				break;
+			}
+
+			case "width": {
+				region[key] = `${parseInt(value)}%`;
 				break;
 			}
 
@@ -98,7 +102,7 @@ class WebVTTRegion implements Region {
 	/**
 	 * Region width expressed in percentage
 	 */
-	public width: number = 100;
+	public width: string = "100%";
 	public lines: number = 3;
 	public scroll?: "up" | "none";
 
@@ -125,7 +129,7 @@ class WebVTTRegion implements Region {
 		 * a thing that I know is that we need low numbers.
 		 */
 
-		const leftOffset = (regionAnchorWidth * this.width) / 100;
+		const leftOffset = (regionAnchorWidth * parseFloat(this.width)) / 100;
 		const topOffset = (regionAnchorHeight * height) / 100;
 
 		const originX = `${viewportAnchorWidth - leftOffset}%`;
