@@ -34,6 +34,21 @@
 			<div>
 				<button id="load-default-track">Load Default WebVTT Track</button>
 			</div>
+			<form id="renderer-settings">
+				<h4>Renderer settings:</h4>
+				<div>
+					<label for="lines">Lines:</label>
+					<input type="number" id="lines" name="lines" value="2" min="1" />
+				</div>
+				<div>
+					<input type="checkbox" id="shiftDownFirstLine" name="shiftDownFirstLine" />
+					<label for="shiftDownFirstLine">Shift down first line</label>
+				</div>
+				<div>
+					<input type="checkbox" id="snapHeightToLineGrid" name="snapHeightToLineGrid" checked />
+					<label for="snapHeightToLineGrid">Snap height to line grid</label>
+				</div>
+			</form>
 		</main>
 		<script type="module" src="script.mjs"></script>
 	</body>

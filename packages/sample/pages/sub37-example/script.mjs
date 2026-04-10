@@ -110,6 +110,13 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 });
 
 document.addEventListener("keydown", ({ code }) => {
+	if (
+		document.activeElement?.tagName === "SCHEDULED-TEXTAREA" ||
+		document.activeElement instanceof HTMLInputElement
+	) {
+		return;
+	}
+
 	switch (code) {
 		case "ArrowLeft": {
 			videoTag.currentTime = videoTag.currentTime - 10;
@@ -161,6 +168,9 @@ scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 		 */
 
 		await Promise.resolve();
+
+		presenter.setCue();
+
 		const timeStart = performance.now();
 
 		const isWebVTTTrackSelected = contentMimeType === "text/vtt";
@@ -236,12 +246,22 @@ server.addEventListener("cuestop", () => {
 	presenter.setCue();
 });
 
-/**
- * @type {CaptionsRenderer}
- */
+function applyRendererSettings() {
+	const form = document.forms["renderer-settings"];
+	const lines = parseInt(form.elements["lines"].value, 10);
+	const shiftDownFirstLine = form.elements["shiftDownFirstLine"].checked;
+	const snapHeightToLineGrid = form.elements["snapHeightToLineGrid"].checked;
 
-const rendererElement = document.getElementsByTagName("captions-renderer")[0];
-rendererElement.setRegionProperties({
-	shiftDownFirstLine: false,
-	roundRegionHeightToNearest: true,
-});
+	presenter.setRegionProperties({ lines, shiftDownFirstLine, snapHeightToLineGrid });
+	presenter.setCue();
+
+	/**
+	 * Random amount, we expect it to be enough to see the effect of
+	 * render settings being applied.
+	 */
+	videoTag.currentTime = videoTag.currentTime - 10;
+}
+
+document.forms["renderer-settings"].addEventListener("change", applyRendererSettings);
+
+applyRendererSettings();
