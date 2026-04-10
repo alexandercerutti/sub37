@@ -108,6 +108,13 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 });
 
 document.addEventListener("keydown", ({ code }) => {
+	if (
+		document.activeElement?.tagName === "SCHEDULED-TEXTAREA" ||
+		document.activeElement instanceof HTMLInputElement
+	) {
+		return;
+	}
+
 	switch (code) {
 		case "ArrowLeft": {
 			videoTag.currentTime = videoTag.currentTime - 10;
