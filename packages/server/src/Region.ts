@@ -12,16 +12,14 @@ export interface Region {
 
 	/**
 	 * A length with unit (e.g. "100%", "192px", "10em").
-	 * Number signature is deprecated.
 	 */
-	width: string | number;
+	width: string;
 
 	/**
 	 * A length string with unit (e.g. "66px", "20%", "4.5em").
 	 * When absent, height is derived from `lines` by the renderer.
-	 * Number signature is deprecated.
 	 */
-	height?: string | number;
+	height?: string;
 
 	lines: number;
 
