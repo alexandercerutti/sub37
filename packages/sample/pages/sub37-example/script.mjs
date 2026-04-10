@@ -259,7 +259,9 @@ function applyRendererSettings() {
 	 * Random amount, we expect it to be enough to see the effect of
 	 * render settings being applied.
 	 */
-	videoTag.currentTime = videoTag.currentTime - 10;
+	if (!videoTag.paused) {
+		videoTag.currentTime = videoTag.currentTime - 10;
+	}
 }
 
 document.forms["renderer-settings"].addEventListener("change", applyRendererSettings);
