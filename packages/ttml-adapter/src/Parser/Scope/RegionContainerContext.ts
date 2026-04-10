@@ -292,11 +292,12 @@ export class TTMLRegion implements Region {
 		return [styles["x"] ?? 0, styles["y"] ?? 0];
 	}
 
-	public get width(): number {
-		const styles = this.computeGeometryStyles();
-		const value = styles["width"];
+	public get width(): string {
+		return this.computeGeometryStyles()["width"] ?? "100%";
+	}
 
-		return value ? parseFloat(value) : 100;
+	public get height(): string | undefined {
+		return this.computeGeometryStyles()["height"];
 	}
 
 	public get styles(): TTMLStyle[] {
