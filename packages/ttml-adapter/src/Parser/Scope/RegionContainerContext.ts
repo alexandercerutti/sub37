@@ -4,7 +4,7 @@ import { NodeWithRelationship } from "../Tags/NodeTree";
 import type { Token } from "../Token";
 import { isUniquelyAnnotatedNode } from "../Token";
 import type { Context, ContextFactory, Scope } from "./Scope";
-import { createScope, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
+import { createScope, isolateContext, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { isStyleAttribute } from "../parseStyle";
 import {
 	createStyleContainerContext,
@@ -45,7 +45,7 @@ declare module "./Scope" {
 export function createRegionContainerContext(
 	contextState: RegionContainerContextState[],
 ): ContextFactory<RegionContainerContext> {
-	return function (_scope: Scope) {
+	return function (scope: Scope) {
 		if (!contextState.length) {
 			return null;
 		}
@@ -64,7 +64,7 @@ export function createRegionContainerContext(
 						continue;
 					}
 
-					const ttmlRegion = createTTMLRegion(region);
+					const ttmlRegion = createTTMLRegion(region, scope);
 
 					regionsIDREFSStorage.set(ttmlRegion.id, ttmlRegion);
 				}
@@ -77,7 +77,7 @@ export function createRegionContainerContext(
 						continue;
 					}
 
-					const incomingTTMLRegion = createTTMLRegion(incomingRegion);
+					const incomingTTMLRegion = createTTMLRegion(incomingRegion, scope);
 
 					regionsIDREFSStorage.set(incomingTTMLRegion.id, incomingTTMLRegion);
 				}
@@ -229,7 +229,10 @@ function extractNestedAnimationsChildren(
 // **************************** //
 // region TTML Region
 
-function createTTMLRegion(regionContextState: RegionContainerContextState): TTMLRegion {
+function createTTMLRegion(
+	regionContextState: RegionContainerContextState,
+	sourceScope: Scope,
+): TTMLRegion {
 	const { attributes, children } = regionContextState;
 
 	const regionTimingAttributes =
@@ -241,8 +244,11 @@ function createTTMLRegion(regionContextState: RegionContainerContextState): TTML
 		}) ||
 		undefined;
 
+	/**
+	 * Contexts will become isolated
+	 */
 	const subscope = createScope(
-		undefined,
+		sourceScope,
 		createStyleContainerContext([
 			extractInlineStyles(attributes),
 			extractNestedStylesChildren(children),
@@ -292,7 +298,7 @@ export class TTMLRegion implements Region {
 	}
 
 	public get styles(): TTMLStyle[] {
-		const styleContext = readScopeStyleContainerContext(this.scope);
+		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
 
 		if (!styleContext) {
 			return [];
@@ -302,7 +308,7 @@ export class TTMLRegion implements Region {
 	}
 
 	public get animations(): Animation[] {
-		const animationContext = readScopeAnimationContext(this.scope);
+		const animationContext = isolateContext(readScopeAnimationContext(this.scope));
 
 		if (!animationContext) {
 			return [];
@@ -312,7 +318,7 @@ export class TTMLRegion implements Region {
 	}
 
 	private computeGeometryStyles(): Record<string, string> {
-		const styleContext = readScopeStyleContainerContext(this.scope);
+		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
 
 		if (!styleContext) {
 			return {};
@@ -338,9 +344,8 @@ export class TTMLRegion implements Region {
 			}, {});
 	}
 
-	// @ts-ignore
 	private computeVisualStyles(): Record<string, string> {
-		const styleContext = readScopeStyleContainerContext(this.scope);
+		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
 
 		if (!styleContext) {
 			return {};
