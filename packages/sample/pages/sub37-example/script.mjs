@@ -169,6 +169,8 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 
 		await Promise.resolve();
 
+		presenter.setCue();
+
 		server.createSession(
 			[
 				{
@@ -242,12 +244,20 @@ server.addEventListener("cuestop", () => {
 	presenter.setCue();
 });
 
-/**
- * @type {CaptionsRenderer}
- */
+function applyRendererSettings() {
+	const form = document.forms["renderer-settings"];
+	const lines = parseInt(form.elements["lines"].value, 10);
+	const shiftDownFirstLine = form.elements["shiftDownFirstLine"].checked;
+	const snapHeightToLineGrid = form.elements["snapHeightToLineGrid"].checked;
 
-const rendererElement = document.getElementsByTagName("captions-renderer")[0];
-rendererElement.setRegionProperties({
-	shiftDownFirstLine: false,
-	roundRegionHeightToNearest: true,
-});
+	presenter.setRegionProperties({ lines, shiftDownFirstLine, snapHeightToLineGrid });
+	presenter.setCue();
+
+	if (server.isRunning) {
+		server.updateTime(videoTag.currentTime * 1000);
+	}
+}
+
+document.forms["renderer-settings"].addEventListener("change", applyRendererSettings);
+
+applyRendererSettings();
