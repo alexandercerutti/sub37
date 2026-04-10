@@ -2,7 +2,7 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { createUnit } from "../../Units/unit.js";
-import { isLength } from "../../Units/length.js";
+import { isLength, isPercentage } from "../../Units/length.js";
 import type { Length } from "../../Units/length.js";
 import { toClamped } from "../../Units/clamp.js";
 import type { ExtentGrammar } from "../syntax/extent.js";
@@ -51,7 +51,11 @@ export function cssTransform(
 	let heightLength: Length;
 
 	if (widthValue && isLength(widthValue.value)) {
-		widthLength = toClamped(widthValue.value, 0, 100) || createUnit(0, "%");
+		if (isPercentage(widthValue.value)) {
+			widthLength = toClamped(widthValue.value, 0, 100) || createUnit(0, "%");
+		} else {
+			widthLength = widthValue.value;
+		}
 	} else {
 		console.warn(
 			"Region extent width set to a value different from a Length is not yet supported. Will be treated as 100%",
@@ -61,7 +65,11 @@ export function cssTransform(
 	}
 
 	if (heightValue && isLength(heightValue.value)) {
-		heightLength = toClamped(heightValue.value, 0, 100) || createUnit(0, "%");
+		if (isPercentage(heightValue.value)) {
+			heightLength = toClamped(heightValue.value, 0, 100) || createUnit(0, "%");
+		} else {
+			heightLength = heightValue.value;
+		}
 	} else {
 		console.warn(
 			"Region extent height set to a value different from a Length is not yet supported. Will be treated as 100%",
