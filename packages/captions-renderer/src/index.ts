@@ -5,6 +5,7 @@ import {
 	CSSVAR_REGION_AREA_BG_COLOR,
 	CSSVAR_REGION_BG_COLOR,
 	CSSVAR_TEXT_BG_COLOR,
+	CSSVAR_SPAN_PADDING_X,
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
 import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
@@ -108,7 +109,13 @@ sub37-region div > p.line-block > span {
 		 * variable cannot get overridden from outside.
 		 */
 		background-color: var(${CSSVAR_TEXT_BG_COLOR}, var(--s37-int-bgcolor));
-		padding: 0px 15px;
+	
+		/**
+		 * Priority: user (${CSSVAR_SPAN_PADDING_X}) → document (--s37-int-padding) → default.
+		 * FCC 47 CFR § 79.103 requires user settings to always prevail over authored ones.
+		 */
+		padding: 0 var(${CSSVAR_SPAN_PADDING_X}, var(--s37-int-padding, 15px));
+
 		line-height: 1.5em;
 		word-wrap: break-word;
 		/**

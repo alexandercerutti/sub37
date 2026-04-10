@@ -393,8 +393,18 @@ function createLine(lineEntities: Entities.LineStyleEntity[]): HTMLElement {
 	for (const [key, value] of Object.entries(lineStylesEntries)) {
 		lineNode.style.cssText += `${key}:${value};`;
 
+		/**
+		 * FCC 47 CFR § 79.103 mandates user settings to be able to override authored ones,
+		 * so we need to make sure that some important styles can be overridden by users.
+		 *
+		 * Here below, we suppress our internal styles when authored styles are present.
+		 */
 		if (key === "background-color") {
 			lineNode.style.setProperty("--s37-int-bgcolor", "transparent");
+		}
+
+		if (key.startsWith("padding")) {
+			lineNode.style.setProperty("--s37-int-padding", "0px");
 		}
 	}
 
