@@ -302,7 +302,7 @@ export default class TreeOrchestrator {
 				(this[rootElementSymbol].firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
 
 			if (this.settings.snapHeightToLineGrid && lineHeightPx > 0) {
-				const wholeLines = Math.floor(this.root.offsetHeight / lineHeightPx);
+				const wholeLines = Math.round(this.root.offsetHeight / lineHeightPx);
 
 				if (wholeLines > 0) {
 					this.root.style.height = `${wholeLines * lineHeightPx}px`;
