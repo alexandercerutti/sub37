@@ -11,8 +11,11 @@ type DiscreteCalcMode = "discrete";
 type ContinuousCalcMode = "linear" | "paced" | "spline";
 
 type CalcMode = DiscreteCalcMode | ContinuousCalcMode;
-	
-export type CalcModeFactory = (animationId: string, attributes: Record<string, string> & UniquelyAnnotatedNode) => BaseAnimation | undefined;
+
+export type CalcModeFactory = (
+	animationId: string,
+	attributes: Record<string, string> & UniquelyAnnotatedNode,
+) => BaseAnimation | undefined;
 
 export function getAnimationFactoryByCalcMode(calcMode: string): CalcModeFactory {
 	switch (calcMode as CalcMode) {
@@ -37,22 +40,19 @@ export function getAnimationFactoryByCalcMode(calcMode: string): CalcModeFactory
 				console.warn(
 					"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. '<set>' is automatically considered as 'discrete'. Animation ignored.",
 				);
-				
+
 				return undefined;
 			}
-
-			noop.calcMode = "" as CalcMode;
 
 			return noop;
 		}
 	}
 }
 
-
 export function assertKeySplinesMissing(
 	attributes: Record<string, string>,
 ): asserts attributes is Record<string, string> & { keySplines?: never } {
-	if ('keySplines' in attributes) {
+	if ("keySplines" in attributes) {
 		throw new KeySplinesNotAllowedError();
 	}
 }
