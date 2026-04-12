@@ -64,11 +64,6 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 	}
 
 	public set entities(value: Entities.AllEntities[]) {
-		/**
-		 * Reordering cues entities for a later reconciliation
-		 * in captions renderer
-		 */
-
 		this[entitiesSymbol] = value;
 	}
 
