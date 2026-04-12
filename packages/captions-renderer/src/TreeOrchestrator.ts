@@ -265,10 +265,11 @@ export default class TreeOrchestrator {
 
 		/**
 		 * To achieve a Youtube-like subtitle effect, when a cue is alone
-		 * is it translated to the bottom of the X visible rows. A.k.a. 1.5em
-		 * (at the current moment). Hence, we need to traslate vertically the
-		 * whole block in steps of 1.5em (or "one line"), starting from 1.5 and
-		 * then going negatively.
+		 * is it translated to the bottom of the X visible rows. Hence, we
+		 * need to traslate vertically the whole block in steps of one line's
+		 * height starting from the original height and then going negatively.
+		 *
+		 * If height is 1.5, for example:
 		 *
 		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
 		 */
@@ -281,7 +282,7 @@ export default class TreeOrchestrator {
 			/**
 			 * We need to obtain the number of rows we should scroll of.
 			 *
-			 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
+			 * (-CHILDREN_AMOUNT + VISIBLE_LINES)
 			 *
 			 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
 			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
@@ -293,10 +294,13 @@ export default class TreeOrchestrator {
 			 * 0 otherwise.
 			 */
 
+			const visibleLines = this.settings.lines;
+
 			const upperBoundLimit = Number(
-				this.shiftDownFirstLine && childrenAmount === 1 && this.settings.lines > 1,
+				this.shiftDownFirstLine && childrenAmount === 1 && visibleLines > 1,
 			);
-			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + this.settings.lines);
+
+			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + visibleLines);
 
 			const lineHeightPx =
 				(this[rootElementSymbol].firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
