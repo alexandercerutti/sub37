@@ -20,6 +20,19 @@ export function cssTransform(
 	}
 
 	if (value[0].value === "auto") {
+		/**
+		 * Remapping to `"inline"` is not an explicit requirement of the spec,
+		 * but the spec says:
+		 *
+		 * > If the value of this attribute is auto, then the affected element
+		 * > is a candidate for region layout and presentation
+		 *
+		 * Which means we need inline for spans.
+		 */
+		if (elementAppliesTo === "span") {
+			return [["display", "inline"]];
+		}
+
 		return [["display", "flex"]];
 	}
 
