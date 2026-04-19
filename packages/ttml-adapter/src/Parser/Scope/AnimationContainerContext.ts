@@ -1,7 +1,14 @@
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { isUniquelyAnnotatedNode, UniquelyAnnotatedNode } from "../Token.js";
-import { isPropertyContinuouslyAnimatable, isPropertyDiscretelyAnimatable, isStyleAttribute, parseAttributeValue, resolveStyleDefinitionByName, styleAppliesToElement } from "../parseStyle.js";
+import {
+	isPropertyContinuouslyAnimatable,
+	isPropertyDiscretelyAnimatable,
+	isStyleAttribute,
+	parseAttributeValue,
+	resolveStyleDefinitionByName,
+	styleAppliesToElement,
+} from "../parseStyle.js";
 import type { DiscreteAnimation } from "../Animations/calcMode/discrete.js";
 import type { LinearAnimation } from "../Animations/calcMode/linear.js";
 import type { PacedAnimation } from "../Animations/calcMode/paced.js";
@@ -9,7 +16,10 @@ import type { SplineAnimation } from "../Animations/calcMode/spline.js";
 import type { CalcModeFactory } from "../Animations/calcMode/factory.js";
 import { getAnimationFactoryByCalcMode } from "../Animations/calcMode/factory.js";
 import type { DerivedValue } from "../Style/structure/operators.js";
-import { assertKeyTimesEndIsOne, getInferredPacedKeyTimesByAmount } from "../Animations/keyTimes/index.js";
+import {
+	assertKeyTimesEndIsOne,
+	getInferredPacedKeyTimesByAmount,
+} from "../Animations/keyTimes/index.js";
 
 export interface BaseAnimation {
 	id: string;
@@ -68,9 +78,7 @@ export function createAnimationContainerContext(
 			[onAttachedSymbol](): void {
 				for (const { calcMode = "linear", attributes } of contextState) {
 					if (!isUniquelyAnnotatedNode(attributes)) {
-						console.warn(
-							"Animation with unknown 'xml:id' attribute, got ignored.",
-						);
+						console.warn("Animation with unknown 'xml:id' attribute, got ignored.");
 						continue;
 					}
 
@@ -96,9 +104,7 @@ export function createAnimationContainerContext(
 
 				for (const { calcMode = "linear", attributes } of args) {
 					if (!isUniquelyAnnotatedNode(attributes)) {
-						console.warn(
-							"Animation with unknown 'xml:id' attribute, got ignored.",
-						);
+						console.warn("Animation with unknown 'xml:id' attribute, got ignored.");
 						continue;
 					}
 
@@ -127,9 +133,7 @@ export function createAnimationContainerContext(
 				return animationsIDREFSStorage.get(id) ?? this.parent?.getAnimationById(id);
 			},
 			get animations(): Animation[] {
-				return Array.from(animationsIDREFSStorage.values()).concat(
-					this.parent?.animations ?? [],
-				);
+				return Array.from(animationsIDREFSStorage.values()).concat(this.parent?.animations ?? []);
 			},
 		};
 	};
@@ -139,14 +143,18 @@ export function readScopeAnimationContext(scope: Scope): AnimationContainerConte
 	return scope.getContextByIdentifier(animationContextSymbol);
 }
 
-function createAnimation(calcModeFactory: CalcModeFactory, attributes: Record<string, string> & UniquelyAnnotatedNode, scope: Scope): Animation | undefined {
+function createAnimation(
+	calcModeFactory: CalcModeFactory,
+	attributes: Record<string, string> & UniquelyAnnotatedNode,
+	scope: Scope,
+): Animation | undefined {
 	const animationId = attributes["xml:id"];
 
 	let animation: BaseAnimation | undefined;
-	
-	try {		
+
+	try {
 		animation = calcModeFactory(animationId, attributes);
-	
+
 		if (!animation) {
 			return undefined;
 		}
@@ -159,40 +167,40 @@ function createAnimation(calcModeFactory: CalcModeFactory, attributes: Record<st
 	}
 
 	const animationValueList = getAnimationValueListByStyleName(attributes);
-		const stylesFrames = getValidAnimationParsedStylesFrames(
-			animation.calcMode === "discrete" ? "discrete" : "continuous",
-			animationValueList,
-			animation.keyTimes.length,
-		);
-	
-		if (!animation.keyTimes.length) {
-			const [stylesToDiscard, keyTimesAmount] =
-				collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
-	
-			for (const discardedStyle of stylesToDiscard) {
-				stylesFrames.delete(discardedStyle);
-				console.warn(
-					`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in the animation. Ignored.`,
-				);
-			}
-	
-			animation.keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
+	const stylesFrames = getValidAnimationParsedStylesFrames(
+		animation.calcMode === "discrete" ? "discrete" : "continuous",
+		animationValueList,
+		animation.keyTimes.length,
+	);
+
+	if (!animation.keyTimes.length) {
+		const [stylesToDiscard, keyTimesAmount] =
+			collectPropertiesWithIncoherentInferredKeyTimesAmount(stylesFrames);
+
+		for (const discardedStyle of stylesToDiscard) {
+			stylesFrames.delete(discardedStyle);
+			console.warn(
+				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in the animation. Ignored.`,
+			);
 		}
-	
-		assertKeyTimesEndIsOne(animation.keyTimes);
-	
-		if (!stylesFrames.size) {
-			return undefined;
-		}
-	
-		const animationWithStyles: Animation = Object.create(animation, {
-			apply: {
-				value(element: string) {
-					return convertAnimationStylesToCSS(stylesFrames, scope, element);
-				},
+
+		animation.keyTimes = getInferredPacedKeyTimesByAmount(keyTimesAmount);
+	}
+
+	assertKeyTimesEndIsOne(animation.keyTimes);
+
+	if (!stylesFrames.size) {
+		return undefined;
+	}
+
+	const animationWithStyles: Animation = Object.create(animation, {
+		apply: {
+			value(element: string) {
+				return convertAnimationStylesToCSS(stylesFrames, scope, element);
 			},
-		});
-	
+		},
+	});
+
 	return animationWithStyles;
 }
 
