@@ -123,12 +123,12 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 				const context = contextFactory(this);
 
 				if (!context) {
-					return;
+					continue;
 				}
 
 				if (contextsMap.has(context.identifier)) {
 					contextsMap.get(context.identifier)![onMergeSymbol]?.(context);
-					return;
+					continue;
 				}
 
 				contextsMap.set(context.identifier, context);
@@ -138,13 +138,17 @@ export function createScope(parent: Scope | undefined, ...contexts: ContextFacto
 						context[onAttachedSymbol]();
 					}
 
-					return;
+					continue;
 				}
 
 				const parentContext = parent.getContextByIdentifier(context.identifier);
 
 				if (!parentContext) {
-					return;
+					if (typeof context[onAttachedSymbol] === "function") {
+						context[onAttachedSymbol]();
+					}
+
+					continue;
 				}
 
 				context.parent = parentContext;
