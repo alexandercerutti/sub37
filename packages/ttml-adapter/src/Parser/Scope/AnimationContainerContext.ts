@@ -262,7 +262,14 @@ function getValidAnimationParsedStylesFrames(
 
 		const animationValue = splitAnimationValueList(animationValueList);
 
-		if (animationValue.length <= 1) {
+		if (animationValue.length === 1 && animatableStyle === "discrete") {
+			/**
+			 * <set> produces a single target value with no semicolons.
+			 * Duplicate it to create a two-keyframe hold: the value
+			 * is set at 0% and held through 100% of the active duration.
+			 */
+			animationValue.push(animationValue[0]!);
+		} else if (animationValue.length <= 1) {
 			continue animationValueListsLoop;
 		}
 
