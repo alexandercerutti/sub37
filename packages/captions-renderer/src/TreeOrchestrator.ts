@@ -217,6 +217,12 @@ export default class TreeOrchestrator {
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
+				if (cueKeyframesCSS) {
+					const styleEl = document.createElement("style");
+					styleEl.textContent = cueKeyframesCSS;
+					this[rootElementSymbol].appendChild(styleEl);
+				}
+
 				this[rootElementSymbol].appendChild(line);
 			}
 
