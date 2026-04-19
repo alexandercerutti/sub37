@@ -207,7 +207,10 @@ export default class TreeOrchestrator {
 			 */
 
 			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
-			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
+			const [cueRootDomNode, textNode, cueKeyframesCSS] = getCueNodeFragmentSubtree(
+				cue,
+				firstDifferentEntityIndex,
+			);
 
 			let line: HTMLElement =
 				latestNode || createLine(cue.entities.filter(Entities.isLineStyleEntity));
@@ -231,7 +234,7 @@ export default class TreeOrchestrator {
 
 			if (shouldCreateNewLine) {
 				let textParentNode = textNode.parentNode as HTMLElement;
-				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
+				const [subTreeClone] = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
 
 				line = createLine(cue.entities.filter(Entities.isLineStyleEntity));
 				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
@@ -435,7 +438,10 @@ function getNodeAtDepth(depth: number, node: Node): Node {
 	return latestNodePointer;
 }
 
-function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.AllEntities[]): Node {
+function wrapIntoEntitiesDocumentFragment(
+	rootNode: Node,
+	entities: Entities.AllEntities[],
+): [element: Node, keyframeString: string] {
 	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
 
@@ -443,8 +449,9 @@ function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.All
 		.filter(Entities.isLocalStyleEntity)
 		.flatMap((entity) => Object.entries(entity.styles));
 	const tagEntities = entities.filter(Entities.isTagEntity);
+	const animationEntities = entities.filter(Entities.isAnimationEntity);
 
-	if (styleEntities.length) {
+	if (styleEntities.length || animationEntities.length) {
 		const styleNode = document.createElement("span");
 
 		for (const [key, value] of styleEntities) {
@@ -459,6 +466,10 @@ function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.All
 					styleNode.style.cssText += `${key}:${value};`;
 				}
 			}
+		}
+
+		if (animationEntities.length) {
+			styleNode.style.animation = animationEntities.map(buildAnimationShorthand).join(", ");
 		}
 
 		styleNode.appendChild(latestNode);
@@ -485,7 +496,7 @@ function wrapIntoEntitiesDocumentFragment(rootNode: Node, entities: Entities.All
 	}
 
 	fragment.appendChild(latestNode);
-	return fragment;
+	return [fragment, buildKeyframesCSS(animationEntities)];
 }
 
 const TAG_TYPE_ENTITY_DOM_MAP = {
@@ -589,18 +600,23 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 function getCueNodeFragmentSubtree(
 	currentCue: CueNode,
 	entityDifferenceIndex: number,
-): [root: Node, textNode: Text] {
+): [root: Node, textNode: Text, keyframesCSS: string] {
 	const textNode = document.createTextNode(currentCue.content);
 
 	const filteredEntities = currentCue.entities
-		.filter(isTagEntityOrLocalStyleEntity)
+		.filter(isTagEntityOrLocalStyleOrAnimationEntity)
 		.slice(entityDifferenceIndex);
 
-	return [wrapIntoEntitiesDocumentFragment(textNode, filteredEntities), textNode];
+	const [fragment, keyframesCSS] = wrapIntoEntitiesDocumentFragment(textNode, filteredEntities);
+	return [fragment, textNode, keyframesCSS];
 }
 
-function isTagEntityOrLocalStyleEntity(
+function isTagEntityOrLocalStyleOrAnimationEntity(
 	entity: Entities.AllEntities,
-): entity is Entities.TagEntity | Entities.LocalStyleEntity {
-	return Entities.isTagEntity(entity) || Entities.isLocalStyleEntity(entity);
+): entity is Entities.TagEntity | Entities.LocalStyleEntity | Entities.AnimationEntity {
+	return (
+		Entities.isTagEntity(entity) ||
+		Entities.isLocalStyleEntity(entity) ||
+		Entities.isAnimationEntity(entity)
+	);
 }
