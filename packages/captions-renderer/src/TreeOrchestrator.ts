@@ -564,8 +564,8 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 
 	let entityDifferenceIndex = 0;
 
-	const currentEntities = currentCue.entities.filter(isTagEntityOrLocalStyleEntity);
-	const previousEntities = previousCue.entities.filter(isTagEntityOrLocalStyleEntity);
+	const currentEntities = currentCue.entities.filter(isTagEntityOrLocalStyleOrAnimationEntity);
+	const previousEntities = previousCue.entities.filter(isTagEntityOrLocalStyleOrAnimationEntity);
 
 	const longestCueEntitiesLength = Math.max(currentEntities.length, previousEntities.length);
 
