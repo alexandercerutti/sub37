@@ -1,5 +1,5 @@
 const RGB_REGEX = /rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/;
-const RGBA_REGEX = /rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/;
+const RGBA_REGEX = /rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d*\.?\d*)\s*\)/;
 
 export type Color =
 	| `#${string}`
@@ -72,19 +72,21 @@ export function isRGBColor(
 		return false;
 	}
 
-	const [, rValue, gValue, bValue, aValue = "255"] =
+	const [, rValue, gValue, bValue, aValue = "1"] =
 		color.match(RGB_REGEX) || color.match(RGBA_REGEX) || [];
 
 	if (!rValue || !gValue || !bValue) {
 		return false;
 	}
 
+	const alpha = parseFloat(aValue);
+
 	const isRed8Bit = !(parseInt(rValue) >> 8);
 	const isGreen8Bit = !(parseInt(gValue) >> 8);
 	const isBlue8Bit = !(parseInt(bValue) >> 8);
-	const isAlpha8Bit = !(parseInt(aValue) >> 8);
+	const isAlphaValid = alpha >= 0 && alpha <= 1;
 
-	return isRed8Bit && isGreen8Bit && isBlue8Bit && isAlpha8Bit;
+	return isRed8Bit && isGreen8Bit && isBlue8Bit && isAlphaValid;
 }
 
 // region <named-color>
