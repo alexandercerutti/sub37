@@ -573,18 +573,18 @@ export default class TTMLAdapter extends BaseAdapter {
 						 */
 						if (temporalActiveContext) {
 							treeScope!.addContexts(
+								createAnimationContainerContext([animation]),
 								createTemporalActiveContext({
 									animationsIDRefs: [animation.attributes["xml:id"]!],
 								}),
-								createAnimationContainerContext([animation]),
 							);
 						} else {
 							treeScope = createScope(
 								treeScope,
-								createAnimationContainerContext([animation]),
 								createTemporalActiveContext({
 									animationsIDRefs: [animation.attributes["xml:id"]!],
 								}),
+								createAnimationContainerContext([animation]),
 							);
 						}
 
