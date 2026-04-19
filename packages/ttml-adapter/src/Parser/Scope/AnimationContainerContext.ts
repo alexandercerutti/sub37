@@ -395,8 +395,10 @@ function getAnimationValueListByStyleName(
 ): AnimationValueListByStyleName {
 	const animationValueListByStyleName: AnimationValueListByStyleName = new Map();
 
-	for (const [attributeName, attributeValue] of Object.entries(attributes)) {
-		if (!isStyleAttribute(attributeName)) {
+	for (const attributeName in attributes) {
+		const attributeValue = attributes[attributeName];
+
+		if (!isStyleAttribute(attributeName) || !attributeValue) {
 			continue;
 		}
 
