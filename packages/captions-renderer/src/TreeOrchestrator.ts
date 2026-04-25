@@ -192,6 +192,8 @@ export default class TreeOrchestrator {
 		let latestNode: HTMLElement | undefined = undefined;
 		let latestHeight: number = 0;
 
+		const animationKeyframesStyleElement = document.createElement("style");
+
 		for (let i = 0; i < cues.length; i++) {
 			const cue = cues[i]!;
 
@@ -222,9 +224,8 @@ export default class TreeOrchestrator {
 			}
 
 			if (cueKeyframesCSS) {
-				const styleEl = document.createElement("style");
-				styleEl.textContent = cueKeyframesCSS;
-				this[rootElementSymbol].appendChild(styleEl);
+				animationKeyframesStyleElement.textContent += cueKeyframesCSS;
+				this[rootElementSymbol].appendChild(animationKeyframesStyleElement);
 			}
 
 			/**
