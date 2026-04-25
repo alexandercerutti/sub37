@@ -11,29 +11,32 @@ export function cssTransform(
 	elementAppliesTo: string,
 ): PropertiesCollection<["display"]> | null {
 	if (value[0].value === "none") {
-		return [
-			/**
-			 * This is to handle the `display: none` case when also `displayAlign` is set.
-			 */
-			["display", "none !important"],
-		];
+		return [["display", "none"]];
 	}
 
 	if (value[0].value === "auto") {
-		/**
-		 * Remapping to `"inline"` is not an explicit requirement of the spec,
-		 * but the spec says:
-		 *
-		 * > If the value of this attribute is auto, then the affected element
-		 * > is a candidate for region layout and presentation
-		 *
-		 * Which means we need inline for spans.
-		 */
 		if (elementAppliesTo === "span") {
 			return [["display", "inline"]];
 		}
 
-		return [["display", "flex"]];
+		if (elementAppliesTo === "region") {
+			/**
+			 * Even if the renderer already has a flex layout for regions as a structural
+			 * invariant, we still emit it here so animation keyframes targeting `auto` have
+			 * a concrete CSS value to restore to (CSS animations need an explicit value).
+			 * This is not a standard requirement, but it is a practical necessity given
+			 * the current implementation of the renderer and conflict with tts:displayAlign's
+			 * mapping.
+			 */
+			return [["display", "flex"]];
+		}
+
+		/**
+		 * For block elements (body, div, p), `auto` means "participate normally in layout".
+		 * We emit `display: block` explicitly rather than `null` so that animation keyframes
+		 * targeting `auto` have a concrete CSS value to restore to when animating from `none`.
+		 */
+		return [["display", "block"]];
 	}
 
 	if (value[0].value === "inlineBlock") {

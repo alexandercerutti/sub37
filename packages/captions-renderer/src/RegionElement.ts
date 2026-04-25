@@ -20,6 +20,8 @@ class Sub37Region extends HTMLElement {
 
 		baseSheet.insertRule(`
 			#surface {
+				display: flex;
+				flex-direction: column;
 				position: absolute;
 				inset: 0;
 				overflow: hidden;
