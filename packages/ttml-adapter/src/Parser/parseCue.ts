@@ -264,20 +264,60 @@ function getCuesTimeIntervalsFromRegionTemporalSegmentation(
 
 			const animationTimeContext = isolateContext(readScopeTimeContext(animationScope))!;
 
+			/**
+			 * Inline animation timing (begin/dur/end) is relative to the parent time container.
+			 * `cueTimeContext.startTime` is the parent's absolute document start time.
+			 * We must offset by it to obtain absolute document times.
+			 *
+			 * Example:
+			 * ```xml
+			 * <p begin="3s" dur="5s">
+			 * 	<set begin="1s" />
+			 * 	...
+			 * ```
+			 *
+			 * |            -----               |  Time                                    |
+			 * |--------------------------------|------------------------------------------|
+			 * | animationTimeContext.startTime |  1000ms (relative)                       |
+			 * | cueTimeContext.startTime       |  3000ms (absolute parent start)          |
+			 * | absolute animation start       |  4000ms                                  |
+			 * | CSS delay relative to cue      | +1000ms  (appears 1s into the paragraph) |
+			 */
+			const absoluteAnimStart = cueTimeContext.startTime + animationTimeContext.startTime;
+
+			/**
+			 * If the <set> has no dur/end, it runs until the parent time container ends
+			 * (TTML/SMIL semantics). The TimeContext returns Infinity in that case.
+			 * Clamp to the parent's end time so the CSS duration is always finite.
+			 *
+			 * TTML2 §12.4 Timing Semantics (normative):
+			 * > The implicit duration of an `animate`, `audio`, `br`, `image`, or `set` element
+			 * > is defined to be the same as if that element were treated as an anonymous span.
+			 * > The implicit duration of an anonymous span [in a `par` container] is equivalent
+			 * > to the `indefinite` duration value as defined by [SMIL 3.0].
+			 *
+			 * @see https://w3c.github.io/ttml2/#semantics-timing
+			 */
+			const relativeEnd = animationTimeContext.endTime;
+
+			const absoluteAnimEnd = Number.isFinite(relativeEnd)
+				? cueTimeContext.startTime + relativeEnd
+				: cueTimeContext.endTime;
+
 			const resolvedAnimation: ResolvedAnimation = Object.create(animation, {
 				duration: {
-					value: animationTimeContext.endTime - animationTimeContext.startTime,
+					value: absoluteAnimEnd - absoluteAnimStart,
 					enumerable: true,
 				},
 				startTime: {
-					value: animationTimeContext.startTime,
+					value: absoluteAnimStart,
 					enumerable: true,
 				},
 			});
 
 			associatedTimeIntervals.push([
-				animationTimeContext.startTime,
-				animationTimeContext.endTime,
+				absoluteAnimStart,
+				absoluteAnimEnd,
 				ActiveTemporalEntities.ANIMATION,
 				resolvedAnimation,
 			]);
