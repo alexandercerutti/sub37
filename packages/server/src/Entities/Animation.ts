@@ -48,7 +48,7 @@ interface InputAnimationData {
 }
 
 export function createAnimationEntity(attributes: InputAnimationData): AnimationEntity {
-	const delay = Math.min(0, attributes.delay || 0);
+	const delay = attributes.delay || 0;
 	const duration = Math.max(0, attributes.duration);
 	const fill = attributes.fill || "forwards";
 	const keyTimes = attributes.keyTimes || [];
