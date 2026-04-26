@@ -554,6 +554,30 @@ describe("Adapter", () => {
 		}*/,
 		);
 
+		it("should assign the span's region to the cue when parent <p> has no region (ISD rule 3)", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+<tt xml:lang="en">
+	<head>
+		<layout>
+			<region xml:id="r1" begin="0s" dur="5s" />
+		</layout>
+	</head>
+	<body>
+		<div>
+			<p>
+				<span region="r1">Hello</span>
+			</p>
+		</div>
+	</body>
+</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+			expect(cues[0].region).toBeDefined();
+			expect(cues[0].region.id).toBe("r1");
+		});
+
 		it("should read tts:origin and tts:extent from a region into getOrigin() and width", () => {
 			const adapter = new TTMLAdapter();
 			const { data: cues } = adapter.parse(`

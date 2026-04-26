@@ -447,6 +447,30 @@ export default class TTMLAdapter extends BaseAdapter {
 									regionIDRef: token.attributes["region"],
 								}),
 							);
+
+							/**
+							 * ISD [associate region] rule 3: an inline element with a region
+							 * associates its ancestors with that region too.
+							 * At this point all validation has already passed, and `treeScope`
+							 * is the parent element's scope. If the parent has no region yet,
+							 * propagate it now — forward in parse time, not retroactively.
+							 */
+							if (isInlineClassElement(token.content)) {
+								let paragraphElement: NodeWithRelationship<Token & NodeWithScope> =
+									nodeTree.currentNode;
+
+								while (paragraphElement.content.content !== "p") {
+									paragraphElement = paragraphElement.parent!;
+								}
+
+								const paragraphScope = paragraphElement.content[nodeScopeSymbol];
+
+								paragraphScope.addContexts(
+									createTemporalActiveContext({
+										regionIDRef: token.attributes["region"],
+									}),
+								);
+							}
 						}
 					}
 
