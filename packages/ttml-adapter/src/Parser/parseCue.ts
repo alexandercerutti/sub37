@@ -32,7 +32,7 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	 * can be merged in the same lines in the renderer.
 	 */
 
-	const rootIntervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(scope);
+	const rootIntervals = getCueTemporalIntervalSegments(scope);
 	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime, attrs, activeEntities]) => {
 		let region: TTMLRegion | undefined;
 
@@ -111,7 +111,7 @@ function processChildren(
 			 */
 
 			const spanEntities = resolveSpanEntities(childScope);
-			const intervals = getCuesTimeIntervalsFromRegionTemporalSegmentation(childScope);
+			const intervals = getCueTemporalIntervalSegments(childScope);
 
 			for (const [startTime, endTime, attrs, activeEntities] of intervals) {
 				const rootCue =
@@ -214,16 +214,16 @@ type TemporalIntervalWithEntities = [
 ];
 
 /**
- * A region can specify timing attributes for which
- * its activation is elegible for.
+ * Regions and animations can specify timing attributes
+ * their activation is elegible for.
  *
- * We have to segment the timeline and the cues
- * in order to make them activate only in that specific
- * time shift.
+ * Segmenting timeline is required to determine when a
+ * cue is active and which entities are active within its active duration.
+ *
+ * It is useless to get segments there Cues are not active but regions or
+ * animations are.
  */
-function getCuesTimeIntervalsFromRegionTemporalSegmentation(
-	scope: Scope,
-): TemporalIntervalWithEntities[] {
+function getCueTemporalIntervalSegments(scope: Scope): TemporalIntervalWithEntities[] {
 	const cueTimeContext = readScopeTimeContext(scope)!;
 	const tac = readScopeTemporalActiveContext(scope);
 	const region = tac?.region;
