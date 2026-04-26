@@ -88,6 +88,14 @@ function appendNodeAttributes<NodeType extends object>(
 	return node;
 }
 
+function markSubtreeIgnored(node: NodeWithRelationship<Token & NodeWithAttributes>): void {
+	appendNodeAttributes(node.content, NodeAttributes.IGNORED);
+
+	for (const child of node.children) {
+		markSubtreeIgnored(child);
+	}
+}
+
 function createNodeWithScope<NodeType extends object>(
 	node: NodeType,
 	scope: Scope,
@@ -390,20 +398,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 							continue;
 						}
-					} else if (!inlineClassElementFlowsInAnyRegion(token, treeScope)) {
-						console.warn(`Element '${token.content}' is not flowing into any region. Ignored.`);
-
-						nodeTree.push(
-							createNodeWithAttributes(
-								createNodeWithScope(
-									createNodeWithDestinationMatch(token, destinationMatch),
-									treeScope,
-								),
-								NodeAttributes.IGNORED,
-							),
-						);
-
-						continue;
 					}
 
 					// ************************************* //
@@ -449,27 +443,43 @@ export default class TTMLAdapter extends BaseAdapter {
 							);
 
 							/**
-							 * ISD [associate region] rule 3: an inline element with a region
-							 * associates its ancestors with that region too.
-							 * At this point all validation has already passed, and `treeScope`
-							 * is the parent element's scope. If the parent has no region yet,
-							 * propagate it now — forward in parse time, not retroactively.
+							 * If a span flows into a region, according to [associate region] procedure,
+							 * it should be associated with that region as well as its parent (which
+							 * wasn't marked so). So, the best thing we can to is to assign the region to all
+							 * the inline elements...
 							 */
 							if (isInlineClassElement(token.content)) {
-								let paragraphElement: NodeWithRelationship<Token & NodeWithScope> =
+								let ancestorElement: NodeWithRelationship<Token & NodeWithScope> =
 									nodeTree.currentNode;
 
-								while (paragraphElement.content.content !== "p") {
-									paragraphElement = paragraphElement.parent!;
+								/**
+								 * ... but not to the parent, which may have other
+								 * valid span blocks, with a region assigned.
+								 *
+								 * ```
+								 * <p>
+								 *   <span>
+								 *     <span region="region1">...</span>
+								 *   </span>
+								 *   <span region="region2">
+								 *     ...
+								 *   </span>
+								 * </p>
+								 * ```
+								 *
+								 * When we are going to parse the paragraph, we'll therefore
+								 * omit those spans that do not flow in any region (pruning).
+								 */
+
+								while (ancestorElement.content.content !== "p") {
+									ancestorElement.content[nodeScopeSymbol].addContexts(
+										createTemporalActiveContext({
+											regionIDRef: token.attributes["region"],
+										}),
+									);
+
+									ancestorElement = ancestorElement.parent!;
 								}
-
-								const paragraphScope = paragraphElement.content[nodeScopeSymbol];
-
-								paragraphScope.addContexts(
-									createTemporalActiveContext({
-										regionIDRef: token.attributes["region"],
-									}),
-								);
 							}
 						}
 					}
@@ -644,6 +654,33 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					const closingElement = nodeTree.pop()!;
 
+					/**
+					 * This is the completion of the equivalent of [associate region] procedure
+					 * described in ISD construction.
+					 *
+					 * When a span ends, if it has not been associated with any region, then
+					 * it and its children will become ignored and then filtered later, when
+					 * processing the paragraph.
+					 */
+					if (
+						isInlineClassElement(closingElement.content.content) &&
+						closingElement.content.content !== "br"
+					) {
+						if (
+							!inlineClassElementFlowsInAnyRegion(
+								closingElement.content,
+								closingElement.content[nodeScopeSymbol],
+							)
+						) {
+							console.warn(
+								`Element '${closingElement.content.content}' is not flowing into any region. Ignored.`,
+							);
+
+							markSubtreeIgnored(closingElement);
+							break;
+						}
+					}
+
 					if (isLayoutElement(closingElement)) {
 						const outOfLineRegions = extractOutOfLineRegions(closingElement);
 
@@ -673,7 +710,14 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (closingElement.content.content === "p") {
-						cues = cues.concat(parseCue(closingElement));
+						const nodeForParsing = Object.create(closingElement, {
+							children: {
+								value: closingElement.children.filter((child) => !isNodeIgnored(child.content)),
+								enumerable: true,
+							},
+						});
+
+						cues = cues.concat(parseCue(nodeForParsing));
 					}
 
 					break;

@@ -554,6 +554,30 @@ describe("Adapter", () => {
 		}*/,
 		);
 
+		it("should assign the span's region to the cue when region is on a deeply nested span (ISD rule 3)", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+<tt xml:lang="en">
+	<head>
+		<layout>
+			<region xml:id="r1" begin="0s" dur="5s" />
+		</layout>
+	</head>
+	<body>
+		<div>
+			<p>
+				<span><span region="r1">Hello</span></span>
+			</p>
+		</div>
+	</body>
+</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+			expect(cues[0].region).toBeDefined();
+			expect(cues[0].region.id).toBe("r1");
+		});
+
 		it("should assign the span's region to the cue when parent <p> has no region (ISD rule 3)", () => {
 			const adapter = new TTMLAdapter();
 			const { data: cues } = adapter.parse(`
@@ -576,6 +600,36 @@ describe("Adapter", () => {
 			expect(cues.length).toBeGreaterThan(0);
 			expect(cues[0].region).toBeDefined();
 			expect(cues[0].region.id).toBe("r1");
+		});
+
+		it("should assign correct regions to sibling spans each one level deep and flowing into different regions", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+<tt xml:lang="en">
+	<head>
+		<layout>
+			<region xml:id="r1" begin="0s" dur="5s" />
+			<region xml:id="r2" begin="0s" dur="5s" />
+		</layout>
+	</head>
+	<body>
+		<div>
+			<p>
+				<span><span region="r1">Hello</span></span>
+				<span><span region="r2">World</span></span>
+			</p>
+		</div>
+	</body>
+</tt>
+			`);
+
+			expect(cues.length).toBe(2);
+			expect(cues[0].region).toBeDefined();
+			expect(cues[0].region.id).toBe("r1");
+			expect(cues[0].content).toBe("Hello");
+			expect(cues[1].region).toBeDefined();
+			expect(cues[1].region.id).toBe("r2");
+			expect(cues[1].content).toBe("World");
 		});
 
 		it("should read tts:origin and tts:extent from a region into getOrigin() and width", () => {
