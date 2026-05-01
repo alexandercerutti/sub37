@@ -112,7 +112,7 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 * on left that might overlap
 	 */
 
-	if (treeNode.left && treeNode.left.max >= low) {
+	if (treeNode.left && treeNode.left.max > low) {
 		matchingNodes.push(...accumulateMatchingNodes(treeNode.left, low, high));
 	}
 
@@ -124,8 +124,8 @@ function accumulateMatchingNodes<LeafShape extends object>(
 	 */
 
 	if (
-		(low >= treeNode.low && treeNode.high >= low) ||
-		(high >= treeNode.low && treeNode.high >= high)
+		(low >= treeNode.low && treeNode.high > low) ||
+		(high >= treeNode.low && treeNode.high > high)
 	) {
 		matchingNodes.push(treeNode.node);
 	}
