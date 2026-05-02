@@ -1,4 +1,5 @@
 import { Entities } from "@sub37/server";
+import { buildAnimationSheet, buildAnimationShorthand } from "./animationCSS.js";
 
 class Sub37Region extends HTMLElement {
 	private readonly sheet = new CSSStyleSheet();
@@ -43,10 +44,13 @@ class Sub37Region extends HTMLElement {
 	 */
 	public applyEntities(entities: Entities.AllEntities[]): void {
 		const staticStyles: Record<string, string> = {};
+		const animations: Entities.AnimationEntity[] = [];
 
 		for (const entity of entities) {
 			if (Entities.isLocalStyleEntity(entity)) {
 				Object.assign(staticStyles, entity.styles);
+			} else if (Entities.isAnimationEntity(entity)) {
+				animations.push(entity);
 			}
 		}
 
@@ -55,16 +59,32 @@ class Sub37Region extends HTMLElement {
 		const staticEntries = Object.entries(staticStyles);
 
 		if (staticEntries.length) {
-			css += `#surface {`;
+			let styleRules = "";
 
 			for (const [prop, value] of staticEntries) {
-				css += `${prop}: ${value};`;
+				styleRules += `${prop}: ${value};\n`;
 			}
 
-			css += `}\n`;
+			css += `
+#surface {
+	${styleRules}
+}`;
 		}
 
 		this.sheet.replaceSync(css);
+
+		const animationSheets = animations.map(buildAnimationSheet);
+
+		if (animations.length) {
+			this.shadowRoot!.querySelector<HTMLElement>("#surface")!.style.animation = animations
+				.map(buildAnimationShorthand)
+				.join(", ");
+		}
+
+		this.shadowRoot!.adoptedStyleSheets = [
+			this.shadowRoot!.adoptedStyleSheets[0]!,
+			this.sheet,
+		].concat(animationSheets);
 	}
 }
 
