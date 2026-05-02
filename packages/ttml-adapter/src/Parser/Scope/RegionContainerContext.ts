@@ -12,6 +12,7 @@ import {
 } from "./StyleContainerContext";
 import type { StyleContainerContextState, TTMLStyle } from "./StyleContainerContext";
 import type { TimeContextData } from "./TimeContext";
+import { createTimeContext, readScopeTimeContext } from "./TimeContext.js";
 import {
 	Animation,
 	AnimationContainerContextState,
@@ -275,7 +276,52 @@ export class TTMLRegion implements Region {
 
 	public get entities(): Entities.AllEntities[] {
 		const styles = this.computeVisualStyles();
-		return Object.keys(styles).length ? [Entities.createLocalStyleEntity(styles)] : [];
+
+		const entities: Entities.AllEntities[] = [];
+
+		if (Object.keys(styles).length) {
+			entities.push(Entities.createLocalStyleEntity(styles));
+		}
+
+		const regionAnimations = this.animations;
+
+		if (regionAnimations.length) {
+			const regionTimeScope = createScope(this.scope, createTimeContext(this.timingAttributes));
+
+			const regionTimeContext = isolateContext(readScopeTimeContext(regionTimeScope))!;
+			const regionStart = regionTimeContext.startTime;
+
+			for (const animation of regionAnimations) {
+				const animationScope = createScope(
+					regionTimeScope,
+					createTimeContext(animation.timingAttributes),
+				);
+
+				const animationTimeContext = isolateContext(readScopeTimeContext(animationScope))!;
+				const duration = animationTimeContext.endTime - animationTimeContext.startTime;
+				const delay = animationTimeContext.startTime - regionStart;
+				const styles = animation.apply("region");
+
+				if (!Object.keys(styles).length) {
+					continue;
+				}
+
+				entities.push(
+					Entities.createAnimationEntity({
+						id: animation.id,
+						kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
+						duration,
+						delay,
+						fill: animation.fill === "freeze" ? "forwards" : "none",
+						keyTimes: animation.keyTimes,
+						splines: animation.keySplines,
+						styles,
+					}),
+				);
+			}
+		}
+
+		return entities;
 	}
 
 	public constructor(id: string, timingAttributes: TimeContextData | undefined, scope: Scope) {
