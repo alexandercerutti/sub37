@@ -271,6 +271,7 @@ export class TTMLRegion implements Region {
 	public scope: Scope;
 
 	private geometryStylesCache: Record<string, string> | undefined = undefined;
+	private visualStylesCache: Record<string, string> | undefined = undefined;
 
 	public get entities(): Entities.AllEntities[] {
 		const styles = this.computeVisualStyles();
@@ -354,6 +355,10 @@ export class TTMLRegion implements Region {
 	}
 
 	private computeVisualStyles(): Record<string, string> {
+		if (this.visualStylesCache) {
+			return this.visualStylesCache;
+		}
+
 		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
 
 		if (!styleContext) {
@@ -362,7 +367,7 @@ export class TTMLRegion implements Region {
 
 		const { styles } = styleContext;
 
-		return styles
+		this.visualStylesCache = styles
 			.filter((s) => s.kind === "nested")
 			.concat(styles.filter((s) => s.kind === "inline"))
 			.reduce<Record<string, string>>((acc, style) => {
@@ -383,5 +388,7 @@ export class TTMLRegion implements Region {
 
 				return Object.assign(acc, filteredStyle.apply("region"));
 			}, {});
+
+		return this.visualStylesCache;
 	}
 }
