@@ -73,38 +73,18 @@ describe("Adapter", () => {
 							</tt>
 							`);
 
-						expect(cues.length).toBe(8);
+						expect(cues.length).toBe(3);
 						expect(cues[0]).toMatchObject({
-							startTime: 0,
-							endTime: 3000,
+							startTime: 3000,
+							endTime: 5000,
 						});
 						expect(cues[1]).toMatchObject({
 							startTime: 3000,
-							endTime: 5000,
-						});
-						expect(cues[2]).toMatchObject({
-							startTime: 5000,
-							endTime: Infinity,
-						});
-						expect(cues[3]).toMatchObject({
-							startTime: 0,
-							endTime: 3000,
-						});
-						expect(cues[4]).toMatchObject({
-							startTime: 3000,
 							endTime: 8000,
 						});
-						expect(cues[5]).toMatchObject({
-							startTime: 8000,
-							endTime: Infinity,
-						});
-						expect(cues[6]).toMatchObject({
+						expect(cues[2]).toMatchObject({
 							startTime: 0,
 							endTime: 5000,
-						});
-						expect(cues[7]).toMatchObject({
-							startTime: 5000,
-							endTime: Infinity,
 						});
 					});
 
@@ -135,26 +115,14 @@ describe("Adapter", () => {
 							</tt>
 							`);
 
-						expect(cues.length).toBe(5);
-						expect(cues[0].startTime).toBe(2500);
-						expect(cues[0].endTime).toBe(3000);
-						expect(cues[0].region).toBeUndefined();
-
-						expect(cues[1].startTime).toBe(3000);
-						expect(cues[1].endTime).toBe(5000);
-						expect(cues[1].region).not.toBeUndefined();
-
-						expect(cues[2].startTime).toBe(5000);
-						expect(cues[2].endTime).toBe(Infinity);
-						expect(cues[2].region).toBeUndefined();
-
-						expect(cues[3].startTime).toBe(5000);
-						expect(cues[3].endTime).toBe(Infinity);
-						expect(cues[3].region).toBeUndefined();
-
-						expect(cues[4].startTime).toBe(7000);
-						expect(cues[4].endTime).toBe(Infinity);
-						expect(cues[4].region).toBeUndefined();
+						/**
+						 * No other cues are emitted, as they are outside of region range
+						 * (a.k.a. they are not active).
+						 */
+						expect(cues.length).toBe(1);
+						expect(cues[0].startTime).toBe(3000);
+						expect(cues[0].endTime).toBe(5000);
+						expect(cues[0].region).not.toBeUndefined();
 					});
 				});
 
@@ -176,29 +144,41 @@ describe("Adapter", () => {
 						</tt>
 					`);
 
-						expect(cues.length).toBe(2);
+						expect(cues.length).toBe(1);
 						expect(cues[0]).toMatchObject({
 							content: "Paragraph flowed inside r1",
 							startTime: 0,
 							endTime: 1300,
-						});
-						expect(cues[1]).toMatchObject({
-							content: "Paragraph flowed inside r1",
-							startTime: 1300,
-							endTime: Infinity,
 						});
 					});
 				});
 			});
 
 			describe("ttp:timeBase 'media'", () => {
-				it("should emit a cue from anonymous span with indefinite active duration when sequential parent doesn't specify a duration", () => {
+				it("should not emit a cue when the paragraph is a direct child of a sequential container with no timing attributes", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
 						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
 									<p>Test cue</p>
+								</div>
+							</body>
+						</tt>
+						`);
+
+					expect(cues.length).toBe(0);
+				});
+
+				it("should emit a cue with indefinite duration when the paragraph is inside a par container nested in a sequential one", () => {
+					const adapter = new TTMLAdapter();
+					const { data: cues } = adapter.parse(`
+						<tt ttp:timeBase="media" xml:lang="">
+							<body>
+								<div begin="0s" timeContainer="seq">
+									<div>
+										<p>Test cue</p>
+									</div>
 								</div>
 							</body>
 						</tt>
@@ -211,7 +191,7 @@ describe("Adapter", () => {
 					});
 				});
 
-				it("should emit a cue from anonymous span with active duration of 0s when parent is sequential", () => {
+				it("should not emit a cue from anonymous span with active duration of 0s when parent is sequential", () => {
 					const adapter = new TTMLAdapter();
 					const { data: cues } = adapter.parse(`
 						<tt ttp:timeBase="media" xml:lang="">
@@ -225,11 +205,7 @@ describe("Adapter", () => {
 						</tt>
 						`);
 
-					expect(cues.length).toBe(1);
-					expect(cues[0]).toMatchObject({
-						startTime: 0,
-						endTime: 0,
-					});
+					expect(cues.length).toBe(0);
 				});
 
 				it("should emit a cue from anonymous span with active duration of 3s when parent is sequential", () => {
