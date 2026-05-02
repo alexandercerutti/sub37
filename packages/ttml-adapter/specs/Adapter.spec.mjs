@@ -638,6 +638,129 @@ describe("Adapter", () => {
 			expect(region.width).toBe(80);
 		});
 	});
+
+	describe("Animations", () => {
+		describe("display: none + <set tts:display>", () => {
+			it("should emit one cue per span, timed to the animation window, not the paragraph", () => {
+				/**
+				 * Three spans, each initially display:none, each revealed by a
+				 * <set> for 1 second. The <p> begins at 3s.
+				 *
+				 * Span 1: set begin="1s" dur="1s"  → absolute 4000–5000 ms
+				 * Span 2: set begin="2s" dur="1s"  → absolute 5000–6000 ms
+				 * Span 3: set begin="3s" dur="1s"  → absolute 6000–7000 ms
+				 */
+				const adapter = new TTMLAdapter();
+				const { data: cues } = adapter.parse(`
+					<tt xml:lang="en"
+						xmlns="http://www.w3.org/ns/ttml"
+						xmlns:tts="http://www.w3.org/ns/ttml#styling">
+						<head>
+							<layout>
+								<region xml:id="r1" />
+							</layout>
+						</head>
+						<body>
+							<div region="r1">
+								<p begin="3s">
+									<span tts:display="none">
+										<set begin="1s" dur="1s" tts:display="auto"/>
+										Beautiful soup,
+									</span>
+									<span tts:display="none">
+										<set begin="2s" dur="1s" tts:display="auto"/>
+										so rich and green,
+									</span>
+									<span tts:display="none">
+										<set begin="3s" dur="1s" tts:display="auto"/>
+										waiting in a hot tureen!
+									</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`);
+
+				// Each span produces exactly one cue, shifted to its animation window.
+				const textCues = cues.filter((c) => c.content.trim().length > 0);
+
+				expect(textCues.length).toBe(3);
+
+				expect(textCues[0]).toMatchObject({
+					startTime: 4000,
+					endTime: 5000,
+				});
+				expect(textCues[0].content.trim()).toBe("Beautiful soup,");
+
+				expect(textCues[1]).toMatchObject({
+					startTime: 5000,
+					endTime: 6000,
+				});
+				expect(textCues[1].content.trim()).toBe("so rich and green,");
+
+				expect(textCues[2]).toMatchObject({
+					startTime: 6000,
+					endTime: 7000,
+				});
+				expect(textCues[2].content.trim()).toBe("waiting in a hot tureen!");
+			});
+
+			it("should not include display:none in the cue's style entity when revealed by animation", () => {
+				const adapter = new TTMLAdapter();
+				const { data: cues } = adapter.parse(`
+					<tt xml:lang="en"
+						xmlns="http://www.w3.org/ns/ttml"
+						xmlns:tts="http://www.w3.org/ns/ttml#styling">
+						<head>
+							<layout>
+								<region xml:id="r1" />
+							</layout>
+						</head>
+						<body>
+							<div region="r1">
+								<p begin="0s" end="5s">
+									<span tts:display="none">
+										<set begin="1s" dur="3s" tts:display="auto"/>
+										Hello
+									</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`);
+
+				const textCues = cues.filter((c) => c.content.trim().length > 0);
+				expect(textCues.length).toBeGreaterThan(0);
+
+				const localStyleEntity = textCues[0].entities.find(
+					(e) => "styles" in e && !("duration" in e),
+				);
+				expect(localStyleEntity).toBeDefined();
+				expect(localStyleEntity.styles["display"]).toBeUndefined();
+			});
+
+			it("should not emit a cue for a span that is permanently hidden (no display animation)", () => {
+				const adapter = new TTMLAdapter();
+				const { data: cues } = adapter.parse(`
+					<tt xml:lang="en"
+						xmlns="http://www.w3.org/ns/ttml"
+						xmlns:tts="http://www.w3.org/ns/ttml#styling">
+						<body>
+							<div>
+								<p begin="0s" end="5s">
+									<span tts:display="none">Never shown</span>
+									<span>Visible</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`);
+
+				const textCues = cues.filter((c) => c.content.trim().length > 0);
+				expect(textCues.every((c) => c.content.trim() !== "Never shown")).toBe(true);
+			});
+		});
+	});
 });
 
 /**
