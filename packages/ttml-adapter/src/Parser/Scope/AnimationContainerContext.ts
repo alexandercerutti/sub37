@@ -194,9 +194,18 @@ function createAnimation(
 	}
 
 	const animationWithStyles: Animation = Object.create(animation, {
+		cachedStylesByElement: {
+			value: new Map<string, Record<string, string>>(),
+		},
 		apply: {
-			value(element: string) {
-				return convertAnimationStylesToCSS(stylesFrames, scope, element);
+			value(element: string): Record<string, string[]> {
+				if (this.cachedStylesByElement.has(element)) {
+					return this.cachedStylesByElement.get(element)!;
+				}
+
+				const styles = convertAnimationStylesToCSS(stylesFrames, scope, element);
+				this.cachedStylesByElement.set(element, styles);
+				return styles;
 			},
 		},
 	});
