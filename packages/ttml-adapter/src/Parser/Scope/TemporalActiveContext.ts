@@ -18,7 +18,7 @@ import type { TTMLStyle } from "./StyleContainerContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
-type ComputedCssProperties = {
+export type ComputedCssProperties = {
 	[K in keyof SupportedCSSProperties]: NonNullable<SupportedCSSProperties[K]>;
 };
 

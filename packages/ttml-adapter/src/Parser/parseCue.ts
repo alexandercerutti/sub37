@@ -3,6 +3,7 @@ import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
+import type { ComputedCssProperties } from "./Scope/TemporalActiveContext.js";
 import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Scope/AnimationContainerContext.js";
@@ -105,28 +106,97 @@ function processChildren(
 				continue;
 			}
 
+			const rawIntervals = getCueTemporalIntervalSegments(childScope);
+			const spanStyles = getStylesForSpanElement(childScope);
+			const displayValue = spanStyles["display"];
+
 			/**
-			 * We have a different scope, so we have to create a new CueNode
-			 * derived from the existing ones.
+			 * When we are aware that an element will appear later because of a
+			 * `set` animation (e.g. `<set tts:display="..."`), we cannot render it
+			 * with a CSS `display: none`, because CSS is not able to animate an element
+			 * that it not rendered in the CSSOM.
+			 *
+			 * This means that we need to change the actual render timing of the CueNode
+			 * in order to make it appear exactly when the animation starts and make it
+			 * disappear when the animation ends (if the animation is not `fill=freeze`-ed).
+			 *
+			 * This also means that we have to strip the display property from
+			 * the entities.
 			 */
 
-			const spanEntities = resolveSpanEntities(childScope);
-			const intervals = getCueTemporalIntervalSegments(childScope);
+			const intervals =
+				displayValue === "none"
+					? getSpanVisibilityIntervalsFromAnimations(rawIntervals)
+					: rawIntervals;
 
-			for (const [startTime, endTime, attrs, activeEntities] of intervals) {
-				const rootCue =
-					rootCues.find((r) => r.startTime === startTime && r.endTime === endTime) ?? rootCues[0]!;
+			if (!intervals.length) {
+				continue;
+			}
+
+			const [spanStart] = intervals[0]!;
+			const spanEnd = intervals[intervals.length - 1]![1];
+
+			const stylesWithoutDisplay: ComputedCssProperties =
+				displayValue === "none"
+					? Object.create(spanStyles, {
+							display: {
+								value: undefined,
+							},
+						})
+					: spanStyles;
+
+			const spanEntities: Entities.AllEntities[] = [
+				Entities.createLocalStyleEntity(stylesWithoutDisplay),
+			];
+
+			/**
+			 * Of all the root cues - which define the temporal window covered by
+			 * the parent <p>, in which does the current span fit in?
+			 */
+
+			for (const rootCue of rootCues) {
+				/**
+				 * When a span doesn't have a start time or a duration,
+				 * we have to fallback to the rootCue's start time and end time.
+				 */
+				const actualSpanStart = Math.max(spanStart, rootCue.startTime);
+				const actualSpanEnd = Math.min(spanEnd, rootCue.endTime);
+
+				if (actualSpanStart >= actualSpanEnd) {
+					continue;
+				}
+
+				let animationEntities: Entities.AllEntities[] = [];
+
+				for (const [start, end, attrs, activeEntities] of intervals) {
+					if (!(attrs & ActiveTemporalEntities.ANIMATION)) {
+						continue;
+					}
+
+					if (start < actualSpanEnd && end > actualSpanStart) {
+						animationEntities = animationEntities.concat(
+							resolveAnimationEntities(attrs, activeEntities, actualSpanStart),
+						);
+					}
+				}
+
+				let spanRegion: TTMLRegion | undefined;
+
+				for (const [, , attrs, activeEntities] of intervals) {
+					if (attrs & ActiveTemporalEntities.REGION) {
+						spanRegion = activeEntities.find((e): e is TTMLRegion => e instanceof TTMLRegion);
+						break;
+					}
+				}
 
 				cues.push(
 					CueNode.from(rootCue, {
 						id: parentId,
 						content: child.content.content,
-						startTime,
-						endTime,
-						region: rootCue.region,
-						entities: spanEntities.concat(
-							resolveAnimationEntities(attrs, activeEntities, startTime),
-						),
+						startTime: actualSpanStart,
+						endTime: actualSpanEnd,
+						region: spanRegion ?? rootCue.region,
+						entities: spanEntities.concat(animationEntities),
 					}),
 				);
 			}
@@ -146,16 +216,14 @@ function processLineBreak(cue: CueNode | undefined): void {
 	cue.content += "\n";
 }
 
-function resolveSpanEntities(scope: Scope): Entities.AllEntities[] {
+function getStylesForSpanElement(scope: Scope): ComputedCssProperties {
 	const tac = readScopeTemporalActiveContext(scope);
 
 	if (!tac) {
-		return [];
+		return {};
 	}
 
-	const styles = tac.computeStylesForElement("span");
-
-	return [Entities.createLocalStyleEntity(styles)];
+	return tac.computeStylesForElement("span");
 }
 
 function resolveAnimationEntities(
@@ -169,8 +237,10 @@ function resolveAnimationEntities(
 
 	return activeEntities
 		.filter((entity): entity is ResolvedAnimation => "startTime" in entity)
-		.map((animation) =>
-			Entities.createAnimationEntity({
+		.map((animation) => {
+			const styles = animation.apply("span");
+
+			return Entities.createAnimationEntity({
 				id: animation.id,
 				duration: animation.duration,
 				keyTimes: animation.keyTimes,
@@ -178,9 +248,76 @@ function resolveAnimationEntities(
 				splines: animation.keySplines,
 				kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
 				delay: animation.startTime - intervalStart,
-				styles: animation.apply("span"),
-			}),
+				styles,
+			});
+		});
+}
+
+function getSpanVisibilityIntervalsFromAnimations(
+	intervals: TemporalIntervalWithEntities[],
+): TemporalIntervalWithEntities[] {
+	const result: TemporalIntervalWithEntities[] = [];
+
+	for (const [start, end, attrs, activeEntities] of intervals) {
+		if (!(attrs & ActiveTemporalEntities.ANIMATION)) {
+			continue;
+		}
+
+		/**
+		 * The dominant animation is the one, among several, that has
+		 * the highest start time.
+		 *
+		 * That's the case of something like this:
+		 *
+		 * ```xml
+		 * <span tts:display="none">
+		 *   <set begin="2s" tts:display="block"/>
+		 *   <set begin="5s" tts:display="none"/>
+		 *   ...
+		 * </span>
+		 * ```
+		 *
+		 * In this case, an interval segment it made of [2s, 5s] with two
+		 * active animations, but the dominant one is the second, which
+		 * makes the span disappear at 5s.
+		 */
+		let dominant: ResolvedAnimation | undefined;
+
+		for (const entity of activeEntities) {
+			if (!("startTime" in entity)) {
+				continue;
+			}
+
+			const styles = entity.apply("span");
+
+			if (!styles["display"]?.length) {
+				continue;
+			}
+
+			if (!dominant || entity.startTime > dominant.startTime) {
+				dominant = entity;
+			}
+		}
+
+		if (!dominant) {
+			continue;
+		}
+
+		const dominantDisplayValues = dominant.apply("span")["display"]!;
+		const lastValue = dominantDisplayValues[dominantDisplayValues.length - 1];
+
+		if (lastValue === "none") {
+			continue;
+		}
+
+		const entitiesWithoutDisplay = activeEntities.filter(
+			(entity) => !("startTime" in entity) || !("display" in entity.apply("span")),
 		);
+
+		result.push([start, end, attrs, entitiesWithoutDisplay]);
+	}
+
+	return result;
 }
 
 const ActiveTemporalEntities = {
