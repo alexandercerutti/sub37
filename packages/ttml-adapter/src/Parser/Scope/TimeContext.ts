@@ -135,15 +135,17 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 				if (typeof end === "undefined") {
 					/**
 					 * If duration is missing, then we need to obtain the
-					 * what-so-called "implicit duration". TTML States this:
+					 * what-so-called "implicit duration".
 					 *
-					 * "The implicit duration of an anonymous span is defined as follows:
-					 * if the anonymous span's parent time container is a parallel time
-					 * container, then the implicit duration is equivalent to the indefinite
-					 * duration value as defined by [SMIL 3.0];
+					 * **§12.4 Timing Semantics:**
 					 *
-					 * if the anonymous span's parent time container is a sequential time
-					 * container, then the implicit duration is equivalent to zero."
+					 * > The implicit duration of an anonymous span is defined as follows:
+					 * > if the anonymous span's parent time container is a parallel time
+					 * > container, then the implicit duration is equivalent to the indefinite
+					 * > duration value as defined by [SMIL 3.0];
+					 * >
+					 * > if the anonymous span's parent time container is a sequential time
+					 * > container, then the implicit duration is equivalent to zero.
 					 *
 					 * @see https://w3c.github.io/ttml2/#semantics-timing
 					 */
