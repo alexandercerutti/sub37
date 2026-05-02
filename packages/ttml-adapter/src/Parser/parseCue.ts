@@ -524,8 +524,13 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 	specialSemanticsStyles: Record<string, string>,
 ): TTMLRegion {
 	const overriddenAttributes: StyleContainerContextState = Object.create(specialSemanticsStyles, {
-		"xml:id": { value: `derived:${baseRegion.id}` },
-		kind: { value: "inline", enumerable: true },
+		"xml:id": {
+			value: `derived:${baseRegion.id}`,
+		},
+		kind: {
+			value: "inline",
+			enumerable: true,
+		},
 	});
 
 	const newScope = createScope(
