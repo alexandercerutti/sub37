@@ -329,39 +329,27 @@ function getCueTemporalIntervalSegments(scope: Scope): TemporalIntervalWithEntit
 		getTimelineSegments(associatedTimeIntervals),
 	);
 
-	const activeCueTimeIntervals = timeIntervals.filter(
-		([, , attr]) => attr & ActiveTemporalEntities.CUE,
-	);
+	/**
+	 * For §11.1.2:
+	 *
+	 * > [...] a region that is temporally inactive must not produce any
+	 * > visible marks when presented on a visual medium.
+	 *
+	 * During ISD construction, in §11.3.1.3:
+	 *
+	 * > For each temporally active region R, replicate the sub-tree [...]
+	 * > evaluating this sub-tree in a postorder traversal, prune elements if [...]
+	 * > - they are temporally inactive;
+	 *
+	 * So, these are the temporal active cues intervals.
+	 */
+	return timeIntervals.filter(([, , attr]) => {
+		if (region && !(attr & ActiveTemporalEntities.REGION)) {
+			return false;
+		}
 
-	if (!activeCueTimeIntervals.length) {
-		/**
-		 * This could happen because we got a cue with
-		 * a duration of 0s (e.g. begin of 0s and sequential
-		 * timeContainer, which leads to 0s).
-		 *
-		 * In that case, the cue would never get rendered.
-		 *
-		 * So, what's the difference between emitting a cue
-		 * that lasts 0s and not emitting one at all?
-		 * Probably just the fact that it could get debugged
-		 * and inspected and nothing else.
-		 *
-		 * For this reason, in this case we are returning
-		 * the [0s, 0s]. But one day we might decide to
-		 * remove it.
-		 */
-
-		return [
-			[
-				associatedTimeIntervals[0]![0],
-				associatedTimeIntervals[0]![1],
-				ActiveTemporalEntities.CUE,
-				[],
-			],
-		];
-	}
-
-	return activeCueTimeIntervals;
+		return Boolean(attr & ActiveTemporalEntities.CUE);
+	});
 }
 
 /**
