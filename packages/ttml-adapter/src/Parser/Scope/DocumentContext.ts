@@ -1,10 +1,10 @@
-import type { Context, ContextFactory, Scope } from "./Scope";
+import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../Units/lwsp.js";
 import { asNumbers } from "../Units/number.js";
-import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree";
-import type { Token } from "../Token";
+import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree.js";
+import type { Token } from "../Token.js";
 
 const documentContextSymbol = Symbol("document");
 

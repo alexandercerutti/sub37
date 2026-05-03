@@ -1,4 +1,4 @@
-import type { TimeDetails } from "../TimeBase";
+import type { TimeDetails } from "../TimeBase/index.js";
 
 /**
  * Given frames string (from matched regex) and the subframes

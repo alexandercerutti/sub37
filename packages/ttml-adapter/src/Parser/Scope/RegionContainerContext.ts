@@ -1,24 +1,24 @@
 import type { Region } from "@sub37/server";
 import { Entities } from "@sub37/server";
-import { NodeWithRelationship } from "../Tags/NodeTree";
-import type { Token } from "../Token";
-import { isUniquelyAnnotatedNode } from "../Token";
-import type { Context, ContextFactory, Scope } from "./Scope";
+import { NodeWithRelationship } from "../Tags/NodeTree.js";
+import type { Token } from "../Token.js";
+import { isUniquelyAnnotatedNode } from "../Token.js";
+import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { createScope, isolateContext, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { isStyleAttribute } from "../parseStyle";
+import { isStyleAttribute } from "../parseStyle.js";
 import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
-} from "./StyleContainerContext";
-import type { StyleContainerContextState, TTMLStyle } from "./StyleContainerContext";
-import type { TimeContextData } from "./TimeContext";
+} from "./StyleContainerContext.js";
+import type { StyleContainerContextState, TTMLStyle } from "./StyleContainerContext.js";
+import type { TimeContextData } from "./TimeContext.js";
 import { createTimeContext, readScopeTimeContext } from "./TimeContext.js";
 import {
 	Animation,
 	AnimationContainerContextState,
 	createAnimationContainerContext,
 	readScopeAnimationContext,
-} from "./AnimationContainerContext";
+} from "./AnimationContainerContext.js";
 
 const regionContextSymbol = Symbol("region");
 

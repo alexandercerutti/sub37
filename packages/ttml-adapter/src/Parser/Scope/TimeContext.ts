@@ -4,7 +4,7 @@ import { matchClockTimeExpression } from "../TimeExpressions/matchers/clockTime.
 import { matchOffsetTimeExpression } from "../TimeExpressions/matchers/offsetTime.js";
 import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallclockTime.js";
 import { readScopeDocumentContext } from "./DocumentContext.js";
-import type { Context, ContextFactory, Scope } from "./Scope";
+import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onMergeSymbol } from "./Scope.js";
 
 const timeContextSymbol = Symbol("time");

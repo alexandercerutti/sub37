@@ -1,7 +1,7 @@
-import { KeyTimesAscendingOrderViolationError } from "./KeyTimesAscendingOrderViolationError";
-import { KeyTimesComponentOutOfBoundaryError } from "./KeyTimesComponentOutOfBoundaryError";
-import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError";
-import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError";
+import { KeyTimesAscendingOrderViolationError } from "./KeyTimesAscendingOrderViolationError.js";
+import { KeyTimesComponentOutOfBoundaryError } from "./KeyTimesComponentOutOfBoundaryError.js";
+import { KeyTimesFirstValueNotZeroError } from "./KeyTimesFirstValueNotZeroError.js";
+import { KeyTimesLastValueNotOneError } from "./KeyTimesLastValueNotOneError.js";
 
 /**
  *

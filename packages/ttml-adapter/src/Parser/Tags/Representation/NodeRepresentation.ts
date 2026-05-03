@@ -1,4 +1,4 @@
-import type { DestinationFactory, Matchable } from "../../structure/kleene";
+import type { DestinationFactory, Matchable } from "../../structure/kleene.js";
 
 export type NodeRepresentation<T extends string> = Matchable<{
 	nodeName: T | null;

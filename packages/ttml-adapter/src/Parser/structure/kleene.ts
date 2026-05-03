@@ -1,4 +1,4 @@
-import { MinimumElementViolationError } from "./MinimumElementViolationError";
+import { MinimumElementViolationError } from "./MinimumElementViolationError.js";
 
 const operatorSymbol = Symbol("kleene.operator");
 const usagesSymbol = Symbol("kleene.counter");

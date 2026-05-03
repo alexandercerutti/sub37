@@ -1,7 +1,7 @@
-import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp";
-import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotMatchingKeyTimesError";
-import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError";
-import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError";
+import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
+import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotMatchingKeyTimesError.js";
+import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError.js";
+import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError.js";
 
 export type Spline = [x1: number, y1: number, x2: number, y2: number];
 

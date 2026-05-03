@@ -7,7 +7,7 @@ import {
 	resolveStyleDefinitionByName,
 	styleAppliesToElement,
 } from "../parseStyle.js";
-import type { Context, ContextFactory, Scope } from "./Scope";
+import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const styleContextSymbol = Symbol("style");

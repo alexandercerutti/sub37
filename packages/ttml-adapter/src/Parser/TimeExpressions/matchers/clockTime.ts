@@ -6,7 +6,7 @@ import {
 	SECONDS_REGEX,
 	SUBFRAMES_REGEX,
 } from "../../Units/time.js";
-import type { Unit } from "../../Units/unit";
+import type { Unit } from "../../Units/unit.js";
 import { createUnit } from "../../Units/unit.js";
 
 /**

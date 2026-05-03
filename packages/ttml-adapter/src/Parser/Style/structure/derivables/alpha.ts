@@ -1,5 +1,5 @@
-import { DerivationState } from "../operators";
-import type { Derivable, DerivationResult, DerivedValue } from "../operators";
+import { DerivationState } from "../operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
 
 export function alpha(): Derivable<"<alpha>", DerivedValue<"alpha", number>> {
 	return Object.create(null, {
