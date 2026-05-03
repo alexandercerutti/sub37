@@ -247,23 +247,25 @@ describe("Scope and contexts", () => {
 		it("should merge multiple style contexts on the same scope", () => {
 			const scope = createScope(
 				undefined,
-				createStyleContainerContext({
-					t1: {
+				createStyleContainerContext([
+					{
 						"xml:id": "t1",
 						"tts:textColor": "blue",
 						"tts:backgroundColor": "rose",
+						kind: "inline",
 					},
-				}),
-				createStyleContainerContext({
-					t2: {
+				]),
+				createStyleContainerContext([
+					{
 						"xml:id": "t2",
 						"tts:textColor": "blue",
+						kind: "inline",
 					},
-				}),
+				]),
 			);
 
 			expect(readScopeStyleContainerContext(scope).getStyleByIDRef("t1")).toMatchObject({
-				id: "t1",
+				"xml:id": "t1",
 				styleAttributes: {
 					"tts:textColor": "blue",
 					"tts:backgroundColor": "rose",
@@ -271,7 +273,7 @@ describe("Scope and contexts", () => {
 			});
 
 			expect(readScopeStyleContainerContext(scope).getStyleByIDRef("t2")).toMatchObject({
-				id: "t2",
+				"xml:id": "t2",
 				styleAttributes: {
 					"tts:textColor": "blue",
 				},
