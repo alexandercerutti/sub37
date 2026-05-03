@@ -7,18 +7,21 @@ export interface Visitor<T extends Matchable> {
 export function createVisitor<T extends Matchable>(node: T): Visitor<T> {
 	const destinations = node.destinationFactory() ?? [];
 
+	let currentIndex = 0;
+
 	return {
 		match(nodeName: string): T | null {
-			let currentIndex = 0;
+			let currentElementIndex = currentIndex;
 
-			while (currentIndex < destinations.length) {
-				const dest = destinations[currentIndex] as T;
+			while (currentElementIndex < destinations.length) {
+				const dest = destinations[currentElementIndex] as T;
 
 				if (!dest.matches(nodeName)) {
-					currentIndex++;
+					currentElementIndex++;
 					continue;
 				}
 
+				currentIndex = currentElementIndex;
 				return dest;
 			}
 
