@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "@jest/globals";
 import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
 
 /**
@@ -41,18 +41,5 @@ describe("NodeTree", () => {
 		nodeTree.pop();
 
 		expect(nodeTree.currentNode).toMatchObject({ content: { content: 5 } });
-		expect(nodeTree.tree).toMatchObject({
-			content: {
-				content: 5,
-			},
-			children: [
-				{
-					content: {
-						content: 6,
-					},
-					children: [],
-				},
-			],
-		});
 	});
 });

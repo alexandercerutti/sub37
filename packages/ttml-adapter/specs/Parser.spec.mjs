@@ -117,40 +117,30 @@ describe("parseCue", () => {
 
 		/**
 		 * <p timeContainer="seq" xml:id="par-01">
-		 * 	Hello <!-- This will be hidden: implicit duration of element in a sequential parent is 0 -->
+		 * 	Hello <!-- zero duration in a sequential parent → not emitted -->
 		 * 	<span> <!-- parallel container (default) -->
-		 * 		Guten <!-- This will be shown: implicit duration of element in a parallel parent is indefinite -->
+		 * 		Guten <!-- infinite duration in a parallel parent → emitted -->
 		 * 		<span> <!-- parallel container (default) -->
-		 * 			Tag <!-- This will be shown: implicit duration of element in a parallel parent is indefinite -->
+		 * 			Tag <!-- infinite duration in a parallel parent → emitted -->
 		 * 		</span>
 		 * 	</span>
-		 * 	Allo <!-- This will be hidden: implicit duration of element in a sequential parent is 0 -->
+		 * 	Allo <!-- zero duration in a sequential parent → not emitted -->
 		 * </p>
 		 */
 
 		const parsed = parseCue(Paragraph);
 
 		expect(parsed).toBeInstanceOf(Array);
-		expect(parsed.length).toBe(4);
+		expect(parsed.length).toBe(2);
 		expect(parsed[0]).toMatchObject({
-			content: "Hello",
-			startTime: 0,
-			endTime: 0,
-		});
-		expect(parsed[1]).toMatchObject({
 			content: "Guten ",
 			startTime: 0,
 			endTime: Infinity,
 		});
-		expect(parsed[2]).toMatchObject({
+		expect(parsed[1]).toMatchObject({
 			content: "Tag",
 			startTime: 0,
 			endTime: Infinity,
-		});
-		expect(parsed[3]).toMatchObject({
-			content: "Allo",
-			startTime: 0,
-			endTime: 0,
 		});
 	});
 

@@ -2,25 +2,6 @@ import { describe, it, expect } from "@jest/globals";
 import { Entities } from "@sub37/server";
 import TTMLAdapter from "../lib/Adapter.js";
 
-/**
- * - A document without tt, is not considered a valid document
- *
- * - An XML that does not contain a <tt> element, should throw an error
- *
- * - A style tag gets correctly inherited by another style tag
- * - A style tag gets correctly inherited by a style tag inside a region
- * - A style tag places inside a region should not get inherited
- * - A style tag with an already available id should get a new one (todo: test tree equals --1, --2, --3)
- *
- * - A region tag should be parsed correctly only in layout/head and if it both a self-closing tag or not.
- * - A style tag should be parsed correctly only in stylings and if it both a self-closing tag or not.
- *
- * - Timings:
- * 		- On an element specifying both "dur" and "end", should win the
- * 				Math.min(dur, end - begin). Test both cases.
- * 		- `referenceBegin` on `media` with par and seq
- */
-
 // https://developer.mozilla.org/en-US/docs/Related/IMSC/Subtitle_placement
 
 describe("Adapter", () => {
@@ -227,6 +208,30 @@ describe("Adapter", () => {
 						endTime: 3000,
 					});
 				});
+
+				it("should offset each paragraph begin by the accumulated duration of its preceding siblings in a sequential container", () => {
+					/**
+					 * referenceBegin for seq containers:
+					 * each child element's begin is relative to the end
+					 * of the previous sibling (accumulated offset).
+					 */
+					const adapter = new TTMLAdapter();
+					const { data: cues } = adapter.parse(`
+					<tt ttp:timeBase="media" xml:lang="">
+						<body>
+							<div begin="0s" timeContainer="seq">
+								<p dur="3s">First</p>
+								<p dur="2s">Second</p>
+							</div>
+						</body>
+					</tt>
+				`);
+
+					expect(cues.length).toBe(2);
+					expect(cues[0]).toMatchObject({ startTime: 0, endTime: 3000 });
+					/* referenceBegin for Second = end of First = 3s */
+					expect(cues[1]).toMatchObject({ startTime: 3000, endTime: 5000 });
+				});
 			});
 		});
 
@@ -400,7 +405,26 @@ describe("Adapter", () => {
 			);
 		});
 
-		it.todo("should use inline styles");
+		it("should apply inline tts:* styles from a span element onto the cue", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head><layout><region xml:id="r1" /></layout></head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s">
+								<span tts:color="blue" tts:fontSize="14px">Hello</span>
+							</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = cue?.entities.find(Entities.isLocalStyleEntity)?.styles;
+			expect(styles?.["color"]).toBe("blue");
+			expect(styles?.["font-size"]).toBe("14px");
+		});
 	});
 
 	describe("Regions", () => {
@@ -495,41 +519,6 @@ describe("Adapter", () => {
 				content: "Content of span el2 flowed in the inline region",
 			});
 		});
-
-		it.todo(
-			"Should parse and provide region styles" /*() => {
-			const track = `
-<tt xml:lang="en">
-	<head>
-		<styling>
-			<style xml:id="inheritable_style_1" />
-			<style xml:id="inheritable_style_2" />
-			<style xml:id="inheritable_style_3" />
-		</styling>
-		<layout>
-			<region xml:id="region_1">
-				<style tts:backgroundColor="black" />
-				<style tts:color="white" />
-				<style tts:border="red" />
-			</region>
-		</layout>
-	</head>
-	<body>
-			<div>
-				<p region="region_1">
-					Yep, that's me
-					<span>The span you were looking</span>
-					for.
-				</p>
-			</div>
-	</body>
-</tt>`;
-
-			const adapter = new TTMLAdapter();
-
-			adapter.parse(track);
-		}*/,
-		);
 
 		it("should assign the span's region to the cue when region is on a deeply nested span (ISD rule 3)", () => {
 			const adapter = new TTMLAdapter();
@@ -916,13 +905,60 @@ describe("Adapter", () => {
 			expect(styles["font-size"]).toBeUndefined();
 			expect(styles["opacity"]).toBe("0.8");
 		});
+
+		it("does not expose a style defined inside a region to elements outside it", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<layout>
+							<region xml:id="r1">
+								<style xml:id="s1" tts:color="red" />
+							</region>
+							<region xml:id="r2" />
+						</layout>
+					</head>
+					<body>
+						<div region="r2">
+							<!-- s1 is scoped to r1; referencing it from r2 should silently fail -->
+							<p begin="0s" end="1s" style="s1">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			expect(styles?.["color"]).toBeUndefined();
+		});
+
+		it("should allow a region-nested style to inherit from a global style via the style attribute", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style xml:id="global" tts:color="red" />
+						</styling>
+						<layout>
+							<region xml:id="r1">
+								<style xml:id="s1" style="global" tts:fontSize="12px" />
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s1">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			/* s1 defines fontSize; it inherits color from the global out-of-line style */
+			expect(styles?.["color"]).toBe("red");
+			expect(styles?.["font-size"]).toBe("12px");
+		});
 	});
 });
-
-/**
- * @TODO add tests for
- *
- *  - div with multiple regions (only the first should be used)
- *  - p with multiple regions (only the first should be used)
- *  - Nested div and p with a region each, both should be applied to the outcoming cue
- */
