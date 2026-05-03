@@ -1,4 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
+import { Entities } from "@sub37/server";
 import TTMLAdapter from "../lib/Adapter.js";
 
 /**
@@ -759,6 +760,161 @@ describe("Adapter", () => {
 				const textCues = cues.filter((c) => c.content.trim().length > 0);
 				expect(textCues.every((c) => c.content.trim() !== "Never shown")).toBe(true);
 			});
+		});
+	});
+
+	describe("Style inheritance", () => {
+		function getStyleEntity(cue) {
+			return cue.entities.find(Entities.isLocalStyleEntity);
+		}
+
+		it("merges a linear style chain onto the cue", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style xml:id="s1" tts:color="red" />
+							<style xml:id="s2" style="s1" tts:fontSize="12px" />
+							<style xml:id="s3" style="s2" tts:fontWeight="bold" />
+						</styling>
+						<layout><region xml:id="r1" /></layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s3">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			expect(styles["color"]).toBe("red");
+			expect(styles["font-size"]).toBe("12px");
+		});
+
+		it("own attributes override inherited ones", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style
+								xml:id="s1"
+								tts:fontSize="12px"
+								tts:color="red"
+							/>
+							<style
+								xml:id="s2"
+								style="s1" 
+								tts:color="blue"
+							/>
+						</styling>
+						<layout><region xml:id="r1" /></layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s2">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			expect(styles["color"]).toBe("blue");
+			expect(styles["font-size"]).toBe("12px");
+		});
+
+		it("resolves a diamond dependency without duplicating properties", () => {
+			/**
+			 *    s1
+			 *   /  \
+			 * s2    s3
+			 *   \  /
+			 *    s4
+			 */
+
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style xml:id="s1" tts:color="red" />
+							<style xml:id="s2" style="s1" tts:fontSize="12px" />
+							<style xml:id="s3" style="s1" tts:opacity="0.5" />
+							<style xml:id="s4" style="s2 s3" tts:backgroundColor="white" />
+						</styling>
+						<layout><region xml:id="r1" /></layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s4">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			expect(styles["color"]).toBe("red");
+			expect(styles["font-size"]).toBe("12px");
+			expect(styles["opacity"]).toBe("0.5");
+			expect(styles["background-color"]).toBe("white");
+		});
+
+		it("merges multiple directly referenced styles onto the cue", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style xml:id="s1" tts:color="red" tts:fontSize="12px" />
+							<style xml:id="s2" tts:opacity="0.5" tts:fontSize="16px" />
+						</styling>
+						<layout><region xml:id="r1" /></layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s1 s2">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			expect(styles["color"]).toBe("red");
+			expect(styles["opacity"]).toBe("0.5");
+		});
+
+		it("ignores cyclic style references", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en">
+					<head>
+						<styling>
+							<style xml:id="s1" style="s2" tts:color="red" />
+							<style xml:id="s2" style="s1" tts:fontSize="12px" />
+							<style xml:id="s3" tts:opacity="0.8" />
+						</styling>
+						<layout><region xml:id="r1" /></layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" end="1s" style="s3">Hello</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const cue = cues.find((c) => c.content.trim() === "Hello");
+			const styles = getStyleEntity(cue)?.styles;
+			/* s1 and s2 form a cycle — neither resolves, only s3 (independent) contributes */
+			expect(styles["color"]).toBeUndefined();
+			expect(styles["font-size"]).toBeUndefined();
+			expect(styles["opacity"]).toBe("0.8");
 		});
 	});
 });
