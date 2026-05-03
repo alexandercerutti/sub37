@@ -635,7 +635,7 @@ describe("Adapter", () => {
 
 			expect(region).toBeDefined();
 			expect(region.getOrigin()).toEqual(["10%", "20%"]);
-			expect(region.width).toBe(80);
+			expect(region.width).toBe("80%");
 		});
 	});
 
