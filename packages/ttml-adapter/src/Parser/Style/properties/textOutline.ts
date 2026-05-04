@@ -59,11 +59,11 @@ export function validateAnimation(
 		const currentComputedThickness = thickness?.value.value.toString();
 		const currentComputedBlurRadius = blurRadius?.value.value.toString() || "0px";
 
-		if (thickness?.value.toString() !== previousThickness) {
+		if (thickness?.value.value.toString() !== previousThickness) {
 			return false;
 		}
 
-		if ((blurRadius?.value.toString() || "0px") !== previousBlurRadius) {
+		if ((blurRadius?.value.value.toString() || "0px") !== previousBlurRadius) {
 			return false;
 		}
 
@@ -87,8 +87,26 @@ function replaceNoneWithEquivalent(
 	 */
 
 	return [
-		{ type: "outline-color", value: { type: "color", value: "transparent" } },
-		{ type: "outline-thickness", value: { type: "length", value: createUnit(0, "px") } },
-		{ type: "outline-blur-radius", value: { type: "length", value: createUnit(0, "px") } },
+		{
+			type: "outline-color",
+			value: {
+				type: "color",
+				value: "transparent",
+			},
+		},
+		{
+			type: "outline-thickness",
+			value: {
+				type: "length",
+				value: createUnit(0, "px"),
+			},
+		},
+		{
+			type: "outline-blur-radius",
+			value: {
+				type: "length",
+				value: createUnit(0, "px"),
+			},
+		},
 	];
 }

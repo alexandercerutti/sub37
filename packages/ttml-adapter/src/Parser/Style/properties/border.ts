@@ -18,10 +18,10 @@ export function cssTransform(
 		if (isBorderColor(output)) {
 			borderColor = output.value.value;
 		} else if (isBorderStyle(output)) {
-			const nakedValue = output.value[0].value;
+			const nakedValue = output.value.value;
 			borderStyle = nakedValue;
 		} else if (isBorderWidth(output)) {
-			const nakedValue = output.value[0].value;
+			const nakedValue = output.value.value;
 			borderWidth = nakedValue.toString();
 		} else if (isBorderRadius(output)) {
 			borderRadius = output.value;
@@ -98,7 +98,7 @@ export function validateAnimation(
 		for (const output of keyframe) {
 			switch (true) {
 				case isBorderStyle(output): {
-					const nakedValue = output.value[0].value;
+					const nakedValue = output.value.value;
 					borderStyle = nakedValue;
 
 					if (borderStyle !== previousBorderStyle) {
@@ -109,7 +109,7 @@ export function validateAnimation(
 				}
 
 				case isBorderWidth(output): {
-					const nakedValue = output.value[0].value;
+					const nakedValue = output.value.value;
 					borderWidth = nakedValue.toString();
 
 					if (borderWidth !== previousBorderWidth) {

@@ -8,7 +8,7 @@ export { TextEmphasisGrammar as Grammar } from "../syntax/text-emphasis.js";
 type GetValuesForTEProperty<Prop extends string> = Extract<
 	InferDerivableValue<typeof TextEmphasisGrammar>[number],
 	{ type: Prop }
->["value"][number]["value"];
+>["value"]["value"];
 
 type TextEmphasisStyleValues = GetValuesForTEProperty<"text-emphasis-style">;
 type TextEmphasisPositionValues = GetValuesForTEProperty<"text-emphasis-position">;
@@ -27,17 +27,17 @@ export function cssTransform(
 	for (const item of value) {
 		switch (item.type) {
 			case "text-emphasis-color": {
-				color = item.value[0].value;
+				color = item.value.value;
 				break;
 			}
 
 			case "text-emphasis-style": {
-				style = item.value[0].value;
+				style = item.value.value;
 				break;
 			}
 
 			case "text-emphasis-position": {
-				position = item.value[0].value;
+				position = item.value.value;
 				break;
 			}
 		}
@@ -72,7 +72,7 @@ export function validateAnimation(
 		for (const item of keyframe) {
 			switch (item.type) {
 				case "text-emphasis-style": {
-					currentKeyframeStyle = item.value[0].value;
+					currentKeyframeStyle = item.value.value;
 
 					if (currentKeyframeStyle !== previousKeyframeStyle) {
 						return false;
@@ -82,7 +82,7 @@ export function validateAnimation(
 				}
 
 				case "text-emphasis-position": {
-					currentKeyframePosition = item.value[0].value;
+					currentKeyframePosition = item.value.value;
 
 					if (currentKeyframePosition !== previousKeyframePosition) {
 						return false;

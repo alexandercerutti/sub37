@@ -1,9 +1,13 @@
-import type { Derivable, DerivationResult } from "../operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
 import { isRejected } from "../operators.js";
 
 /**
- * Wraps the result values in an object { type: tagName, value: originalValue }
+ * Wraps the single result value in an object { type: tagName, value: originalValue }
  * and changes the type value to the given tagName for debug purposes.
+ *
+ * Only accepts derivables that produce a single DerivedValue per token
+ * (primitives and oneOf selections). sequence and someOf are excluded
+ * because they accumulate multiple values.
  *
  * @param tagName
  * @param node
@@ -11,7 +15,7 @@ import { isRejected } from "../operators.js";
  */
 export function as<const N extends string, D>(
 	tagName: N,
-	node: Derivable<string, D>,
+	node: Derivable<string, D extends DerivedValue<string, unknown> ? D : never>,
 ): Derivable<N, { type: N; value: D }> {
 	return Object.create(null, {
 		type: {
@@ -29,7 +33,7 @@ export function as<const N extends string, D>(
 				if (result.values) {
 					return {
 						...result,
-						values: [{ type: tagName, value: result.values }],
+						values: [{ type: tagName, value: result.values[0] }],
 					};
 				}
 

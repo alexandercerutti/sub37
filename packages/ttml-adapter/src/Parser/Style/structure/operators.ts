@@ -236,9 +236,11 @@ export function sequence<const D extends Derivable<string, unknown>[]>(
 	} satisfies { [K in keyof Derivable]: TypedPropertyDescriptor<Derivable[K]> });
 }
 
-export function oneOf<const D extends Derivable[]>(
+type MinimumTwoDerivables = [Derivable, Derivable, ...Derivable[]];
+
+export function oneOf<const D extends MinimumTwoDerivables>(
 	nodes: D,
-): Derivable<"|", InferDerivableValue<D[number]>> {
+): Derivable<"|", D[number] extends Derivable<string, infer R> ? R : never> {
 	return Object.create(null, {
 		type: {
 			value: "|",
@@ -300,7 +302,9 @@ export function oneOf<const D extends Derivable[]>(
 				if (doneResults.length) {
 					return {
 						state: DerivationState.DERIVED,
-						nextNode: zeroOrOne(oneOf(derivedResults.map((result) => result.nextNode))),
+						nextNode: zeroOrOne(
+							oneOf(derivedResults.map((result) => result.nextNode) as MinimumTwoDerivables),
+						),
 						// All the doneResults are expected to have returned the same values conversions
 						values: doneResults[0]!.values,
 					};
@@ -309,11 +313,13 @@ export function oneOf<const D extends Derivable[]>(
 				/**
 				 * None of the successful patterns are done,
 				 * we still need to find at least one done.
+				 * derivedResults.length >= 2 here since successResults.length >= 2
+				 * and all results are derived (doneResults is empty).
 				 */
 
 				return {
 					state: DerivationState.DERIVED,
-					nextNode: oneOf(derivedResults.map((result) => result.nextNode)),
+					nextNode: oneOf(derivedResults.map((result) => result.nextNode) as MinimumTwoDerivables),
 					// All the derivedResults are expected to have returned the same values conversions
 					values: derivedResults[0]!.values,
 				};

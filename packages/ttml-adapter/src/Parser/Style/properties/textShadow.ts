@@ -79,6 +79,9 @@ export function validateAnimation(
 	 *
 	 * We need to check other components for presence in all keyframes.
 	 * They must not change. They cannot be none.
+	 *
+	 * Each shadow is made of a sequence of four components, plus a comma
+	 * as a separator when multiple shadows occur.
 	 */
 	const SHADOW_COMPONENTS_TOTAL_WITH_COMMA = 5;
 
@@ -87,11 +90,13 @@ export function validateAnimation(
 	for (let i = 1; i < keyframes.length; i++) {
 		const currentShadow = replaceNoneWithEquivalent(keyframes[i]!);
 
-		const currentAmountOfCommaSeparatedShadows =
-			currentShadow.length / SHADOW_COMPONENTS_TOTAL_WITH_COMMA;
+		const currentAmountOfCommaSeparatedShadows = Math.ceil(
+			currentShadow.length / SHADOW_COMPONENTS_TOTAL_WITH_COMMA,
+		);
 
-		const previousAmountOfCommaSeparatedShadows =
-			previousShadow.length / SHADOW_COMPONENTS_TOTAL_WITH_COMMA;
+		const previousAmountOfCommaSeparatedShadows = Math.ceil(
+			previousShadow.length / SHADOW_COMPONENTS_TOTAL_WITH_COMMA,
+		);
 
 		if (currentAmountOfCommaSeparatedShadows !== previousAmountOfCommaSeparatedShadows) {
 			return false;
