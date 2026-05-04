@@ -290,7 +290,7 @@ function getValidAnimationParsedStylesFrames(
 			continue animationValueListsLoop;
 		}
 
-		const keyframes: DerivedValue[][] = [];
+		const keyframes: (DerivedValue | undefined)[][] = [];
 		const attribute = resolveStyleDefinitionByName(name);
 		const Syntax = attribute.syntax;
 
@@ -302,7 +302,7 @@ function getValidAnimationParsedStylesFrames(
 				continue animationValueListsLoop;
 			}
 
-			keyframes.push(parsingOutcome.filter((v): v is DerivedValue => Boolean(v)));
+			keyframes.push(parsingOutcome);
 		}
 
 		if (typeof Syntax.validateAnimation === "function") {
@@ -315,7 +315,7 @@ function getValidAnimationParsedStylesFrames(
 		}
 
 		const existingStyles = stylesMap.get(name) || [];
-		existingStyles.push(...keyframes);
+		existingStyles.push(...keyframes.filter((kf): kf is DerivedValue[] => !!kf));
 		stylesMap.set(name, existingStyles);
 	}
 
