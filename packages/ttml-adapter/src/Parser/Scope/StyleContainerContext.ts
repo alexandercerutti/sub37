@@ -7,6 +7,7 @@ import {
 	resolveStyleDefinitionByName,
 	styleAppliesToElement,
 } from "../parseStyle.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
@@ -46,6 +47,9 @@ export function createStyleContainerContext(
 	registeredStyles: StyleContainerContextState[],
 ): ContextFactory<StyleContainerContext> {
 	return function (scope: Scope) {
+		const errorContext = readScopeErrorContext(scope)!;
+		const onErrorReport = (error: Error) => errorContext.report(error, false);
+
 		/**
 		 * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#semantics-style-association-chained-referential
 		 */
@@ -53,7 +57,6 @@ export function createStyleContainerContext(
 
 		function processStyles(
 			stylesAttributesList: StyleContainerContextState[],
-			scope: Scope,
 			retriveExternalStyle: (idref: string) => Record<string, string> | undefined,
 		): void {
 			const stylesIDREFSQueuedStorage = new Map<string, QueuedStorageValues>();
@@ -64,7 +67,10 @@ export function createStyleContainerContext(
 			 */
 			for (const styleAttributes of stylesAttributesList) {
 				if (!isUniquelyAnnotatedNode(styleAttributes)) {
-					console.warn("Style with unknown 'xml:id' attribute, got ignored.");
+					errorContext.report(
+						new Error(`Style with non-unique or missing 'xml:id' attribute, got ignored.`),
+						false,
+					);
 					continue;
 				}
 
@@ -77,6 +83,7 @@ export function createStyleContainerContext(
 			const stylesByTopology = processStylesByTopology(
 				stylesIDREFSQueuedStorage,
 				retriveExternalStyle,
+				onErrorReport,
 			);
 
 			for (const [id, styleAttributes] of stylesByTopology) {
@@ -99,12 +106,12 @@ export function createStyleContainerContext(
 				return registeredStyles;
 			},
 			[onAttachedSymbol]() {
-				processStyles(this.args, scope, (idref) => {
+				processStyles(this.args, (idref) => {
 					return this.getStyleByIDRef(idref)?.styleAttributes;
 				});
 			},
 			[onMergeSymbol](incomingContext: StyleContainerContext): void {
-				processStyles(incomingContext.args, scope, (idref) => {
+				processStyles(incomingContext.args, (idref) => {
 					return this.getStyleByIDRef(idref)?.styleAttributes;
 				});
 			},
@@ -118,7 +125,10 @@ export function createStyleContainerContext(
 				const styleFromParent = this.parent?.getStyleByIDRef(idref);
 
 				if (!styleFromParent) {
-					console.warn(`Cannot retrieve style id '${idref}'. Not provided.`);
+					errorContext.report(
+						new Error(`Cannot retrieve style id '${idref}'. Not provided.`),
+						false,
+					);
 					return undefined;
 				}
 
@@ -220,6 +230,7 @@ function buildStylesTopology(
 function processStylesByTopology(
 	stylesIDREFSQueuedStorage: Map<string, QueuedStorageValues>,
 	retrieveExternalStyle: (idref: string) => Record<string, string> | undefined,
+	onErrorReport: (error: Error) => void,
 ) {
 	const { inDegreeNodes, reverseDependencyList } = buildStylesTopology(stylesIDREFSQueuedStorage);
 
@@ -263,8 +274,10 @@ function processStylesByTopology(
 				continue;
 			}
 
-			console.warn(
-				`Style '${id}' has a dependency on style '${idref}' that cannot be resolved. It will be ignored.`,
+			onErrorReport(
+				new Error(
+					`Style '${id}' has a dependency on style '${idref}' that cannot be resolved. It will be ignored.`,
+				),
 			);
 		}
 
@@ -300,7 +313,7 @@ function processStylesByTopology(
 			continue;
 		}
 
-		console.warn(`Style '${id}' forms a cyclic reference. Will be ignored.`);
+		onErrorReport(new Error(`Style '${id}' forms a cyclic reference. Will be ignored.`));
 	}
 
 	return resolvedStyles;
@@ -332,13 +345,8 @@ function createTTMLStyle(
 	kind: "inline" | "referential" | "nested",
 	attributes: Record<string, string>,
 	scope: Scope,
-): TTMLStyle | undefined {
-	if (!id) {
-		console.warn("Style with unknown 'xml:id' attribute, got ignored.");
-		return undefined;
-	}
-
-	const style = {
+): TTMLStyle {
+	return {
 		"xml:id": id,
 		kind,
 		styleAttributes: attributes,
@@ -346,8 +354,6 @@ function createTTMLStyle(
 			return convertAttributesToCSS(this.styleAttributes, scope, element);
 		},
 	};
-
-	return style;
 }
 
 function extractStyleAttributes(

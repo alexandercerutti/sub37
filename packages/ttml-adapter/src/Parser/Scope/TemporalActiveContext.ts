@@ -15,6 +15,7 @@ import { readScopeAnimationContext } from "./AnimationContainerContext.js";
 import type { Animation } from "./AnimationContainerContext.js";
 import { readScopeStyleContainerContext } from "./StyleContainerContext.js";
 import type { TTMLStyle } from "./StyleContainerContext.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 
 const temporalActiveContextSymbol = Symbol("temporal.active.context");
 
@@ -50,6 +51,9 @@ export function createTemporalActiveContext(
 	initParams: TemporalActiveInitParams,
 ): ContextFactory<TemporalActiveContext> {
 	return function (scope: Scope) {
+		const errorContext = readScopeErrorContext(scope)!;
+		const onErrorReport = (error: Error) => errorContext.report(error, false);
+
 		const store: TemporalActiveContextState = {
 			styles: [],
 			region: undefined,
@@ -75,24 +79,32 @@ export function createTemporalActiveContext(
 				return initParams;
 			},
 			[onAttachedSymbol](): void {
-				const { regionIDRef, stylesIDRefs = [], animationsIDRefs } = this.args;
+				try {
+					const { regionIDRef, stylesIDRefs = [], animationsIDRefs } = this.args;
 
-				if (regionIDRef) {
-					const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
-					store.styles = store.styles.concat(stylesFromRegion);
+					if (regionIDRef) {
+						const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
+						store.styles = store.styles.concat(stylesFromRegion);
 
-					const regionContext = readScopeRegionContext(scope);
-					store.region = regionContext?.getRegionById(regionIDRef);
-				}
+						const regionContext = readScopeRegionContext(scope);
+						store.region = regionContext?.getRegionById(regionIDRef);
+					}
 
-				if (stylesIDRefs?.length) {
-					const styles = extractActiveStylesFromStyleStore(scope, stylesIDRefs);
-					store.styles = store.styles.concat(styles);
-				}
+					if (stylesIDRefs?.length) {
+						const styles = extractActiveStylesFromStyleStore(scope, stylesIDRefs, onErrorReport);
+						store.styles = store.styles.concat(styles);
+					}
 
-				if (animationsIDRefs?.length) {
-					const animations = extractActiveAnimationsByIdRefs(scope, animationsIDRefs);
-					store.animations = store.animations.concat(animations);
+					if (animationsIDRefs?.length) {
+						const animations = extractActiveAnimationsByIdRefs(
+							scope,
+							animationsIDRefs,
+							onErrorReport,
+						);
+						store.animations = store.animations.concat(animations);
+					}
+				} catch (error) {
+					errorContext.report(error instanceof Error ? error : new Error(String(error)), false);
 				}
 			},
 			[onMergeSymbol](incomingContext: TemporalActiveContext): void {
@@ -111,7 +123,11 @@ export function createTemporalActiveContext(
 				}
 
 				if (incomingStylesIDRefs.length) {
-					const styles = extractActiveStylesFromStyleStore(scope, incomingStylesIDRefs);
+					const styles = extractActiveStylesFromStyleStore(
+						scope,
+						incomingStylesIDRefs,
+						onErrorReport,
+					);
 					const currentStylesIds = new Set(store.styles.map(({ "xml:id": id }) => id));
 
 					for (const style of styles) {
@@ -124,7 +140,11 @@ export function createTemporalActiveContext(
 				}
 
 				if (incomingAnimationsIDRefs?.length) {
-					const animations = extractActiveAnimationsByIdRefs(scope, incomingAnimationsIDRefs);
+					const animations = extractActiveAnimationsByIdRefs(
+						scope,
+						incomingAnimationsIDRefs,
+						onErrorReport,
+					);
 					const currentAnimationsIds = new Set(store.animations.map(({ id }) => id));
 
 					for (const animation of animations) {
@@ -232,7 +252,13 @@ function filterStylesByInheritability(styles: Record<string, string>): Record<st
 	const filteredStyles: Record<string, string> = {};
 
 	for (const styleName of Object.keys(styles)) {
-		if (!isInheritableStyle(resolveStyleDefinitionByName(styleName))) {
+		const definition = resolveStyleDefinitionByName(styleName);
+
+		if (!definition) {
+			continue;
+		}
+
+		if (!isInheritableStyle(definition)) {
 			continue;
 		}
 
@@ -242,7 +268,11 @@ function filterStylesByInheritability(styles: Record<string, string>): Record<st
 	return filteredStyles;
 }
 
-function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): TTMLStyle[] {
+function extractActiveStylesFromStyleStore(
+	scope: Scope,
+	idrefs: string[],
+	onErrorReport: (error: Error) => void,
+): TTMLStyle[] {
 	if (!idrefs?.length) {
 		return [];
 	}
@@ -255,16 +285,20 @@ function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): TTML
 		const recognizedStyle = styleContext?.getStyleByIDRef(style);
 
 		if (!recognizedStyle) {
-			console.warn(
-				`Style with id '${style}' referenced in temporal active context was not found in the document. Ignored.`,
+			onErrorReport(
+				new Error(
+					`Style with id '${style}' referenced in temporal active context was not found in the document. Ignored.`,
+				),
 			);
 
 			continue;
 		}
 
 		if (!allowedKinds.includes(recognizedStyle.kind)) {
-			console.log(
-				`Style with not recognized kind ('${recognizedStyle.kind}') received. Additional style ignored.`,
+			onErrorReport(
+				new Error(
+					`Style with not recognized kind ('${recognizedStyle.kind}') received. Additional style ignored.`,
+				),
 			);
 
 			continue;
@@ -276,7 +310,11 @@ function extractActiveStylesFromStyleStore(scope: Scope, idrefs: string[]): TTML
 	return styles;
 }
 
-function extractActiveAnimationsByIdRefs(scope: Scope, idrefs: string[]): Animation[] {
+function extractActiveAnimationsByIdRefs(
+	scope: Scope,
+	idrefs: string[],
+	onMissingAnimation: (error: Error) => void,
+): Animation[] {
 	const animations: Animation[] = [];
 	const animationContext = readScopeAnimationContext(scope);
 
@@ -284,8 +322,10 @@ function extractActiveAnimationsByIdRefs(scope: Scope, idrefs: string[]): Animat
 		const recognizedAnimation = animationContext?.getAnimationById(idref);
 
 		if (!recognizedAnimation) {
-			console.warn(
-				`Animation with id '${idref}' referenced in temporal active context was not found in the document. Ignored.`,
+			onMissingAnimation(
+				new Error(
+					`Animation with id '${idref}' referenced in temporal active context was not found in the document. Ignored.`,
+				),
 			);
 
 			continue;

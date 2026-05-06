@@ -20,6 +20,7 @@ import {
 	assertKeyTimesEndIsOne,
 	getInferredPacedKeyTimesByAmount,
 } from "../Animations/keyTimes/index.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 
 export interface BaseAnimation {
 	id: string;
@@ -67,6 +68,8 @@ export function createAnimationContainerContext(
 			return null;
 		}
 
+		const errorContext = readScopeErrorContext(scope)!;
+
 		const animationsIDREFSStorage = new Map<string, Animation>();
 
 		return {
@@ -77,52 +80,72 @@ export function createAnimationContainerContext(
 			},
 			[onAttachedSymbol](): void {
 				for (const { calcMode = "linear", attributes } of contextState) {
-					if (!isUniquelyAnnotatedNode(attributes)) {
-						console.warn("Animation with unknown 'xml:id' attribute, got ignored.");
-						continue;
+					try {
+						if (!isUniquelyAnnotatedNode(attributes)) {
+							errorContext.report(
+								new Error("Animation with unknown 'xml:id' attribute, got ignored."),
+								false,
+							);
+							continue;
+						}
+
+						if (animationsIDREFSStorage.has(attributes["xml:id"])) {
+							errorContext.report(
+								new Error(
+									`Animation with duplicate 'xml:id' attribute (${attributes["xml:id"]}), got ignored.`,
+								),
+								false,
+							);
+							continue;
+						}
+
+						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
+						const animation = createAnimation(calcModeFactory, attributes, scope);
+
+						if (!animation) {
+							continue;
+						}
+
+						animationsIDREFSStorage.set(attributes["xml:id"], animation);
+					} catch (err) {
+						errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
 					}
-
-					if (animationsIDREFSStorage.has(attributes["xml:id"])) {
-						console.warn(
-							`Animation with duplicate 'xml:id' attribute (${attributes["xml:id"]}), got ignored.`,
-						);
-						continue;
-					}
-
-					const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-					const animation = createAnimation(calcModeFactory, attributes, scope);
-
-					if (!animation) {
-						continue;
-					}
-
-					animationsIDREFSStorage.set(attributes["xml:id"], animation);
 				}
 			},
 			[onMergeSymbol](incomingContext: AnimationContainerContext): void {
 				const { args } = incomingContext;
 
 				for (const { calcMode = "linear", attributes } of args) {
-					if (!isUniquelyAnnotatedNode(attributes)) {
-						console.warn("Animation with unknown 'xml:id' attribute, got ignored.");
-						continue;
+					try {
+						if (!isUniquelyAnnotatedNode(attributes)) {
+							errorContext.report(
+								new Error("Animation with unknown 'xml:id' attribute, got ignored."),
+								false,
+							);
+							continue;
+						}
+
+						if (animationsIDREFSStorage.has(attributes["xml:id"])) {
+							errorContext.report(
+								new Error(
+									`Animation with duplicate 'xml:id' attribute (${attributes["xml:id"]}), got ignored.`,
+								),
+								false,
+							);
+							continue;
+						}
+
+						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
+						const animation = createAnimation(calcModeFactory, attributes, scope);
+
+						if (!animation) {
+							continue;
+						}
+
+						animationsIDREFSStorage.set(attributes["xml:id"], animation);
+					} catch (err) {
+						errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
 					}
-
-					if (animationsIDREFSStorage.has(attributes["xml:id"])) {
-						console.warn(
-							`Animation with duplicate 'xml:id' attribute (${attributes["xml:id"]}), got ignored.`,
-						);
-						continue;
-					}
-
-					const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-					const animation = createAnimation(calcModeFactory, attributes, scope);
-
-					if (!animation) {
-						continue;
-					}
-
-					animationsIDREFSStorage.set(attributes["xml:id"], animation);
 				}
 			},
 			getAnimationById(id: string | undefined): Animation | undefined {
@@ -149,6 +172,7 @@ function createAnimation(
 	scope: Scope,
 ): Animation | undefined {
 	const animationId = attributes["xml:id"];
+	const errorContext = readScopeErrorContext(scope)!;
 
 	let animation: BaseAnimation | undefined;
 
@@ -159,8 +183,10 @@ function createAnimation(
 			return undefined;
 		}
 	} catch (err) {
-		console.warn(
-			`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
+		reportError(
+			new Error(
+				`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
+			),
 		);
 
 		return undefined;
@@ -171,6 +197,7 @@ function createAnimation(
 		animation.calcMode === "discrete" ? "discrete" : "continuous",
 		animationValueList,
 		animation.keyTimes.length,
+		(error) => errorContext.report(error, false),
 	);
 
 	if (!animation.keyTimes.length) {
@@ -179,8 +206,11 @@ function createAnimation(
 
 		for (const discardedStyle of stylesToDiscard) {
 			stylesFrames.delete(discardedStyle);
-			console.warn(
-				`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in the animation. Ignored.`,
+			errorContext.report(
+				new Error(
+					`Invalid inferred keyTimes: ${discardedStyle} has an incoherent amount of keyframes compared to other styles in the animation. Ignored.`,
+				),
+				false,
 			);
 		}
 
@@ -261,11 +291,12 @@ function getValidAnimationParsedStylesFrames(
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
 	expectedKeytimes: number,
+	reportError: (error: Error) => void,
 ): Map<string, DerivedValue[][]> {
 	const stylesMap = new Map<string, DerivedValue[][]>();
 
 	animationValueListsLoop: for (const [name, animationValueList] of animationValueListByStyleName) {
-		if (!isStyleAnimationCompatible(animatableStyle, name)) {
+		if (!isStyleAnimationCompatible(animatableStyle, name, reportError)) {
 			continue;
 		}
 
@@ -283,8 +314,10 @@ function getValidAnimationParsedStylesFrames(
 		}
 
 		if (expectedKeytimes > 0 && expectedKeytimes !== animationValue.length) {
-			console.warn(
-				`Style '${name}' was specified as animation-value, but the amount of keyTimes (${expectedKeytimes}) does not match the amount of specified animation values (${animationValue.length}). Ignored.`,
+			reportError(
+				new Error(
+					`Style '${name}' was specified as animation-value, but the amount of keyTimes (${expectedKeytimes}) does not match the amount of specified animation values (${animationValue.length}). Ignored.`,
+				),
 			);
 
 			continue animationValueListsLoop;
@@ -292,6 +325,17 @@ function getValidAnimationParsedStylesFrames(
 
 		const keyframes: (DerivedValue | undefined)[][] = [];
 		const attribute = resolveStyleDefinitionByName(name);
+
+		if (!attribute) {
+			reportError(
+				new Error(
+					`Style '${name}' was specified as animation-value, but no definition was found for it. Ignored.`,
+				),
+			);
+
+			continue animationValueListsLoop;
+		}
+
 		const Syntax = attribute.syntax;
 
 		for (const value of animationValue) {
@@ -325,9 +369,21 @@ function getValidAnimationParsedStylesFrames(
 function isStyleAnimationCompatible(
 	animatableStyle: "discrete" | "continuous",
 	styleName: `tts:${string}`,
+	reportError: (error: Error) => void,
 ): boolean {
-	const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(styleName);
-	const isAnimatableContinuously = isPropertyContinuouslyAnimatable(styleName);
+	const definition = resolveStyleDefinitionByName(styleName);
+
+	if (!definition) {
+		reportError(
+			new Error(
+				`Style '${styleName}' was specified as animation-value, but no definition was found for it. Ignored.`,
+			),
+		);
+		return false;
+	}
+
+	const isAnimatableDiscretely = isPropertyDiscretelyAnimatable(definition);
+	const isAnimatableContinuously = isPropertyContinuouslyAnimatable(definition);
 
 	const isAnimatable = isAnimatableDiscretely || isAnimatableContinuously;
 
@@ -336,16 +392,21 @@ function isStyleAnimationCompatible(
 		 * "Targeting a non-animatable style is considered an error and
 		 * must be ignored for the purpose of presentation processing."
 		 */
-		console.warn(
-			`Style '${styleName}' was specified as animation-value, but is not animatable. Ignored.`,
+
+		reportError(
+			new Error(
+				`Style '${styleName}' was specified as animation-value, but is not animatable. Ignored.`,
+			),
 		);
 
 		return false;
 	}
 
 	if (animatableStyle === "discrete" && !isAnimatableDiscretely) {
-		console.warn(
-			`Style '${styleName}' was specified as animation-value with a continuous animatable style, but is not discretely animatable. Ignored.`,
+		reportError(
+			new Error(
+				`Style '${styleName}' was specified as animation-value with a continuous animatable style, but is not discretely animatable. Ignored.`,
+			),
 		);
 
 		return false;

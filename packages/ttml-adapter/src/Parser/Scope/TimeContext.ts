@@ -4,8 +4,9 @@ import { matchClockTimeExpression } from "../TimeExpressions/matchers/clockTime.
 import { matchOffsetTimeExpression } from "../TimeExpressions/matchers/offsetTime.js";
 import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallclockTime.js";
 import { readScopeDocumentContext } from "./DocumentContext.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
-import { onMergeSymbol } from "./Scope.js";
+import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
@@ -70,6 +71,8 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			return null;
 		}
 
+		const errorContext = readScopeErrorContext(scope)!;
+
 		const { attributes: documentAttributes } = readScopeDocumentContext(scope)!;
 
 		const isDurAttributeForbidden =
@@ -78,8 +81,11 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			documentAttributes["ttp:markerMode"] === "discontinuous";
 
 		if (isDurAttributeForbidden) {
-			throw new Error(
-				"Dur attribute cannot be specified when timeBase is set to 'smpte' and marker mode is 'discontinuous' (default).",
+			errorContext.report(
+				new Error(
+					"Dur attribute cannot be specified when timeBase is set to 'smpte' and marker mode is 'discontinuous' (default).",
+				),
+				true,
 			);
 		}
 
@@ -87,10 +93,25 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			? contextInput["timeContainer"]
 			: undefined;
 
+		let begin: number | undefined;
+		let end: number | undefined;
+		let dur: number | undefined;
+
+		try {
+			begin = parseTimeString(contextInput.begin, documentAttributes);
+			end = parseTimeString(contextInput.end, documentAttributes);
+			dur = parseTimeString(contextInput.dur, documentAttributes);
+		} catch (error) {
+			errorContext.report(
+				error instanceof Error ? error : new Error("Unknown error while parsing time attributes."),
+				true,
+			);
+		}
+
 		const state: TimeContextState = {
-			begin: parseTimeString(contextInput.begin, documentAttributes),
-			end: parseTimeString(contextInput.end, documentAttributes),
-			dur: parseTimeString(contextInput.dur, documentAttributes),
+			begin,
+			end,
+			dur,
 			timeContainer,
 		};
 

@@ -36,12 +36,10 @@ export function getAnimationFactoryByCalcMode(calcMode: string): CalcModeFactory
 		}
 
 		default: {
-			function noop() {
-				console.warn(
+			function noop(): undefined {
+				throw new Error(
 					"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. '<set>' is automatically considered as 'discrete'. Animation ignored.",
 				);
-
-				return undefined;
 			}
 
 			return noop;

@@ -36,6 +36,8 @@ import {
 	createAnimationContainerContext,
 	readScopeAnimationContext,
 } from "./Parser/Scope/AnimationContainerContext.js";
+import { createErrorContext, readScopeErrorContext } from "./Parser/Scope/ErrorContext.js";
+import { ParseError } from "@sub37/server/src/BaseAdapter/index.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -174,8 +176,20 @@ export default class TTMLAdapter extends BaseAdapter {
 			);
 		}
 
+		let errors: ParseError[] = [];
 		let cues: CueNode[] = [];
-		const rootScope: Scope = createScope(undefined);
+		const rootScope: Scope = createScope(
+			undefined,
+			createErrorContext({
+				onReport(error: Error, critical: boolean) {
+					errors.push(new ParseError(error, critical, ""));
+				},
+			}),
+		);
+
+		const errorContext = readScopeErrorContext(rootScope)!;
+		const onErrorReport = (error: Error) => errorContext.report(error, false);
+
 		let treeScope: Scope | undefined = rootScope;
 
 		const nodeTree = new NodeTree<
@@ -190,6 +204,10 @@ export default class TTMLAdapter extends BaseAdapter {
 				throw new Error(
 					"Tree scope became undefined. This is an internal error that should not happen. Please report it.",
 				);
+			}
+
+			if (errorContext.hasCriticalError) {
+				break;
 			}
 
 			switch (token.type) {
@@ -288,7 +306,10 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						if (isParentLayout) {
 							if (!isUniquelyAnnotatedNode(token.attributes)) {
-								console.log("Region element has no 'xml:id' attribute. Ignored.");
+								errorContext.report(
+									new Error("Region element has no 'xml:id' attribute. Ignored."),
+									false,
+								);
 
 								nodeTree.push(
 									createNodeWithAttributes(
@@ -303,7 +324,10 @@ export default class TTMLAdapter extends BaseAdapter {
 							}
 						} else {
 							if (isInlineRegionConflicting(treeScope)) {
-								console.warn("Found an inline region flowing into an out-of-line region. Ignored.");
+								errorContext.report(
+									new Error("Found an inline region flowing into an out-of-line region. Ignored."),
+									false,
+								);
 
 								appendNodeAttributes(currentNode.content, NodeAttributes.IGNORED);
 								nodeTree.push(
@@ -382,8 +406,11 @@ export default class TTMLAdapter extends BaseAdapter {
 							isDefaultRegionActive(treeScope) ||
 							flowingIntoRegionConflicts(token.attributes["region"], treeScope)
 						) {
-							console.warn(
-								`Element '${token.content}' is assigned to region '${token.attributes["region"]}' but either default region is active or this element is already flowing in a different region. Ignored.`,
+							errorContext.report(
+								new Error(
+									`Element '${token.content}' is assigned to region '${token.attributes["region"]}' but either default region is active or this element is already flowing in a different region. Ignored.`,
+								),
+								false,
 							);
 
 							nodeTree.push(
@@ -520,7 +547,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.attributes["style"] && destinationMatch.matchesAttribute("style")) {
-						const outOfLineStyles = getOutOfLineStylesByIDREFS(token, treeScope);
+						const outOfLineStyles = getOutOfLineStylesByIDREFS(token, treeScope, onErrorReport);
 
 						if (outOfLineStyles.length) {
 							contextsList.push(
@@ -532,7 +559,11 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (token.attributes["animate"] && destinationMatch.matchesAttribute("animate")) {
-						const animationsIDRefs = getOutOfLineAnimationsIdsByIDREFS(token, treeScope);
+						const animationsIDRefs = getOutOfLineAnimationsIdsByIDREFS(
+							token,
+							treeScope,
+							onErrorReport,
+						);
 
 						if (animationsIDRefs.length) {
 							contextsList.push(
@@ -672,8 +703,11 @@ export default class TTMLAdapter extends BaseAdapter {
 								closingElement.content[nodeScopeSymbol],
 							)
 						) {
-							console.warn(
-								`Element '${closingElement.content.content}' is not flowing into any region. Ignored.`,
+							errorContext.report(
+								new Error(
+									`Element '${closingElement.content.content}' is not flowing into any region. Ignored.`,
+								),
+								false,
 							);
 
 							markSubtreeIgnored(closingElement);
@@ -726,10 +760,24 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		if (!readScopeDocumentContext(rootScope)) {
-			throw new Error(`Document failed to parse: <tt> element is apparently missing.`);
+			errors.push(
+				new ParseError(
+					new Error("Document failed to parse: <tt> element is apparently missing."),
+					true,
+					rawContent,
+				),
+			);
+		} else if (!cues.length) {
+			errors.push(
+				new ParseError(
+					new Error("Document parsed successfully but no cues have been found."),
+					false,
+					rawContent,
+				),
+			);
 		}
 
-		return BaseAdapter.ParseResult(cues, []);
+		return BaseAdapter.ParseResult(cues, errors);
 	}
 }
 
@@ -1010,13 +1058,19 @@ function extractInlineStylesFromToken(
 	});
 }
 
-function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): TTMLStyle[] {
+function getOutOfLineStylesByIDREFS(
+	token: Token,
+	scope: Scope,
+	onStyleNotFound: (error: Error) => void,
+): TTMLStyle[] {
 	const { attributes } = token;
 	const styleContext = readScopeStyleContainerContext(scope);
 
 	if (!styleContext) {
-		console.warn(
-			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style(s) '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
+		onStyleNotFound(
+			new Error(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style(s) '${attributes["style"]}', but no out-of-line styles were defined in this document. Ignored.`,
+			),
 		);
 
 		return [];
@@ -1029,8 +1083,10 @@ function getOutOfLineStylesByIDREFS(token: Token, scope: Scope): TTMLStyle[] {
 		const style = styleContext.getStyleByIDRef(idref);
 
 		if (!style) {
-			console.warn(
-				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${idref}', but no such out-of-line style was defined in this document. Ignored.`,
+			onStyleNotFound(
+				new Error(
+					`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced style '${idref}', but no such out-of-line style was defined in this document. Ignored.`,
+				),
 			);
 
 			continue;
@@ -1143,13 +1199,19 @@ function getInlineAnimationId(token: Token, parent?: Token): string {
  * @param scope
  * @returns
  */
-function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[] {
+function getOutOfLineAnimationsIdsByIDREFS(
+	token: Token,
+	scope: Scope,
+	onAnimationNotFound: (error: Error) => void,
+): string[] {
 	const { attributes } = token;
 	const animationContext = readScopeAnimationContext(scope);
 
 	if (!animationContext) {
-		console.warn(
-			`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation(s) '${attributes["animate"]}', but no out-of-line animations were defined in this document. Ignored.`,
+		onAnimationNotFound(
+			new Error(
+				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation(s) '${attributes["animate"]}', but no out-of-line animations were defined in this document. Ignored.`,
+			),
 		);
 
 		return [];
@@ -1160,8 +1222,10 @@ function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[]
 
 	for (const idref of idrefsAnimationList) {
 		if (!animationContext.getAnimationById(idref)) {
-			console.warn(
-				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}', but no such out-of-line animation was defined in this document. Ignored.`,
+			onAnimationNotFound(
+				new Error(
+					`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}', but no such out-of-line animation was defined in this document. Ignored.`,
+				),
 			);
 
 			continue;
@@ -1172,8 +1236,10 @@ function getOutOfLineAnimationsIdsByIDREFS(token: Token, scope: Scope): string[]
 		 * > A given IDREF must not appear more than one time in the value of an animate attribute.
 		 */
 		if (seenAnimationIDRefs.has(idref)) {
-			console.warn(
-				`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}' multiple times. Duplicated references are not allowed.`,
+			onAnimationNotFound(
+				new Error(
+					`Element '${token.content}' (id: ${attributes["xml:id"] || "(n/a)"}) referenced animation '${idref}' multiple times. Duplicated references are not allowed.`,
+				),
 			);
 
 			continue;

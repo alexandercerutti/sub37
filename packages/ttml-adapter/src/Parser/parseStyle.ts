@@ -59,22 +59,20 @@ function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr):
 	return def;
 }
 
-export function resolveStyleDefinitionByName(propName: string): AttributeDefinition {
+export function resolveStyleDefinitionByName(propName: string): AttributeDefinition | undefined {
 	if (!isMappedKey(propName)) {
-		throw new Error(`Provided name ('${propName}') is not a valid (mapped) style property.`);
+		return undefined;
 	}
 
 	return TTML_CSS_ATTRIBUTES_MAP[propName];
 }
 
-export function isPropertyContinuouslyAnimatable(name: string): boolean {
-	const attribute = resolveStyleDefinitionByName(name);
-	return Boolean(attribute.flags & AnimationFlags.CONTINUOUS);
+export function isPropertyContinuouslyAnimatable(definition: AttributeDefinition): boolean {
+	return Boolean(definition.flags & AnimationFlags.CONTINUOUS);
 }
 
-export function isPropertyDiscretelyAnimatable(name: string): boolean {
-	const attribute = resolveStyleDefinitionByName(name);
-	return Boolean(attribute.flags & AnimationFlags.DISCRETE);
+export function isPropertyDiscretelyAnimatable(definition: AttributeDefinition): boolean {
+	return Boolean(definition.flags & AnimationFlags.DISCRETE);
 }
 
 interface SyntaxModuleDefinition<DestinationProperties extends string[] = string[]> {
