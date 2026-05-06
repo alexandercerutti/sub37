@@ -6,7 +6,7 @@ import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallcl
 import { readScopeDocumentContext } from "./DocumentContext.js";
 import { readScopeErrorContext } from "./ErrorContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
-import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
+import { onMergeSymbol } from "./Scope.js";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
