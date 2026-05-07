@@ -614,7 +614,7 @@ export class Tokenizer {
 					}
 
 					if (isQuotationMark(char) || this.sourceWindow.peekAdvance(QUOTATION_MARK_CHECKER)) {
-						if (!result.length) {
+						if (!result.length && !currentAttributeValue) {
 							currentAttributeValue = this.sourceWindow.char;
 
 							this.sourceWindow.advance();
