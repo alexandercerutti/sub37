@@ -37,7 +37,6 @@ import {
 	readScopeAnimationContext,
 } from "./Parser/Scope/AnimationContainerContext.js";
 import { createErrorContext, readScopeErrorContext } from "./Parser/Scope/ErrorContext.js";
-import { ParseError } from "@sub37/server/src/BaseAdapter/index.js";
 
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
@@ -176,13 +175,17 @@ export default class TTMLAdapter extends BaseAdapter {
 			);
 		}
 
-		let errors: ParseError[] = [];
+		let errors: BaseAdapter.ParseError[] = [];
 		let cues: CueNode[] = [];
 		const rootScope: Scope = createScope(
 			undefined,
 			createErrorContext({
 				onReport(error: Error, critical: boolean) {
-					errors.push(new ParseError(error, critical, ""));
+					errors.push({
+						error,
+						isCritical: critical,
+						failedChunk: "",
+					});
 				},
 			}),
 		);
@@ -760,21 +763,17 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		if (!readScopeDocumentContext(rootScope)) {
-			errors.push(
-				new ParseError(
-					new Error("Document failed to parse: <tt> element is apparently missing."),
-					true,
-					rawContent,
-				),
-			);
+			errors.push({
+				error: new Error("Document failed to parse: <tt> element is apparently missing."),
+				isCritical: true,
+				failedChunk: rawContent,
+			});
 		} else if (!cues.length) {
-			errors.push(
-				new ParseError(
-					new Error("Document parsed successfully but no cues have been found."),
-					false,
-					rawContent,
-				),
-			);
+			errors.push({
+				error: new Error("Document parsed successfully but no cues have been found."),
+				isCritical: false,
+				failedChunk: rawContent,
+			});
 		}
 
 		return BaseAdapter.ParseResult(cues, errors);
