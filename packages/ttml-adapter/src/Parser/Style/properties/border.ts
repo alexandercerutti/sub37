@@ -101,7 +101,7 @@ export function validateAnimation(
 					const nakedValue = output.value.value;
 					borderStyle = nakedValue;
 
-					if (borderStyle !== previousBorderStyle) {
+					if (previousBorderStyle && borderStyle !== previousBorderStyle) {
 						return false;
 					}
 
@@ -112,7 +112,7 @@ export function validateAnimation(
 					const nakedValue = output.value.value;
 					borderWidth = nakedValue.toString();
 
-					if (borderWidth !== previousBorderWidth) {
+					if (previousBorderWidth && borderWidth !== previousBorderWidth) {
 						return false;
 					}
 
@@ -122,7 +122,7 @@ export function validateAnimation(
 				case isBorderRadius(output): {
 					borderRadius = output.value;
 
-					if (borderRadius !== previousBorderRadius) {
+					if (previousBorderRadius && borderRadius !== previousBorderRadius) {
 						return false;
 					}
 
