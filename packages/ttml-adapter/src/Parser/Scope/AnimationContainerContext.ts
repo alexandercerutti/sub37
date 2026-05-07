@@ -183,10 +183,13 @@ function createAnimation(
 			return undefined;
 		}
 	} catch (err) {
-		reportError(
-			new Error(
-				`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
-			),
+		errorContext.report(
+			err instanceof Error
+				? err
+				: new Error(
+						`An error occurred while parsing an animation definition: ${err}. Animation ignored.`,
+					),
+			false,
 		);
 
 		return undefined;
