@@ -3,10 +3,11 @@ import type { Context, ContextFactory, Scope } from "./Scope.js";
 const errorContextSymbol = Symbol("error");
 
 interface ErrorReporters {
-	onReport(error: Error, critical: boolean): void;
+	onReport(error: Error, critical: boolean, offset: number): void;
 }
 
 interface ErrorContext extends Context<ErrorContext, ErrorReporters> {
+	setTokenPosition(offset: number): void;
 	report(error: Error, critical: boolean): void;
 	hasCriticalError: boolean;
 }
@@ -20,6 +21,7 @@ declare module "./Scope" {
 export function createErrorContext(args: ErrorReporters): ContextFactory<ErrorContext> {
 	return function (_scope: Scope) {
 		let hasCriticalError = false;
+		let currentTokenOffset = 0;
 
 		return {
 			parent: undefined,
@@ -27,8 +29,11 @@ export function createErrorContext(args: ErrorReporters): ContextFactory<ErrorCo
 			get args() {
 				return args;
 			},
+			setTokenPosition(offset: number) {
+				currentTokenOffset = offset;
+			},
 			report(error: Error, critical: boolean) {
-				args.onReport(error, critical);
+				args.onReport(error, critical, currentTokenOffset);
 
 				if (critical) {
 					hasCriticalError = true;

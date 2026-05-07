@@ -180,11 +180,11 @@ export default class TTMLAdapter extends BaseAdapter {
 		const rootScope: Scope = createScope(
 			undefined,
 			createErrorContext({
-				onReport(error: Error, critical: boolean) {
+				onReport(error: Error, critical: boolean, offset: number) {
 					errors.push({
 						error,
 						isCritical: critical,
-						failedChunk: "",
+						failedChunk: rawContent.substring(offset, offset + 10) + "...",
 					});
 				},
 			}),
@@ -212,6 +212,8 @@ export default class TTMLAdapter extends BaseAdapter {
 			if (errorContext.hasCriticalError) {
 				break;
 			}
+
+			errorContext.setTokenPosition(token.position.offset);
 
 			switch (token.type) {
 				case TokenType.STRING: {
