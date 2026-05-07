@@ -61,8 +61,11 @@ function isQuotationMark(character: string): boolean {
 
 function createTextSlidingWindow(content: string, startingIndex: number) {
 	let cursor: number = startingIndex;
+	let line: number = 1;
+	let column: number = 1;
 
 	return {
+		content,
 		get char(): string {
 			return content[cursor]!;
 		},
@@ -72,8 +75,11 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 		get cursor() {
 			return cursor;
 		},
-		get content() {
-			return content;
+		get line() {
+			return line;
+		},
+		get column() {
+			return column;
 		},
 		/**
 		 * Looks at the next N characters, according to the
@@ -100,11 +106,29 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 				return false;
 			}
 
-			cursor = requestedCharacters + nextCharIndexNoSpaces;
+			const newCursor = requestedCharacters + nextCharIndexNoSpaces;
+
+			for (let i = cursor; i < newCursor; i++) {
+				if (Tokenizer.isNewLine(content[i])) {
+					line++;
+					column = 1;
+				} else {
+					column++;
+				}
+			}
+
+			cursor = newCursor;
 
 			return true;
 		},
 		advance() {
+			if (Tokenizer.isNewLine(this.char)) {
+				line++;
+				column = 1;
+			} else {
+				column++;
+			}
+
 			cursor++;
 		},
 	};
@@ -154,6 +178,9 @@ enum TokenizerState {
 export class Tokenizer {
 	private sourceWindow: ReturnType<typeof createTextSlidingWindow>;
 	private lastTagName: string = "";
+	private column = 0;
+	private line = 1;
+	private offset = 0;
 
 	public constructor(rawContent: string) {
 		this.sourceWindow = createTextSlidingWindow(rawContent, 0);
@@ -179,6 +206,10 @@ export class Tokenizer {
 		let currentAttributeName = "";
 		let currentAttributeValue = "";
 
+		this.line = this.sourceWindow.line;
+		this.column = this.sourceWindow.column;
+		this.offset = this.sourceWindow.cursor;
+
 		while (this.sourceWindow.cursor <= this.sourceWindow.content.length) {
 			const { char } = this.sourceWindow;
 
@@ -190,7 +221,7 @@ export class Tokenizer {
 						 * empty tag, so we must match its end.
 						 */
 						this.sourceWindow.advance();
-						return Token.EndTag(this.lastTagName);
+						return Token.EndTag(this.lastTagName, this.line, this.column, this.offset);
 					}
 
 					this.lastTagName = "";
@@ -203,10 +234,17 @@ export class Tokenizer {
 
 						result += char;
 						state = TokenizerState.DATA;
+						this.line = this.sourceWindow.line;
+						this.column = this.sourceWindow.column;
+						this.offset = this.sourceWindow.cursor;
 
 						this.sourceWindow.advance();
 						break;
 					}
+
+					this.line = this.sourceWindow.line;
+					this.column = this.sourceWindow.column;
+					this.offset = this.sourceWindow.cursor;
 
 					if (this.sourceWindow.peekAdvance(PI_BEGIN_CHECKER)) {
 						state = TokenizerState.PROCESSING_INSTRUCTION;
@@ -286,7 +324,7 @@ export class Tokenizer {
 
 				case TokenizerState.END_VALIDATION_ENTITY: {
 					this.sourceWindow.advance();
-					return Token.ValidationEntity(result);
+					return Token.ValidationEntity(result, this.line, this.column, this.offset);
 				}
 
 				case TokenizerState.PROCESSING_INSTRUCTION: {
@@ -302,7 +340,7 @@ export class Tokenizer {
 
 					if (this.sourceWindow.peekAdvance(PI_END_CHECKER)) {
 						this.sourceWindow.advance();
-						return Token.ProcessingInstruction(result);
+						return Token.ProcessingInstruction(result, this.line, this.column, this.offset);
 					}
 
 					this.sourceWindow.advance();
@@ -330,7 +368,7 @@ export class Tokenizer {
 
 				case TokenizerState.END_COMMENT: {
 					this.sourceWindow.advance();
-					return Token.Comment(result);
+					return Token.Comment(result, this.line, this.column, this.offset);
 				}
 
 				case TokenizerState.START_CDATA: {
@@ -353,7 +391,7 @@ export class Tokenizer {
 
 				case TokenizerState.END_CDATA: {
 					this.sourceWindow.advance();
-					return Token.CData(result);
+					return Token.CData(result, this.line, this.column, this.offset);
 				}
 
 				case TokenizerState.START_TAG: {
@@ -364,17 +402,37 @@ export class Tokenizer {
 						 * No need to advance, we need to recognize ">" to emit
 						 * an end tag.
 						 */
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
 						this.lastTagName = result + char;
 
 						this.sourceWindow.advance();
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
-					if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
+					if (Tokenizer.isNewLine(char)) {
+						this.lastTagName = result;
+						result = "";
+						state = TokenizerState.START_TAG_ANNOTATION;
+						this.sourceWindow.advance();
+						break;
+					}
+
+					if (Tokenizer.isWhitespace(char)) {
 						this.lastTagName = result;
 						result = "";
 						state = TokenizerState.START_TAG_ANNOTATION;
@@ -399,7 +457,7 @@ export class Tokenizer {
 						this.lastTagName = result;
 
 						this.sourceWindow.advance();
-						return Token.EndTag(this.lastTagName);
+						return Token.EndTag(this.lastTagName, this.line, this.column, this.offset);
 					}
 
 					this.sourceWindow.advance();
@@ -410,7 +468,7 @@ export class Tokenizer {
 					result += char;
 
 					if (this.sourceWindow.peekAdvance(START_TAG_CHECKER)) {
-						return Token.String(result.trim());
+						return Token.String(result.trim(), this.line, this.column, this.offset);
 					}
 
 					this.sourceWindow.advance();
@@ -423,7 +481,13 @@ export class Tokenizer {
 						 * No need to advance, we need to recognize ">" to emit
 						 * an end tag.
 						 */
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
@@ -433,7 +497,13 @@ export class Tokenizer {
 						}
 
 						this.sourceWindow.advance();
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (isValidName(char)) {
@@ -478,7 +548,13 @@ export class Tokenizer {
 						 * No need to advance, we need to recognize ">" to emit
 						 * an end tag.
 						 */
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
@@ -486,7 +562,13 @@ export class Tokenizer {
 						attributes[result] = "";
 
 						this.sourceWindow.advance();
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					/**
@@ -509,14 +591,26 @@ export class Tokenizer {
 						 * No need to advance, we need to recognize ">" to emit
 						 * an end tag.
 						 */
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
 						attributes[currentAttributeName] = result.trimEnd();
 
 						this.sourceWindow.advance();
-						return Token.StartTag(this.lastTagName, attributes);
+						return Token.StartTag(
+							this.lastTagName,
+							attributes,
+							this.line,
+							this.column,
+							this.offset,
+						);
 					}
 
 					if (isQuotationMark(char) || this.sourceWindow.peekAdvance(QUOTATION_MARK_CHECKER)) {
