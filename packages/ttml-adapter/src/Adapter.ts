@@ -180,11 +180,17 @@ export default class TTMLAdapter extends BaseAdapter {
 		const rootScope: Scope = createScope(
 			undefined,
 			createErrorContext({
-				onReport(error: Error, critical: boolean, offset: number) {
+				onReport(error: Error, isCritical: boolean, offset: number) {
+					const failedChunk =
+						rawContent
+							.substring(offset, offset + 50)
+							.replace(/\s+/g, " ")
+							.trimStart() + "...";
+
 					errors.push({
 						error,
-						isCritical: critical,
-						failedChunk: rawContent.substring(offset, offset + 10) + "...",
+						isCritical,
+						failedChunk,
 					});
 				},
 			}),
