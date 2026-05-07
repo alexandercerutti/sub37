@@ -1,4 +1,4 @@
-import type { BaseAdapter } from "../BaseAdapter";
+import type { BaseAdapter, ParseError } from "../BaseAdapter";
 import type { CueNode } from "../CueNode";
 import type { SessionTrack } from "../DistributionSession";
 import type { TrackRecord } from "./TrackRecord";
@@ -9,7 +9,7 @@ export const addCuesSymbol = Symbol("track.addcues");
 
 export default class Track implements Omit<TrackRecord, "content"> {
 	private readonly timeline: IntervalBinaryTree<CueNode>;
-	private readonly onSafeFailure: (error: Error) => void;
+	private readonly onSafeFailure: (error: ParseError) => void;
 	public readonly adapter: BaseAdapter;
 	public readonly lang: string;
 	public readonly mimeType: `${string}/${string}`;
@@ -20,7 +20,7 @@ export default class Track implements Omit<TrackRecord, "content"> {
 		lang: string,
 		mimeType: SessionTrack["mimeType"],
 		adapter: BaseAdapter,
-		onSafeFailure: (error: Error) => void,
+		onSafeFailure: (error: ParseError) => void,
 	) {
 		this.adapter = adapter;
 		this.timeline = new IntervalBinaryTree();

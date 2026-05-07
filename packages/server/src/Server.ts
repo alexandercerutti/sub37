@@ -1,6 +1,6 @@
 import type { CueNode } from "./CueNode.js";
 import type { Track, TrackRecord } from "./Track/index.js";
-import { BaseAdapter, BaseAdapterConstructor } from "./BaseAdapter/index.js";
+import { BaseAdapter, BaseAdapterConstructor, ParseError } from "./BaseAdapter/index.js";
 import { SessionTrack, DistributionSession } from "./DistributionSession.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
 import {
@@ -34,7 +34,7 @@ export interface EventsPayloadMap {
 	[Events.CUE_START]: CueNode[];
 	[Events.CUE_STOP]: void;
 	[Events.CUES_FETCH]: CueNode[];
-	[Events.CUE_ERROR]: Error;
+	[Events.CUE_ERROR]: ParseError;
 }
 
 interface EventDescriptor<EventName extends Events = Events> {
@@ -121,7 +121,7 @@ export class Server {
 		});
 
 		try {
-			this[sessionSymbol] = new DistributionSession(sessionTracks, (error: Error) => {
+			this[sessionSymbol] = new DistributionSession(sessionTracks, (error) => {
 				emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
 			});
 			return;

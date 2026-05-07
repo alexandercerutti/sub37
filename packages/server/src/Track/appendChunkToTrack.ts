@@ -1,4 +1,4 @@
-import { ParseResult } from "../BaseAdapter";
+import { ParseError, ParseResult } from "../BaseAdapter";
 import { CueNode } from "../CueNode";
 import {
 	UncaughtParsingExceptionError,
@@ -15,13 +15,13 @@ import Track, { addCuesSymbol } from "./Track";
  * 										understood by the adapter assigned to the track;
  * @param {Function} onSafeFailure A function that will be invoked whenever there's a
  * 										non-critical failure during parsing. The function accepts a parameter
- * 										which will be the Error object
+ * 										which will be the ParseError object
  */
 
 export function appendChunkToTrack(
 	track: Track,
 	content: unknown,
-	onSafeFailure?: (error: Error) => void,
+	onSafeFailure?: (error: ParseError) => void,
 ): void {
 	const { adapter, lang } = track;
 
@@ -53,7 +53,7 @@ export function appendChunkToTrack(
 
 		if (typeof onSafeFailure === "function") {
 			for (const parseResultError of parseResult.errors) {
-				onSafeFailure(parseResultError.error);
+				onSafeFailure(parseResultError);
 			}
 		}
 	} catch (err: unknown) {
