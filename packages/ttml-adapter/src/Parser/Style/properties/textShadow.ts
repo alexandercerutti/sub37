@@ -3,7 +3,7 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { DerivedValue, InferDerivableValue } from "../structure/operators.js";
 import type { TextShadowGrammar } from "../syntax/text-shadow.js";
 import type { Length } from "../../Units/length.js";
-import { createUnit } from "../../Units/unit.js";
+import { createUnit } from "../../Unit.js";
 
 export { TextShadowGrammar as Grammar } from "../syntax/text-shadow.js";
 

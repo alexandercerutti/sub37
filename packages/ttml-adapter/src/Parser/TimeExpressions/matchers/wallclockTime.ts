@@ -1,6 +1,6 @@
 import { DATE_REGEX, HHMMSS_TIME_REGEX } from "../primitives.js";
-import type { Unit } from "../../Units/unit.js";
-import { createUnit } from "../../Units/unit.js";
+import type { Unit } from "../../Unit.js";
+import { createUnit } from "../../Unit.js";
 
 /**
  * Wallclock regexes are ordered by specificity

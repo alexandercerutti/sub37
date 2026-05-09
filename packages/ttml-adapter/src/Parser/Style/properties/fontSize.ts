@@ -5,7 +5,7 @@ import type { FontSizeGrammar } from "../syntax/font-size.js";
 import type { Length } from "../../Units/length.js";
 import { readScopeDocumentContext } from "../../Scope/DocumentContext.js";
 import { getCellScalarPixelConversion, isCellScalar } from "../../Units/cell.js";
-import { createUnit } from "../../Units/unit.js";
+import { createUnit } from "../../Unit.js";
 
 export { FontSizeGrammar as Grammar } from "../syntax/font-size.js";
 

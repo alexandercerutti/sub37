@@ -4,7 +4,7 @@ import { keyword } from "../structure/derivables/keyword.js";
 import { length } from "../structure/derivables/length.js";
 import { isLength, subtract } from "../../Units/length.js";
 import type { Length } from "../../Units/length.js";
-import { createUnit } from "../../Units/unit.js";
+import { createUnit } from "../../Unit.js";
 
 /**
  * @syntax "left" | "right"

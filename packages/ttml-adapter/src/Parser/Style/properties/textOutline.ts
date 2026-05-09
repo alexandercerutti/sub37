@@ -2,7 +2,7 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import type { TextOutlineGrammar } from "../syntax/text-outline.js";
-import { createUnit } from "../../Units/unit.js";
+import { createUnit } from "../../Unit.js";
 
 export { TextOutlineGrammar as Grammar } from "../syntax/text-outline.js";
 

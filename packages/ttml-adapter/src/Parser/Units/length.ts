@@ -1,5 +1,5 @@
-import type { Unit } from "./unit.js";
-import { createUnit } from "./unit.js";
+import type { Unit } from "../Unit.js";
+import { createUnit } from "../Unit.js";
 
 /**
  * @see https://www.w3.org/TR/2018/REC-ttml2-20181108/#style-value-length

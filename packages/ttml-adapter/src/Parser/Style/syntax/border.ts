@@ -1,5 +1,5 @@
 import { toLength } from "../../Units/length.js";
-import { createUnit } from "../../Units/unit.js";
+import { createUnit } from "../../Unit.js";
 import { as } from "../structure/derivables/tag.js";
 import { color } from "../structure/derivables/color.js";
 import { keyword } from "../structure/derivables/keyword.js";
