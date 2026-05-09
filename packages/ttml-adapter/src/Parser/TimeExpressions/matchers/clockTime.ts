@@ -5,7 +5,7 @@ import {
 	MINUTES_REGEX,
 	SECONDS_REGEX,
 	SUBFRAMES_REGEX,
-} from "../../Units/time.js";
+} from "../primitives.js";
 import type { Unit } from "../../Units/unit.js";
 import { createUnit } from "../../Units/unit.js";
 

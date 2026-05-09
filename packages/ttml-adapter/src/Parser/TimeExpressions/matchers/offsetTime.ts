@@ -1,4 +1,4 @@
-import { AT_LEAST_ONE_DIGIT_TIME_REGEX } from "../../Units/time.js";
+import { AT_LEAST_ONE_DIGIT_TIME_REGEX } from "../primitives.js";
 import type { Unit } from "../../Units/unit.js";
 import { createUnit } from "../../Units/unit.js";
 
