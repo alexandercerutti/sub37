@@ -5,6 +5,7 @@ import type { Token } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
 import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
+import { getSplittedLinearWhitespaceValues } from "./lwsp.js";
 
 export type StyleAttributeString = `tts:${string}`;
 
@@ -1145,7 +1146,7 @@ export function parseAttributeValue(
 	const tokens =
 		typeof syntaxModuleDefinition.tokenizer === "function"
 			? syntaxModuleDefinition.tokenizer(value)
-			: value.split(/\s+/g);
+			: getSplittedLinearWhitespaceValues(value);
 
 	let collectedValues: (DerivedValue | undefined)[] = [];
 	let nextGrammar: Derivable = syntaxModuleDefinition.Grammar;
