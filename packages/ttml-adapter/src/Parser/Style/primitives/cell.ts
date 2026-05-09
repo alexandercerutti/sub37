@@ -2,6 +2,8 @@
  * Converters for 'cell' unit (i.e. 0.1c)
  */
 
+import { createUnit } from "../../Unit.js";
+import type { Unit } from "../../Unit.js";
 import type { Length } from "./length.js";
 import { isScalar } from "./length.js";
 
@@ -36,12 +38,12 @@ export function getCellScalarPixelConversion(
 	length: number,
 	cellProgressionResolution: number,
 	cellScalar: Length,
-): number | null {
+): Unit<"px"> | null {
 	if (!isCellScalar(cellScalar)) {
 		return null;
 	}
 
-	return (length / cellProgressionResolution) * cellScalar.value;
+	return createUnit((length / cellProgressionResolution) * cellScalar.value, "px");
 }
 
 export function isCellScalar(value: unknown): value is CellScalar {

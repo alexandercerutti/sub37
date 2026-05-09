@@ -75,17 +75,17 @@ export function cssTransform(
 			return null;
 		}
 
-		const convertedPixelValue = getCellScalarPixelConversion(
+		const convertedPixelUnit = getCellScalarPixelConversion(
 			extent[0],
 			cellResolutionHeight,
 			fontSize,
 		);
 
-		if (!convertedPixelValue) {
+		if (!convertedPixelUnit) {
 			return null;
 		}
 
-		return [["font-size", createUnit(convertedPixelValue, "px").toString()]];
+		return [["font-size", convertedPixelUnit.toString()]];
 	}
 
 	/**
@@ -97,10 +97,7 @@ export function cssTransform(
 
 function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
 	// Initial value is 1c
-	return createUnit(
-		getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c"))!,
-		"px",
-	);
+	return getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c"))!;
 }
 
 export function validateAnimation(
