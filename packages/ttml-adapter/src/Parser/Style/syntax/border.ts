@@ -1,4 +1,4 @@
-import { toLength } from "../../Units/length.js";
+import { toLength } from "../primitives/length.js";
 import { createUnit } from "../../Unit.js";
 import { as } from "../structure/derivables/tag.js";
 import { color } from "../structure/derivables/color.js";

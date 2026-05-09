@@ -2,8 +2,8 @@ import type { Scope } from "../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { createUnit, toClamped } from "../../Unit.js";
-import { isLength, isPercentage } from "../../Units/length.js";
-import type { Length } from "../../Units/length.js";
+import { isLength, isPercentage } from "../primitives/length.js";
+import type { Length } from "../primitives/length.js";
 import type { ExtentGrammar } from "../syntax/extent.js";
 
 export { ExtentGrammar as Grammar } from "../syntax/extent.js";

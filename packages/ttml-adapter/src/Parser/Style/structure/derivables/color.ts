@@ -1,5 +1,5 @@
-import { isValidColor } from "../../../Units/color.js";
-import type { Color } from "../../../Units/color.js";
+import { isValidColor } from "../../primitives/color.js";
+import type { Color } from "../../primitives/color.js";
 import { DerivationState } from "../operators.js";
 import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
 

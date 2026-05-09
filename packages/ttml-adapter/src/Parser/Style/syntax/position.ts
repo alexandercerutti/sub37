@@ -2,8 +2,8 @@ import { oneOf, sequence } from "../structure/operators.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length } from "../structure/derivables/length.js";
-import { isLength, subtract } from "../../Units/length.js";
-import type { Length } from "../../Units/length.js";
+import { isLength, subtract } from "../primitives/length.js";
+import type { Length } from "../primitives/length.js";
 import { createUnit } from "../../Unit.js";
 
 /**
