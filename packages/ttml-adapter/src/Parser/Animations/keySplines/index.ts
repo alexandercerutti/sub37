@@ -1,4 +1,4 @@
-import { getSplittedLinearWhitespaceValues } from "../../Units/lwsp.js";
+import { getSplittedLinearWhitespaceValues } from "../../lwsp.js";
 import { KeySplinesAmountNotMatchingKeyTimesError } from "./KeySplinesAmountNotMatchingKeyTimesError.js";
 import { KeySplinesCoordinateOutOfBoundaryError } from "./KeySplinesCoordinateOutOfBoundaryError.js";
 import { KeySplinesInvalidControlsAmountError } from "./KeySplinesInvalidControlsAmountError.js";
