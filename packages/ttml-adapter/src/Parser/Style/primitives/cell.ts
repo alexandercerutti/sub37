@@ -3,11 +3,11 @@
  */
 
 import { createUnit } from "../../Unit.js";
-import type { Unit } from "../../Unit.js";
 import type { Length } from "./length.js";
 import { isScalar } from "./length.js";
+import type { PixelScalar } from "./pixel.js";
 
-type CellScalar = Length & { metric: "c" };
+export type CellScalar = Length & { metric: "c" };
 
 /**
  * @example
@@ -38,7 +38,7 @@ export function getCellScalarPixelConversion(
 	length: number,
 	cellProgressionResolution: number,
 	cellScalar: Length,
-): Unit<"px"> | null {
+): PixelScalar | null {
 	if (!isCellScalar(cellScalar)) {
 		return null;
 	}
