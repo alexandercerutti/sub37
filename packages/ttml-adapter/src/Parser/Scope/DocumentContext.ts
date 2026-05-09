@@ -2,7 +2,6 @@ import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
-import { asNumbers } from "../Units/number.js";
 import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
 
@@ -318,4 +317,8 @@ function getMarkerModeResolvedValue(
 	}
 
 	return "discontinuous";
+}
+
+function asNumbers(values: string[]): number[] {
+	return values.map((e) => parseFloat(e));
 }
