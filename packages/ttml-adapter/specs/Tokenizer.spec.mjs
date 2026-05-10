@@ -278,5 +278,16 @@ describe("Tokenizer", () => {
 				content: "Some Content",
 			});
 		});
+
+		it("should correctly parse an attribute whose value is a single character", () => {
+			const content = `<set repeatCount="2"/>`;
+			const tokenizer = new Tokenizer(content);
+			const result = tokenizer.nextToken();
+
+			expect(result).not.toBeNull();
+			expect(result).toBeInstanceOf(Token);
+			expect(result?.type).toBe(TokenType.START_TAG);
+			expect(result?.attributes["repeatCount"]).toBe("2");
+		});
 	});
 });
