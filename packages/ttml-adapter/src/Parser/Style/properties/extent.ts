@@ -5,6 +5,9 @@ import { createUnit, toClamped } from "../../Unit.js";
 import { isLength, isPercentage } from "../primitives/length.js";
 import type { Length } from "../primitives/length.js";
 import type { ExtentGrammar } from "../syntax/extent.js";
+import { readScopeDocumentContext } from "../../Scope/DocumentContext.js";
+import { readScopeErrorContext } from "../../Scope/ErrorContext.js";
+import { getPixelScalarPercentageConversion, isPixelScalar } from "../primitives/pixel.js";
 
 export { ExtentGrammar as Grammar } from "../syntax/extent.js";
 
@@ -15,7 +18,7 @@ function isExtentSupportedKeyword(
 }
 
 export function cssTransform(
-	_scope: Scope,
+	scope: Scope,
 	value: InferDerivableValue<typeof ExtentGrammar>,
 ): PropertiesCollection<["width", "height"]> {
 	if (isExtentSupportedKeyword(value)) {
@@ -45,42 +48,67 @@ export function cssTransform(
 		}
 	}
 
-	let [widthValue, heightValue] = value;
-	let widthLength: Length;
-	let heightLength: Length;
+	const widthLength = getExtentLengthDimension(scope, value[0], 0);
+	const heightLength = getExtentLengthDimension(scope, value[1], 1);
 
-	if (widthValue && isLength(widthValue.value)) {
-		if (isPercentage(widthValue.value)) {
-			widthLength = toClamped(widthValue.value, 0, 100) || createUnit(0, "%");
-		} else {
-			widthLength = widthValue.value;
-		}
-	} else {
-		console.warn(
-			"Region extent width set to a value different from a Length is not yet supported. Will be treated as 100%",
-		);
-
-		widthLength = createUnit(100, "%");
-	}
-
-	if (heightValue && isLength(heightValue.value)) {
-		if (isPercentage(heightValue.value)) {
-			heightLength = toClamped(heightValue.value, 0, 100) || createUnit(0, "%");
-		} else {
-			heightLength = heightValue.value;
-		}
-	} else {
-		console.warn(
-			"Region extent height set to a value different from a Length is not yet supported. Will be treated as 100%",
-		);
-
-		heightLength = createUnit(100, "%");
+	if (!widthLength || !heightLength) {
+		return null;
 	}
 
 	return [
 		["width", widthLength.toString()],
 		["height", heightLength.toString()],
 	];
+}
+
+/**
+ * @param scope
+ * @param data
+ * @param axis - 0 for width, 1 for height
+ * @returns
+ */
+function getExtentLengthDimension<
+	ExtentData extends InferDerivableValue<typeof ExtentGrammar>[number],
+>(scope: Scope, data: ExtentData, axis: 0 | 1): Length | null {
+	if (!data) {
+		return null;
+	}
+
+	const extentWithUnit = data.value;
+
+	if (!isLength(extentWithUnit)) {
+		console.warn(
+			`Region extent ${axis === 0 ? "width" : "height"} set to a value different from a Length is not supported yet. Will be treated as 100%`,
+		);
+
+		return createUnit(100, "%");
+	}
+
+	if (isPercentage(extentWithUnit)) {
+		return toClamped(extentWithUnit, 0, 100) || createUnit(0, "%");
+	}
+
+	if (isPixelScalar(extentWithUnit)) {
+		const documentContext = readScopeDocumentContext(scope)!;
+		const documentExtent = documentContext.attributes["tts:extent"];
+
+		if (!documentExtent) {
+			const errorContext = readScopeErrorContext(scope)!;
+
+			errorContext.report(
+				new Error(
+					"Pixel values are deprecated for 'tts:extent' when document (<tt>) doesn't specify any 'tts:extent' pixel values. Will be treated as 100%.",
+				),
+				false,
+			);
+
+			return createUnit(100, "%");
+		}
+
+		return getPixelScalarPercentageConversion(documentExtent[axis].value, extentWithUnit);
+	}
+
+	return extentWithUnit;
 }
 
 export function validateAnimation(
