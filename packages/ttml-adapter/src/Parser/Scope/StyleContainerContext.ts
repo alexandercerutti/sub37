@@ -14,7 +14,7 @@ import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 const styleContextSymbol = Symbol("style");
 
 interface StyleTypology {
-	kind: "inline" | "referential" | "nested";
+	kind: "initial" | "inline" | "referential" | "nested";
 }
 
 type ReferentialStyleChain = Partial<Record<"style", string>>;
@@ -324,9 +324,7 @@ function processStylesByTopology(
 // *************************** //
 // region TTMLStyle
 
-export interface TTMLStyle extends UniquelyAnnotatedNode {
-	kind: "inline" | "nested" | "referential";
-
+export interface TTMLStyle extends UniquelyAnnotatedNode, StyleTypology {
 	/**
 	 * Filtered list of tts:* attributes
 	 */
@@ -342,7 +340,7 @@ export interface TTMLStyle extends UniquelyAnnotatedNode {
 
 function createTTMLStyle(
 	id: string,
-	kind: "inline" | "referential" | "nested",
+	kind: StyleTypology["kind"],
 	attributes: Record<string, string>,
 	scope: Scope,
 ): TTMLStyle {

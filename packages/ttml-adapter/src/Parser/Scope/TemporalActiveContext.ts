@@ -61,6 +61,9 @@ export function createTemporalActiveContext(
 		};
 
 		const stylesFilter = {
+			get initial() {
+				return store.styles.filter(({ kind }) => kind === "initial");
+			},
 			get inline() {
 				return store.styles.filter(({ kind }) => kind === "inline");
 			},
@@ -164,6 +167,7 @@ export function createTemporalActiveContext(
 				const parentComputedStyles = this.parent?.computeStylesForElement(element) || {};
 
 				const {
+					initial: initialStyles,
 					referential: referentialStyles,
 					nested: nestedStyles,
 					inline: inlineStyles,
@@ -174,7 +178,8 @@ export function createTemporalActiveContext(
 				 * @see https://w3c.github.io/ttml2/#semantics-style-resolution-processing-sss
 				 */
 
-				const computedStyles = referentialStyles
+				const computedStyles = initialStyles
+					.concat(referentialStyles)
 					.concat(nestedStyles)
 					.concat(inlineStyles)
 					.reduce<ReturnType<TTMLStyle["apply"]>>((acc, style) => {
@@ -278,7 +283,7 @@ function extractActiveStylesFromStyleStore(
 	}
 
 	const styles: TTMLStyle[] = [];
-	const allowedKinds = ["inline", "nested", "referential"] as const;
+	const allowedKinds = ["initial", "inline", "nested", "referential"] as const;
 	const styleContext = readScopeStyleContainerContext(scope);
 
 	for (const style of idrefs) {

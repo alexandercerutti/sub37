@@ -737,8 +737,15 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (isStylingElement(closingElement)) {
-						const styles = extractOutOfLineStyles(closingElement);
-						rootScope.addContexts(createStyleContainerContext(styles));
+						const initialStyles = extractInitialStyles(closingElement);
+						const outOfLineStyles = initialStyles.concat(extractOutOfLineStyles(closingElement));
+
+						rootScope.addContexts(
+							createStyleContainerContext(outOfLineStyles),
+							createTemporalActiveContext({
+								stylesIDRefs: outOfLineStyles.map(({ "xml:id": id }) => id),
+							}),
+						);
 
 						break;
 					}
@@ -1004,6 +1011,40 @@ function extractOutOfLineRegions(
 
 function isStylingElement(currentNode: NodeWithRelationship<Token>): boolean {
 	return currentNode.content.content === "styling";
+}
+
+function extractInitialStyles(
+	currentNode: NodeWithRelationship<Token>,
+): StyleContainerContextState[] {
+	const { children } = currentNode;
+
+	if (!children.length) {
+		return [];
+	}
+
+	const styles: StyleContainerContextState[] = [];
+
+	for (const { content } of children) {
+		if (content.content !== "initial") {
+			continue;
+		}
+
+		styles.push(
+			Object.create(content.attributes, {
+				"xml:id": {
+					value:
+						content.attributes["xml:id"] ||
+						`in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+					enumerable: true,
+				},
+				kind: {
+					value: "initial",
+				},
+			}),
+		);
+	}
+
+	return styles;
 }
 
 /**
