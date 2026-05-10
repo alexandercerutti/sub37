@@ -47,8 +47,13 @@ type Flatten<T> = T extends any[]
 			: [T]
 	: [T];
 
+// Fallback gracefully otherwise we would fallback to `[unknown]`
 export type InferDerivableValue<D extends Derivable> =
-	D extends Derivable<any, infer R> ? (Flatten<R> extends undefined ? [] : Flatten<R>) : never;
+	D extends Derivable<any, infer R>
+		? Flatten<R> extends (DerivedValue | undefined)[]
+			? Flatten<R>
+			: (DerivedValue | undefined)[]
+		: never;
 
 export function isDerived(
 	derivationResult: DerivationResult,

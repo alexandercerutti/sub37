@@ -9,6 +9,7 @@ import {
 	resolveStyleDefinitionByName,
 	styleAppliesToElement,
 } from "../parseStyle.js";
+import type { SyntaxModuleDefinition } from "../parseStyle.js";
 import type { DiscreteAnimation } from "../Animations/calcMode/discrete.js";
 import type { LinearAnimation } from "../Animations/calcMode/linear.js";
 import type { PacedAnimation } from "../Animations/calcMode/paced.js";
@@ -339,7 +340,7 @@ function getValidAnimationParsedStylesFrames(
 			continue animationValueListsLoop;
 		}
 
-		const Syntax = attribute.syntax;
+		const Syntax: SyntaxModuleDefinition = attribute.syntax;
 
 		for (const value of animationValue) {
 			const parsingOutcome = parseAttributeValue(Syntax, value);

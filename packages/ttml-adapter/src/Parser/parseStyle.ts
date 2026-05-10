@@ -3,7 +3,7 @@ import type { Scope } from "./Scope/Scope.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import type { Token } from "./Token.js";
 import * as Syntaxes from "./Style/properties/index.js";
-import type { Derivable, DerivedValue } from "./Style/structure/operators.js";
+import type { Derivable, DerivedValue, InferDerivableValue } from "./Style/structure/operators.js";
 import { isDerived, isRejected } from "./Style/structure/operators.js";
 import { getSplittedLinearWhitespaceValues } from "./lwsp.js";
 
@@ -38,14 +38,18 @@ const AnimationFlags = {
 	CONTINUOUS: /****/ 0b0110,
 } as const;
 
-interface AttributeDefinition<DestinationProperties extends string[] = string[]> {
-	readonly name: string;
+interface AttributeDefinition<
+	Name extends string = string,
+	DestinationProperties extends string[] = string[],
+	Syntax extends SyntaxModuleDefinition = SyntaxModuleDefinition,
+> {
+	readonly name: Name;
 	readonly appliesTo: string[];
 	readonly default: unknown;
 	readonly allowedValues: Set<unknown>;
 	readonly namespace: string | undefined;
 	readonly toCSS: PropertiesMapper<DestinationProperties>;
-	readonly syntax: SyntaxModuleDefinition;
+	readonly syntax: Syntax;
 
 	flags: number;
 }
@@ -60,7 +64,19 @@ function animatable<Attr extends AttributeDefinition>(attrs: number, def: Attr):
 	return def;
 }
 
-export function resolveStyleDefinitionByName(propName: string): AttributeDefinition | undefined {
+/**
+ * Triple overload to allow us to have better typings when the property is known.
+ * Otherwise Typescript can't correlate the input string with the keys of the map and we lose type information.
+ */
+export function resolveStyleDefinitionByName<Prop extends keyof TTML_CSS_ATTRIBUTES_MAP>(
+	propName: Prop,
+): TTML_CSS_ATTRIBUTES_MAP[Prop];
+
+export function resolveStyleDefinitionByName(
+	propName: string,
+): TTML_CSS_ATTRIBUTES_MAP[keyof TTML_CSS_ATTRIBUTES_MAP] | undefined;
+
+export function resolveStyleDefinitionByName(propName: string) {
 	if (!isMappedKey(propName)) {
 		return undefined;
 	}
@@ -76,8 +92,11 @@ export function isPropertyDiscretelyAnimatable(definition: AttributeDefinition):
 	return Boolean(definition.flags & AnimationFlags.DISCRETE);
 }
 
-interface SyntaxModuleDefinition<DestinationProperties extends string[] = string[]> {
-	Grammar: Derivable;
+export interface SyntaxModuleDefinition<
+	DestinationProperties extends string[] = string[],
+	Grammar extends Derivable = Derivable,
+> {
+	Grammar: Grammar;
 	cssTransform(
 		scope: Scope,
 		value: unknown,
@@ -101,15 +120,17 @@ interface SyntaxModuleDefinition<DestinationProperties extends string[] = string
 }
 
 function createAttributeDefinition<
+	const Name extends string,
 	DestinationProperties extends string[],
 	const AllowedValues extends string,
+	Syntax extends SyntaxModuleDefinition<DestinationProperties>,
 >(
-	attributeName: string,
+	attributeName: Name,
 	appliesTo: string[],
 	defaultValue: NoInfer<AllowedValues>,
 	allowedValues: Set<AllowedValues> | undefined,
-	syntax: SyntaxModuleDefinition<DestinationProperties>,
-): AttributeDefinition<DestinationProperties> {
+	syntax: Syntax,
+): AttributeDefinition<Name, DestinationProperties, Syntax> {
 	return Object.create(null, {
 		name: {
 			value: attributeName,
@@ -125,7 +146,7 @@ function createAttributeDefinition<
 		},
 		toCSS: {
 			value(
-				this: AttributeDefinition<DestinationProperties>,
+				this: AttributeDefinition<Name, DestinationProperties>,
 				scope: Scope,
 				value: unknown,
 				elementAppliesTo: string,
@@ -382,7 +403,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 */
 	"tts:extent": animatable(
 		AnimationFlags.DISCRETE,
-		createAttributeDefinition<["width", "height"], string>(
+		createAttributeDefinition(
 			"tts:extent",
 			["tt", "region", "image"],
 			"auto",
@@ -1139,10 +1160,10 @@ function getElementsHierarchyFromScope(scope: Scope): string[] {
  * @param value
  * @returns
  */
-export function parseAttributeValue(
-	syntaxModuleDefinition: SyntaxModuleDefinition,
+export function parseAttributeValue<Syntax extends SyntaxModuleDefinition>(
+	syntaxModuleDefinition: Syntax,
 	value: string,
-): (DerivedValue | undefined)[] | null {
+): InferDerivableValue<Syntax["Grammar"]> | null {
 	const tokens =
 		typeof syntaxModuleDefinition.tokenizer === "function"
 			? syntaxModuleDefinition.tokenizer(value)
@@ -1179,5 +1200,6 @@ export function parseAttributeValue(
 		collectedValues = collectedValues.concat(tokenDerivationResult.values);
 	}
 
-	return collectedValues;
+	// Safe casting, but typescript cannot hold the reference.
+	return collectedValues as InferDerivableValue<Syntax["Grammar"]>;
 }
