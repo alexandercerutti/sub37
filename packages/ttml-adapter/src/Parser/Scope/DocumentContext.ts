@@ -4,6 +4,9 @@ import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
 import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
+import { parseAttributeValue, resolveStyleDefinitionByName } from "../parseStyle.js";
+import { isPixelScalar } from "../Style/primitives/pixel.js";
+import type { PixelScalar } from "../Style/primitives/pixel.js";
 
 const documentContextSymbol = Symbol("document");
 
@@ -11,7 +14,7 @@ export interface DocumentAttributes extends TimeDetails {
 	"ttp:displayAspectRatio": number[];
 	"ttp:cellResolution": [number, number];
 	"ttp:pixelAspectRatio"?: number[];
-	"tts:extent"?: number[];
+	"tts:extent"?: [PixelScalar, PixelScalar];
 }
 
 interface DocumentContext extends Context<DocumentContext, Record<string, string>> {
@@ -127,7 +130,7 @@ function parseDocumentSupportedAttributes(
 
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	const extent = asNumbers(getSplittedLinearWhitespaceValues(attributes["tts:extent"]));
+	const extent = getDocumentExtentResolvedValue(attributes["tts:extent"]);
 
 	return Object.freeze({
 		/**
@@ -171,7 +174,10 @@ function parseDocumentSupportedAttributes(
  * @returns
  */
 
-function getPixelAspectRatio(values: number[], extent?: number[]): [number, number] | undefined {
+function getPixelAspectRatio(
+	values: number[],
+	extent?: [PixelScalar, PixelScalar] | undefined,
+): [number, number] | undefined {
 	if (!values || values.length < 2 || !extent) {
 		return undefined;
 	}
@@ -321,4 +327,93 @@ function getMarkerModeResolvedValue(
 
 function asNumbers(values: string[]): number[] {
 	return values.map((e) => parseFloat(e));
+}
+/**
+ * `tts:extent` applied to the root container (the <tt> element) acts as a
+ * canvas size indicator (the equivalent of viewbox in SVG) and it is used
+ * to determine the storage aspect ratio.
+ *
+ * §10.2.16
+ *
+ * > If a tts:extent attribute is specified on the tt element,
+ * > then the specified value is restricted to one of the following:
+ * > (1) the auto keyword,
+ * > (2) the contain keyword, or
+ * > (3) two <length> specifications, where these specifications are
+ * > expressed as non-percentage, definite lengths using pixel units.
+ * >
+ * > All other syntactically legal values must not be used in this
+ * > context, and, if used, must be considered an error and must be
+ * > ignored for the purpose of presentation processing, in which case
+ * > the initial value (auto) applies.
+ * >
+ * > [...]
+ * >
+ * > If the value of this attribute is auto, then the computed value of
+ * > its associated property is determined as follows:
+ * >    if the property applies to the tt element, then auto is
+ * >    interpreted as if the value contain were specified;
+ * > [...]
+ * > If the value of this attribute is contain, then the computed value
+ * > of its associated property is determined as follows:
+ * >  if the property applies to the tt element, then contain is interpreted
+ * >  as specified in H Root Container Region Semantics;
+ *
+ * § H.1 Aspect Ratios
+ *
+ * > When the tts:extent attribute is specified on the tt element, then
+ * >   if the value of the tts:extent attribute consists of two pixel-valued
+ * >   <length> expressions, the storage aspect ratio is considered to be
+ * >   specified and having a numeric value equal to the width of the extent
+ * >   divided by its height;
+ * >
+ * >   otherwise (the computed value is contain), the storage aspect ratio is
+ * >   considered to be unspecified and is inferred using other information
+ * >   described below.
+ *
+ * @see https://w3c.github.io/ttml2/#root-container-region-semantics-aspect-ratios
+ *
+ * @param extent
+ * @returns
+ */
+
+function getDocumentExtentResolvedValue(
+	extent: string | undefined,
+): DocumentAttributes["tts:extent"] {
+	if (!extent) {
+		return undefined;
+	}
+
+	const Syntax = resolveStyleDefinitionByName("tts:extent")!.syntax;
+
+	const parsedExtentValue = parseAttributeValue(Syntax, extent);
+
+	if (!parsedExtentValue) {
+		return undefined;
+	}
+
+	if (
+		parsedExtentValue.length !== 2 ||
+		// These two shouldn't be possible by grammar definition
+		parsedExtentValue[0] === undefined ||
+		parsedExtentValue[1] === undefined
+	) {
+		return undefined;
+	}
+
+	const [first, second] = parsedExtentValue;
+
+	/**
+	 * This omits "auto" and "contain" keywords as well, since
+	 * they mean to auto-compute the size based.
+	 */
+	if (first.type !== "length" || second.type !== "length") {
+		return undefined;
+	}
+
+	if (!isPixelScalar(first.value) || !isPixelScalar(second.value)) {
+		return undefined;
+	}
+
+	return [first.value, second.value];
 }

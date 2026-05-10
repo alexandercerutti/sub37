@@ -6,6 +6,7 @@ import type { Length } from "../primitives/length.js";
 import { readScopeDocumentContext } from "../../Scope/DocumentContext.js";
 import { getCellScalarPixelConversion, isCellScalar } from "../primitives/cell.js";
 import { createUnit } from "../../Unit.js";
+import type { PixelScalar } from "../primitives/pixel.js";
 
 export { FontSizeGrammar as Grammar } from "../syntax/font-size.js";
 
@@ -95,7 +96,10 @@ export function cssTransform(
 	return [["font-size", fontSize.toString()]];
 }
 
-function fontSizeValueDefaultLength(dimension: number, cellResolutionDimension: number): Length {
+function fontSizeValueDefaultLength(
+	dimension: PixelScalar,
+	cellResolutionDimension: number,
+): Length {
 	// Initial value is 1c
 	return getCellScalarPixelConversion(dimension, cellResolutionDimension, createUnit(1, "c"))!;
 }

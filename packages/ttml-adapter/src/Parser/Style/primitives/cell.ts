@@ -35,7 +35,7 @@ export type CellScalar = Length & { metric: "c" };
  */
 
 export function getCellScalarPixelConversion(
-	length: number,
+	length: PixelScalar,
 	cellProgressionResolution: number,
 	cellScalar: Length,
 ): PixelScalar | null {
@@ -43,7 +43,7 @@ export function getCellScalarPixelConversion(
 		return null;
 	}
 
-	return createUnit((length / cellProgressionResolution) * cellScalar.value, "px");
+	return createUnit((length.value / cellProgressionResolution) * cellScalar.value, "px");
 }
 
 export function isCellScalar(value: unknown): value is CellScalar {
