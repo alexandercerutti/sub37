@@ -290,4 +290,73 @@ describe("Tokenizer", () => {
 			expect(result?.attributes["repeatCount"]).toBe("2");
 		});
 	});
+
+	describe("String token (DATA state)", () => {
+		/**
+		 * Single-character text content is the minimal case for DATA state.
+		 * The cursor lands on '<' immediately after consuming the first char
+		 * in UNKNOWN_CONTENT, so the DATA state must detect end-of-text
+		 * without first accumulating '<' into the result.
+		 */
+		it("should tokenize a single-character text node", () => {
+			const content = `<p>A</p>`;
+			const tokenizer = new Tokenizer(content);
+
+			const start = tokenizer.nextToken();
+			const string = tokenizer.nextToken();
+			const end = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("A");
+
+			/* cursor must not have consumed the '<', so end tag follows cleanly */
+			expect(end?.type).toBe(TokenType.END_TAG);
+			expect(end?.content).toBe("p");
+		});
+
+		it("should tokenize consecutive single-character siblings without contamination", () => {
+			const content = `<div><p>A</p><p>B</p><p>C</p></div>`;
+			const tokenizer = new Tokenizer(content);
+
+			/** @type {import("../lib/Parser/Token.js").Token[]} */
+			const tokens = [];
+			let token;
+			while ((token = tokenizer.nextToken())) {
+				tokens.push(token);
+			}
+
+			const strings = tokens.filter((t) => t.type === TokenType.STRING);
+
+			expect(strings).toHaveLength(3);
+			expect(strings[0].content).toBe("A");
+			expect(strings[1].content).toBe("B");
+			expect(strings[2].content).toBe("C");
+		});
+
+		it("should tokenize multi-character text followed immediately by a closing tag", () => {
+			const content = `<p>Hello</p>`;
+			const tokenizer = new Tokenizer(content);
+
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+			const end = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("Hello");
+			expect(end?.type).toBe(TokenType.END_TAG);
+			expect(end?.content).toBe("p");
+		});
+
+		it("should not include tag markup in the string token content", () => {
+			const content = `<p>X</p>`;
+			const tokenizer = new Tokenizer(content);
+
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+
+			expect(string?.content).not.toContain("<");
+			expect(string?.content).not.toContain("/");
+			expect(string?.content).not.toContain(">");
+		});
+	});
 });
