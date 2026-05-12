@@ -232,13 +232,7 @@ export class Tokenizer {
 							break;
 						}
 
-						result += char;
 						state = TokenizerState.DATA;
-						this.line = this.sourceWindow.line;
-						this.column = this.sourceWindow.column;
-						this.offset = this.sourceWindow.cursor;
-
-						this.sourceWindow.advance();
 						break;
 					}
 
@@ -466,6 +460,9 @@ export class Tokenizer {
 
 				case TokenizerState.DATA: {
 					result += char;
+					this.line = this.sourceWindow.line;
+					this.column = this.sourceWindow.column;
+					this.offset = this.sourceWindow.cursor;
 
 					if (this.sourceWindow.peekAdvance(START_TAG_CHECKER)) {
 						return Token.String(result.trim(), this.line, this.column, this.offset);
