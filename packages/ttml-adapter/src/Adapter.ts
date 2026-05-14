@@ -38,9 +38,11 @@ import {
 } from "./Parser/Scope/AnimationContainerContext.js";
 import { createErrorContext, readScopeErrorContext } from "./Parser/Scope/ErrorContext.js";
 
+// ************************ //
+// *** NODES ATTRIBUTES *** //
+// ************************ //
+
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
-export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
-const nodeMatchSymbol = Symbol("nodeMatchSymbol");
 
 enum NodeAttributes {
 	NO_ATTRS /***/ = 0b000,
@@ -49,14 +51,6 @@ enum NodeAttributes {
 
 interface NodeWithAttributes {
 	[nodeAttributesSymbol]: NodeAttributes;
-}
-
-export interface NodeWithScope {
-	[nodeScopeSymbol]: Scope;
-}
-
-interface NodeWithDestinationMatch {
-	[nodeMatchSymbol]?: NodeRepresentation<string>;
 }
 
 function isNodeIgnored(
@@ -97,6 +91,16 @@ function markSubtreeIgnored(node: NodeWithRelationship<Token & NodeWithAttribute
 	}
 }
 
+// ******************* //
+// *** NODES SCOPE *** //
+// ******************* //
+
+export const nodeScopeSymbol = Symbol("nodeScopeSymbol");
+
+export interface NodeWithScope {
+	[nodeScopeSymbol]: Scope;
+}
+
 function createNodeWithScope<NodeType extends object>(
 	node: NodeType,
 	scope: Scope,
@@ -106,6 +110,16 @@ function createNodeWithScope<NodeType extends object>(
 			value: scope,
 		},
 	});
+}
+
+// ******************************* //
+// *** NODES DESTINATION MATCH *** //
+// ******************************* //
+
+const nodeMatchSymbol = Symbol("nodeMatchSymbol");
+
+interface NodeWithDestinationMatch {
+	[nodeMatchSymbol]?: NodeRepresentation<string>;
 }
 
 function createNodeWithDestinationMatch<NodeType extends object>(
