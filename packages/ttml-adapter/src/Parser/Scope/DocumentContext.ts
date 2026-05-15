@@ -1,3 +1,4 @@
+import type { NodeWithScope } from "../../Adapter.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onMergeSymbol } from "./Scope.js";
 import type { TimeDetails } from "../TimeBase/index.js";
@@ -19,7 +20,7 @@ export interface DocumentAttributes extends TimeDetails {
 
 interface DocumentContext extends Context<DocumentContext, Record<string, string>> {
 	attributes: DocumentAttributes;
-	get currentNode(): NodeWithRelationship<Token>;
+	get currentNode(): NodeWithRelationship<Token & NodeWithScope>;
 }
 
 declare module "./Scope" {
@@ -39,7 +40,7 @@ declare module "./Scope" {
  */
 
 export function createDocumentContext(
-	nodeTree: NodeTree<Token>,
+	nodeTree: NodeTree<Token & NodeWithScope>,
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
 	return function (_scope: Scope) {
@@ -63,7 +64,7 @@ export function createDocumentContext(
 				);
 			},
 			attributes,
-			get currentNode(): NodeWithRelationship<Token> {
+			get currentNode(): NodeWithRelationship<Token & NodeWithScope> {
 				return nodeTree.currentNode;
 			},
 		};
