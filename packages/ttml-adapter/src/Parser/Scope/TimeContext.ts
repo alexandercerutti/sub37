@@ -6,7 +6,7 @@ import { matchWallClockTimeExpression } from "../TimeExpressions/matchers/wallcl
 import { readScopeDocumentContext } from "./DocumentContext.js";
 import { readScopeErrorContext } from "./ErrorContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
-import { onMergeSymbol } from "./Scope.js";
+import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 
 const timeContextSymbol = Symbol("time");
 const currentStateSymbol = Symbol("state");
@@ -71,48 +71,11 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			return null;
 		}
 
-		const errorContext = readScopeErrorContext(scope)!;
-
-		const { attributes: documentAttributes } = readScopeDocumentContext(scope)!;
-
-		const isDurAttributeForbidden =
-			typeof contextInput.dur !== "undefined" &&
-			documentAttributes["ttp:timeBase"] === "smpte" &&
-			documentAttributes["ttp:markerMode"] === "discontinuous";
-
-		if (isDurAttributeForbidden) {
-			errorContext.report(
-				new Error(
-					"Dur attribute cannot be specified when timeBase is set to 'smpte' and marker mode is 'discontinuous' (default).",
-				),
-				true,
-			);
-		}
-
-		const timeContainer = isTimeContainerStardardString(contextInput["timeContainer"])
-			? contextInput["timeContainer"]
-			: undefined;
-
-		let begin: number | undefined;
-		let end: number | undefined;
-		let dur: number | undefined;
-
-		try {
-			begin = parseTimeString(contextInput.begin, documentAttributes);
-			end = parseTimeString(contextInput.end, documentAttributes);
-			dur = parseTimeString(contextInput.dur, documentAttributes);
-		} catch (error) {
-			errorContext.report(
-				error instanceof Error ? error : new Error("Unknown error while parsing time attributes."),
-				true,
-			);
-		}
-
 		const state: TimeContextState = {
-			begin,
-			end,
-			dur,
-			timeContainer,
+			begin: undefined,
+			end: undefined,
+			dur: undefined,
+			timeContainer: undefined,
 		};
 
 		return {
@@ -120,6 +83,62 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			identifier: timeContextSymbol,
 			get args() {
 				return contextInput;
+			},
+			[onAttachedSymbol](): void {
+				const documentContext = readScopeDocumentContext(scope)!;
+				const errorContext = readScopeErrorContext(scope)!;
+
+				const { attributes: documentAttributes } = documentContext;
+
+				const isDurAttributeForbidden =
+					typeof contextInput.dur !== "undefined" &&
+					documentAttributes["ttp:timeBase"] === "smpte" &&
+					documentAttributes["ttp:markerMode"] === "discontinuous";
+
+				if (isDurAttributeForbidden) {
+					errorContext.report(
+						new Error(
+							"Dur attribute cannot be specified when timeBase is set to 'smpte' and marker mode is 'discontinuous' (default).",
+						),
+						true,
+					);
+				}
+
+				const timeContainer = isTimeContainerStardardString(contextInput["timeContainer"])
+					? contextInput["timeContainer"]
+					: undefined;
+
+				let begin: number | undefined;
+				let end: number | undefined;
+				let dur: number | undefined;
+
+				try {
+					begin = parseTimeString(contextInput.begin, documentAttributes);
+					end = parseTimeString(contextInput.end, documentAttributes);
+					dur = parseTimeString(contextInput.dur, documentAttributes);
+
+					Object.defineProperties(state, {
+						begin: {
+							value: begin,
+						},
+						end: {
+							value: end,
+						},
+						dur: {
+							value: dur,
+						},
+						timeContainer: {
+							value: timeContainer,
+						},
+					});
+				} catch (error) {
+					errorContext.report(
+						error instanceof Error
+							? error
+							: new Error("Unknown error while parsing time attributes."),
+						true,
+					);
+				}
 			},
 			[onMergeSymbol](incomingContext: TimeContext): void {
 				Object.assign(state, incomingContext[currentStateSymbol] || {});
