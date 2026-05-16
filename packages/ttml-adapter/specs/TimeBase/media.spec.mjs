@@ -100,6 +100,7 @@ describe("When timeBase is 'media'", () => {
 					"ttp:tickRate": 60,
 					"ttp:frameRate": 24,
 					"ttp:subFrameRate": 1, // fallback
+					"ttp:frameRateMultiplier": 1, // fallback per §7.2.6
 				},
 			),
 		).toBe(1021);
