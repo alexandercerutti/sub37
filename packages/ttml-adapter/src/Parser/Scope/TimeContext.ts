@@ -1,3 +1,4 @@
+import { nodeScopeSymbol } from "../../Adapter.js";
 import type { TimeDetails } from "../TimeBase/index.js";
 import { getTimeBaseProvider } from "../TimeBase/index.js";
 import { matchClockTimeExpression } from "../TimeExpressions/matchers/clockTime.js";
@@ -71,12 +72,7 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 			return null;
 		}
 
-		const state: TimeContextState = {
-			begin: undefined,
-			end: undefined,
-			dur: undefined,
-			timeContainer: undefined,
-		};
+		const state: TimeContextState = {};
 
 		return {
 			parent: undefined,
@@ -112,9 +108,25 @@ export function createTimeContext(contextInput: TimeContextData = {}): ContextFa
 				let end: number | undefined;
 				let dur: number | undefined;
 
+				const referenceBegin = this.timeContainer === "seq" ? getReferenceBeginFromScope(scope) : 0;
+
 				try {
-					begin = parseTimeString(contextInput.begin, documentAttributes);
-					end = parseTimeString(contextInput.end, documentAttributes);
+					begin = parseTimeString(contextInput.begin, documentAttributes, referenceBegin);
+
+					/*
+					 * In a seq container, if no explicit begin is given, the implicit
+					 * begin is the referenceBegin itself (offset 0 from the slot start).
+					 */
+					if (this.timeContainer === "seq" && typeof begin === "undefined") {
+						begin = referenceBegin;
+					}
+
+					end = parseTimeString(contextInput.end, documentAttributes, referenceBegin);
+
+					/**
+					 * `referenceBegin` applies only to `begin` and `end`.
+					 * `dur` is always relative to element start
+					 */
 					dur = parseTimeString(contextInput.dur, documentAttributes);
 
 					Object.defineProperties(state, {
@@ -283,29 +295,54 @@ function isTimeContainerStardardString(
 	return timeContainer === "par" || timeContainer === "seq";
 }
 
+/**
+ * §12.3.1
+ *
+ * "[...] where referenceBegin is determined according to whether the nearest ancestor time container
+ * employs parallel (par) or sequential (seq) semantics: if parallel or if sequential and no prior
+ * sibling timed element exists, then referenceBegin is the media time that corresponds to the beginning
+ * of the nearest ancestor time container or zero (0) if this time container is the root temporal extent;
+ *
+ * otherwise, if sequential and a prior sibling timed element exists, then referenceBegin is the media
+ * time that corresponds to the active end of the immediately prior sibling timed element;"
+ *
+ * @see https://w3c.github.io/ttml2/#semantics-timing-attribute-begin
+ */
+function getReferenceBeginFromScope(scope: Scope): number {
+	const { currentNode } = readScopeDocumentContext(scope)!;
+
+	/*
+	 * At onAttachedSymbol time, nodeTree.push has not been called yet —
+	 * so currentNode IS the seq container, not the element being processed.
+	 * Its children are the already-pushed prior siblings.
+	 */
+	const previousSibling = currentNode.children[currentNode.children.length - 1];
+
+	if (!previousSibling) {
+		/**
+		 * §I.2.2
+		 * > if sequential and no prior sibling timed element exists, then
+		 * > `referenceBegin` is the media time that corresponds to the beginning of the
+		 * > nearest ancestor time container
+		 *
+		 * @see https://w3c.github.io/ttml2/#semantics-media-timing
+		 */
+		return readScopeTimeContext(currentNode.content[nodeScopeSymbol])?.startTime ?? 0;
+	}
+
+	return readScopeTimeContext(previousSibling.content[nodeScopeSymbol])?.endTime ?? 0;
+}
+
 function parseTimeString(
 	timeString: string | undefined,
 	timeDetails: TimeDetails,
+	referenceBegin: number = 0,
 ): number | undefined {
 	if (!timeString) {
 		return undefined;
 	}
 
 	const timeProvider = getTimeBaseProvider(timeDetails["ttp:timeBase"]);
-
-	/**
-	 * "[...] where referenceBegin is determined according to whether the nearest ancestor time container
-	 * employs parallel (par) or sequential (seq) semantics: if parallel or if sequential and no prior
-	 * sibling timed element exists, then referenceBegin is the media time that corresponds to the beginning
-	 * of the nearest ancestor time container or zero (0) if this time container is the root temporal extent;
-	 *
-	 * otherwise, if sequential and a prior sibling timed element exists, then referenceBegin is the media
-	 * time that corresponds to the active end of the immediately prior sibling timed element;"
-	 *
-	 * @FIXME pass the correct referenceBegin according above description
-	 */
-
-	const referenceBegin = 0;
 
 	{
 		const match = matchClockTimeExpression(timeString);
