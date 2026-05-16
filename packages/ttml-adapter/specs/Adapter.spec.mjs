@@ -236,8 +236,30 @@ describe("Adapter", () => {
 			});
 		});
 
-		describe("Region attribute chain", () => {
-			it("should emit an element nested inside a parent when both have the same region attribute", () => {});
+		describe("Regions", () => {
+			it("should emit an element nested inside a parent when both have the same region attribute", () => {
+				const adapter = new TTMLAdapter();
+
+				const { data: cues } = adapter.parse(`
+					<tt xml:lang="">
+						<head>
+							<layout>
+								<region xml:id="r1" />
+							</layout>
+						</head>
+						<body>
+							<div region="r1">
+								<p begin="0s" end="5s" region="r1">
+									<span>Content</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`);
+
+				expect(cues.length).toBe(1);
+				expect(cues[0]).toMatchObject({ content: "Content" });
+			});
 
 			it("should not emit an element containing an inline region, nested inside a parent with a region attribute", () => {
 				{
