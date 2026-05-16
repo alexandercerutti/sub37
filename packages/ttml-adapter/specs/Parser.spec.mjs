@@ -164,35 +164,35 @@ describe("parseCue", () => {
 });
 
 describe("Cell Resolution", () => {
-	it.todo("should default if not available");
-
-	it.todo("should default if its values are incorrect");
-
-	it.todo("should be used it available and correct");
-
-	it.todo("should be allowed to be converted to pixels");
-
-	/**
-	 * @TODO Add tests for font-size cell conversion to pixel
+	/*
+	 * Unit tests for ttp:cellResolution attribute parsing live in Scope.spec.mjs
+	 * under the DocumentContext describe block.
+	 *
+	 * Integration test for font-size cell-to-pixel conversion:
+	 * requires tts:extent on <tt> to derive cell pixel dimensions.
+	 * Formula: 1c = extent_height_px / cellResolution_rows
 	 */
+	it("should convert a cell-sized font to pixels using extent and cellResolution", () => {
+		const cues = new TTMLAdapter().parse(`
+			<tt xml:lang="en"
+				xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				tts:extent="480px 320px"
+				ttp:cellResolution="32 15">
+				<head>
+					<layout><region xml:id="r1" /></layout>
+				</head>
+				<body>
+					<div region="r1">
+						<p begin="0s" end="1s">
+							<span tts:fontSize="1c">text</span>
+						</p>
+					</div>
+				</body>
+			</tt>
+		`).data;
 
-	/**
-	 * @TODO Add tests for font-size percentage
-	 */
-});
-
-describe("Lengths", () => {
-	/**
-	 * Add tests for <length> unit measure with the dedicated parser
-	 */
-});
-
-describe("Styling", () => {
-	describe("Chaining Referential Styling", () => {
-		it.todo("should be applied if one IDREF is specified through style attribute");
-
-		it.todo("should be applied if multiple IDREFs are specified through style attribute");
-
-		it.todo("should throw if there's a loop in styling referencing chain");
+		const styles = cues[0]?.entities.find((e) => "styles" in e)?.styles;
+		/* 1c = extent_width / rows = 480px / 15 = 32px */
+		expect(styles?.["font-size"]).toBe("32px");
 	});
 });
