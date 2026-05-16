@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "@jest/globals";
-import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
+import { NodeTree } from "../../lib/Parser/Tags/NodeTree.js";
 
 /**
- * @typedef {import("../lib/Parser/Token.js").Token} Token
+ * @typedef {import("../../lib/Parser/Token.js").Token} Token
  */
 
 describe("NodeTree", () => {

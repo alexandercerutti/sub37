@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { matchClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/clockTime.js";
-import { matchOffsetTimeExpression } from "../lib/Parser/TimeExpressions/matchers/offsetTime.js";
-import { matchWallClockTimeExpression } from "../lib/Parser/TimeExpressions/matchers/wallclockTime.js";
+import { matchClockTimeExpression } from "../../lib/Parser/TimeExpressions/matchers/clockTime.js";
+import { matchOffsetTimeExpression } from "../../lib/Parser/TimeExpressions/matchers/offsetTime.js";
+import { matchWallClockTimeExpression } from "../../lib/Parser/TimeExpressions/matchers/wallclockTime.js";
 
 // hours : minutes : seconds (. fraction | : frames ('.' sub-frames)? )?
 describe("Clock Time conversion to time matcher", () => {

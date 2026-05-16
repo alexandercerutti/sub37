@@ -1,10 +1,10 @@
 import { describe, it, expect } from "@jest/globals";
-import { createVisitor } from "../lib/Parser/structure/visitor.js";
-import { createNode } from "../lib/Parser/Tags/Representation/NodeRepresentation.js";
-import * as Kleene from "../lib/Parser/structure/kleene.js";
+import { createVisitor } from "../../lib/Parser/structure/visitor.js";
+import { createNode } from "../../lib/Parser/Tags/Representation/NodeRepresentation.js";
+import * as Kleene from "../../lib/Parser/structure/kleene.js";
 
 /**
- * @typedef {import("../lib/Parser/Tags/Representation/NodeRepresentation.js").NodeRepresentation<string>} NodeRepresentation
+ * @typedef {import("../../lib/Parser/Tags/Representation/NodeRepresentation.js").NodeRepresentation<string>} NodeRepresentation
  */
 
 describe("Visitor", () => {

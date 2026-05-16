@@ -1,21 +1,24 @@
 import { describe, it, expect, jest } from "@jest/globals";
-import TTMLAdapter from "../lib/Adapter.js";
-import { createScope, onMergeSymbol } from "../lib/Parser/Scope/Scope.js";
-import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
+import TTMLAdapter from "../../lib/Adapter.js";
+import { createScope, onMergeSymbol } from "../../lib/Parser/Scope/Scope.js";
+import { createTimeContext, readScopeTimeContext } from "../../lib/Parser/Scope/TimeContext.js";
 import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
-} from "../lib/Parser/Scope/StyleContainerContext.js";
+} from "../../lib/Parser/Scope/StyleContainerContext.js";
 import {
 	createRegionContainerContext,
 	readScopeRegionContext,
-} from "../lib/Parser/Scope/RegionContainerContext.js";
-import { createDocumentContext, readScopeDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
-import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
-import { nodeScopeSymbol } from "../lib/Adapter.js";
+} from "../../lib/Parser/Scope/RegionContainerContext.js";
+import {
+	createDocumentContext,
+	readScopeDocumentContext,
+} from "../../lib/Parser/Scope/DocumentContext.js";
+import { NodeTree } from "../../lib/Parser/Tags/NodeTree.js";
+import { nodeScopeSymbol } from "../../lib/Adapter.js";
 
 /**
- * @typedef {import("../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
+ * @typedef {import("../../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
  * @template {string[]} ContentType
  */
 
@@ -300,10 +303,7 @@ describe("Scope and contexts", () => {
 				 */
 				nodeTree.push({ [nodeScopeSymbol]: seqContainerScope });
 
-				const childScope = createScope(
-					seqContainerScope,
-					createTimeContext({ begin: "0s" }),
-				);
+				const childScope = createScope(seqContainerScope, createTimeContext({ begin: "0s" }));
 
 				expect(readScopeTimeContext(childScope).endTime).toBe(0);
 			});
@@ -334,18 +334,12 @@ describe("Scope and contexts", () => {
 		}
 
 		it("should return undefined for an unknown idref", () => {
-			const scope = createScope(
-				undefined,
-				createRegionContainerContext([makeRegion("r1")]),
-			);
+			const scope = createScope(undefined, createRegionContainerContext([makeRegion("r1")]));
 			expect(readScopeRegionContext(scope).getRegionById("unknown")).toBeUndefined();
 		});
 
 		it("should return undefined when idref is not provided", () => {
-			const scope = createScope(
-				undefined,
-				createRegionContainerContext([makeRegion("r1")]),
-			);
+			const scope = createScope(undefined, createRegionContainerContext([makeRegion("r1")]));
 			expect(readScopeRegionContext(scope).getRegionById(undefined)).toBeUndefined();
 		});
 
@@ -371,10 +365,7 @@ describe("Scope and contexts", () => {
 		it("should skip regions without an xml:id", () => {
 			const scope = createScope(
 				undefined,
-				createRegionContainerContext([
-					{ attributes: {}, children: [] },
-					makeRegion("r1"),
-				]),
+				createRegionContainerContext([{ attributes: {}, children: [] }, makeRegion("r1")]),
 			);
 			expect(readScopeRegionContext(scope).regions.length).toBe(1);
 			expect(readScopeRegionContext(scope).regions[0].id).toBe("r1");
@@ -394,10 +385,7 @@ describe("Scope and contexts", () => {
 		});
 
 		it("should find a region from a parent scope", () => {
-			const parent = createScope(
-				undefined,
-				createRegionContainerContext([makeRegion("r1")]),
-			);
+			const parent = createScope(undefined, createRegionContainerContext([makeRegion("r1")]));
 			const child = createScope(parent, createRegionContainerContext([makeRegion("r2")]));
 			expect(readScopeRegionContext(child).getRegionById("r1")).toBeDefined();
 			expect(readScopeRegionContext(child).getRegionById("r2")).toBeDefined();

@@ -1,8 +1,8 @@
 // @ts-check
 
 import { describe, it, expect } from "@jest/globals";
-import { Tokenizer } from "../lib/Parser/Tokenizer.js";
-import { Token, TokenType } from "../lib/Parser/Token.js";
+import { Tokenizer } from "../../lib/Parser/Tokenizer.js";
+import { Token, TokenType } from "../../lib/Parser/Token.js";
 
 describe("Tokenizer", () => {
 	describe("Tokenization", () => {
@@ -318,7 +318,7 @@ describe("Tokenizer", () => {
 			const content = `<div><p>A</p><p>B</p><p>C</p></div>`;
 			const tokenizer = new Tokenizer(content);
 
-			/** @type {import("../lib/Parser/Token.js").Token[]} */
+			/** @type {import("../../lib/Parser/Token.js").Token[]} */
 			const tokens = [];
 			let token;
 			while ((token = tokenizer.nextToken())) {
