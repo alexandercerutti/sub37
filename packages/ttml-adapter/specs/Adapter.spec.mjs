@@ -5,20 +5,21 @@ import TTMLAdapter from "../lib/Adapter.js";
 // https://developer.mozilla.org/en-US/docs/Related/IMSC/Subtitle_placement
 
 describe("Adapter", () => {
-	it("should throw if the track does not start with a <tt> element", () => {
+	it("should report a critical error if the track does not start with a <tt> element", () => {
 		const adapter = new TTMLAdapter();
-		expect(() => {
-			adapter.parse(`
-				<head>
-					<layout></layout>
-				</head>
-				<body>
-					<div>
-						<p>Some Content that won't be used</p>
-					</div>
-				</body>
-			`);
-		}).toThrowError();
+		const result = adapter.parse(`
+			<head>
+				<layout></layout>
+			</head>
+			<body>
+				<div>
+					<p>Some Content that won't be used</p>
+				</div>
+			</body>
+		`);
+
+		expect(result.errors.length).toBeGreaterThan(0);
+		expect(result.errors.some((e) => e.isCritical)).toBe(true);
 	});
 
 	describe("Cues", () => {
