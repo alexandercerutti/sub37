@@ -8,9 +8,9 @@
 		"@sub37/server": "workspace:^"
 	},
 	"scripts": {
-		"build": "rm -rf lib && npx tsc --build --force",
-		"test": "npm run build && npm --prefix ../.. run test",
-		"prepublishOnly": "npm run build"
+		"build": "rm -rf lib && pnpm tsc --build --force",
+		"test": "pnpm build && pnpm -C ../.. run test",
+		"prepublishOnly": "pnpm build"
 	},
 	"repository": {
 		"type": "git",
