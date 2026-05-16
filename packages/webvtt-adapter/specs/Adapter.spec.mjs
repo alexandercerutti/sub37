@@ -411,7 +411,7 @@ Alberto, come to look at Marcello!
 				},
 				region: {
 					id: "fred",
-					width: 40,
+					width: "40%",
 					lines: 3,
 				},
 			});

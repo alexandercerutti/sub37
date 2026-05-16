@@ -350,7 +350,7 @@ scroll:up
 		it("should return a custom region with converted attributes if string is separated by newlines", () => {
 			expect(parseRegion(REGION_WITH_ATTRIBUTES_NEWLINES)).toMatchObject({
 				id: "fred",
-				width: 40,
+				width: "40%",
 				lines: 3,
 			});
 		});
@@ -358,7 +358,7 @@ scroll:up
 		it("should return a custom region with converted attributes if string is separated by spaces", () => {
 			expect(parseRegion(REGION_WITH_ATTRIBUTES_SPACES)).toMatchObject({
 				id: "fred",
-				width: 40,
+				width: "40%",
 				lines: 3,
 			});
 		});
