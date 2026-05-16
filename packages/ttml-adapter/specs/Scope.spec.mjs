@@ -1,4 +1,5 @@
 import { describe, it, expect, jest } from "@jest/globals";
+import TTMLAdapter from "../lib/Adapter.js";
 import { createScope, onMergeSymbol } from "../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../lib/Parser/Scope/TimeContext.js";
 import {
@@ -159,89 +160,162 @@ describe("Scope and contexts", () => {
 		 * - On an element specifying both "dur" and "end", should win the
 		 * 				Math.min(dur, end - begin). Test both cases.
 		 */
-		it("should return the minimum between end and dur, on the same context", () => {
-			const scope = createScope(
-				undefined,
-				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-				createTimeContext({
-					end: "10s",
-					dur: "20s",
-				}),
-			);
-
-			expect(readScopeTimeContext(scope).endTime).toBe(10000);
-		});
-
-		it("should return the minimum between end and dur, on the different contexts", () => {
-			const scope1 = createScope(
-				undefined,
-				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-				createTimeContext({
-					end: "20s",
-				}),
-			);
-
-			const scope2 = createScope(
-				scope1,
-				createTimeContext({
-					dur: "15s",
-				}),
-			);
-
-			expect(readScopeTimeContext(scope2).endTime).toBe(15000);
-		});
-
-		it("should return the minimum between end - begin and dur plus the startTime, when begin is specified", () => {
-			const scope1 = createScope(
-				undefined,
-				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-				createTimeContext({
-					begin: "5s",
-					end: "20s",
-				}),
-			);
-
-			const scope2 = createScope(
-				scope1,
-				createTimeContext({
-					dur: "16s",
-				}),
-			);
-
-			expect(readScopeTimeContext(scope2).endTime).toBe(20000);
-		});
-
-		it("should return infinity if neither dur and end are specified", () => {
-			const scope = createScope(
-				undefined,
-				createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-				createTimeContext({
-					timeContainer: "par",
-				}),
-			);
-
-			expect(readScopeTimeContext(scope).endTime).toBe(Infinity);
-		});
-
-		it("should return 0 if neither dur and end are specified but cues are sequential", () => {
-			const scope1 = createScope(
-				createScope(
+		describe("endTime is the minimum of end and dur (same element)", () => {
+			it("unit", () => {
+				const scope = createScope(
 					undefined,
 					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
 					createTimeContext({
-						timeContainer: "seq",
+						end: "10s",
+						dur: "20s",
 					}),
-				),
-				createTimeContext({
-					begin: "0s",
-				}),
-			);
+				);
 
-			expect(readScopeTimeContext(scope1).endTime).toBe(0);
+				expect(readScopeTimeContext(scope).endTime).toBe(10000);
+			});
+
+			it("integration", () => {
+				const cues = new TTMLAdapter().parse(`
+					<tt xml:lang="">
+						<body>
+							<div>
+								<p>
+									<span end="10s" dur="20s">text</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`).data;
+				expect(cues[0].endTime).toBe(10000);
+			});
+		});
+
+		describe("endTime is the minimum of end and dur (across scopes)", () => {
+			it("unit", () => {
+				const scope1 = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+					createTimeContext({
+						end: "20s",
+					}),
+				);
+
+				const scope2 = createScope(
+					scope1,
+					createTimeContext({
+						dur: "15s",
+					}),
+				);
+
+				expect(readScopeTimeContext(scope2).endTime).toBe(15000);
+			});
+
+			it("integration", () => {
+				const cues = new TTMLAdapter().parse(`
+					<tt xml:lang="">
+						<body>
+							<div>
+								<p end="20s">
+									<span dur="15s">text</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`).data;
+				expect(cues[0].endTime).toBe(15000);
+			});
+		});
+
+		describe("endTime respects begin offset when comparing dur vs end", () => {
+			it("unit", () => {
+				const scope1 = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+					createTimeContext({
+						begin: "5s",
+						end: "20s",
+					}),
+				);
+
+				const scope2 = createScope(
+					scope1,
+					createTimeContext({
+						dur: "16s",
+					}),
+				);
+
+				expect(readScopeTimeContext(scope2).endTime).toBe(20000);
+			});
+
+			it("integration", () => {
+				const cues = new TTMLAdapter().parse(`
+					<tt xml:lang="">
+						<body>
+							<div>
+								<p begin="5s" end="20s">
+									<span dur="16s">text</span>
+								</p>
+							</div>
+						</body>
+					</tt>
+				`).data;
+				expect(cues[0].endTime).toBe(20000);
+			});
+		});
+
+		describe("endTime is Infinity when neither dur nor end are specified in a par container", () => {
+			it("unit", () => {
+				const scope = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+					createTimeContext({
+						timeContainer: "par",
+					}),
+				);
+
+				expect(readScopeTimeContext(scope).endTime).toBe(Infinity);
+			});
+		});
+
+		describe("endTime is 0 when neither dur nor end are specified in a seq container", () => {
+			it("unit", () => {
+				const scope1 = createScope(
+					createScope(
+						undefined,
+						createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+						createTimeContext({
+							timeContainer: "seq",
+						}),
+					),
+					createTimeContext({
+						begin: "0s",
+					}),
+				);
+
+				expect(readScopeTimeContext(scope1).endTime).toBe(0);
+			});
+
+			it("integration", () => {
+				/*
+				 * Text must be a direct child of the seq <p>, not wrapped in a <span>.
+				 * A child <span> gets its own TimeContext with state.timeContainer=undefined,
+				 * so its anonymous text reads "par" from the span's state — not "seq" from <p>.
+				 */
+				const cues = new TTMLAdapter().parse(`
+					<tt xml:lang="">
+						<body>
+							<div>
+								<p timeContainer="seq">text</p>
+							</div>
+						</body>
+					</tt>
+				`).data;
+				expect(cues.length).toBe(0);
+			});
 		});
 	});
 
-	describe("RegionContext", () => {});
+	describe("RegionContainerContext", () => {});
 
 	describe("StyleContext", () => {
 		it("should merge multiple style contexts on the same scope", () => {
