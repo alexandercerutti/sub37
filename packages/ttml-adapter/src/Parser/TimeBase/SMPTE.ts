@@ -126,7 +126,8 @@ export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
  * When using a DF Timecode, the way to flat the different is discarding some frames
  * from the counting (we can't, ofc, discard them from the video).
  *
- * First of all, 30fps is 0.1% faster than 29.97fps (30fps / 29.97fps ≈ 1,001).
+ * 30fps is 0.1% faster than 29.97fps. Ratio is of `30fps / 29.97fps ≈ 1,001`
+ * which means that every 1000 frames of real time, we have 1001 frames of timecode time.
  *
  * 1h = 60s * 60m = 3.600s.
  * At 30,00 fps, one hour of content contains 108.000 frames per hour (30,00fps * 3600s)
@@ -205,44 +206,54 @@ export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
  *
  * ___
  *
- * The same should be valid for PAL. Normal PAL runs at 25fps so SMPTE
- * doesn't expect any frame reduction. On the other side, M/PAL (Brazil only)
- * is PAL that runs at 29.97fps instead of 30 fps. So we probably want to convert
- * it to NTSC o something like that. I wasn't able to find any precise explanation,
- * so everything might be dependand on the frequencies and something like that.
+ * The same is valid for PAL. Normally, PAL runs at 25fps. SMPTE doesn't expect
+ * any frame reduction for it. However, M/PAL (Brazil only) runs at 29.97fps
+ * instead of 30fps.
  *
- * Anyway, we still want to drop 108 frames per hour (h * 180).
- * Then, PAL/M is said to drop 4 frames (00, 01, 02, and 03) if the second of a
- * time expression is 00 and the minute of the time expression **is even** but
- * not 00, 20 or 40.
+ * So, we need to drop frames in a similar way as NTSC.
  *
- * If the second must be 00, we have up to 59 minutes slots on which we could
- * remove 4 frames. 59 * 4 = 236f/m. Too much. But, if we use only even ones:
- * floor(59 / 2) = 29
- * 29 * 4 = 116 f/m. Which is still bigger than 108, but only of 8 frames.
- * So we must remove 8 of them from the dropped ones.
+ * M/PAL is equally 0.1% slower than 30fps. Ratio is of `30fps / 29.97fps ≈ 1,001`
+ * which means that every 1000 frames of real time, we have 1001 frames of timecode time.
  *
- * So, if we get 4 frames from the two slots ((00*4) + (20*4) + (40*4)), we
- * recover 8 frames. And we get exactly 108 frames.
+ * We have, over one hour, 60 slots (minutes 00-59): 30 even and 30 odd.
+ * If we exclude the 00, 20, 40 minutes from the even ones, we reach 27 even minutes
+ * we can operate on.
  *
- * Something I am still missing is why it was chosen to remove 4 frames.
- * For NTSC, it is a matter of having 18f/10min => 2*9/10min.
+ * The chosen pattern by engineers was to drop 4 frames (00-03) at every even minute
+ * except 00, 20, 40.
  *
- * Maybe, if we make the reversed reasoning: 1,8f/m * 10min * 2 = 36f/20min = 4 * 9 / 20 min
- * which is 4 frames times 9 minutes ((20 min / 2) - 1 to have only even seconds).
+ * `4 × 27 = 108 frames / hour`, which is exactly the drift we need to compensate
+ * (same as NTSC above).
  *
- * But still, why distributing 1,8f over 20 minutes? Is there a particular reason?
+ * If we count how many "drop events" per even minute we have, we therefore have:
  *
- * Anyway, we get:
- *  - hour * 108/4 = hour * 27 * 4
- *  - floor(minutes / 2), for even numbers, multiplied by 4
- *  - floor(minutes / 20), to get back the 2 slots of frames lost (00 * 4, 20 * 4 and 40 * 4)
+ * 	floor (00 / 2) = 0   ← minute 0 is never counted (outputs 0), so it's implicitly excluded
+ * 	floor (02 / 2) = 1
+ *  ...
+ * 	floor (18 / 2) = 9
+ * 	floor (20 / 2) = 10  ← wrongly counted; minute 20 should be excluded
+ *  ...
+ * 	floor (40 / 2) = 20  ← wrongly counted; minute 40 should be excluded
+ *  ...
+ * 	floor (58 / 2) = 29
  *
- * floor (00 / 20) = 0
- * floor (20 / 20) = 1
- * floor (25 / 20) = 1
- * floor (40 / 20) = 2
- * floor (59 / 20) = 2
+ * Which means that 2 drop events should be... dropped (badum, tss), which means subtracted.
+ *
+ * In order to drop these two events, if we divide `floor(m / 20)` we get:
+ *
+ * 	floor (00 / 20) = 0
+ *  ...
+ * 	floor (19 / 20) = 0
+ * 	floor (20 / 20) = 1
+ *  ...
+ * 	floor (39 / 20) = 1
+ * 	floor (40 / 20) = 2
+ *  ...
+ * 	floor (59 / 20) = 2
+ *
+ * So `floor(m/2) - floor(m/20)` gives the number of drop-events up to minute m.
+ *
+ * ---
  *
  * Okay, yeah, this seems the perfect example for the analogy of "the importance of
  * a horse ass" (seriously, go looking for it. This story about legacy systems that
