@@ -6,8 +6,13 @@ import {
 	createStyleContainerContext,
 	readScopeStyleContainerContext,
 } from "../lib/Parser/Scope/StyleContainerContext.js";
-import { createDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
+import {
+	createRegionContainerContext,
+	readScopeRegionContext,
+} from "../lib/Parser/Scope/RegionContainerContext.js";
+import { createDocumentContext, readScopeDocumentContext } from "../lib/Parser/Scope/DocumentContext.js";
 import { NodeTree } from "../lib/Parser/Tags/NodeTree.js";
+import { nodeScopeSymbol } from "../lib/Adapter.js";
 
 /**
  * @typedef {import("../lib/Parser/Scope/Scope.js").Context<ContentType>} Context<ContentType>
@@ -279,20 +284,28 @@ describe("Scope and contexts", () => {
 
 		describe("endTime is 0 when neither dur nor end are specified in a seq container", () => {
 			it("unit", () => {
-				const scope1 = createScope(
-					createScope(
-						undefined,
-						createDocumentContext(new NodeTree(), { "xml:lang": "" }),
-						createTimeContext({
-							timeContainer: "seq",
-						}),
-					),
-					createTimeContext({
-						begin: "0s",
-					}),
+				const nodeTree = new NodeTree();
+
+				const seqContainerScope = createScope(
+					undefined,
+					createDocumentContext(nodeTree, { "xml:lang": "" }),
+					createTimeContext({ timeContainer: "seq" }),
 				);
 
-				expect(readScopeTimeContext(scope1).endTime).toBe(0);
+				/*
+				 * Simulate the adapter's nodeTree state just before a child element
+				 * of the seq container would have its TimeContext attached: push a node
+				 * that carries the seq container's scope (matching production behaviour)
+				 * so currentNode is non-null with no children yet (= no prior siblings).
+				 */
+				nodeTree.push({ [nodeScopeSymbol]: seqContainerScope });
+
+				const childScope = createScope(
+					seqContainerScope,
+					createTimeContext({ begin: "0s" }),
+				);
+
+				expect(readScopeTimeContext(childScope).endTime).toBe(0);
 			});
 
 			it("integration", () => {
@@ -315,7 +328,81 @@ describe("Scope and contexts", () => {
 		});
 	});
 
-	describe("RegionContainerContext", () => {});
+	describe("RegionContainerContext", () => {
+		function makeRegion(id, extraAttrs = {}) {
+			return { attributes: { "xml:id": id, ...extraAttrs }, children: [] };
+		}
+
+		it("should return undefined for an unknown idref", () => {
+			const scope = createScope(
+				undefined,
+				createRegionContainerContext([makeRegion("r1")]),
+			);
+			expect(readScopeRegionContext(scope).getRegionById("unknown")).toBeUndefined();
+		});
+
+		it("should return undefined when idref is not provided", () => {
+			const scope = createScope(
+				undefined,
+				createRegionContainerContext([makeRegion("r1")]),
+			);
+			expect(readScopeRegionContext(scope).getRegionById(undefined)).toBeUndefined();
+		});
+
+		it("should find a region by its id", () => {
+			const scope = createScope(
+				undefined,
+				createRegionContainerContext([makeRegion("r1"), makeRegion("r2")]),
+			);
+			const region = readScopeRegionContext(scope).getRegionById("r1");
+			expect(region).toBeDefined();
+			expect(region.id).toBe("r1");
+		});
+
+		it("should expose all registered regions through .regions", () => {
+			const scope = createScope(
+				undefined,
+				createRegionContainerContext([makeRegion("r1"), makeRegion("r2")]),
+			);
+			const ids = readScopeRegionContext(scope).regions.map((r) => r.id);
+			expect(ids).toEqual(["r1", "r2"]);
+		});
+
+		it("should skip regions without an xml:id", () => {
+			const scope = createScope(
+				undefined,
+				createRegionContainerContext([
+					{ attributes: {}, children: [] },
+					makeRegion("r1"),
+				]),
+			);
+			expect(readScopeRegionContext(scope).regions.length).toBe(1);
+			expect(readScopeRegionContext(scope).regions[0].id).toBe("r1");
+		});
+
+		it("should return null when contextState is empty", () => {
+			const scope = createScope(undefined, createRegionContainerContext([]));
+			expect(readScopeRegionContext(scope)).toBeUndefined();
+		});
+
+		it("should accumulate regions from a merged context", () => {
+			const scope = createScope(undefined, createRegionContainerContext([makeRegion("r1")]));
+			scope.addContexts(createRegionContainerContext([makeRegion("r2")]));
+			const ids = readScopeRegionContext(scope).regions.map((r) => r.id);
+			expect(ids).toContain("r1");
+			expect(ids).toContain("r2");
+		});
+
+		it("should find a region from a parent scope", () => {
+			const parent = createScope(
+				undefined,
+				createRegionContainerContext([makeRegion("r1")]),
+			);
+			const child = createScope(parent, createRegionContainerContext([makeRegion("r2")]));
+			expect(readScopeRegionContext(child).getRegionById("r1")).toBeDefined();
+			expect(readScopeRegionContext(child).getRegionById("r2")).toBeDefined();
+		});
+	});
 
 	describe("StyleContext", () => {
 		it("should merge multiple style contexts on the same scope", () => {
@@ -351,6 +438,40 @@ describe("Scope and contexts", () => {
 				styleAttributes: {
 					"tts:textColor": "blue",
 				},
+			});
+		});
+	});
+
+	describe("DocumentContext", () => {
+		describe("ttp:cellResolution", () => {
+			it("should default to [32, 15] when not specified", () => {
+				const scope = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), { "xml:lang": "" }),
+				);
+				expect(readScopeDocumentContext(scope).attributes["ttp:cellResolution"]).toEqual([32, 15]);
+			});
+
+			it("should default to [32, 15] when columns or rows are below 1", () => {
+				const scope = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), {
+						"xml:lang": "",
+						"ttp:cellResolution": "0 -5",
+					}),
+				);
+				expect(readScopeDocumentContext(scope).attributes["ttp:cellResolution"]).toEqual([32, 15]);
+			});
+
+			it("should use the provided values when valid", () => {
+				const scope = createScope(
+					undefined,
+					createDocumentContext(new NodeTree(), {
+						"xml:lang": "",
+						"ttp:cellResolution": "40 20",
+					}),
+				);
+				expect(readScopeDocumentContext(scope).attributes["ttp:cellResolution"]).toEqual([40, 20]);
 			});
 		});
 	});
