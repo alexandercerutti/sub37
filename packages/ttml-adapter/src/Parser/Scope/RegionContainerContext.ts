@@ -2,6 +2,8 @@ import type { Region } from "@sub37/server";
 import { Entities } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
+import { nodeScopeSymbol } from "../../Adapter.js";
+import type { NodeWithScope } from "../../Adapter.js";
 import { isUniquelyAnnotatedNode } from "../Token.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { createScope, isolateContext, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
@@ -14,7 +16,6 @@ import type { StyleContainerContextState, TTMLStyle } from "./StyleContainerCont
 import type { TimeContextData } from "./TimeContext.js";
 import { createTimeContext, readScopeTimeContext } from "./TimeContext.js";
 import {
-	Animation,
 	AnimationContainerContextState,
 	createAnimationContainerContext,
 	readScopeAnimationContext,
@@ -24,7 +25,7 @@ const regionContextSymbol = Symbol("region");
 
 export interface RegionContainerContextState {
 	attributes: Record<string, string>;
-	children: NodeWithRelationship<Token>[];
+	children: NodeWithRelationship<Token & NodeWithScope>[];
 }
 
 interface RegionContainerContext extends Context<
@@ -34,7 +35,6 @@ interface RegionContainerContext extends Context<
 	regions: Region[];
 	getRegionById(idref: string | undefined): TTMLRegion | undefined;
 	getStylesByRegionId(idref: string | undefined): TTMLStyle[];
-	getAnimationsByRegionId(idref: string | undefined): Animation[];
 }
 
 declare module "./Scope" {
@@ -96,9 +96,6 @@ export function createRegionContainerContext(
 				}
 
 				return regionsIDREFSStorage.get(idref)?.styles || [];
-			},
-			getAnimationsByRegionId(idref: string): Animation[] {
-				return regionsIDREFSStorage.get(idref)?.animations || [];
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
@@ -258,9 +255,89 @@ function createTTMLRegion(
 			//
 			extractNestedAnimationsChildren(children),
 		),
+		createTimeContext(regionTimingAttributes),
 	);
 
-	return new TTMLRegion(attributes["xml:id"] || "inline", regionTimingAttributes, subscope);
+	const regionStyles = getRegionStylesByScope(subscope);
+	const regionVisualStyles = computeRegionVisualStylesByScope(subscope);
+	const regionGeometryStyles = computeRegionGeometryStylesByScope(subscope);
+	const entities = getRegionEntitiesByScope(subscope, children);
+
+	const region = new TTMLRegion(attributes["xml:id"] || "inline", regionTimingAttributes);
+
+	region.entities = entities;
+	region.styles = regionStyles;
+	region.visualStyles = regionVisualStyles;
+	region.geometryStyles = regionGeometryStyles;
+
+	return region;
+}
+
+function getRegionEntitiesByScope(
+	scope: Scope,
+	children: NodeWithRelationship<Token & NodeWithScope>[] = [],
+): Entities.AllEntities[] {
+	const styles = computeRegionVisualStylesByScope(scope);
+
+	const entities: Entities.AllEntities[] = [];
+
+	if (Object.keys(styles).length) {
+		entities.push(Entities.createLocalStyleEntity(styles));
+	}
+
+	const regionAnimations = isolateContext(readScopeAnimationContext(scope))?.animations || [];
+
+	if (regionAnimations.length) {
+		const regionTimeContext = isolateContext(readScopeTimeContext(scope))!;
+		const regionStart = regionTimeContext.startTime;
+
+		const animationChildren = children.filter(
+			(c) => c.content.content === "animate" || c.content.content === "set",
+		);
+
+		for (let i = 0; i < regionAnimations.length; i++) {
+			const animation = regionAnimations[i]!;
+			const animationScope: Scope | undefined = animationChildren[i]?.content[nodeScopeSymbol];
+			const animationTimeContext = animationScope && readScopeTimeContext(animationScope);
+
+			if (!animationTimeContext) {
+				continue;
+			}
+
+			const duration = animationTimeContext.endTime - animationTimeContext.startTime;
+			const delay = animationTimeContext.startTime - regionStart;
+			const styles = animation.apply("region");
+
+			if (!Object.keys(styles).length) {
+				continue;
+			}
+
+			entities.push(
+				Entities.createAnimationEntity({
+					id: animation.id,
+					kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
+					duration,
+					delay,
+					fill: animation.fill === "freeze" ? "forwards" : "none",
+					keyTimes: animation.keyTimes,
+					splines: animation.keySplines,
+					styles,
+				}),
+			);
+		}
+	}
+
+	return entities;
+}
+
+function getRegionStylesByScope(scope: Scope): TTMLStyle[] {
+	const styleContext = isolateContext(readScopeStyleContainerContext(scope));
+
+	if (!styleContext) {
+		return [];
+	}
+
+	return styleContext.styles;
 }
 
 const REGION_GEOMETRY_ATTRIBUTES = new Set(["tts:origin", "tts:extent", "tts:position"]);
@@ -269,172 +346,90 @@ export class TTMLRegion implements Region {
 	public id: string;
 	public timingAttributes?: TimeContextData;
 	public lines: number = 2;
-	public scope: Scope;
+	public entities: Entities.AllEntities[] = [];
+	public styles: TTMLStyle[] = [];
 
-	private geometryStylesCache: Record<string, string> | undefined = undefined;
-	private visualStylesCache: Record<string, string> | undefined = undefined;
+	public geometryStyles: Record<string, string> | undefined = undefined;
+	public visualStyles: Record<string, string> | undefined = undefined;
 
-	public get entities(): Entities.AllEntities[] {
-		const styles = this.computeVisualStyles();
-
-		const entities: Entities.AllEntities[] = [];
-
-		if (Object.keys(styles).length) {
-			entities.push(Entities.createLocalStyleEntity(styles));
-		}
-
-		const regionAnimations = this.animations;
-
-		if (regionAnimations.length) {
-			const regionTimeScope = createScope(this.scope, createTimeContext(this.timingAttributes));
-
-			const regionTimeContext = isolateContext(readScopeTimeContext(regionTimeScope))!;
-			const regionStart = regionTimeContext.startTime;
-
-			for (const animation of regionAnimations) {
-				const animationScope = createScope(
-					regionTimeScope,
-					createTimeContext(animation.timingAttributes),
-				);
-
-				const animationTimeContext = isolateContext(readScopeTimeContext(animationScope))!;
-				const duration = animationTimeContext.endTime - animationTimeContext.startTime;
-				const delay = animationTimeContext.startTime - regionStart;
-				const styles = animation.apply("region");
-
-				if (!Object.keys(styles).length) {
-					continue;
-				}
-
-				entities.push(
-					Entities.createAnimationEntity({
-						id: animation.id,
-						kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
-						duration,
-						delay,
-						fill: animation.fill === "freeze" ? "forwards" : "none",
-						keyTimes: animation.keyTimes,
-						splines: animation.keySplines,
-						styles,
-					}),
-				);
-			}
-		}
-
-		return entities;
-	}
-
-	public constructor(id: string, timingAttributes: TimeContextData | undefined, scope: Scope) {
+	public constructor(id: string, timingAttributes: TimeContextData | undefined) {
 		this.id = id;
 		this.timingAttributes = timingAttributes;
-		this.scope = scope;
 	}
 
 	public getOrigin(
 		_viewportWidth?: number,
 		_viewportHeight?: number,
 	): [x: number | string, y: number | string] {
-		const styles = this.computeGeometryStyles();
+		const styles = this.geometryStyles!;
 
 		return [styles["x"] ?? 0, styles["y"] ?? 0];
 	}
 
 	public get width(): string {
-		return this.computeGeometryStyles()["width"] ?? "100%";
+		return this.geometryStyles?.["width"] ?? "100%";
 	}
 
 	public get height(): string | undefined {
-		return this.computeGeometryStyles()["height"];
+		return this.geometryStyles?.["height"];
+	}
+}
+
+function computeRegionVisualStylesByScope(scope: Scope): Record<string, string> {
+	const styleContext = isolateContext(readScopeStyleContainerContext(scope));
+
+	if (!styleContext) {
+		return {};
 	}
 
-	public get styles(): TTMLStyle[] {
-		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
+	const { styles } = styleContext;
 
-		if (!styleContext) {
-			return [];
-		}
+	return styles
+		.filter((s) => s.kind === "nested")
+		.concat(styles.filter((s) => s.kind === "inline"))
+		.reduce<Record<string, string>>((acc, style) => {
+			const visualStyleAttributes: Record<string, string> = {};
 
-		return styleContext.styles;
-	}
-
-	public get animations(): Animation[] {
-		const animationContext = isolateContext(readScopeAnimationContext(this.scope));
-
-		if (!animationContext) {
-			return [];
-		}
-
-		return animationContext.animations;
-	}
-
-	private computeGeometryStyles(): Record<string, string> {
-		if (this.geometryStylesCache) {
-			return this.geometryStylesCache;
-		}
-
-		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
-
-		if (!styleContext) {
-			return {};
-		}
-
-		const { styles } = styleContext;
-
-		this.geometryStylesCache = styles
-			.filter((s) => s.kind === "nested")
-			.concat(styles.filter((s) => s.kind === "inline"))
-			.reduce<Record<string, string>>((acc, style) => {
-				const filtered = Object.fromEntries(
-					Object.entries(style.styleAttributes).filter(([attr]) =>
-						REGION_GEOMETRY_ATTRIBUTES.has(attr),
-					),
-				);
-
-				const filteredStyle = Object.create(style, {
-					styleAttributes: { value: filtered, enumerable: true },
-				});
-
-				return Object.assign(acc, filteredStyle.apply("region"));
-			}, {});
-
-		return this.geometryStylesCache;
-	}
-
-	private computeVisualStyles(): Record<string, string> {
-		if (this.visualStylesCache) {
-			return this.visualStylesCache;
-		}
-
-		const styleContext = isolateContext(readScopeStyleContainerContext(this.scope));
-
-		if (!styleContext) {
-			return {};
-		}
-
-		const { styles } = styleContext;
-
-		this.visualStylesCache = styles
-			.filter((s) => s.kind === "nested")
-			.concat(styles.filter((s) => s.kind === "inline"))
-			.reduce<Record<string, string>>((acc, style) => {
-				const visualStyleAttributes: Record<string, string> = {};
-
-				for (const attr in style.styleAttributes) {
-					if (!REGION_GEOMETRY_ATTRIBUTES.has(attr)) {
-						visualStyleAttributes[attr] = style.styleAttributes[attr]!;
-					}
+			for (const attr in style.styleAttributes) {
+				if (!REGION_GEOMETRY_ATTRIBUTES.has(attr)) {
+					visualStyleAttributes[attr] = style.styleAttributes[attr]!;
 				}
+			}
 
-				const filteredStyle = Object.create(style, {
-					styleAttributes: {
-						value: visualStyleAttributes,
-						enumerable: true,
-					},
-				});
+			const filteredStyle = Object.create(style, {
+				styleAttributes: {
+					value: visualStyleAttributes,
+					enumerable: true,
+				},
+			});
 
-				return Object.assign(acc, filteredStyle.apply("region"));
-			}, {});
+			return Object.assign(acc, filteredStyle.apply("region"));
+		}, {});
+}
 
-		return this.visualStylesCache;
+export function computeRegionGeometryStylesByScope(scope: Scope): Record<string, string> {
+	const styleContext = isolateContext(readScopeStyleContainerContext(scope));
+
+	if (!styleContext) {
+		return {};
 	}
+
+	const { styles } = styleContext;
+
+	return styles
+		.filter((s) => s.kind === "nested")
+		.concat(styles.filter((s) => s.kind === "inline"))
+		.reduce<Record<string, string>>((acc, style) => {
+			const filtered = Object.fromEntries(
+				Object.entries(style.styleAttributes).filter(([attr]) =>
+					REGION_GEOMETRY_ATTRIBUTES.has(attr),
+				),
+			);
+
+			const filteredStyle = Object.create(style, {
+				styleAttributes: { value: filtered, enumerable: true },
+			});
+
+			return Object.assign(acc, filteredStyle.apply("region"));
+		}, {});
 }

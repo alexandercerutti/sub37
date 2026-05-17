@@ -456,23 +456,53 @@ export default class TTMLAdapter extends BaseAdapter {
 					// *** VALID NODE CONFIRMATION POINT *** //
 					// ************************************* //
 
+					const contextsList: ContextFactory[] = [];
+
+					/**
+					 * Using "begin" because if an element supports it,
+					 * it must support "end" and "dur" as well.
+					 *
+					 * A time context should always get created because we
+					 * might have an element with `timeContainer` attribute
+					 * that must be read by its children.
+					 *
+					 * `timeContainer` is not forwarded for elements that don't
+					 * support it (e.g. animate, set) to avoid creating unintended
+					 * seq/par containers.
+					 */
+					if (destinationMatch.matchesAttribute("begin")) {
+						contextsList.push(
+							createTimeContext({
+								begin: token.attributes["begin"],
+								end: token.attributes["end"],
+								dur: token.attributes["dur"],
+								timeContainer: destinationMatch.matchesAttribute("timeContainer")
+									? token.attributes["timeContainer"]
+									: undefined,
+							}),
+						);
+					}
+
 					/**
 					 * Checking this allows us to also
 					 * prevent adding new things to a new scope.
 					 * Regions and stylings > style are meant to
 					 * be set on the global scope.
-					 *
-					 * @TODO should we use regions and style contexts
-					 * to write on the document context instead
-					 * and only use them as processors?
 					 */
 
 					if (!isContentModuleElement(token.content)) {
+						let usedScope = rootScope;
+
+						if (contextsList.length) {
+							usedScope = createScope(treeScope, ...contextsList);
+							treeScope = usedScope;
+						}
+
 						nodeTree.push(
 							createNodeWithAttributes(
 								createNodeWithScope(
 									createNodeWithDestinationMatch(token, destinationMatch),
-									rootScope,
+									usedScope,
 								),
 								NodeAttributes.NO_ATTRS,
 							),
@@ -480,8 +510,6 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						continue;
 					}
-
-					const contextsList: ContextFactory[] = [];
 
 					if (destinationMatch.matchesAttribute("region") && token.attributes["region"]) {
 						const regionContext = readScopeRegionContext(treeScope);
@@ -534,28 +562,6 @@ export default class TTMLAdapter extends BaseAdapter {
 								}
 							}
 						}
-					}
-
-					/**
-					 * Using "begin" because if an element supports it,
-					 * it must support "end", "dur" and "timeContainer" as well.
-					 *
-					 * A time context should always get created because we
-					 * might have an element with `timeContainer` attribute
-					 * that must be read by its children.
-					 *
-					 * @TODO animation elements support all but timeContainer.
-					 * How should we improve the check here?
-					 */
-					if (destinationMatch.matchesAttribute("begin")) {
-						contextsList.push(
-							createTimeContext({
-								begin: token.attributes["begin"],
-								end: token.attributes["end"],
-								dur: token.attributes["dur"],
-								timeContainer: token.attributes["timeContainer"],
-							}),
-						);
 					}
 
 					if (destinationMatch.matchesAttribute("tts:*")) {
@@ -958,7 +964,7 @@ function isInlineRegion(currentNode: NodeWithRelationship<Token>): boolean {
  * opening tag.
  */
 function getInlineRegionFromOpeningTag(
-	openingTag: NodeWithRelationship<Token>,
+	openingTag: NodeWithRelationship<Token & NodeWithScope>,
 ): RegionContainerContextState {
 	const {
 		content: { attributes: regionAttributes },
@@ -995,7 +1001,7 @@ function isLayoutElement(currentNode: NodeWithRelationship<Token>): boolean {
 }
 
 function extractOutOfLineRegions(
-	currentNode: NodeWithRelationship<Token>,
+	currentNode: NodeWithRelationship<Token & NodeWithScope>,
 ): RegionContainerContextState[] {
 	const { children } = currentNode;
 

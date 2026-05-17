@@ -7,7 +7,7 @@ import type { ComputedCssProperties } from "./Scope/TemporalActiveContext.js";
 import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Scope/AnimationContainerContext.js";
-import { TTMLRegion } from "./Scope/RegionContainerContext.js";
+import { computeRegionGeometryStylesByScope, TTMLRegion } from "./Scope/RegionContainerContext.js";
 import { isStyleAttribute } from "./parseStyle.js";
 import type { SupportedTTMLAttributes } from "./parseStyle.js";
 import { createStyleContainerContext } from "./Scope/StyleContainerContext.js";
@@ -43,7 +43,11 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 			const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
 
 			if (region && Object.keys(specialSemanticsStyles).length) {
-				region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles);
+				region = createDerivedRegionWithSpecialSemanticsStyles(
+					region,
+					specialSemanticsStyles,
+					scope,
+				);
 			}
 		}
 
@@ -656,9 +660,23 @@ function getSpecialSemanticsStylesFromAnchestors(
 	return styles;
 }
 
+/**
+ * §11.1.2.1 — Special Semantics of Inline Animation:
+ *
+ * > The original extent of the region is retained, but the child animation
+ * > overrides this extent during the indicated time interval, thus producing
+ * > an effect of (temporarily) changing the extent of the region as desired.
+ *
+ * The base region's styles, entities and visual properties are preserved.
+ * Only the geometry (origin, extent, position, disparity) is overridden for
+ * the cue's active interval.
+ *
+ * @see https://www.w3.org/TR/ttml2/#layout-vocabulary-region-special-inline-animation-semantics
+ */
 function createDerivedRegionWithSpecialSemanticsStyles(
 	baseRegion: TTMLRegion,
 	specialSemanticsStyles: Record<string, string>,
+	scope: Scope,
 ): TTMLRegion {
 	const overriddenAttributes: StyleContainerContextState = Object.create(specialSemanticsStyles, {
 		"xml:id": {
@@ -671,9 +689,21 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 	});
 
 	const newScope = createScope(
-		baseRegion.scope,
+		//
+		scope,
 		createStyleContainerContext([overriddenAttributes]),
 	);
 
-	return new TTMLRegion(baseRegion.id, baseRegion.timingAttributes, newScope);
+	const newGeometryStyles = Object.assign(
+		baseRegion.geometryStyles ?? {},
+		computeRegionGeometryStylesByScope(newScope),
+	);
+
+	const region = new TTMLRegion(baseRegion.id, baseRegion.timingAttributes);
+
+	region.entities = baseRegion.entities;
+	region.styles = baseRegion.styles;
+	region.geometryStyles = newGeometryStyles;
+
+	return region;
 }

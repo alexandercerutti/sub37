@@ -2478,6 +2478,142 @@ describe("Animations", () => {
 			expect(entity.kind).toBe("discrete");
 		});
 	});
+
+	describe("Region animations", () => {
+		it("should produce a continuous animation entity on the region for <animate> tts:opacity", () => {
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" tts:opacity="0">
+								<animate dur="1s" tts:opacity="0;1"/>
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="1s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const region = cues[0]?.region;
+			expect(region).toBeDefined();
+			const animEntity = region.entities.find(Entities.isAnimationEntity);
+			expect(animEntity).toBeDefined();
+			expect(animEntity.kind).toBe("continuous");
+			expect(animEntity.styles["opacity"]).toBeDefined();
+		});
+
+		it("should produce a discrete animation entity on the region for <set> tts:origin", () => {
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1">
+								<set dur="3s" tts:origin="80px 580px"/>
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="3s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const region = cues[0]?.region;
+			expect(region).toBeDefined();
+			const animEntity = region.entities.find(Entities.isAnimationEntity);
+			expect(animEntity).toBeDefined();
+			expect(animEntity.kind).toBe("discrete");
+			/* tts:origin maps to "x" and "y" CSS properties */
+			expect(animEntity.styles["x"]).toBeDefined();
+			expect(animEntity.styles["y"]).toBeDefined();
+		});
+
+		it("should compute animation delay relative to the region's own begin, not absolute document time", () => {
+			/*
+			 * A region with begin="2s" contains an <animate> with no explicit begin.
+			 * The animation starts at the region's start, so delay must be 0ms —
+			 * not 2000ms, which would result from subtracting regionStart=0 (root
+			 * TimeContext) instead of regionStart=2000 (the region's own TimeContext).
+			 */
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" begin="2s" dur="4s">
+								<animate dur="2s" tts:opacity="0;1"/>
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="2s" dur="4s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const region = cues[0]?.region;
+			expect(region).toBeDefined();
+			const animEntity = region.entities.find(Entities.isAnimationEntity);
+			expect(animEntity).toBeDefined();
+			expect(animEntity.delay).toBe(0);
+			expect(animEntity.duration).toBe(2000);
+		});
+
+		it("should offset sequential region animations by the accumulated duration of preceding siblings", () => {
+			/*
+			 * timeContainer="seq" on region: each animation starts when the previous ends.
+			 * Two <animate dur="4s"> → first.delay=0ms, second.delay=4000ms.
+			 *
+			 * Known bug: buildContexts crashes with a null access on <animate> children
+			 * of a region with timeContainer="seq" (RegionContainerContext.ts:295).
+			 */
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" timeContainer="seq">
+								<animate dur="4s" tts:backgroundColor="rgba(0,0,0,0.8);rgba(255,0,0,0.8)"/>
+								<animate dur="4s" tts:backgroundColor="rgba(255,0,0,0.8);rgba(0,0,255,0.8)"/>
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="8s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const region = cues[0]?.region;
+			expect(region).toBeDefined();
+			const animEntities = region.entities.filter(Entities.isAnimationEntity);
+			expect(animEntities.length).toBe(2);
+			expect(animEntities[0].delay).toBe(0);
+			expect(animEntities[0].duration).toBe(4000);
+			expect(animEntities[1].delay).toBe(4000);
+			expect(animEntities[1].duration).toBe(4000);
+		});
+	});
 });
 // #endregion
 
