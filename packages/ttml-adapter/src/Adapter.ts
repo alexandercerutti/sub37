@@ -637,16 +637,6 @@ export default class TTMLAdapter extends BaseAdapter {
 						if (currentNode[nodeScopeSymbol] !== rootScope) {
 							treeScope = treeScope.parent;
 						}
-
-						// const currentNode = nodeTree.currentNode.content;
-						// const parentNode = nodeTree.currentNode.parent?.content;
-						// const didScopeUpgrade = parentNode
-						// 	? currentNode[nodeScopeSymbol] !== parentNode[nodeScopeSymbol]
-						// 	: true;
-
-						// if (didScopeUpgrade && treeScope.parent) {
-						// 	treeScope = treeScope.parent;
-						// }
 					}
 
 					if (isNodeIgnored(nodeTree.currentNode.content)) {
