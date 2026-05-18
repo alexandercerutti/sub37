@@ -1,5 +1,10 @@
 import { Token } from "./Token.js";
 
+interface KnownAttributesNames extends Record<string, string> {
+	"xml:id": string;
+	"xml:space": "preserve" | "default";
+}
+
 /**
  * @see https://www.w3.org/TR/xml/#sec-common-syn
  */
@@ -14,23 +19,33 @@ const NAME_REGEX = new RegExp(`${NAME_START_CHAR_REGEX.source}(${NAME_CHAR_REGEX
 
 interface PeekEvaluator<Search extends string> {
 	check(chars: Search): boolean;
+	skipWhitespaces?: boolean;
 	readonly requestedCharacters: number;
 }
 
 function createEvaluator<Search extends string>(
 	evaluationFn: (chars: string) => boolean,
 	charsAmount: number,
+	skipWhitespaces = true,
 ): PeekEvaluator<Search> {
 	return {
 		check: evaluationFn,
 		requestedCharacters: charsAmount,
+		skipWhitespaces,
 	};
 }
 
-function createCheckForString<Search extends string>(evalString: Search): PeekEvaluator<Search> {
-	return createEvaluator(function check(chars: string) {
-		return chars === evalString;
-	}, evalString.length);
+function createCheckForString<Search extends string>(
+	evalString: Search,
+	skipWhitespaces = true,
+): PeekEvaluator<Search> {
+	return createEvaluator(
+		function check(chars: string) {
+			return chars === evalString;
+		},
+		evalString.length,
+		skipWhitespaces,
+	);
 }
 
 const PI_BEGIN_CHECKER = createCheckForString("?");
@@ -40,7 +55,7 @@ const COMMENT_END_CHECKER = createCheckForString("-->");
 const CDATA_BEGIN_CHECKER = createCheckForString("![CDATA[");
 const CDATA_END_CHECKER = createCheckForString("]]>");
 const VE_BEGIN_CHECKER = createCheckForString("!");
-const START_TAG_CHECKER = createCheckForString("<");
+const START_TAG_CHECKER = createCheckForString("<", false);
 const END_TAG_CHECKER = createCheckForString("/");
 const CLOSE_TAG_CHECKER = createCheckForString(">");
 const EMPTY_TAG_CHECKER = createCheckForString("/>");
@@ -88,11 +103,14 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 		 *
 		 * @returns
 		 */
-		peekAdvance({ check, requestedCharacters }: PeekEvaluator<string>): boolean {
-			const amountOfWhitespacesNextCurrentChar = Math.max(
-				0,
-				getAmountOfWhitespacesNext(content, cursor),
-			);
+		peekAdvance({
+			check,
+			requestedCharacters,
+			skipWhitespaces = true,
+		}: PeekEvaluator<string>): boolean {
+			const amountOfWhitespacesNextCurrentChar = skipWhitespaces
+				? Math.max(0, getAmountOfWhitespacesNext(content, cursor))
+				: 0;
 
 			const nextCharIndexNoSpaces = cursor + amountOfWhitespacesNextCurrentChar;
 			const evaluation = check(
@@ -181,6 +199,7 @@ export class Tokenizer {
 	private column = 0;
 	private line = 1;
 	private offset = 0;
+	private xmlSpaceStack: ("default" | "preserve")[] = ["default"];
 
 	public constructor(rawContent: string) {
 		this.sourceWindow = createTextSlidingWindow(rawContent, 0);
@@ -202,7 +221,7 @@ export class Tokenizer {
 		let state: TokenizerState = TokenizerState.UNKNOWN_CONTENT;
 		let result = "";
 
-		let attributes: { [key: string]: string } = {};
+		let attributes: KnownAttributesNames = {} as KnownAttributesNames;
 		let currentAttributeName = "";
 		let currentAttributeValue = "";
 
@@ -228,6 +247,10 @@ export class Tokenizer {
 
 					if (char !== "<") {
 						if (Tokenizer.isWhitespace(char) || Tokenizer.isNewLine(char)) {
+							if (this.xmlSpaceStack[this.xmlSpaceStack.length - 1] === "preserve") {
+								result += char;
+							}
+
 							this.sourceWindow.advance();
 							break;
 						}
@@ -281,6 +304,9 @@ export class Tokenizer {
 					}
 
 					if (this.sourceWindow.peekAdvance(END_TAG_CHECKER)) {
+						// Discarding whitespaces
+						result = "";
+
 						state = TokenizerState.END_TAG;
 
 						this.sourceWindow.advance();
@@ -288,7 +314,15 @@ export class Tokenizer {
 					}
 
 					if (isValidName(this.sourceWindow.nextChar)) {
+						// Discarding whitespaces
+						result = "";
+
 						state = TokenizerState.START_TAG;
+
+						/**
+						 * Adding what's currently being inherited.
+						 */
+						this.xmlSpaceStack.push(this.xmlSpaceStack[this.xmlSpaceStack.length - 1]!);
 
 						this.sourceWindow.advance();
 						break;
@@ -450,6 +484,7 @@ export class Tokenizer {
 					) {
 						this.lastTagName = result;
 
+						this.xmlSpaceStack.pop();
 						this.sourceWindow.advance();
 						return Token.EndTag(this.lastTagName, this.line, this.column, this.offset);
 					}
@@ -465,7 +500,12 @@ export class Tokenizer {
 					this.offset = this.sourceWindow.cursor;
 
 					if (this.sourceWindow.peekAdvance(START_TAG_CHECKER)) {
-						return Token.String(result.trim(), this.line, this.column, this.offset);
+						const contentString =
+							this.xmlSpaceStack[this.xmlSpaceStack.length - 1] === "preserve"
+								? result
+								: result.trim();
+
+						return Token.String(contentString, this.line, this.column, this.offset);
 					}
 
 					this.sourceWindow.advance();
@@ -624,6 +664,17 @@ export class Tokenizer {
 							 */
 							state = TokenizerState.START_TAG_ANNOTATION;
 							attributes[currentAttributeName] = result + char;
+
+							if (
+								currentAttributeName === "xml:space" &&
+								["preserve", "default"].includes(
+									attributes[currentAttributeName] as "preserve" | "default",
+								)
+							) {
+								this.xmlSpaceStack[this.xmlSpaceStack.length - 1] = attributes[
+									currentAttributeName
+								] as "preserve" | "default";
+							}
 
 							result = "";
 							currentAttributeValue = "";

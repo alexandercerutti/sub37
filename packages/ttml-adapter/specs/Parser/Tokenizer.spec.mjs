@@ -359,4 +359,159 @@ describe("Tokenizer", () => {
 			expect(string?.content).not.toContain(">");
 		});
 	});
+
+	describe("Multi-line formatting", () => {
+		/*
+		 * Real TTML files put every attribute on its own line with indentation.
+		 * The whitespace that accumulates in `result` before the state machine
+		 * reaches START_TAG or END_TAG must not bleed into tag names or
+		 * attribute names/values.
+		 */
+		it("should parse tag names and attributes correctly when each attribute is on its own indented line", () => {
+			const content = `<p
+	begin="0s"
+	end="5s"
+	xml:id="sub1"
+>
+	<span
+		tts:color="white"
+	>Hello</span>
+</p>`;
+			const tokenizer = new Tokenizer(content);
+			/** @type {import("../../lib/Parser/Token.js").Token[]} */
+			const tokens = [];
+			let token;
+			while ((token = tokenizer.nextToken())) {
+				tokens.push(token);
+			}
+
+			const [pStart, spanStart, stringToken, spanEnd, pEnd] = tokens;
+
+			expect(pStart?.type).toBe(TokenType.START_TAG);
+			expect(pStart?.content).toBe("p");
+			expect(pStart?.attributes).toEqual({
+				begin: "0s",
+				end: "5s",
+				"xml:id": "sub1",
+			});
+
+			expect(spanStart?.type).toBe(TokenType.START_TAG);
+			expect(spanStart?.content).toBe("span");
+			expect(spanStart?.attributes).toEqual({ "tts:color": "white" });
+
+			expect(stringToken?.type).toBe(TokenType.STRING);
+			expect(stringToken?.content).toBe("Hello");
+
+			expect(spanEnd?.type).toBe(TokenType.END_TAG);
+			expect(spanEnd?.content).toBe("span");
+
+			expect(pEnd?.type).toBe(TokenType.END_TAG);
+			expect(pEnd?.content).toBe("p");
+		});
+
+		it("should not bleed indentation whitespace into tag names when xml:space is preserve", () => {
+			/*
+			 * xml:space="preserve" causes inter-element whitespace to be
+			 * accumulated into `result` in UNKNOWN_CONTENT. The reset of
+			 * `result` on START_TAG and END_TAG entry must discard it so
+			 * tag names are never contaminated.
+			 */
+			const content = `<p xml:space="preserve">
+	<span>Hello </span>
+	<span> World</span>
+</p>`;
+			const tokenizer = new Tokenizer(content);
+			/** @type {import("../../lib/Parser/Token.js").Token[]} */
+			const tokens = [];
+			let token;
+			while ((token = tokenizer.nextToken())) {
+				tokens.push(token);
+			}
+
+			const startTags = tokens.filter((t) => t.type === TokenType.START_TAG);
+			const endTags = tokens.filter((t) => t.type === TokenType.END_TAG);
+			const strings = tokens.filter((t) => t.type === TokenType.STRING);
+
+			expect(startTags.map((t) => t.content)).toEqual(["p", "span", "span"]);
+			expect(endTags.map((t) => t.content)).toEqual(["span", "span", "p"]);
+
+			/* intra-element spaces are preserved, indentation is not emitted as content */
+			expect(strings[0].content).toBe("Hello ");
+			expect(strings[1].content).toBe(" World");
+		});
+	});
+
+	describe("xml:space", () => {
+		function tokenize(xml) {
+			const tokenizer = new Tokenizer(xml);
+			/** @type {import("../../lib/Parser/Token.js").Token[]} */
+			const tokens = [];
+			let token;
+			while ((token = tokenizer.nextToken())) {
+				tokens.push(token);
+			}
+			return tokens;
+		}
+
+		/*
+		 * xml:space is an XML-standard attribute with two values:
+		 *   "default"  — trim leading/trailing whitespace from text nodes
+		 *   "preserve" — keep whitespace verbatim
+		 *
+		 * It is inherited: setting it on a parent applies to all descendants
+		 * unless overridden.  The tests below use flat (non-indented) XML to
+		 * avoid inter-element whitespace interfering with tag-name parsing.
+		 */
+
+		it("should trim text content and preserve tag names when xml:space is default", () => {
+			const tokens = tokenize(`<p xml:space="default"><span>Hello </span><span> World</span></p>`);
+
+			const startTags = tokens.filter((t) => t.type === TokenType.START_TAG);
+			const endTags = tokens.filter((t) => t.type === TokenType.END_TAG);
+			const strings = tokens.filter((t) => t.type === TokenType.STRING);
+
+			expect(startTags.map((t) => t.content)).toEqual(["p", "span", "span"]);
+			expect(endTags.map((t) => t.content)).toEqual(["span", "span", "p"]);
+
+			expect(strings).toHaveLength(2);
+			expect(strings[0].content).toBe("Hello");
+			expect(strings[1].content).toBe("World");
+		});
+
+		it("should preserve leading and trailing spaces and tag names when xml:space is preserve", () => {
+			/*
+			 * xml:space="preserve" set on <p> is inherited by both <span> children,
+			 * so the trailing space after "Hello" and the leading space before "World"
+			 * must survive tokenization unchanged.
+			 */
+			const tokens = tokenize(`<p xml:space="preserve"><span>Hello </span><span> World</span></p>`);
+
+			const startTags = tokens.filter((t) => t.type === TokenType.START_TAG);
+			const endTags = tokens.filter((t) => t.type === TokenType.END_TAG);
+			const strings = tokens.filter((t) => t.type === TokenType.STRING);
+
+			expect(startTags.map((t) => t.content)).toEqual(["p", "span", "span"]);
+			expect(endTags.map((t) => t.content)).toEqual(["span", "span", "p"]);
+
+			expect(strings).toHaveLength(2);
+			expect(strings[0].content).toBe("Hello ");
+			expect(strings[1].content).toBe(" World");
+		});
+
+		it("should allow a child to override xml:space back to default", () => {
+			/*
+			 * <p> sets preserve, but the first <span> overrides back to default.
+			 * After </span> the stack unwinds to preserve, so the second span
+			 * inherits preserve again.
+			 */
+			const tokens = tokenize(
+				`<p xml:space="preserve"><span xml:space="default"> trimmed </span><span> kept </span></p>`,
+			);
+
+			const strings = tokens.filter((t) => t.type === TokenType.STRING);
+
+			expect(strings[0].content).toBe("trimmed");
+			expect(strings[1].content).toBe(" kept ");
+		});
+	});
 });
