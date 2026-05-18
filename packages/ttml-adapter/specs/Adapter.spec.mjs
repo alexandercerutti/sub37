@@ -658,6 +658,72 @@ describe("Cues", () => {
 			expect(styles?.["font-size"]).toBe("32px");
 		});
 	});
+
+	it("should not corrupt the scope chain when non-scope-creating nodes close", () => {
+		/*
+		 * Non-content-module elements (region, layout, etc.) without timing
+		 * do not own a scope. Their closing tag must not pop treeScope.
+		 *
+		 * Here r1 (timed) creates and then correctly restores treeScope.
+		 * r2 (untimed) must leave treeScope untouched on close.
+		 * If it did pop, </layout> would advance treeScope to undefined,
+		 * causing the next element to throw before producing any cue.
+		 */
+		const { data: cues } = new TTMLAdapter().parse(`
+			<tt xml:lang="">
+				<head>
+					<layout>
+						<region xml:id="r1" begin="0s" end="2s" />
+						<region xml:id="r2" />
+					</layout>
+				</head>
+				<body>
+					<div region="r1">
+						<p>Hello</p>
+					</div>
+				</body>
+			</tt>
+		`);
+
+		expect(cues.length).toBe(1);
+		expect(cues[0].startTime).toBe(0);
+		expect(cues[0].endTime).toBe(2000);
+	});
+
+	it("should correctly pop treeScope when a scope-creating non-content node closes", () => {
+		/*
+		 * Non-content-module elements WITH timing create a scope that must be
+		 * popped on close. If the pop is skipped (old bug: isNodeSkippedScopeCreation
+		 * returned true → popped when it shouldn't), subsequent sibling elements
+		 * would read stale scope state and inherit wrong timing.
+		 *
+		 * Here r1 and r2 are both timed. Each creates its own scope during parsing.
+		 * After r1 closes, treeScope must be restored to the layout level so r2's
+		 * begin/end are resolved independently and not stacked on r1's scope.
+		 */
+		const { data: cues } = new TTMLAdapter().parse(`
+			<tt xml:lang="">
+				<head>
+					<layout>
+						<region xml:id="r1" begin="0s" end="2s" />
+						<region xml:id="r2" begin="4s" end="6s" />
+					</layout>
+				</head>
+				<body>
+					<div>
+						<p begin="0s" end="2s" region="r1">Hello</p>
+						<p begin="4s" end="6s" region="r2">World</p>
+					</div>
+				</body>
+			</tt>
+		`);
+
+		expect(cues.length).toBe(2);
+		expect(cues[0].startTime).toBe(0);
+		expect(cues[0].endTime).toBe(2000);
+		expect(cues[1].startTime).toBe(4000);
+		expect(cues[1].endTime).toBe(6000);
+	});
 });
 // #endregion
 
