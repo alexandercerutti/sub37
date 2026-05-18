@@ -45,8 +45,9 @@ import { createErrorContext, readScopeErrorContext } from "./Parser/Scope/ErrorC
 const nodeAttributesSymbol = Symbol("nodeAttributesSymbol");
 
 enum NodeAttributes {
-	NO_ATTRS /***/ = 0b000,
-	IGNORED /****/ = 0b001,
+	NO_ATTRS /************/ = 0b000,
+	IGNORED /*************/ = 0b001,
+	NO_SCOPE_CREATION /***/ = 0b010,
 }
 
 interface NodeWithAttributes {
@@ -57,6 +58,19 @@ function isNodeIgnored(
 	node: NodeWithAttributes,
 ): node is NodeAttributes & { [nodeAttributesSymbol]: NodeAttributes.IGNORED } {
 	return Boolean(node[nodeAttributesSymbol] & NodeAttributes.IGNORED);
+}
+
+/**
+ * Non-content-module elements (region, layout, styling, animation, etc.)
+ * do not always contribute timing or context. When they don't, no scope is
+ * created for them — they inherit the current treeScope as a borrowed reference.
+ *
+ * Created scopes need to be explicitly popped when the closing tag is reached.
+ * A node owns a scope only when it has NO flags set — IGNORED nodes and
+ * NO_SCOPE_CREATION nodes both borrow their scope and must never pop.
+ */
+function isNodeOwningScope(node: NodeWithAttributes): boolean {
+	return node[nodeAttributesSymbol] === NodeAttributes.NO_ATTRS;
 }
 
 function createNodeWithAttributes<NodeType extends object>(
@@ -315,7 +329,7 @@ export default class TTMLAdapter extends BaseAdapter {
 									createNodeWithDestinationMatch(token, destinationMatch),
 									rootScope,
 								),
-								NodeAttributes.NO_ATTRS,
+								NodeAttributes.NO_SCOPE_CREATION,
 							),
 						);
 
@@ -491,20 +505,21 @@ export default class TTMLAdapter extends BaseAdapter {
 					 */
 
 					if (!isContentModuleElement(token.content)) {
-						let usedScope = rootScope;
+						let attributes = NodeAttributes.NO_ATTRS;
 
 						if (contextsList.length) {
-							usedScope = createScope(treeScope, ...contextsList);
-							treeScope = usedScope;
+							treeScope = createScope(treeScope, ...contextsList);
+						} else {
+							attributes = NodeAttributes.NO_SCOPE_CREATION;
 						}
 
 						nodeTree.push(
 							createNodeWithAttributes(
 								createNodeWithScope(
 									createNodeWithDestinationMatch(token, destinationMatch),
-									usedScope,
+									treeScope,
 								),
-								NodeAttributes.NO_ATTRS,
+								attributes,
 							),
 						);
 
@@ -634,7 +649,7 @@ export default class TTMLAdapter extends BaseAdapter {
 
 						const currentNode = nodeTree.currentNode.content;
 
-						if (currentNode[nodeScopeSymbol] !== rootScope) {
+						if (isNodeOwningScope(currentNode)) {
 							treeScope = treeScope.parent;
 						}
 					}
