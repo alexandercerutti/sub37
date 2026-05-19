@@ -18,4 +18,6 @@ export * as TextEmphasis from "./textEmphasis.js";
 export * as TextOrientation from "./textOrientation.js";
 export * as TextOutline from "./textOutline.js";
 export * as TextShadow from "./textShadow.js";
+export * as zIndex from "./zIndex.js";
+
 export * as Unavailable from "./unavailable.js";

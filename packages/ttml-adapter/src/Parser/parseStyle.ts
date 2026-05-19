@@ -1036,7 +1036,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			["region"],
 			"auto",
 			undefined,
-			Syntaxes.Unavailable,
+			Syntaxes.zIndex,
 		),
 	),
 } as const;
