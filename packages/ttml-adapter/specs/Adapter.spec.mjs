@@ -1057,6 +1057,139 @@ describe("Animations", () => {
 		});
 	});
 
+	describe("visibility: hidden + <set tts:visibility>", () => {
+		/**
+		 * From the TTML2 spec §10.3.13 example.
+		 *
+		 * Unlike display:none, visibility:hidden preserves layout space —
+		 * the element is still rendered in the timeline. Cue timing follows
+		 * the parent <p>, not the <set> animation window.
+		 */
+		it("should emit one cue per span covering the full paragraph duration", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" />
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p region="r1" begin="0s" dur="4s">
+								<span tts:visibility="hidden">
+									<set begin="1s" tts:visibility="visible"/>
+									Curiouser
+								</span>
+								<span tts:visibility="hidden">
+									<set begin="2s" tts:visibility="visible"/>
+									and
+								</span>
+								<span tts:visibility="hidden">
+									<set begin="3s" tts:visibility="visible"/>
+									curiouser!
+								</span>
+							</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const textCues = cues.filter((c) => c.content.trim().length > 0);
+
+			expect(textCues.length).toBe(3);
+
+			/* All spans are visible in the layout throughout the paragraph */
+			expect(textCues[0]).toMatchObject({ startTime: 0, endTime: 4000 });
+			expect(textCues[1]).toMatchObject({ startTime: 0, endTime: 4000 });
+			expect(textCues[2]).toMatchObject({ startTime: 0, endTime: 4000 });
+		});
+
+		it("should include visibility:hidden in each cue's local style", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" />
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p region="r1" begin="0s" dur="4s">
+								<span tts:visibility="hidden">
+									<set begin="1s" tts:visibility="visible"/>
+									Curiouser
+								</span>
+							</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const textCues = cues.filter((c) => c.content.trim().length > 0);
+			expect(textCues.length).toBeGreaterThan(0);
+
+			const localStyleEntity = textCues[0].entities.find(Entities.isLocalStyleEntity);
+			expect(localStyleEntity).toBeDefined();
+			expect(localStyleEntity.styles["visibility"]).toBe("hidden");
+		});
+
+		it("should attach a discrete animation entity that sets visibility:visible at the right delay", () => {
+			const adapter = new TTMLAdapter();
+			const { data: cues } = adapter.parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" />
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p region="r1" begin="0s" dur="4s">
+								<span tts:visibility="hidden">
+									<set begin="1s" tts:visibility="visible"/>
+									Curiouser
+								</span>
+								<span tts:visibility="hidden">
+									<set begin="2s" tts:visibility="visible"/>
+									and
+								</span>
+								<span tts:visibility="hidden">
+									<set begin="3s" tts:visibility="visible"/>
+									curiouser!
+								</span>
+							</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			const textCues = cues.filter((c) => c.content.trim().length > 0);
+
+			for (const [index, delay] of [
+				[0, 1000],
+				[1, 2000],
+				[2, 3000],
+			]) {
+				const animEntity = textCues[index].entities.find(Entities.isAnimationEntity);
+				expect(animEntity).toBeDefined();
+				expect(animEntity.kind).toBe("discrete");
+				expect(animEntity.styles["visibility"]).toBeDefined();
+				expect(animEntity.delay).toBe(delay);
+			}
+		});
+	});
+
 	describe("TTML Continuous Animations - Linear", () => {
 		it("should animate tts:color correctly", () => {
 			const { data: cues } = new TTMLAdapter().parse(`

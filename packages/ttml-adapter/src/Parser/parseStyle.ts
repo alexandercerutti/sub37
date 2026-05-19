@@ -973,7 +973,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				["body", "div", "image", "p", "region", "span"],
 				"visible",
 				new Set(["visible", "hidden"]),
-				Syntaxes.Unavailable,
+				Syntaxes.Visibility,
 			),
 		),
 	),
