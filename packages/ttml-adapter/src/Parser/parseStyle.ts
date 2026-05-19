@@ -515,7 +515,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				["p", "span"],
 				"normal",
 				new Set(["normal", "italic", "oblique"]),
-				Syntaxes.Unavailable,
+				Syntaxes.FontStyle,
 			),
 		),
 	),
