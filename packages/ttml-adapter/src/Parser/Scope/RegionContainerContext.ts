@@ -4,7 +4,7 @@ import { NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
 import { nodeScopeSymbol } from "../../Adapter.js";
 import type { NodeWithScope } from "../../Adapter.js";
-import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
+import { isUniquelyAnnotatedNode, generateSyntheticId } from "../namespaces/xml/id.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { createScope, isolateContext, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { isStyleAttribute } from "../parseStyle.js";
@@ -151,7 +151,7 @@ function extractInlineStyles(regionAttributes: Record<string, string>): StyleCon
 	return Object.create(inlineStyles, {
 		"xml:id": {
 			value:
-				inlineStyles["xml:id"] || `region-inline:${Math.floor(Math.random() * (500 - 100) + 100)}`,
+				inlineStyles["xml:id"] || generateSyntheticId("region-inline"),
 		},
 		kind: {
 			value: "inline",
@@ -177,7 +177,7 @@ function extractNestedStylesChildren(
 
 	return Object.create(nestedStyles, {
 		"xml:id": {
-			value: `region-nested:${Math.floor(Math.random() * (500 - 100) + 100)}`,
+			value: generateSyntheticId("region-nested"),
 		},
 		kind: {
 			value: "nested",
@@ -207,7 +207,7 @@ function extractNestedAnimationsChildren(
 
 		const animationId =
 			tokenContent.attributes["xml:id"] ||
-			`region-animation:${Math.floor(Math.random() * (500 - 100) + 100)}`;
+			generateSyntheticId("region-animation");
 
 		animations.push({
 			attributes: Object.create(tokenContent.attributes, {

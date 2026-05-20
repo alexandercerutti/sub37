@@ -21,7 +21,7 @@ import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
 import { Token, TokenType } from "./Parser/Token.js";
 import type { UniquelyAnnotatedNode } from "./Parser/namespaces/xml/id.js";
-import { isUniquelyAnnotatedNode } from "./Parser/namespaces/xml/id.js";
+import { isUniquelyAnnotatedNode, generateSyntheticId } from "./Parser/namespaces/xml/id.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
 import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 import {
@@ -982,16 +982,15 @@ function getInlineRegionFromOpeningTag(
 		content: { attributes: parentAttributes },
 	} = parent!;
 
-	const INLINE_REGION_PREFIX = "in:region";
-	const regionId =
+	const regionIdBody =
 		regionAttributes["xml:id"] ||
-		parentAttributes["xml:id"] ||
-		Math.floor(Math.random() * (500 - 100) + 100);
+		(parentAttributes["xml:id"] && `in:region-${parentAttributes["xml:id"]}`) ||
+		generateSyntheticId("in:region");
 
 	return {
 		attributes: Object.create(regionAttributes, {
 			"xml:id": {
-				value: `${INLINE_REGION_PREFIX}-${regionId}`,
+				value: regionIdBody,
 			},
 		}),
 		children,
@@ -1058,9 +1057,7 @@ function extractInitialStyles(
 		styles.push(
 			Object.create(content.attributes, {
 				"xml:id": {
-					value:
-						content.attributes["xml:id"] ||
-						`in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+					value: content.attributes["xml:id"] || generateSyntheticId("in:style"),
 					enumerable: true,
 				},
 				kind: {
@@ -1123,7 +1120,7 @@ function extractInlineStylesFromToken(
 
 	return Object.create(attributes, {
 		"xml:id": {
-			value: attributes["xml:id"] || `in:style-${Math.floor(Math.random() * (500 - 100) + 100)}`,
+			value: attributes["xml:id"] || generateSyntheticId("in:style"),
 			enumerable: true,
 		},
 		kind: {
@@ -1255,13 +1252,12 @@ function getInlineAnimationFromToken(
 }
 
 function getInlineAnimationId(token: Token, parent?: Token): string {
-	const INLINE_ANIMATION_PREFIX = "in:animation";
 	const animationIdBody =
 		token.attributes["xml:id"] ||
-		parent?.attributes["xml:id"] ||
-		String(Math.floor(Math.random() * (500 - 100) + 100));
+		(parent?.attributes["xml:id"] && `in:animation-${parent.attributes["xml:id"]}`) ||
+		generateSyntheticId("in:animation");
 
-	return `${INLINE_ANIMATION_PREFIX}-${animationIdBody}`;
+	return `in:animation-${animationIdBody}`;
 }
 
 /**
