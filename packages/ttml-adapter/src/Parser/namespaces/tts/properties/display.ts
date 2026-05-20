@@ -1,3 +1,4 @@
+import { readScopeErrorContext } from "../../../Scope/ErrorContext.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { InferDerivableValue } from "../structure/operators.js";
@@ -6,7 +7,7 @@ import type { DisplayGrammar } from "../syntax/display.js";
 export { DisplayGrammar as Grammar } from "../syntax/display.js";
 
 export function cssTransform(
-	_scope: Scope,
+	scope: Scope,
 	value: InferDerivableValue<typeof DisplayGrammar>,
 	elementAppliesTo: string,
 ): PropertiesCollection<["display"]> | null {
@@ -44,8 +45,13 @@ export function cssTransform(
 			return [["display", "inline-block"]];
 		}
 
-		throw new Error(
-			"`inlineBlock` value for `tts:display` property can be applied only to `span` elements.",
+		const errorContext = readScopeErrorContext(scope)!;
+
+		errorContext.report(
+			new Error(
+				"`inlineBlock` value for `tts:display` property can be applied only to `span` elements.",
+			),
+			false,
 		);
 	}
 
