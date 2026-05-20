@@ -2,9 +2,13 @@ import { readScopeDocumentContext } from "./Scope/DocumentContext.js";
 import type { Scope } from "./Scope/Scope.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import type { Token } from "./Token.js";
-import * as Syntaxes from "./Style/properties/index.js";
-import type { Derivable, DerivedValue, InferDerivableValue } from "./Style/structure/operators.js";
-import { isDerived, isRejected } from "./Style/structure/operators.js";
+import * as Syntaxes from "./namespaces/tts/properties/index.js";
+import type {
+	Derivable,
+	DerivedValue,
+	InferDerivableValue,
+} from "./namespaces/tts/structure/operators.js";
+import { isDerived, isRejected } from "./namespaces/tts/structure/operators.js";
 import { getSplittedLinearWhitespaceValues } from "./lwsp.js";
 
 export type StyleAttributeString = `tts:${string}`;

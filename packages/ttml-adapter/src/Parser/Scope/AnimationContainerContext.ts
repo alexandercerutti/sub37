@@ -16,7 +16,7 @@ import type { PacedAnimation } from "../Animations/calcMode/paced.js";
 import type { SplineAnimation } from "../Animations/calcMode/spline.js";
 import type { CalcModeFactory } from "../Animations/calcMode/factory.js";
 import { getAnimationFactoryByCalcMode } from "../Animations/calcMode/factory.js";
-import type { DerivedValue } from "../Style/structure/operators.js";
+import type { DerivedValue } from "../namespaces/tts/structure/operators.js";
 import {
 	assertKeyTimesEndIsOne,
 	getInferredPacedKeyTimesByAmount,

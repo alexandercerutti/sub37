@@ -6,8 +6,8 @@ import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
 import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
 import { parseAttributeValue, resolveStyleDefinitionByName } from "../parseStyle.js";
-import { isPixelScalar } from "../Style/primitives/pixel.js";
-import type { PixelScalar } from "../Style/primitives/pixel.js";
+import { isPixelScalar } from "../namespaces/tts/primitives/pixel.js";
+import type { PixelScalar } from "../namespaces/tts/primitives/pixel.js";
 
 const documentContextSymbol = Symbol("document");
 
