@@ -8,6 +8,7 @@ export * as DisplayAlign from "./displayAlign.js";
 export * as Extent from "./extent.js";
 export * as FontSize from "./fontSize.js";
 export * as FontStyle from "./fontStyle.js";
+export * as FontFamily from "./fontFamily.js";
 export * as Position from "./position.js";
 export * as Opacity from "./opacity.js";
 export * as Origin from "./origin.js";
