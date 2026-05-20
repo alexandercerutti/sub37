@@ -239,9 +239,15 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		while ((token = tokenizer.nextToken())) {
 			if (!treeScope) {
-				throw new Error(
-					"Tree scope became undefined. This is an internal error that should not happen. Please report it.",
-				);
+				errors.push({
+					error: new Error(
+						`Tree scope became undefined. This is an internal error that should not happen. Please report it. The error happened after token ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column}).`,
+					),
+					isCritical: true,
+					failedChunk: `element: ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column})`,
+				});
+
+				break;
 			}
 
 			if (errorContext.hasCriticalError) {
