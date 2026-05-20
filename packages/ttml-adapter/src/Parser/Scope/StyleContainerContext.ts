@@ -3,10 +3,10 @@ import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import type { StyleAttributeString, SupportedCSSProperties } from "../parseStyle.js";
 import {
 	isStyleAttribute,
-	parseAttributeValue,
 	resolveStyleDefinitionByName,
 	styleAppliesToElement,
 } from "../parseStyle.js";
+import { parseAttributeValue } from "../grammar/parseAttributeValue.js";
 import { readScopeErrorContext } from "./ErrorContext.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";

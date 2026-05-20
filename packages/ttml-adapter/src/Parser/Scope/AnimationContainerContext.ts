@@ -6,11 +6,11 @@ import {
 	isPropertyContinuouslyAnimatable,
 	isPropertyDiscretelyAnimatable,
 	isStyleAttribute,
-	parseAttributeValue,
 	resolveStyleDefinitionByName,
 	styleAppliesToElement,
 } from "../parseStyle.js";
 import type { SyntaxModuleDefinition } from "../parseStyle.js";
+import { parseAttributeValue } from "../grammar/parseAttributeValue.js";
 import type { DiscreteAnimation } from "../Animations/calcMode/discrete.js";
 import type { LinearAnimation } from "../Animations/calcMode/linear.js";
 import type { PacedAnimation } from "../Animations/calcMode/paced.js";

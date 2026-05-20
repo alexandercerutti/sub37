@@ -5,7 +5,8 @@ import type { TimeDetails } from "../TimeBase/index.js";
 import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
 import type { NodeTree, NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
-import { parseAttributeValue, resolveStyleDefinitionByName } from "../parseStyle.js";
+import { resolveStyleDefinitionByName } from "../parseStyle.js";
+import { parseAttributeValue } from "../grammar/parseAttributeValue.js";
 import { isPixelScalar } from "../namespaces/tts/primitives/pixel.js";
 import type { PixelScalar } from "../namespaces/tts/primitives/pixel.js";
 
