@@ -4,7 +4,7 @@ import { NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
 import { nodeScopeSymbol } from "../../Adapter.js";
 import type { NodeWithScope } from "../../Adapter.js";
-import { isUniquelyAnnotatedNode } from "../Token.js";
+import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { createScope, isolateContext, onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { isStyleAttribute } from "../parseStyle.js";

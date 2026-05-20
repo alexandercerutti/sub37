@@ -8,7 +8,7 @@ import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import { isInheritableStyle, resolveStyleDefinitionByName } from "../parseStyle.js";
 import type { SupportedCSSProperties } from "../parseStyle.js";
-import type { IDREF } from "../Token.js";
+import type { IDREF } from "../namespaces/xml/id.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
 import type { TTMLRegion } from "./RegionContainerContext.js";
 import { readScopeAnimationContext } from "./AnimationContainerContext.js";

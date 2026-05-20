@@ -1,6 +1,7 @@
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { isUniquelyAnnotatedNode, UniquelyAnnotatedNode } from "../Token.js";
+import type { UniquelyAnnotatedNode } from "../namespaces/xml/id.js";
+import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import {
 	isPropertyContinuouslyAnimatable,
 	isPropertyDiscretelyAnimatable,

@@ -1,6 +1,6 @@
 import type { BaseAnimation } from "../../Scope/AnimationContainerContext.js";
 import type { TimeContextData } from "../../Scope/TimeContext.js";
-import type { UniquelyAnnotatedNode } from "../../Token.js";
+import type { UniquelyAnnotatedNode } from "../../namespaces/xml/id.js";
 import { KeySplinesNotAllowedError } from "../keySplines/KeySplinesNotAllowedError.js";
 import { createDiscreteAnimation } from "./discrete.js";
 import { createLinearAnimation } from "./linear.js";

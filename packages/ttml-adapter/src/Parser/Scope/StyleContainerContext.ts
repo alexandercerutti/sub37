@@ -1,5 +1,5 @@
-import { isUniquelyAnnotatedNode } from "../Token.js";
-import type { UniquelyAnnotatedNode } from "../Token.js";
+import type { UniquelyAnnotatedNode } from "../namespaces/xml/id.js";
+import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import type { StyleAttributeString, SupportedCSSProperties } from "../parseStyle.js";
 import {
 	isStyleAttribute,

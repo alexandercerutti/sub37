@@ -19,8 +19,9 @@ import {
 } from "./Parser/Scope/RegionContainerContext.js";
 import { parseCue } from "./Parser/parseCue.js";
 import { createDocumentContext, readScopeDocumentContext } from "./Parser/Scope/DocumentContext.js";
-import { isUniquelyAnnotatedNode, Token, TokenType } from "./Parser/Token.js";
-import type { UniquelyAnnotatedNode } from "./Parser/Token.js";
+import { Token, TokenType } from "./Parser/Token.js";
+import type { UniquelyAnnotatedNode } from "./Parser/namespaces/xml/id.js";
+import { isUniquelyAnnotatedNode } from "./Parser/namespaces/xml/id.js";
 import { NodeTree } from "./Parser/Tags/NodeTree.js";
 import type { NodeWithRelationship } from "./Parser/Tags/NodeTree.js";
 import {
