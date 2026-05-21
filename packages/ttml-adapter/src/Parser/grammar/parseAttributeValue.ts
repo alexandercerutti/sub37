@@ -1,4 +1,8 @@
-import type { Derivable, DerivedValue, InferDerivableValue } from "../namespaces/tts/structure/operators.js";
+import type {
+	Derivable,
+	DerivedValue,
+	InferDerivableValue,
+} from "../namespaces/tts/structure/operators.js";
 import { isDerived, isRejected } from "../namespaces/tts/structure/operators.js";
 import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
 
@@ -53,7 +57,7 @@ export interface GrammarDefinition<Grammar extends Derivable = Derivable> {
 export function parseAttributeValue<Syntax extends GrammarDefinition>(
 	syntaxModuleDefinition: Syntax,
 	value: string,
-): InferDerivableValue<Syntax["Grammar"]> | null {
+): InferDerivableValue<Syntax["Grammar"]> {
 	const tokens =
 		typeof syntaxModuleDefinition.tokenizer === "function"
 			? syntaxModuleDefinition.tokenizer(value)
@@ -73,7 +77,9 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 
 		if (isRejected(tokenDerivationResult)) {
 			// A token couldn't be derived, skip entire attribute
-			return null;
+			throw new Error(
+				`Can't parse attribute value ${value} according to syntax ${syntaxModuleDefinition}: token ${token} couldn't be derived`,
+			);
 		}
 
 		if (isDerived(tokenDerivationResult)) {
@@ -84,7 +90,9 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 
 		if (tokens.length > 0) {
 			// Derivation finished (done) but there are still tokens left, skip entire attribute
-			return null;
+			throw new Error(
+				`Can't parse attribute value ${value} according to syntax ${syntaxModuleDefinition}: extra tokens found after derivation finished`,
+			);
 		}
 
 		collectedValues = collectedValues.concat(tokenDerivationResult.values);

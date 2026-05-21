@@ -384,6 +384,7 @@ function convertAttributesToCSS(
 	sourceElementName: string,
 ): SupportedCSSProperties {
 	const convertedAttributes: SupportedCSSProperties = {};
+	const errorContext = readScopeErrorContext(scope)!;
 
 	/**
 	 * Not using Object.entries or "for..of" because they are not
@@ -400,9 +401,23 @@ function convertAttributesToCSS(
 
 		const value = attributes[attributeKey]!;
 
-		const collectedValues = parseAttributeValue(definition.syntax, value);
+		let collectedValues;
+
+		try {
+			collectedValues = parseAttributeValue(definition.syntax, value);
+		} catch (err) {
+			errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
+
+			continue;
+		}
 
 		if (collectedValues === null) {
+			errorContext.report(
+				//
+				new Error(`Invalid value "${value}" for "${attributeKey}".`),
+				false,
+			);
+
 			continue;
 		}
 

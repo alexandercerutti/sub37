@@ -344,14 +344,22 @@ function getValidAnimationParsedStylesFrames(
 		const Syntax: SyntaxModuleDefinition = attribute.syntax;
 
 		for (const value of animationValue) {
-			const parsingOutcome = parseAttributeValue(Syntax, value);
+			try {
+				const parsingOutcome = parseAttributeValue(Syntax, value);
 
-			if (parsingOutcome === null) {
+				keyframes.push(parsingOutcome);
+			} catch (err) {
 				// Attribute is invalid. Skip entire style.
+				reportError(
+					err instanceof Error
+						? err
+						: new Error(
+								`An error occurred while parsing animation value '${value}' for style '${name}': ${err}. Animation value ignored.`,
+							),
+				);
+
 				continue animationValueListsLoop;
 			}
-
-			keyframes.push(parsingOutcome);
 		}
 
 		if (typeof Syntax.validateAnimation === "function") {

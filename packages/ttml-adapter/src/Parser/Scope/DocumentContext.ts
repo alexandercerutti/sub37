@@ -9,6 +9,7 @@ import { resolveStyleDefinitionByName } from "../parseStyle.js";
 import { parseAttributeValue } from "../grammar/parseAttributeValue.js";
 import { isPixelScalar } from "../namespaces/tts/primitives/pixel.js";
 import type { PixelScalar } from "../namespaces/tts/primitives/pixel.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 
 const documentContextSymbol = Symbol("document");
 
@@ -44,14 +45,14 @@ export function createDocumentContext(
 	nodeTree: NodeTree<Token & NodeWithScope>,
 	rawAttributes: Record<string, string>,
 ): ContextFactory<DocumentContext> {
-	return function (_scope: Scope) {
+	return function (scope: Scope) {
 		if (typeof rawAttributes["xml:lang"] === "undefined") {
 			throw new Error(
 				"Document failed to parse: <tt> element is lacking of 'xml:lang' attribute. The attribute is required, even if empty.",
 			);
 		}
 
-		const attributes = parseDocumentSupportedAttributes(rawAttributes);
+		const attributes = parseDocumentSupportedAttributes(rawAttributes, scope);
 
 		return {
 			parent: undefined,
@@ -78,6 +79,7 @@ export function readScopeDocumentContext(scope: Scope): DocumentContext | undefi
 
 function parseDocumentSupportedAttributes(
 	attributes: Record<string, string>,
+	scope: Scope,
 ): Readonly<DocumentAttributes> {
 	/**
 	 * "If not specified, the frame rate must be considered
@@ -108,7 +110,7 @@ function parseDocumentSupportedAttributes(
 
 	const tickRate = getTickRateResolvedValue(attributes["ttp:tickRate"], frameRate, subFrameRate);
 
-	const extent = getDocumentExtentResolvedValue(attributes["tts:extent"]);
+	const extent = getDocumentExtentResolvedValue(attributes["tts:extent"], scope);
 
 	return Object.freeze({
 		/**
@@ -357,41 +359,45 @@ function asNumbers(values: string[]): number[] {
 
 function getDocumentExtentResolvedValue(
 	extent: string | undefined,
-): DocumentAttributes["tts:extent"] {
+	scope: Scope,
+): DocumentAttributes["tts:extent"] | undefined {
 	if (!extent) {
 		return undefined;
 	}
 
 	const Syntax = resolveStyleDefinitionByName("tts:extent")!.syntax;
 
-	const parsedExtentValue = parseAttributeValue(Syntax, extent);
+	try {
+		const parsedExtentValue = parseAttributeValue(Syntax, extent);
 
-	if (!parsedExtentValue) {
+		if (
+			parsedExtentValue.length !== 2 ||
+			// These two shouldn't be possible by grammar definition
+			parsedExtentValue[0] === undefined ||
+			parsedExtentValue[1] === undefined
+		) {
+			return undefined;
+		}
+
+		const [first, second] = parsedExtentValue;
+
+		/**
+		 * This omits "auto" and "contain" keywords as well, since
+		 * they mean to auto-compute the size based.
+		 */
+		if (first.type !== "length" || second.type !== "length") {
+			return undefined;
+		}
+
+		if (!isPixelScalar(first.value) || !isPixelScalar(second.value)) {
+			return undefined;
+		}
+
+		return [first.value, second.value];
+	} catch (err) {
+		const errorContext = readScopeErrorContext(scope)!;
+		errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
+
 		return undefined;
 	}
-
-	if (
-		parsedExtentValue.length !== 2 ||
-		// These two shouldn't be possible by grammar definition
-		parsedExtentValue[0] === undefined ||
-		parsedExtentValue[1] === undefined
-	) {
-		return undefined;
-	}
-
-	const [first, second] = parsedExtentValue;
-
-	/**
-	 * This omits "auto" and "contain" keywords as well, since
-	 * they mean to auto-compute the size based.
-	 */
-	if (first.type !== "length" || second.type !== "length") {
-		return undefined;
-	}
-
-	if (!isPixelScalar(first.value) || !isPixelScalar(second.value)) {
-		return undefined;
-	}
-
-	return [first.value, second.value];
 }

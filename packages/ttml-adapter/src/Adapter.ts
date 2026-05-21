@@ -770,7 +770,9 @@ export default class TTMLAdapter extends BaseAdapter {
 
 					if (isStylingElement(closingElement)) {
 						const initialStyles = extractInitialStyles(closingElement);
-						const outOfLineStyles = initialStyles.concat(extractOutOfLineStyles(closingElement));
+						const outOfLineStyles = initialStyles.concat(
+							extractOutOfLineStyles(closingElement, rootScope),
+						);
 
 						rootScope.addContexts(
 							createStyleContainerContext(outOfLineStyles),
@@ -783,7 +785,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					if (isAnimationElement(closingElement)) {
-						const animations = extractOutOfLineAnimations(closingElement);
+						const animations = extractOutOfLineAnimations(closingElement, rootScope);
 
 						rootScope.addContexts(
 							//
@@ -1085,6 +1087,7 @@ function extractInitialStyles(
  */
 function extractOutOfLineStyles(
 	currentNode: NodeWithRelationship<Token>,
+	scope: Scope,
 ): StyleContainerContextState[] {
 	const { children } = currentNode;
 
@@ -1096,7 +1099,14 @@ function extractOutOfLineStyles(
 		}
 
 		if (!isUniquelyAnnotatedNode(content.attributes)) {
-			continue;
+			const errorContext = readScopeErrorContext(scope)!;
+
+			errorContext.report(
+				new Error(
+					`Style element '${content.content}' has no 'xml:id' attribute. Although it not mandatory, this style won't be able to be referenced by any element.`,
+				),
+				false,
+			);
 		}
 
 		styles.push(
@@ -1209,6 +1219,7 @@ function isAnimationElement(currentNode: NodeWithRelationship<Token>): boolean {
 
 function extractOutOfLineAnimations(
 	currentNode: NodeWithRelationship<Token>,
+	scope: Scope,
 ): AnimationContainerContextState[] {
 	const { children } = currentNode;
 
@@ -1220,6 +1231,19 @@ function extractOutOfLineAnimations(
 
 	for (const { content: tokenContent } of children) {
 		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+			continue;
+		}
+
+		if (!isUniquelyAnnotatedNode(tokenContent.attributes)) {
+			const errorContext = readScopeErrorContext(scope)!;
+
+			errorContext.report(
+				new Error(
+					`Animation element '${tokenContent.content}' has no 'xml:id' attribute. Ignored.`,
+				),
+				false,
+			);
+
 			continue;
 		}
 
