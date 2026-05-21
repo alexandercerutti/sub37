@@ -1190,9 +1190,15 @@ function getOutOfLineStylesByIDREFS(
 // ********************************************** //
 // region animation extraction
 
+type AnimateOrSetToken = Token & { content: "animate" | "set" };
+
+export function isAnimateOrSetElement(currentNode: Token): currentNode is AnimateOrSetToken {
+	return currentNode.content === "animate" || currentNode.content === "set";
+}
+
 function isInlineAnimation(
 	currentNode: NodeWithRelationship<Token & NodeWithDestinationMatch>,
-): boolean {
+): currentNode is NodeWithRelationship<AnimateOrSetToken & NodeWithDestinationMatch> {
 	const { content, parent } = currentNode;
 	const parentNode = parent!.content;
 
@@ -1207,10 +1213,7 @@ function isInlineAnimation(
 	const isParentAllowedToContainInlineAnimation =
 		parentNode[nodeMatchSymbol]?.matchesAttribute("animate") || false;
 
-	return (
-		isParentAllowedToContainInlineAnimation &&
-		(content.content === "animate" || content.content === "set")
-	);
+	return isParentAllowedToContainInlineAnimation && isAnimateOrSetElement(content);
 }
 
 function isAnimationElement(currentNode: NodeWithRelationship<Token>): boolean {
@@ -1230,7 +1233,7 @@ function extractOutOfLineAnimations(
 	const animations: AnimationContainerContextState[] = [];
 
 	for (const { content: tokenContent } of children) {
-		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+		if (!isAnimateOrSetElement(tokenContent)) {
 			continue;
 		}
 
@@ -1256,7 +1259,7 @@ function extractOutOfLineAnimations(
 }
 
 function getInlineAnimationFromOpeningTag(
-	openingTag: NodeWithRelationship<Token>,
+	openingTag: NodeWithRelationship<AnimateOrSetToken>,
 ): AnimationContainerContextState {
 	const { content, parent } = openingTag;
 
@@ -1267,11 +1270,12 @@ function getInlineAnimationFromOpeningTag(
 
 function getInlineAnimationFromToken(
 	animationId: string,
-	token: Token,
+	token: AnimateOrSetToken,
 ): AnimationContainerContextState {
 	const tokenAttributes = token.attributes;
 
 	return {
+		element: token.content,
 		attributes: Object.create(tokenAttributes, {
 			"xml:id": {
 				value: animationId,

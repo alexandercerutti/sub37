@@ -2,7 +2,7 @@ import type { Region } from "@sub37/server";
 import { Entities } from "@sub37/server";
 import { NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
-import { nodeScopeSymbol } from "../../Adapter.js";
+import { isAnimateOrSetElement, nodeScopeSymbol } from "../../Adapter.js";
 import type { NodeWithScope } from "../../Adapter.js";
 import { isUniquelyAnnotatedNode, generateSyntheticId } from "../namespaces/xml/id.js";
 import type { Context, ContextFactory, Scope } from "./Scope.js";
@@ -150,8 +150,7 @@ function extractInlineStyles(regionAttributes: Record<string, string>): StyleCon
 
 	return Object.create(inlineStyles, {
 		"xml:id": {
-			value:
-				inlineStyles["xml:id"] || generateSyntheticId("region-inline"),
+			value: inlineStyles["xml:id"] || generateSyntheticId("region-inline"),
 		},
 		kind: {
 			value: "inline",
@@ -201,15 +200,15 @@ function extractNestedAnimationsChildren(
 	const animations: AnimationContainerContextState[] = [];
 
 	for (const { content: tokenContent } of regionChildren) {
-		if (tokenContent.content !== "animate" && tokenContent.content !== "set") {
+		if (!isAnimateOrSetElement(tokenContent)) {
 			continue;
 		}
 
 		const animationId =
-			tokenContent.attributes["xml:id"] ||
-			generateSyntheticId("region-animation");
+			tokenContent.attributes["xml:id"] || generateSyntheticId("region-animation");
 
 		animations.push({
+			element: tokenContent.content,
 			attributes: Object.create(tokenContent.attributes, {
 				"xml:id": {
 					value: animationId,

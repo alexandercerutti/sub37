@@ -2813,6 +2813,47 @@ describe("Animations", () => {
 			expect(animEntities[1].duration).toBe(4000);
 		});
 	});
+
+	describe("<set> single-value constraint (§13.1.3 + §13.3.1)", () => {
+		it("should report an error and still emit the cue when tts:color contains a semicolon-separated list", () => {
+			/**
+			 * §13.1.3 specifies that <set> targets a single <animation-value>.
+			 * §13.3.1 defines <animation-value> as a token that must not contain
+			 * an unescaped semicolon — that separator belongs to <animation-value-list>
+			 * (§13.3.2), which is the syntax for <animate>, not <set>.
+			 */
+			const { data: cues, errors } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1" />
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="2s">
+								<span>
+									<set begin="0s" dur="2s" tts:color="red;green"/>
+									Hello world
+								</span>
+							</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			/* The cue must still be emitted — bad animation must not swallow the cue. */
+			const textCues = cues.filter((c) => c.content.trim().length > 0);
+			expect(textCues.length).toBeGreaterThan(0);
+
+			/* A non-critical error must be reported for the illegal animation-value-list. */
+			expect(errors.length).toBeGreaterThan(0);
+			expect(errors.every((e) => !e.isCritical)).toBe(true);
+		});
+	});
 });
 // #endregion
 

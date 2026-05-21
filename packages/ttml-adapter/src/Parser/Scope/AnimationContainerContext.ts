@@ -44,6 +44,7 @@ export type Animation = (DiscreteAnimation | LinearAnimation | PacedAnimation | 
 const animationContextSymbol = Symbol("animations");
 
 export interface AnimationContainerContextState {
+	element: "set" | "animate";
 	calcMode: string | undefined;
 	attributes: Record<string, string>;
 }
@@ -81,8 +82,12 @@ export function createAnimationContainerContext(
 				return contextState;
 			},
 			[onAttachedSymbol](): void {
-				for (const { calcMode = "linear", attributes } of contextState) {
+				for (const { calcMode = "linear", attributes, element } of contextState) {
 					try {
+						/**
+						 * Both sets and animate will get assigned a synthetic "xml:id" on parse,
+						 * so this might be a dead branch
+						 */
 						if (!isUniquelyAnnotatedNode(attributes)) {
 							errorContext.report(
 								new Error("Animation with unknown 'xml:id' attribute, got ignored."),
@@ -102,7 +107,7 @@ export function createAnimationContainerContext(
 						}
 
 						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-						const animation = createAnimation(calcModeFactory, attributes, scope);
+						const animation = createAnimation(calcModeFactory, attributes, element, scope);
 
 						if (!animation) {
 							continue;
@@ -117,8 +122,12 @@ export function createAnimationContainerContext(
 			[onMergeSymbol](incomingContext: AnimationContainerContext): void {
 				const { args } = incomingContext;
 
-				for (const { calcMode = "linear", attributes } of args) {
+				for (const { calcMode = "linear", attributes, element } of args) {
 					try {
+						/**
+						 * Both sets and animate will get assigned a synthetic "xml:id" on parse,
+						 * so this might be a dead branch
+						 */
 						if (!isUniquelyAnnotatedNode(attributes)) {
 							errorContext.report(
 								new Error("Animation with unknown 'xml:id' attribute, got ignored."),
@@ -138,7 +147,7 @@ export function createAnimationContainerContext(
 						}
 
 						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-						const animation = createAnimation(calcModeFactory, attributes, scope);
+						const animation = createAnimation(calcModeFactory, attributes, element, scope);
 
 						if (!animation) {
 							continue;
@@ -171,6 +180,7 @@ export function readScopeAnimationContext(scope: Scope): AnimationContainerConte
 function createAnimation(
 	calcModeFactory: CalcModeFactory,
 	attributes: Record<string, string> & UniquelyAnnotatedNode,
+	sourceElement: "set" | "animate",
 	scope: Scope,
 ): Animation | undefined {
 	const animationId = attributes["xml:id"];
@@ -199,6 +209,7 @@ function createAnimation(
 
 	const animationValueList = getAnimationValueListByStyleName(attributes);
 	const stylesFrames = getValidAnimationParsedStylesFrames(
+		sourceElement,
 		animation.calcMode === "discrete" ? "discrete" : "continuous",
 		animationValueList,
 		animation.keyTimes.length,
@@ -293,6 +304,7 @@ function createAnimation(
  * @returns
  */
 function getValidAnimationParsedStylesFrames(
+	elementSource: "animate" | "set",
 	animatableStyle: "discrete" | "continuous",
 	animationValueListByStyleName: AnimationValueListByStyleName,
 	expectedKeytimes: number,
@@ -306,6 +318,13 @@ function getValidAnimationParsedStylesFrames(
 		}
 
 		const animationValue = splitAnimationValueList(animationValueList);
+
+		if (elementSource === "set" && animationValue.length > 1) {
+			reportError(
+				new Error(`<set> element styles can't have multiple values. Animation value ignored.`),
+			);
+			continue animationValueListsLoop;
+		}
 
 		if (animationValue.length === 1 && animatableStyle === "discrete") {
 			/**
