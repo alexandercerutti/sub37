@@ -1,7 +1,8 @@
 // @ts-check
 
 import { describe, expect, it } from "@jest/globals";
-import { resolveStyleDefinitionByName, parseAttributeValue } from "../../../lib/Parser/parseStyle.js";
+import { resolveStyleDefinitionByName } from "../../../lib/Parser/parseStyle.js";
+import { parseAttributeValue } from "../../../lib/Parser/grammar/parseAttributeValue.js";
 import { createScope } from "../../../lib/Parser/Scope/Scope.js";
 import {
 	createDocumentContext,

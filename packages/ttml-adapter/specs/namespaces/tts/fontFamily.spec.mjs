@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { tokenizer } from "../../../lib/Parser/namespaces/tts/properties/fontFamily.js";
-import { parseAttributeValue } from "../../../lib/Parser/parseStyle.js";
+import { parseAttributeValue } from "../../../lib/Parser/grammar/parseAttributeValue.js";
 import * as FontFamilySyntax from "../../../lib/Parser/namespaces/tts/syntax/font-family.js";
 import * as FontFamilyProperty from "../../../lib/Parser/namespaces/tts/properties/fontFamily.js";
 
