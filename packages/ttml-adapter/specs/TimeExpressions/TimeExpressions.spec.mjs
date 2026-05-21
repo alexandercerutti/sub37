@@ -109,34 +109,34 @@ describe("Offset time conversion to time matcher", () => {
 	});
 });
 
-/** "wallclock(" <lwsp>? ( date-time | wall-time | date ) <lwsp>? ")" */
+/** wallclock( <lwsp>? ( date-time | wall-time | date ) <lwsp>? ) */
 describe("Wallclock time conversion to time matcher", () => {
-	it("should convert 'wallclock(\"<lwsp>&quest; (date-time) <lwsp>&quest;\")'", () => {
-		expect(matchWallClockTimeExpression(`wallclock(" 2020-05-10T22:10:57 ")`)).toMatchObject({
+	it("should convert 'wallclock(<lwsp>&quest; (date-time) <lwsp>&quest;)'", () => {
+		expect(matchWallClockTimeExpression(`wallclock( 2020-05-10T22:10:57 )`)).toMatchObject({
 			value: new Date("2020-05-10T19:10:57.000Z").getTime(),
 			metric: "date",
 		});
 
-		expect(matchWallClockTimeExpression(`wallclock(" 2021-06-10T22:10")`)).toMatchObject({
+		expect(matchWallClockTimeExpression(`wallclock( 2021-06-10T22:10)`)).toMatchObject({
 			value: new Date("2021-06-10T19:10:00.000Z").getTime(),
 			metric: "date",
 		});
 	});
 
-	it("should convert 'wallclock(\"<lwsp>&quest; (wall-time) <lwsp>&quest;\")'", () => {
-		expect(matchWallClockTimeExpression(`wallclock("22:10:57 ")`)).toMatchObject({
+	it("should convert 'wallclock(<lwsp>&quest; (wall-time) <lwsp>&quest;)'", () => {
+		expect(matchWallClockTimeExpression(`wallclock(22:10:57 )`)).toMatchObject({
 			value: new Date("1970-01-01T21:10:57.000Z").getTime(),
 			metric: "date",
 		});
 
-		expect(matchWallClockTimeExpression(`wallclock("22:10 ")`)).toMatchObject({
+		expect(matchWallClockTimeExpression(`wallclock(22:10 )`)).toMatchObject({
 			value: new Date("1970-01-01T21:10:00.000Z").getTime(),
 			metric: "date",
 		});
 	});
 
-	it("should convert 'wallclock(\"<lwsp>&quest; (date) <lwsp>&quest;\")'", () => {
-		expect(matchWallClockTimeExpression(`wallclock(" 2021-10-19 ")`)).toMatchObject({
+	it("should convert 'wallclock(<lwsp>&quest; (date) <lwsp>&quest;)'", () => {
+		expect(matchWallClockTimeExpression(`wallclock( 2021-10-19 )`)).toMatchObject({
 			value: new Date(2021, 9, 19).getTime(),
 			metric: "date",
 		});

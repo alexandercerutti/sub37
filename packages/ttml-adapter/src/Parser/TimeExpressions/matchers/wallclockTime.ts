@@ -6,55 +6,55 @@ import { createUnit } from "../../Unit.js";
  * Wallclock regexes are ordered by specificity
  * as DATETIME includes WALLTIME and DATE.
  *
- * "wallclock(" <lwsp>? ( date-time | wall-time | date ) \<lwsp>? ")"
+ * "wallclock(" \<lwsp>? ( date-time | wall-time | date ) \<lwsp>? ")"
  */
 
 /**
  * @definition
- * wallclock(" \<lwsp>? (             date-time            ) \<lwsp>? ")
- * wallclock(" \<lwsp>? ( YYYY-MM-DD T ( HH:MM:SS | HH:MM )) \<lwsp>? ")
+ * "wallclock(" \<lwsp>? (             date-time            ) \<lwsp>? ")"
+ * "wallclock(" \<lwsp>? ( YYYY-MM-DD T ( HH:MM:SS | HH:MM )) \<lwsp>? ")"
  *
  * @testcases
- * wallclock(" 2023-08-13T01:49")
- * wallclock(" 2023-08-13T01:49:13")
- * wallclock(" 2023-08-13T01:49:13.000")
- * wallclock(" 2023-08-13T01:49:13 ")
+ * wallclock( 2023-08-13T01:49)
+ * wallclock( 2023-08-13T01:49:13)
+ * wallclock( 2023-08-13T01:49:13.000)
+ * wallclock( 2023-08-13T01:49:13 )
  */
 
 const WALLCLOCK_DATETIME_REGEX = new RegExp(
-	`wallclock\\("\\s*${DATE_REGEX.source}T(?:${HHMMSS_TIME_REGEX.source})\\s*"\\)`,
+	`wallclock\\(\\s*${DATE_REGEX.source}T(?:${HHMMSS_TIME_REGEX.source})\\s*\\)`,
 );
 
 /**
  * @definition
- * wallclock(" \<lwsp>? (       wall-time      ) \<lwsp>? ")
- * wallclock(" \<lwsp>? ( HH:MM | HH:MM:SS.FR? ) \<lwsp>? ")
+ * "wallclock(" \<lwsp>? (       wall-time      ) \<lwsp>? ")"
+ * "wallclock(" \<lwsp>? ( HH:MM | HH:MM:SS.FR? ) \<lwsp>? ")"
  *
  * @testcases
- * wallclock("22:10")
- * wallclock(" 22:10:15")
- * wallclock("22:10:15 ")
- * wallclock(" 22:10:15.000")
+ * wallclock(22:10)
+ * wallclock( 22:10:15)
+ * wallclock(22:10:15 )
+ * wallclock( 22:10:15.000)
  */
-const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\("\\s*${HHMMSS_TIME_REGEX.source}\\s*"\\)`);
+const WALLCLOCK_WALLTIME_REGEX = new RegExp(`wallclock\\(\\s*${HHMMSS_TIME_REGEX.source}\\s*\\)`);
 
 /**
  * @definition
  * ```
- * 	wallclock(" \<lwsp>? (    date    ) \<lwsp>? ")
- * 	wallclock(" \<lwsp>? ( YYYY-MM-DD ) \<lwsp>? ")
+ * 	"wallclock(" \<lwsp>? (    date    ) \<lwsp>? ")"
+ * 	"wallclock(" \<lwsp>? ( YYYY-MM-DD ) \<lwsp>? ")"
  * ```
  *
  * @testcases
  * ```
- * 	wallclock("2023-08-13")
- * 	wallclock(" 2023-08-13")
- * 	wallclock("2023-08-13 ")
- * 	wallclock(" 2023-08-13 ")
+ * 	wallclock(2023-08-13)
+ * 	wallclock( 2023-08-13)
+ * 	wallclock(2023-08-13 )
+ * 	wallclock( 2023-08-13 )
  * ```
  */
 
-const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\("\\s*${DATE_REGEX.source}\\s*"\\)`);
+const WALLCLOCK_DATE_REGEX = new RegExp(`wallclock\\(\\s*${DATE_REGEX.source}\\s*\\)`);
 export type WallClockUnit = Unit<"date">;
 
 function toWallClockWallTimeMatch(
