@@ -9,6 +9,7 @@ export * as Extent from "./extent.js";
 export * as FontSize from "./fontSize.js";
 export * as FontStyle from "./fontStyle.js";
 export * as FontFamily from "./fontFamily.js";
+export * as FontKerning from "./fontKerning.js";
 export * as FontWeight from "./fontWeight.js";
 export * as LetterSpacing from "./letterSpacing.js";
 export * as Position from "./position.js";

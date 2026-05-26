@@ -424,7 +424,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				["span"],
 				"normal",
 				new Set(["none", "normal"]),
-				Syntaxes.Unavailable,
+				Syntaxes.FontKerning,
 			),
 		),
 	),
