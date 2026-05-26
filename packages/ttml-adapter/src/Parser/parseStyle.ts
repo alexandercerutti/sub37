@@ -570,7 +570,7 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				["p", "span"],
 				"normal",
 				undefined,
-				Syntaxes.Unavailable,
+				Syntaxes.LetterSpacing,
 			),
 		),
 	),
