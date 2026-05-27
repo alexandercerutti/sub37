@@ -401,6 +401,12 @@ function convertAttributesToCSS(
 
 		const value = attributes[attributeKey]!;
 
+		if (definition.syntax.Grammar.type === "unavailable") {
+			errorContext.report(new Error(`Style attribute '${attributeKey}' is not supported.`), false);
+
+			continue;
+		}
+
 		let collectedValues;
 
 		try {
@@ -408,7 +414,7 @@ function convertAttributesToCSS(
 		} catch (err) {
 			errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
 
-			continue;
+			collectedValues = definition.default;
 		}
 
 		if (collectedValues === null) {

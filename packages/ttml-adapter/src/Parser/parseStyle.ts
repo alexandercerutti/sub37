@@ -5,6 +5,7 @@ import type { Token } from "./Token.js";
 import * as Syntaxes from "./namespaces/tts/properties/index.js";
 import type { Derivable } from "./namespaces/tts/structure/operators.js";
 import type { GrammarDefinition } from "./grammar/parseAttributeValue.js";
+import { parseAttributeValue } from "./grammar/parseAttributeValue.js";
 
 export type StyleAttributeString = `tts:${string}`;
 
@@ -119,7 +120,22 @@ function createAttributeDefinition<
 			value: appliesTo,
 		},
 		default: {
-			value: defaultValue,
+			get() {
+				if (syntax.Grammar === Syntaxes.Unavailable.Grammar) {
+					return null;
+				}
+
+				try {
+					/**
+					 * Should this be cached?
+					 */
+					return parseAttributeValue(syntax, defaultValue);
+				} catch (err) {
+					throw new Error(
+						`Default value for attribute "${attributeName}" is invalid according to its syntax. This is a bug in the adapter and should be reported.`,
+					);
+				}
+			},
 		},
 		toCSS: {
 			value(
