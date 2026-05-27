@@ -47,10 +47,20 @@ export const Grammar = alias("tts:textDecoration", TextDecorationGrammar);
  */
 
 export function cssTransform(
-	_scope: Scope,
+	scope: Scope,
 	_value: InferDerivableValue<typeof TextDecorationGrammar>,
 ): PropertiesCollection<[]> | null {
-	// See note above
+	const errorContext = readScopeErrorContext(scope)!;
+
+	errorContext.report(
+		new Error(
+			`text-decoration property is not supported.
+			You might want help supporting that. Look for this message in the codebase,
+			and you'll find a full explanation on what should be done to achieve it.`,
+		),
+		false,
+	);
+
 	return null;
 }
 
