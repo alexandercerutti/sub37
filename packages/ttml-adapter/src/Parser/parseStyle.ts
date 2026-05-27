@@ -45,7 +45,6 @@ interface AttributeDefinition<
 	readonly name: Name;
 	readonly appliesTo: string[];
 	readonly default: unknown;
-	readonly allowedValues: Set<unknown>;
 	readonly namespace: string | undefined;
 	readonly toCSS: PropertiesMapper<DestinationProperties>;
 	readonly syntax: Syntax;
@@ -105,13 +104,11 @@ export interface SyntaxModuleDefinition<
 function createAttributeDefinition<
 	const Name extends string,
 	DestinationProperties extends string[],
-	const AllowedValues extends string,
 	Syntax extends SyntaxModuleDefinition<DestinationProperties>,
 >(
 	attributeName: Name,
 	appliesTo: string[],
-	defaultValue: NoInfer<AllowedValues>,
-	allowedValues: Set<AllowedValues> | undefined,
+	defaultValue: string,
 	syntax: Syntax,
 ): AttributeDefinition<Name, DestinationProperties, Syntax> {
 	return Object.create(null, {
@@ -123,9 +120,6 @@ function createAttributeDefinition<
 		},
 		default: {
 			value: defaultValue,
-		},
-		allowedValues: {
-			value: allowedValues,
 		},
 		toCSS: {
 			value(
@@ -168,10 +162,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:backgroundClip": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:backgroundClip",
 			["body", "div", "image", "p", "region", "span"],
 			"border",
-			new Set(["border", "content", "padding"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -186,7 +180,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundColor",
 			["body", "div", "image", "p", "region", "span"],
 			"transparent",
-			undefined,
 			Syntaxes.BackgroundColor,
 		),
 	),
@@ -204,7 +197,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundExtent",
 			["body", "div", "image", "p", "region", "span"],
 			"",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -223,7 +215,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundImage",
 			["body", "div", "image", "p", "region", "span"],
 			"none",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -241,7 +232,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundOrigin",
 			["body", "div", "image", "p", "region", "span"],
 			"padding",
-			new Set(["border", "content", "padding"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -256,7 +246,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundPosition",
 			["body", "div", "image", "p", "region", "span"],
 			"0% 0%",
-			undefined,
 			Syntaxes.BackgroundPosition,
 		),
 	),
@@ -271,7 +260,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:backgroundRepeat",
 			["body", "div", "image", "p", "region", "span"],
 			"repeat",
-			new Set(["repeat", "repeatX", "repeatY", "noRepeat"]),
 			Syntaxes.BackgroundRepeat,
 		),
 	),
@@ -286,7 +274,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:border",
 			["body", "div", "image", "p", "region", "span"],
 			"none",
-			undefined,
 			Syntaxes.Border,
 		),
 	),
@@ -306,7 +293,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:bpd",
 			["body", "div", "p", "span"],
 			"auto",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -321,9 +307,8 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			createAttributeDefinition(
 				//
 				"tts:color",
-				["span", ""],
+				["span"],
 				"white",
-				undefined,
 				Syntaxes.Color,
 			),
 		),
@@ -342,10 +327,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:direction",
 				["p", "span"],
 				"ltr",
-				new Set(["ltr", "rtl"]),
 				Syntaxes.Unavailable,
 			),
 		),
@@ -362,7 +347,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:disparity",
 			["region"],
 			"0px",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -377,7 +361,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:display",
 			["body", "div", "image", "p", "region", "span"],
 			"auto",
-			new Set(["auto", "none", "inlineBlock"]),
 			Syntaxes.Display,
 		),
 	),
@@ -392,7 +375,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:displayAlign",
 			["body", "div", "p", "region"],
 			"before",
-			new Set(["before", "center", "after", "justify"]),
 			Syntaxes.DisplayAlign,
 		),
 	),
@@ -404,10 +386,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:extent": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:extent",
 			["tt", "region", "image"],
 			"auto",
-			undefined,
 			Syntaxes.Extent,
 		),
 	),
@@ -420,10 +402,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontFamily",
 				["p", "span"],
 				"default",
-				undefined,
 				Syntaxes.FontFamily,
 			),
 		),
@@ -437,10 +419,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontKerning",
 				["span"],
 				"normal",
-				new Set(["none", "normal"]),
 				Syntaxes.FontKerning,
 			),
 		),
@@ -458,10 +440,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontSelectionStrategy",
 				["p", "span"],
 				"auto",
-				new Set(["auto", "character"]),
 				Syntaxes.Unavailable,
 			),
 		),
@@ -483,7 +465,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:fontShear",
 				["span"],
 				"0%",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -497,10 +478,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontSize",
 				["p", "span", "region"],
 				"1c",
-				undefined,
 				Syntaxes.FontSize,
 			),
 		),
@@ -514,10 +495,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontStyle",
 				["p", "span"],
 				"normal",
-				new Set(["normal", "italic", "oblique"]),
 				Syntaxes.FontStyle,
 			),
 		),
@@ -536,10 +517,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontVariant",
 				["p", "span"],
 				"normal",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -553,10 +534,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:fontWeight",
 				["p", "span"],
 				"normal",
-				new Set(["normal", "bold"]),
 				Syntaxes.FontWeight,
 			),
 		),
@@ -577,7 +558,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:ipd",
 			["body", "div", "p", "span"],
 			"auto",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -590,10 +570,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:letterSpacing",
 				["p", "span"],
 				"normal",
-				undefined,
 				Syntaxes.LetterSpacing,
 			),
 		),
@@ -616,7 +596,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:lineHeight",
 				["p"],
 				"normal",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -637,7 +616,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:lineShear",
 				["p"],
 				"0%",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -654,10 +632,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:luminanceGain": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
 		createAttributeDefinition(
+			//
 			"tts:luminanceGain",
 			["region"],
 			"1.0",
-			undefined,
 			Syntaxes.Unavailable,
 		),
 	),
@@ -672,7 +650,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:opacity",
 			["body", "div", "image", "p", "region", "span"],
 			"1.0",
-			undefined,
 			Syntaxes.Opacity,
 		),
 	),
@@ -691,7 +668,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:origin",
 			["region"],
 			"auto",
-			undefined,
 			Syntaxes.Origin,
 		),
 	),
@@ -706,10 +682,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:overflow": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:overflow",
 			["region"],
 			"hidden",
-			new Set(["visible", "hidden"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -724,7 +700,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:padding",
 			["body", "div", "image", "p", "region", "span"],
 			"0px",
-			undefined,
 			Syntaxes.Padding,
 		),
 	),
@@ -740,7 +715,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:position",
 			["region"],
 			"top left",
-			undefined,
 			Syntaxes.Position,
 		),
 	),
@@ -753,10 +727,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 * @see https://w3c.github.io/ttml2/#derivation-ruby
 	 */
 	"tts:ruby": createAttributeDefinition(
+		//
 		"tts:ruby",
 		["span"],
 		"none",
-		new Set(["none", "container", "base", "baseContainer", "text", "textContainer", "delimiter"]),
 		Syntaxes.Unavailable,
 	),
 
@@ -770,10 +744,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:rubyAlign",
 				["span"],
 				"center",
-				new Set(["start", "center", "end", "spaceAround", "spaceBetween", "withBase"]),
 				Syntaxes.Unavailable,
 			),
 		),
@@ -789,10 +763,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:rubyPosition",
 				["span"],
 				"outside",
-				new Set(["before", "after", "outside"]),
 				Syntaxes.Unavailable,
 			),
 		),
@@ -812,7 +786,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:rubyReserve",
 				["p"],
 				"none",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -834,7 +807,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:shear",
 				["p"],
 				"0%",
-				undefined,
 				Syntaxes.Unavailable,
 			),
 		),
@@ -852,10 +824,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:showBackground": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:showBackground",
 			["region"],
 			"always",
-			new Set(["always", "whenActive"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -867,10 +839,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:textAlign": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:textAlign",
 			["p"],
 			"start",
-			new Set(["left", "center", "right", "start", "end", "justify"]),
 			Syntaxes.TextAlign,
 		),
 	),
@@ -883,10 +855,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:textCombine",
 				["span"],
 				"none",
-				undefined,
 				Syntaxes.TextCombine,
 			),
 		),
@@ -900,10 +872,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:textDecoration",
 				["span"],
 				"none",
-				undefined,
 				Syntaxes.TextDecoration,
 			),
 		),
@@ -917,10 +889,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
 			createAttributeDefinition(
+				//
 				"tts:textEmphasis",
 				["span"],
 				"none",
-				undefined,
 				Syntaxes.TextEmphasis,
 			),
 		),
@@ -932,10 +904,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	 */
 	"tts:textOrientation": inheritable(
 		createAttributeDefinition(
+			//
 			"tts:textOrientation",
 			["span"],
 			"mixed",
-			new Set(["mixed", "sideways", "upright"]),
 			Syntaxes.TextOrientation,
 		),
 	),
@@ -952,7 +924,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:textOutline",
 				["span"],
 				"none",
-				undefined,
 				Syntaxes.TextOutline,
 			),
 		),
@@ -970,7 +941,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:textShadow",
 				["span"],
 				"none",
-				undefined,
 				Syntaxes.TextShadow,
 			),
 		),
@@ -987,10 +957,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:unicodeBidi": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:unicodeBidi",
 			["p", "span"],
 			"normal",
-			new Set(["normal", "embed", "bidiOverride", "isolate"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -1006,7 +976,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 				"tts:visibility",
 				["body", "div", "image", "p", "region", "span"],
 				"visible",
-				new Set(["visible", "hidden"]),
 				Syntaxes.Visibility,
 			),
 		),
@@ -1025,10 +994,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 		animatable(
 			AnimationFlags.DISCRETE,
 			createAttributeDefinition(
+				//
 				"tts:wrapOption",
 				["span"],
 				"wrap",
-				new Set(["wrap", "noWrap"]),
 				Syntaxes.Unavailable,
 			),
 		),
@@ -1045,10 +1014,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	"tts:writingMode": animatable(
 		AnimationFlags.DISCRETE,
 		createAttributeDefinition(
+			//
 			"tts:writingMode",
 			["region"],
 			"lrtb",
-			new Set(["lrtb", "rltb", "tbrl", "tblr", "lr", "rl", "tb"]),
 			Syntaxes.Unavailable,
 		),
 	),
@@ -1064,7 +1033,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			"tts:zIndex",
 			["region"],
 			"auto",
-			undefined,
 			Syntaxes.zIndex,
 		),
 	),
