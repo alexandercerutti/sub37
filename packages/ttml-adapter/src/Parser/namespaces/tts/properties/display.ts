@@ -1,10 +1,11 @@
 import { readScopeErrorContext } from "../../../Scope/ErrorContext.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { DisplayGrammar } from "../syntax/display.js";
+import { DisplayGrammar } from "../syntax/display.js";
 
-export { DisplayGrammar as Grammar } from "../syntax/display.js";
+export const Grammar = alias("tts:display", DisplayGrammar);
 
 export function cssTransform(
 	scope: Scope,

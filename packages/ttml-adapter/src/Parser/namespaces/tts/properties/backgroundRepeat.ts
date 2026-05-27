@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { BackgroundRepeatGrammar } from "../syntax/background-repeat.js";
+import { BackgroundRepeatGrammar } from "../syntax/background-repeat.js";
 
-export { BackgroundRepeatGrammar as Grammar } from "../syntax/background-repeat.js";
+export const Grammar = alias("tts:backgroundRepeat", BackgroundRepeatGrammar);
 
 export function cssTransform(
 	_scope: Scope,

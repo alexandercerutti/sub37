@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { OpacityGrammar } from "../syntax/opacity.js";
+import { OpacityGrammar } from "../syntax/opacity.js";
 
-export { OpacityGrammar as Grammar } from "../syntax/opacity.js";
+export const Grammar = alias("tts:opacity", OpacityGrammar);
 
 export function cssTransform(
 	_scope: Scope,

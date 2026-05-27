@@ -1,14 +1,15 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { FontSizeGrammar } from "../syntax/font-size.js";
+import { FontSizeGrammar } from "../syntax/font-size.js";
 import type { Length } from "../primitives/length.js";
 import { readScopeDocumentContext } from "../../../Scope/DocumentContext.js";
 import { getCellScalarPixelConversion, isCellScalar } from "../primitives/cell.js";
 import { createUnit } from "../../../Unit.js";
 import type { PixelScalar } from "../primitives/pixel.js";
 
-export { FontSizeGrammar as Grammar } from "../syntax/font-size.js";
+export const Grammar = alias("tts:fontSize", FontSizeGrammar);
 
 /**
  * TTML supports providing two <length> for `tts:fontSize`.

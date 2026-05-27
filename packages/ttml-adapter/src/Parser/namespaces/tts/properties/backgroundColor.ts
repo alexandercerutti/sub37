@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { ColorGrammar } from "../syntax/color.js";
+import { ColorGrammar } from "../syntax/color.js";
 
-export { ColorGrammar as Grammar } from "../syntax/color.js";
+export const Grammar = alias("tts:backgroundColor", ColorGrammar);
 
 export function cssTransform(
 	_scope: Scope,

@@ -5,10 +5,11 @@ import { createUnit, Unit } from "../../../Unit.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import { isPercentage } from "../primitives/length.js";
 import { getPixelScalarPercentageConversion, isPixelScalar } from "../primitives/pixel.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { OriginGrammar } from "../syntax/origin.js";
+import { OriginGrammar } from "../syntax/origin.js";
 
-export { OriginGrammar as Grammar } from "../syntax/origin.js";
+export const Grammar = alias("tts:origin", OriginGrammar);
 
 export function cssTransform(
 	scope: Scope,

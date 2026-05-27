@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { TextCombineGrammar } from "../syntax/text-combine.js";
+import { TextCombineGrammar } from "../syntax/text-combine.js";
 
-export { TextCombineGrammar as Grammar } from "../syntax/text-combine.js";
+export const Grammar = alias("tts:textCombine", TextCombineGrammar);
 
 export function cssTransform(
 	_scope: Scope,

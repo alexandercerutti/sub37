@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { VisibilityGrammar } from "../syntax/visibility.js";
+import { VisibilityGrammar } from "../syntax/visibility.js";
 
-export { VisibilityGrammar as Grammar } from "../syntax/visibility.js";
+export const Grammar = alias("tts:visibility", VisibilityGrammar);
 
 export function cssTransform(
 	_scope: Scope,

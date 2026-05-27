@@ -1,10 +1,11 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { TextOutlineGrammar } from "../syntax/text-outline.js";
+import { TextOutlineGrammar } from "../syntax/text-outline.js";
 import { createUnit } from "../../../Unit.js";
 
-export { TextOutlineGrammar as Grammar } from "../syntax/text-outline.js";
+export const Grammar = alias("tts:textOutline", TextOutlineGrammar);
 
 export function cssTransform(
 	_scope: Scope,

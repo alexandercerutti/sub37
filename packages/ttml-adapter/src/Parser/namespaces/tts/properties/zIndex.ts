@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { zIndexGrammar } from "../syntax/zIndex.js";
+import { zIndexGrammar } from "../syntax/zIndex.js";
 
-export { zIndexGrammar as Grammar } from "../syntax/zIndex.js";
+export const Grammar = alias("tts:zIndex", zIndexGrammar);
 
 export function cssTransform(
 	_scope: Scope,

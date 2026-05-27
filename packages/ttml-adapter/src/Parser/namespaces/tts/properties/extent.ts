@@ -4,12 +4,13 @@ import type { InferDerivableValue } from "../structure/operators.js";
 import { createUnit, toClamped } from "../../../Unit.js";
 import { isLength, isPercentage } from "../primitives/length.js";
 import type { Length } from "../primitives/length.js";
-import type { ExtentGrammar } from "../syntax/extent.js";
+import { ExtentGrammar } from "../syntax/extent.js";
 import { readScopeDocumentContext } from "../../../Scope/DocumentContext.js";
 import { readScopeErrorContext } from "../../../Scope/ErrorContext.js";
 import { getPixelScalarPercentageConversion, isPixelScalar } from "../primitives/pixel.js";
+import { alias } from "../structure/derivables/alias.js";
 
-export { ExtentGrammar as Grammar } from "../syntax/extent.js";
+export const Grammar = alias("tts:extent", ExtentGrammar);
 
 function isExtentSupportedKeyword(
 	value: InferDerivableValue<typeof ExtentGrammar>,

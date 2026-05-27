@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { FontStyleGrammar } from "../syntax/font-style.js";
+import { FontStyleGrammar } from "../syntax/font-style.js";
 
-export { FontStyleGrammar as Grammar } from "../syntax/font-style.js";
+export const Grammar = alias("tts:fontStyle", FontStyleGrammar);
 
 export function cssTransform(
 	_scope: Scope,

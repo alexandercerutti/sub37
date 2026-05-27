@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { DerivedValue, InferDerivableValue } from "../structure/operators.js";
-import type { FontFamiliesGrammar } from "../syntax/font-family.js";
+import { FontFamiliesGrammar } from "../syntax/font-family.js";
 
-export { FontFamiliesGrammar as Grammar } from "../syntax/font-family.js";
+export const Grammar = alias("tts:fontFamily", FontFamiliesGrammar);
 
 type InferredFontFamily = InferDerivableValue<typeof FontFamiliesGrammar>[number];
 type GenericFamilyName = Extract<InferredFontFamily, DerivedValue<"keyword", string>>["value"];

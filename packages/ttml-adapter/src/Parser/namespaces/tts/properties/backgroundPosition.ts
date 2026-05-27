@@ -1,10 +1,11 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { normalizePositionValue } from "../syntax/position.js";
-import type { PositionGrammar } from "../syntax/position.js";
+import { PositionGrammar } from "../syntax/position.js";
 
-export { PositionGrammar as Grammar } from "../syntax/position.js";
+export const Grammar = alias("tts:backgroundPosition", PositionGrammar);
 
 export function cssTransform(
 	_scope: Scope,

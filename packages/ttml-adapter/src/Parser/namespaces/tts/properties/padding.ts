@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { PaddingGrammar } from "../syntax/padding.js";
+import { PaddingGrammar } from "../syntax/padding.js";
 
-export { PaddingGrammar as Grammar } from "../syntax/padding.js";
+export const Grammar = alias("tts:padding", PaddingGrammar);
 
 export function cssTransform(
 	_scope: Scope,

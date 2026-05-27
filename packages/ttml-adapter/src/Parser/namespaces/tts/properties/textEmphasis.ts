@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { TextEmphasisGrammar } from "../syntax/text-emphasis.js";
+import { TextEmphasisGrammar } from "../syntax/text-emphasis.js";
 
-export { TextEmphasisGrammar as Grammar } from "../syntax/text-emphasis.js";
+export const Grammar = alias("tts:textEmphasis", TextEmphasisGrammar);
 
 type GetValuesForTEProperty<Prop extends string> = Extract<
 	InferDerivableValue<typeof TextEmphasisGrammar>[number],

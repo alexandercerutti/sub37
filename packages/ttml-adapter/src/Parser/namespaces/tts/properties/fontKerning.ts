@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { FontKerningGrammar } from "../syntax/font-kerning.js";
 
-export { FontKerningGrammar as Grammar } from "../syntax/font-kerning.js";
+export const Grammar = alias("tts:fontKerning", FontKerningGrammar);
 
 export function cssTransform(
 	_scope: Scope,

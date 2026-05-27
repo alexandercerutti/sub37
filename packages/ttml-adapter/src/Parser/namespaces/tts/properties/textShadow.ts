@@ -1,11 +1,12 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { DerivedValue, InferDerivableValue } from "../structure/operators.js";
-import type { TextShadowGrammar } from "../syntax/text-shadow.js";
+import { TextShadowGrammar } from "../syntax/text-shadow.js";
 import type { Length } from "../primitives/length.js";
 import { createUnit } from "../../../Unit.js";
 
-export { TextShadowGrammar as Grammar } from "../syntax/text-shadow.js";
+export const Grammar = alias("tts:textShadow", TextShadowGrammar);
 
 /**
  * TextShadow allows splitting by commas to separate multiple shadows

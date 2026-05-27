@@ -1,9 +1,10 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
-import type { BorderGrammar } from "../syntax/border.js";
+import { BorderGrammar } from "../syntax/border.js";
+import { alias } from "../structure/derivables/alias.js";
 
-export { BorderGrammar as Grammar } from "../syntax/border.js";
+export const Grammar = alias("tts:border", BorderGrammar);
 
 export function cssTransform(
 	_scope: Scope,

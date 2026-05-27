@@ -74,11 +74,12 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 		}
 
 		const tokenDerivationResult = nextGrammar.derive(token);
+		const syntaxName = syntaxModuleDefinition.Grammar.type;
 
 		if (isRejected(tokenDerivationResult)) {
 			// A token couldn't be derived, skip entire attribute
 			throw new Error(
-				`Can't parse attribute value ${value} according to syntax ${syntaxModuleDefinition}: token ${token} couldn't be derived`,
+				`Can't parse attribute value ${value} according to syntax ${syntaxName}: token ${token} couldn't be derived`,
 			);
 		}
 
@@ -91,7 +92,7 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 		if (tokens.length > 0) {
 			// Derivation finished (done) but there are still tokens left, skip entire attribute
 			throw new Error(
-				`Can't parse attribute value ${value} according to syntax ${syntaxModuleDefinition}: extra tokens found after derivation finished`,
+				`Can't parse attribute value ${value} according to syntax ${syntaxName}: extra tokens found after derivation finished`,
 			);
 		}
 

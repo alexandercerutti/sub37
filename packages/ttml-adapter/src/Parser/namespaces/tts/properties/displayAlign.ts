@@ -1,9 +1,10 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { DisplayAlignGrammar } from "../syntax/display-align.js";
+import { DisplayAlignGrammar } from "../syntax/display-align.js";
 
-export { DisplayAlignGrammar as Grammar } from "../syntax/display-align.js";
+export const Grammar = alias("tts:displayAlign", DisplayAlignGrammar);
 
 /**
  * This property mapper assumes the renderer has a flexbox-based layout.

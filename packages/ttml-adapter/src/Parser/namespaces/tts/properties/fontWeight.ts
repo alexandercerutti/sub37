@@ -1,9 +1,10 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
+import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
-import type { FontWeightGrammar } from "../syntax/font-weight.js";
+import { FontWeightGrammar } from "../syntax/font-weight.js";
 
-export { FontWeightGrammar as Grammar } from "../syntax/font-weight.js";
+export const Grammar = alias("tts:fontWeight", FontWeightGrammar);
 
 export function cssTransform(
 	_scope: Scope,
