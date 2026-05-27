@@ -159,6 +159,9 @@ function createAttributeDefinition<
 
 const TTML_CSS_ATTRIBUTES_MAP = {
 	/**
+	 * Deferred — only meaningful when background images are in use.
+	 * `tts:backgroundImage` is currently not supported.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundClip
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundClip
 	 */
@@ -189,6 +192,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred — maps to CSS `background-size`, but has no practical
+	 * effect until `tts:backgroundImage` is supported.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundExtent
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundExtent
 	 */
@@ -204,6 +210,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Not supported — the adapter pipeline has no resource resolver;
+	 * URLs and inline data URIs cannot be turned into values the
+	 * renderer can consume. Audio and image content are out of scope.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundImage
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundImage
 	 */
@@ -219,6 +229,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred. Depends on `tts:backgroundImage`, which is currently not
+	 * supported.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-backgroundOrigin
 	 * @see https://w3c.github.io/ttml2/#derivation-backgroundOrigin
 	 */
@@ -279,11 +292,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * This property defines the size an element should have
-	 * while in the Block Progress Dimension (bpd) which will
-	 * be vertical when writing mode is from left to right (or
-	 * viceversa) and horizonal when writing mode is from top
-	 * to bottom (or viceversa?)
+	 * Deferred — the block axis maps to CSS `height` in horizontal
+	 * writing modes and `width` in vertical ones; cannot be emitted
+	 * without knowing the active `tts:writingMode`. Blocked by the
+	 * same writing-mode gap as `tts:ipd`.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-bpd
 	 * @see https://w3c.github.io/ttml2/#derivation-bpd
@@ -318,6 +330,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Skipped — the renderer splits a TTML `<p>` into one DOM `<p>`
+	 * per word. Applying a single authored `direction` to all of them
+	 * is incorrect for mixed-direction content; correct implementation
+	 * requires per-line bidi analysis.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-direction
 	 * @see https://w3c.github.io/ttml2/#derivation-direction
 	 */
@@ -430,7 +447,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * No CSS equivalent
+	 * No CSS equivalent — controls whether glyph selection is
+	 * per-character or per-run. Browser shaping engines handle
+	 * this automatically and cannot be overridden via CSS.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-fontSelectionStrategy
 	 * @see https://w3c.github.io/ttml2/#derivation-fontSelectionStrategy
@@ -449,7 +468,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * Maps to CSS values. Must be handled differently
+	 * Skipped — per-glyph distortion (synthetic oblique). No direct
+	 * CSS equivalent; `transform: skewX()` would also skew the
+	 * element's bounding box, misaligning surrounding geometry.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-fontShear
 	 * @see https://w3c.github.io/ttml2/#derivation-fontShear
@@ -470,7 +491,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-fontSize
-	 * Syntax.Unavailable,
 	 * @see https://w3c.github.io/ttml2/#derivation-fontSize
 	 */
 	"tts:fontSize": inheritable(
@@ -504,6 +524,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Not supported yet. Maps to multiple CSS properties depending on
+	 * value group: `font-variant-position`, `font-variant-east-asian`,
+	 * `font-feature-settings`. Only `small-caps` has practical
+	 * broadcast subtitle usage.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-fontVariant
 	 * @see https://w3c.github.io/ttml2/#derivation-fontVariant
 	 */
@@ -538,11 +563,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * This property defines the size an element should have
-	 * while in the Inline Progress Dimension (ipd) which will
-	 * be horizotal when writing mode is from left to right (or
-	 * viceversa) and vertical when writing mode is from top
-	 * to bottom (or viceversa?)
+	 * Deferred — the inline axis maps to CSS `width` in horizontal
+	 * writing modes and `height` in vertical ones; cannot be emitted
+	 * without knowing the active `tts:writingMode`. Blocked by the
+	 * same writing-mode gap as `tts:bpd`.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-ipd
 	 * @see https://w3c.github.io/ttml2/#derivation-ipd
@@ -576,6 +600,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Blocked by renderer — `captions-renderer` hardcodes
+	 * `line-height: 1.5em` on spans, and `TreeOrchestrator` derives
+	 * grid-snap and scroll-step from a uniform `offsetHeight`.
+	 * Injecting an authored value corrupts row-height arithmetic.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-lineHeight
 	 * @see https://w3c.github.io/ttml2/#derivation-lineHeight
 	 */
@@ -592,8 +621,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 			),
 		),
 	),
-	// Maps to CSS values. Must be handled differently
 	/**
+	 * Skipped — tilts a whole text line. `transform: skewX()` would
+	 * approximate the effect but also skews the element's bounding
+	 * box, misaligning region geometry. No safe CSS equivalent.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-lineShear
 	 * @see https://w3c.github.io/ttml2/#derivation-lineShear
 	 */
@@ -612,8 +644,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * TTML Only
-	 * Syntax.Unavailable,
+	 * Won't implement — TTML-only concept with no CSS equivalent.
+	 * `filter: brightness()` is not semantically equivalent as it
+	 * also affects child elements and blends differently.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-luminanceGain
 	 * @see https://w3c.github.io/ttml2/#derivation-luminanceGain
@@ -632,7 +665,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	/**
 	 * @see https://w3c.github.io/ttml2/#style-attribute-opacity
 	 * @see https://w3c.github.io/ttml2/#derivation-opacity
-	 * Syntax.Unavailable,
 	 */
 	"tts:opacity": animatable(
 		AnimationFlags.DISCRETE | AnimationFlags.CONTINUOUS,
@@ -646,12 +678,8 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * This attribute doesn't have a CSS property.
-	 * However, it is used to determine the origin of
-	 * a region.
-	 *
-	 * Having it to be a string: string as type is
-	 * completely fine
+	 * No direct CSS property — used internally to position a region
+	 * via `left`/`top` on the region element.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-origin
 	 * @see https://w3c.github.io/ttml2/#derivation-origin
@@ -669,6 +697,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Blocked by renderer — `RegionElement` hardcodes `overflow: hidden`;
+	 * an authored value would be silently overridden.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-overflow
 	 * @see https://w3c.github.io/ttml2/#derivation-overflow
 	 */
@@ -715,6 +746,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred — requires coordinating `ruby`, `rubyAlign`,
+	 * `rubyPosition`, and `rubyReserve` across the full CSS ruby model.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-ruby
 	 * @see https://w3c.github.io/ttml2/#derivation-ruby
 	 */
@@ -727,6 +761,8 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred — part of the ruby model; see `tts:ruby`.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-rubyAlign
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyAlign
 	 */
@@ -744,6 +780,8 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred — part of the ruby model; see `tts:ruby`.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-rubyPosition
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyPosition
 	 */
@@ -761,6 +799,8 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Deferred — part of the ruby model; see `tts:ruby`.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-rubyReserve
 	 * @see https://w3c.github.io/ttml2/#derivation-rubyReserve
 	 */
@@ -779,8 +819,11 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Skipped — tilts the entire region. Same issue as `tts:lineShear`
+	 * and `tts:fontShear`: `transform: skewX()` would misalign region
+	 * geometry. No safe CSS equivalent.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-shear
-	 * Syntax.Unavailable,
 	 * @see https://w3c.github.io/ttml2/#derivation-shear
 	 */
 	"tts:shear": inheritable(
@@ -798,8 +841,12 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Partially supported by default — the renderer already implements
+	 * `whenActive` semantics (regions are hidden when no cues are active).
+	 * The `always` value (keep region background visible when idle) has
+	 * no CSS mechanism in the current renderer.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-showBackground
-	 * Syntax.Unavailable,
 	 * @see https://w3c.github.io/ttml2/#derivation-showBackground
 	 */
 	"tts:showBackground": animatable(
@@ -930,6 +977,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
+	 * Skipped — depends on `tts:direction`. Applying `unicode-bidi`
+	 * in isolation without correct per-line `direction` context
+	 * would produce incorrect bidi rendering.
+	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-unicodeBidi
 	 * @see https://w3c.github.io/ttml2/#derivation-unicodeBidi
 	 */
@@ -962,10 +1013,10 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * XLFO, not a direct mapping with CSS. Can use remap it somehow
-	 * without impacting renderer?
-	 *
-	 * @TODO
+	 * No clean CSS derivation — spec §N.2.1.49 lists only XSL-FO
+	 * `wrap-option`. The closest CSS approximation `white-space` also
+	 * controls whitespace collapsing, which TTML governs separately
+	 * via `xml:space`, making a lossless mapping impossible.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-wrapOption
 	 * @see https://w3c.github.io/ttml2/#derivation-wrapOption
@@ -984,10 +1035,9 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * Writing mode impacts rendering, so we must first verify nothing
-	 * will break on that front.
-	 *
-	 * @TODO
+	 * Deferred — the engine has no concept of vertical or reversed
+	 * text progression. The renderer's word-splitting and line-height
+	 * geometry assumes horizontal LTR.
 	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-writingMode
 	 * @see https://w3c.github.io/ttml2/#derivation-writingMode
@@ -1004,10 +1054,6 @@ const TTML_CSS_ATTRIBUTES_MAP = {
 	),
 
 	/**
-	 * Z-index impacts on rendering (it is a valid CSS), but it won't be
-	 * used until we won't paint on a new layer or an absolute element.
-	 * @TODO
-	 *
 	 * @see https://w3c.github.io/ttml2/#style-attribute-zIndex
 	 * @see https://w3c.github.io/ttml2/#derivation-zIndex
 	 */
