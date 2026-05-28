@@ -130,8 +130,8 @@ describe("fontFamily grammar", () => {
 			expect(parseFamily("")).toBeNull();
 		});
 
-		it("returns null for a value starting with a digit", () => {
-			expect(parseFamily("123font")).toBeNull();
+		it("throws for a value starting with a digit", () => {
+			expect(() => parseFamily("123font")).toThrow();
 		});
 	});
 });

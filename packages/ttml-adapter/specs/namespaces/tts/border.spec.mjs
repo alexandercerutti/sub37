@@ -40,7 +40,7 @@ describe("tts:border", () => {
 		});
 
 		it("rejects input that has no valid border components", () => {
-			expect(parseAttributeValue(def.syntax, "invalid")).toBeNull();
+			expect(() => parseAttributeValue(def.syntax, "invalid")).toThrow();
 		});
 	});
 });

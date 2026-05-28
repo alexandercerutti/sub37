@@ -71,7 +71,7 @@ describe("tts:extent", () => {
 		 * enforces NonNegativeConstraint on length values.
 		 */
 		it("rejects negative percentages at parse time", () => {
-			expect(parseAttributeValue(def.syntax, "-10% -20%")).toBeNull();
+			expect(() => parseAttributeValue(def.syntax, "-10% -20%")).toThrow();
 		});
 	});
 

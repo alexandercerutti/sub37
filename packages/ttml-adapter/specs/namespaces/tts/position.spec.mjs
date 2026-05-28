@@ -121,11 +121,11 @@ describe("tts:position", () => {
 			});
 
 			it("rejects two horizontal keywords ('left right') at parse time", () => {
-				expect(parseAttributeValue(def.syntax, "left right")).toBeNull();
+				expect(() => parseAttributeValue(def.syntax, "left right")).toThrow();
 			});
 
 			it("rejects two vertical keywords ('top bottom') at parse time", () => {
-				expect(parseAttributeValue(def.syntax, "top bottom")).toBeNull();
+				expect(() => parseAttributeValue(def.syntax, "top bottom")).toThrow();
 			});
 		});
 
