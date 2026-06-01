@@ -1,4 +1,4 @@
-import type { CueNode, RenderingModifiers } from "@sub37/server";
+import { CueNode, RenderingModifiers, Events, Server } from "@sub37/server";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,
@@ -9,6 +9,7 @@ import {
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
 import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
+import type { BaseAdapter } from "@sub37/server";
 
 export * from "./constants.js";
 export type { OrchestratorSettings };
@@ -228,6 +229,46 @@ sub37-region div > p.line-block > span {
 
 	private appendTree(tree: TreeOrchestrator): void {
 		this.container.appendChild(tree.root);
+	}
+
+	public connect(
+		serverInstance: Server,
+		onError: (error: BaseAdapter.ParseError) => void,
+	): { disconnect: () => void } {
+		const onCueStart = (cues: CueNode[]): void => {
+			this.setCue(cues);
+		};
+
+		const onCueStop = (): void => {
+			this.setCue();
+		};
+
+		const onCueError = (parsingError: BaseAdapter.ParseError): void => {
+			onError(parsingError);
+		};
+
+		serverInstance.addEventListener(Events.CUE_START, onCueStart);
+		serverInstance.addEventListener(Events.CUE_STOP, onCueStop);
+		serverInstance.addEventListener(Events.CUE_ERROR, onCueError);
+
+		let active = true;
+
+		return {
+			disconnect: () => {
+				if (!active) {
+					return;
+				}
+
+				active = false;
+
+				serverInstance.removeEventListener(Events.CUE_START, onCueStart);
+				serverInstance.removeEventListener(Events.CUE_STOP, onCueStop);
+				serverInstance.removeEventListener(Events.CUE_ERROR, onCueError);
+
+				/** @ts-ignore - breaking the reference if the user keeps the object */
+				serverInstance = undefined;
+			},
+		};
 	}
 }
 
