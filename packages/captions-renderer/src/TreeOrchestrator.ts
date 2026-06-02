@@ -69,6 +69,7 @@ export default class TreeOrchestrator {
 
 	private settings: OrchestratorSettings;
 	private shiftDownFirstLine: boolean = false;
+	private animatedElements: HTMLElement[] = [];
 
 	public constructor(
 		parent: HTMLElement,
@@ -173,6 +174,8 @@ export default class TreeOrchestrator {
 		for (let node: Node | null; (node = this[rootElementSymbol].firstChild); ) {
 			this[rootElementSymbol].removeChild(node);
 		}
+
+		this.animatedElements = [];
 	}
 
 	public renderCuesToHTML(cueNodes: CueNode[]): void {
@@ -213,6 +216,9 @@ export default class TreeOrchestrator {
 			const [cueRootDomNode, textNode, cueKeyframesCSS] = getCueNodeFragmentSubtree(
 				cue,
 				firstDifferentEntityIndex,
+				(element) => {
+					this.animatedElements.push(element);
+				},
 			);
 
 			let line: HTMLElement =
@@ -242,7 +248,13 @@ export default class TreeOrchestrator {
 
 			if (shouldCreateNewLine) {
 				let textParentNode = textNode.parentNode as HTMLElement;
-				const [subTreeClone] = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
+				const [subTreeClone] = wrapIntoEntitiesDocumentFragment(
+					textNode,
+					cue.entities,
+					(element) => {
+						this.animatedElements.push(element);
+					},
+				);
 
 				line = createLine(cue.entities.filter(Entities.isLineStyleEntity));
 				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
@@ -333,6 +345,14 @@ export default class TreeOrchestrator {
 				const transformCSS = `transform ${LINES_TRANSITION_TIME_MS}ms cubic-bezier(0.25, 0.46, 0.2, 1.0) 0s`;
 				this[rootElementSymbol].style.transition = transformCSS;
 			}
+		}
+	}
+
+	public setAnimationActivity(active: boolean) {
+		console.log(this.animatedElements);
+
+		for (const element of this.animatedElements) {
+			element.style.animationPlayState = active ? "running" : "paused";
 		}
 	}
 }
@@ -449,6 +469,7 @@ function getNodeAtDepth(depth: number, node: Node): Node {
 function wrapIntoEntitiesDocumentFragment(
 	rootNode: Node,
 	entities: Entities.AllEntities[],
+	onAnimationRegister: (element: HTMLElement) => void,
 ): [element: Node, keyframeString: string] {
 	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
@@ -478,6 +499,7 @@ function wrapIntoEntitiesDocumentFragment(
 
 		if (animationEntities.length) {
 			styleNode.style.animation = animationEntities.map(buildAnimationShorthand).join(", ");
+			onAnimationRegister(styleNode);
 		}
 
 		styleNode.appendChild(latestNode);
@@ -608,6 +630,7 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 function getCueNodeFragmentSubtree(
 	currentCue: CueNode,
 	entityDifferenceIndex: number,
+	onAnimationRegister: (element: HTMLElement) => void,
 ): [root: Node, textNode: Text, keyframesCSS: string] {
 	const textNode = document.createTextNode(currentCue.content);
 
@@ -615,7 +638,11 @@ function getCueNodeFragmentSubtree(
 		.filter(isTagEntityOrLocalStyleOrAnimationEntity)
 		.slice(entityDifferenceIndex);
 
-	const [fragment, keyframesCSS] = wrapIntoEntitiesDocumentFragment(textNode, filteredEntities);
+	const [fragment, keyframesCSS] = wrapIntoEntitiesDocumentFragment(
+		textNode,
+		filteredEntities,
+		onAnimationRegister,
+	);
 	return [fragment, textNode, keyframesCSS];
 }
 

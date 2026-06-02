@@ -248,15 +248,19 @@ sub37-region div > p.line-block > span {
 		};
 
 		const onUserPause = (): void => {
-			/**
-			 * @TODO pause the animations
-			 */
+			for (const regionId in this.activeRegions) {
+				const region = this.activeRegions[regionId]!;
+
+				region.setAnimationActivity(false);
+			}
 		};
 
 		const onUserResume = (): void => {
-			/**
-			 * @TODO resume the animations
-			 */
+			for (const regionId in this.activeRegions) {
+				const region = this.activeRegions[regionId]!;
+
+				region.setAnimationActivity(true);
+			}
 		};
 
 		serverInstance.addEventListener(Events.CUE_START, onCueStart);
