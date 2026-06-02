@@ -128,6 +128,7 @@ export class Server {
 			this[sessionSymbol] = new DistributionSession(sessionTracks, (error) => {
 				emitEvent(this[listenersSymbol], Events.CUE_ERROR, error);
 			});
+
 			return;
 		} catch (err: unknown) {
 			throw new ParsingError(err);
@@ -288,6 +289,23 @@ export class Server {
 		}
 
 		return this[intervalSymbol].isRunning;
+	}
+
+	/**
+	 * Returns `true` if session has been started, independently
+	 * from the serving status, and is not destroyed. Otherwise `false`.
+	 *
+	 * @returns {boolean}
+	 */
+	public get isStarted(): boolean {
+		try {
+			assertSessionInitialized(this[sessionSymbol]);
+			assertSessionStarted(this[intervalSymbol]);
+
+			return true;
+		} catch (err) {
+			return false;
+		}
 	}
 
 	/**
