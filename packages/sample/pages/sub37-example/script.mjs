@@ -51,7 +51,9 @@ const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[
 
 const presenter = document.getElementById("presenter");
 
-presenter.connect(server);
+presenter.connect(server, (parseError) => {
+	console.warn(parseError);
+});
 
 /**
  * @param {FakeHTMLVideoElement} videoElement
@@ -228,10 +230,6 @@ scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 // 	],
 // 	"text/vtt",
 // );
-
-server.addEventListener("cueerror", (error) => {
-	console.warn(error);
-});
 
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
