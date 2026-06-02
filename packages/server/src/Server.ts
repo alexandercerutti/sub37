@@ -26,6 +26,8 @@ export const Events = {
 	CUE_STOP: "cuestop",
 	CUES_FETCH: "cuesfetch",
 	CUE_ERROR: "cueerror",
+	USER_PAUSE: "userpause",
+	USER_RESUME: "userresume",
 } as const;
 
 export type Events = (typeof Events)[keyof typeof Events];
@@ -35,6 +37,8 @@ export interface EventsPayloadMap {
 	[Events.CUE_STOP]: void;
 	[Events.CUES_FETCH]: CueNode[];
 	[Events.CUE_ERROR]: ParseError;
+	[Events.USER_PAUSE]: void;
+	[Events.USER_RESUME]: void;
 }
 
 interface EventDescriptor<EventName extends Events = Events> {
@@ -245,6 +249,7 @@ export class Server {
 		assertIntervalRunning(this[intervalSymbol]);
 
 		this[intervalSymbol].stop();
+		emitEvent(this[listenersSymbol], Events.USER_PAUSE, undefined);
 
 		if (emitStop) {
 			emitEvent(this[listenersSymbol], Events.CUE_STOP, undefined);
@@ -261,6 +266,8 @@ export class Server {
 	public resume(): void {
 		assertSessionStarted(this[intervalSymbol]);
 		assertSessionPaused(this[intervalSymbol]);
+
+		emitEvent(this[listenersSymbol], Events.USER_RESUME, undefined);
 
 		this[intervalSymbol].start();
 	}
