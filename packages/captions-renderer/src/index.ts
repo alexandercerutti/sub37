@@ -247,9 +247,23 @@ sub37-region div > p.line-block > span {
 			onError(parsingError);
 		};
 
+		const onUserPause = (): void => {
+			/**
+			 * @TODO pause the animations
+			 */
+		};
+
+		const onUserResume = (): void => {
+			/**
+			 * @TODO resume the animations
+			 */
+		};
+
 		serverInstance.addEventListener(Events.CUE_START, onCueStart);
 		serverInstance.addEventListener(Events.CUE_STOP, onCueStop);
 		serverInstance.addEventListener(Events.CUE_ERROR, onCueError);
+		serverInstance.addEventListener(Events.USER_PAUSE, onUserPause);
+		serverInstance.addEventListener(Events.USER_RESUME, onUserResume);
 
 		let active = true;
 
@@ -264,6 +278,8 @@ sub37-region div > p.line-block > span {
 				serverInstance.removeEventListener(Events.CUE_START, onCueStart);
 				serverInstance.removeEventListener(Events.CUE_STOP, onCueStop);
 				serverInstance.removeEventListener(Events.CUE_ERROR, onCueError);
+				serverInstance.removeEventListener(Events.USER_PAUSE, onUserPause);
+				serverInstance.removeEventListener(Events.USER_RESUME, onUserResume);
 
 				/** @ts-ignore - breaking the reference if the user keeps the object */
 				serverInstance = undefined;
