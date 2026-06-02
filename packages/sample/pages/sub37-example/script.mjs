@@ -51,6 +51,8 @@ const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[
 
 const presenter = document.getElementById("presenter");
 
+presenter.connect(server);
+
 /**
  * @param {FakeHTMLVideoElement} videoElement
  */
@@ -232,8 +234,6 @@ server.addEventListener("cueerror", (error) => {
 
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
-	// console.log("CUE START:", cues);
-	presenter.setCue(cues);
 	console.info(
 		`%c[DEBUG] Cue rendering took: ${performance.now() - timeStart}ms`,
 		"background-color: #7900ff; color: #FFF; padding: 5px; margin: 5px",
@@ -243,7 +243,6 @@ server.addEventListener("cuestart", (cues) => {
 
 server.addEventListener("cuestop", () => {
 	console.log("CUES STOP");
-	presenter.setCue();
 });
 
 function applyRendererSettings() {
