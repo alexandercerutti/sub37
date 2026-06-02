@@ -349,8 +349,6 @@ export default class TreeOrchestrator {
 	}
 
 	public setAnimationActivity(active: boolean) {
-		console.log(this.animatedElements);
-
 		for (const element of this.animatedElements) {
 			element.style.animationPlayState = active ? "running" : "paused";
 		}
