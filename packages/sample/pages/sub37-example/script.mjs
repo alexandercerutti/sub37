@@ -142,14 +142,15 @@ videoTag.addEventListener("seeked", () => {
 });
 
 videoTag.addEventListener("playing", () => {
-	if (server.isRunning) {
-		server.resume();
+	if (!server.isStarted) {
+		server.start(() => {
+			return parseFloat(videoTag.currentTime) * 1000;
+		});
+
 		return;
 	}
 
-	server.start(() => {
-		return parseFloat(videoTag.currentTime) * 1000;
-	});
+	server.resume();
 });
 
 videoTag.addEventListener("pause", () => {
