@@ -2854,6 +2854,95 @@ describe("Animations", () => {
 			expect(errors.every((e) => !e.isCritical)).toBe(true);
 		});
 	});
+
+	describe("Out-of-line animations (<animation> container)", () => {
+		it("should attach a continuous animation entity from a <head><animation><animate> reference", () => {
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+					<head>
+						<animation>
+							<animate xml:id="colorFade" dur="5s" calcMode="discrete" keyTimes="0;1" tts:color="red;blue"/>
+						</animation>
+						<layout>
+							<region xml:id="r1"/>
+						</layout>
+					</head>
+					<body>
+						<div>
+							<p region="r1" begin="0s" end="5s" animate="colorFade">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
+			expect(entity).toBeDefined();
+			expect(entity.kind).toBe("discrete");
+			expect(entity.styles["color"]).toBeDefined();
+		});
+
+		it("should attach a discrete animation entity from a <head><animation><set> reference", () => {
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+					<head>
+						<animation>
+							<set xml:id="colorFlash" begin="1s" tts:color="yellow"/>
+						</animation>
+						<layout>
+							<region xml:id="r1"/>
+						</layout>
+					</head>
+					<body>
+						<div>
+							<p region="r1" begin="0s" end="5s" animate="colorFlash">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+			/*
+			 * begin="1s" splits the <p> into two cues: [0s,1s) and [1s,5s].
+			 * The animation entity only appears on the second one.
+			 * Search across all cues so the assertion is timing-resilient.
+			 */
+			const entity = cues.flatMap((c) => c?.entities ?? []).find(Entities.isAnimationEntity);
+			expect(entity).toBeDefined();
+			expect(entity.kind).toBe("discrete");
+			expect(entity.styles["color"]).toBeDefined();
+		});
+
+		it("should attach multiple animation entities when animate contains space-separated IDREFS", () => {
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+					<head>
+						<animation>
+							<animate xml:id="colorAnim" dur="5s" calcMode="discrete" keyTimes="0;1" tts:color="red;blue"/>
+							<animate xml:id="opacityAnim" dur="5s" calcMode="discrete" keyTimes="0;1" tts:opacity="0;1"/>
+						</animation>
+						<layout>
+							<region xml:id="r1"/>
+						</layout>
+					</head>
+					<body>
+						<div>
+							<p region="r1" begin="0s" end="5s" animate="colorAnim opacityAnim">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+
+			const allEntities = cues.flatMap((c) => c?.entities ?? []);
+			const animationEntities = allEntities.filter(Entities.isAnimationEntity);
+
+			expect(animationEntities.length).toBeGreaterThanOrEqual(2);
+			expect(animationEntities.some((e) => e.styles["color"] !== undefined)).toBe(true);
+			expect(animationEntities.some((e) => e.styles["opacity"] !== undefined)).toBe(true);
+		});
+	});
 });
 // #endregion
 
