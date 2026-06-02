@@ -1286,12 +1286,15 @@ function getInlineAnimationFromToken(
 }
 
 function getInlineAnimationId(token: Token, parent?: Token): string {
-	const animationIdBody =
-		token.attributes["xml:id"] ||
-		(parent?.attributes["xml:id"] && `in:animation-${parent.attributes["xml:id"]}`) ||
-		generateSyntheticId("in:animation");
+	if (token.attributes["xml:id"]) {
+		return token.attributes["xml:id"];
+	}
 
-	return `in:animation-${animationIdBody}`;
+	if (parent?.attributes["xml:id"]) {
+		return `in:animation-${parent.attributes["xml:id"]}`;
+	}
+
+	return generateSyntheticId("in:animation");
 }
 
 /**
