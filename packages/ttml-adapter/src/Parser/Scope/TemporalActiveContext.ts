@@ -6,7 +6,6 @@
 
 import type { Context, ContextFactory, Scope } from "./Scope.js";
 import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
-import { isInheritableStyle, resolveStyleDefinitionByName } from "../parseStyle.js";
 import type { SupportedCSSProperties } from "../parseStyle.js";
 import type { IDREF } from "../namespaces/xml/id.js";
 import { readScopeRegionContext } from "./RegionContainerContext.js";
@@ -86,9 +85,6 @@ export function createTemporalActiveContext(
 					const { regionIDRef, stylesIDRefs = [], animationsIDRefs } = this.args;
 
 					if (regionIDRef) {
-						const stylesFromRegion = extractActiveStylesFromRegion(scope, regionIDRef);
-						store.styles = store.styles.concat(stylesFromRegion);
-
 						const regionContext = readScopeRegionContext(scope);
 						store.region = regionContext?.getRegionById(regionIDRef);
 					}
@@ -120,9 +116,6 @@ export function createTemporalActiveContext(
 				if (incomingRegionIDRef && !store.region) {
 					const regionContext = readScopeRegionContext(scope);
 					store.region = regionContext?.getRegionById(incomingRegionIDRef);
-
-					const stylesFromRegion = extractActiveStylesFromRegion(scope, incomingRegionIDRef);
-					store.styles = store.styles.concat(stylesFromRegion);
 				}
 
 				if (incomingStylesIDRefs.length) {
@@ -200,77 +193,6 @@ export function createTemporalActiveContext(
 
 export function readScopeTemporalActiveContext(scope: Scope): TemporalActiveContext | undefined {
 	return scope.getContextByIdentifier(temporalActiveContextSymbol);
-}
-
-function extractActiveStylesFromRegion(scope: Scope, idref: string): TTMLStyle[] {
-	const regionContext = readScopeRegionContext(scope);
-
-	if (!regionContext) {
-		return [];
-	}
-
-	const regionStyles = regionContext.getStylesByRegionId(idref);
-
-	if (!regionStyles.length) {
-		return [];
-	}
-
-	const styles: TTMLStyle[] = [];
-	const inlineStyles = regionStyles.find(({ kind }) => kind === "inline");
-
-	if (inlineStyles) {
-		styles.push(
-			Object.create(inlineStyles, {
-				kind: {
-					value: "inline",
-					enumerable: true,
-				},
-				styleAttributes: {
-					value: filterStylesByInheritability(inlineStyles.styleAttributes),
-					enumerable: true,
-				},
-			}),
-		);
-	}
-
-	const nestedStyles = regionStyles.find(({ kind }) => kind === "nested");
-
-	if (nestedStyles) {
-		styles.push(
-			Object.create(nestedStyles, {
-				kind: {
-					value: "nested",
-					enumerable: true,
-				},
-				styleAttributes: {
-					value: filterStylesByInheritability(nestedStyles.styleAttributes),
-					enumerable: true,
-				},
-			}),
-		);
-	}
-
-	return styles;
-}
-
-function filterStylesByInheritability(styles: Record<string, string>): Record<string, string> {
-	const filteredStyles: Record<string, string> = {};
-
-	for (const styleName of Object.keys(styles)) {
-		const definition = resolveStyleDefinitionByName(styleName);
-
-		if (!definition) {
-			continue;
-		}
-
-		if (!isInheritableStyle(definition)) {
-			continue;
-		}
-
-		filteredStyles[styleName] = styles[styleName]!;
-	}
-
-	return filteredStyles;
 }
 
 function extractActiveStylesFromStyleStore(

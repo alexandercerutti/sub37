@@ -2812,6 +2812,51 @@ describe("Animations", () => {
 			expect(animEntities[1].delay).toBe(4000);
 			expect(animEntities[1].duration).toBe(4000);
 		});
+
+		it("should forward an inheritable region animation to the cue's own entity list", () => {
+			/*
+			 * tts:color is INHERITABLE and applies to "span". A <region> that
+			 * animates tts:color causes content to inherit the time-varying value
+			 * frame-by-frame (TTML2 §10.4.4.2 + §10.4.2.2 Region Style Inheritance).
+			 *
+			 * The cue itself must therefore receive an AnimationEntity with
+			 * styles["color"] so the renderer can apply the keyframe animation
+			 * to the span element.
+			 *
+			 * This is Track A from REGION_SCOPE_REFACTOR.md §9.
+			 */
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1">
+								<animate dur="2s" calcMode="discrete" keyTimes="0;1" tts:color="white;yellow"/>
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="2s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+
+			/*
+			 * The animation must appear on the cue's entity list — not just on
+			 * region.entities — because the renderer applies it to the span element.
+			 */
+			const cueAnimEntity = cues.flatMap((c) => c?.entities ?? []).find(Entities.isAnimationEntity);
+
+			expect(cueAnimEntity).toBeDefined();
+			expect(cueAnimEntity.styles["color"]).toBeDefined();
+		});
+
 	});
 
 	describe("<set> single-value constraint (§13.1.3 + §13.3.1)", () => {
@@ -3131,6 +3176,38 @@ describe("Style inheritance", () => {
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
 		expect(styles?.["color"]).toBeUndefined();
+	});
+
+	it("inherits an inheritable style attribute from the region element (§10.4.2.2)", () => {
+		/*
+		 * §10.4.2.2 condition: if an inheritable style property P is not
+		 * associated with the content element, and P is in the computed style
+		 * set of the region R into which the element is flowed, then P is
+		 * inherited from R.
+		 */
+		const { data: cues } = new TTMLAdapter().parse(`
+			<tt xml:lang="en"
+				xmlns="http://www.w3.org/ns/ttml"
+				xmlns:tts="http://www.w3.org/ns/ttml#styling"
+			>
+				<head>
+					<layout>
+						<region xml:id="r1" tts:color="red" />
+					</layout>
+				</head>
+				<body>
+					<div region="r1">
+						<p begin="0s" dur="2s">Text</p>
+					</div>
+				</body>
+			</tt>
+		`);
+
+		expect(cues.length).toBeGreaterThan(0);
+
+		const lineStyleEntity = cues[0].entities.find(Entities.isLocalStyleEntity);
+		expect(lineStyleEntity).toBeDefined();
+		expect(lineStyleEntity.styles["color"]).toBe("red");
 	});
 
 	it("should allow a region-nested style to inherit from a global style via the style attribute", () => {

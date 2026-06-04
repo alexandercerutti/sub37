@@ -20,6 +20,7 @@ import {
 	createAnimationContainerContext,
 	readScopeAnimationContext,
 } from "./AnimationContainerContext.js";
+import { createTemporalActiveContext } from "./TemporalActiveContext.js";
 
 const regionContextSymbol = Symbol("region");
 
@@ -34,7 +35,6 @@ interface RegionContainerContext extends Context<
 > {
 	regions: Region[];
 	getRegionById(idref: string | undefined): TTMLRegion | undefined;
-	getStylesByRegionId(idref: string | undefined): TTMLStyle[];
 }
 
 declare module "./Scope" {
@@ -89,13 +89,6 @@ export function createRegionContainerContext(
 				}
 
 				return regionsIDREFSStorage.get(idref) ?? this.parent?.getRegionById(idref);
-			},
-			getStylesByRegionId(idref: string): TTMLStyle[] {
-				if (!idref?.length) {
-					throw new Error("Cannot retrieve styles for a region with an unknown name.");
-				}
-
-				return regionsIDREFSStorage.get(idref)?.styles || [];
 			},
 			get regions(): Region[] {
 				const parentRegions: Region[] = this.parent?.regions ?? [];
@@ -241,20 +234,36 @@ function createTTMLRegion(
 		}) ||
 		undefined;
 
+	const inlineStyles = extractInlineStyles(attributes);
+	const nestedStyles = extractNestedStylesChildren(children);
+
+	const styleIds = [inlineStyles["xml:id"], nestedStyles["xml:id"]];
+
+	const animations = extractNestedAnimationsChildren(children);
+
+	const animationIds = animations
+		.map((a) => a.attributes["xml:id"])
+		.filter((id): id is string => !!id);
+
 	/**
 	 * Contexts will become isolated
 	 */
 	const subscope = createScope(
 		sourceScope,
 		createStyleContainerContext([
-			extractInlineStyles(attributes),
-			extractNestedStylesChildren(children),
+			//
+			inlineStyles,
+			nestedStyles,
 		]),
 		createAnimationContainerContext(
 			//
-			extractNestedAnimationsChildren(children),
+			animations,
 		),
 		createTimeContext(regionTimingAttributes),
+		createTemporalActiveContext({
+			stylesIDRefs: styleIds,
+			animationsIDRefs: animationIds,
+		}),
 	);
 
 	const regionStyles = getRegionStylesByScope(subscope);
@@ -262,7 +271,7 @@ function createTTMLRegion(
 	const regionGeometryStyles = computeRegionGeometryStylesByScope(subscope);
 	const entities = getRegionEntitiesByScope(subscope, children);
 
-	const region = new TTMLRegion(attributes["xml:id"] || "inline", regionTimingAttributes);
+	const region = new TTMLRegion(attributes["xml:id"] || "inline", subscope, regionTimingAttributes);
 
 	region.entities = entities;
 	region.styles = regionStyles;
@@ -347,12 +356,14 @@ export class TTMLRegion implements Region {
 	public lines: number = 2;
 	public entities: Entities.AllEntities[] = [];
 	public styles: TTMLStyle[] = [];
+	public scope: Scope;
 
 	public geometryStyles: Record<string, string> | undefined = undefined;
 	public visualStyles: Record<string, string> | undefined = undefined;
 
-	public constructor(id: string, timingAttributes: TimeContextData | undefined) {
+	public constructor(id: string, scope: Scope, timingAttributes: TimeContextData | undefined) {
 		this.id = id;
+		this.scope = scope;
 		this.timingAttributes = timingAttributes;
 	}
 

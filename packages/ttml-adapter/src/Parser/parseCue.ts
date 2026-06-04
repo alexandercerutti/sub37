@@ -699,7 +699,7 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 		computeRegionGeometryStylesByScope(newScope),
 	);
 
-	const region = new TTMLRegion(baseRegion.id, baseRegion.timingAttributes);
+	const region = new TTMLRegion(baseRegion.id, baseRegion.scope, baseRegion.timingAttributes);
 
 	region.entities = baseRegion.entities;
 	region.styles = baseRegion.styles;

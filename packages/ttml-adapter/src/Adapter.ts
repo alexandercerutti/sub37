@@ -538,6 +538,8 @@ export default class TTMLAdapter extends BaseAdapter {
 						const flowedRegion = regionContext?.getRegionById(token.attributes["region"]);
 
 						if (flowedRegion) {
+							treeScope = flowedRegion.scope;
+
 							contextsList.push(
 								createTemporalActiveContext({
 									regionIDRef: token.attributes["region"],
@@ -657,7 +659,7 @@ export default class TTMLAdapter extends BaseAdapter {
 						const currentNode = nodeTree.currentNode.content;
 
 						if (isNodeOwningScope(currentNode)) {
-							treeScope = treeScope.parent;
+							treeScope = currentNode[nodeScopeSymbol].parent;
 						}
 					}
 
