@@ -285,6 +285,6 @@ describe("DistributionSession", () => {
 		new DistributionSession(trackRecords, mockObject.onSafeFailureCb);
 
 		expect(spy).toHaveBeenCalledTimes(2); /** One error per track */
-		expect(spy).toHaveBeenCalledWith(mockedError);
+		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ error: mockedError }));
 	});
 });

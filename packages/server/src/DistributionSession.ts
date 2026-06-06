@@ -1,8 +1,8 @@
-import type { TrackRecord } from "./Track";
+import type { TrackRecord } from "./Track/index.js";
 import { CueNode } from "./CueNode.js";
 import { BaseAdapterConstructor, ParseError } from "./BaseAdapter/index.js";
 import { ActiveTrackMissingError } from "./Errors/index.js";
-import { Track } from "./Track";
+import { Track } from "./Track/index.js";
 
 export interface SessionTrack extends TrackRecord {
 	adapter: InstanceType<BaseAdapterConstructor>;
