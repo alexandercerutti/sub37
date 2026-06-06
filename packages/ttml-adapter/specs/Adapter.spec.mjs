@@ -609,7 +609,8 @@ describe("Cues", () => {
 						<body>
 							<div>
 								<p xml:id="par-01" region="r1" begin="0s" end="5s">
-									<animate xml:id="a1" begin="0s" dur="5s" calcMode="discrete" keyTimes="0;1" tts:color="red;blue"/>Hello
+									<animate xml:id="a1" begin="0s" dur="5s" calcMode="discrete" keyTimes="0;1" tts:color="red;blue" />
+									Hello
 								</p>
 							</div>
 						</body>
@@ -2815,13 +2816,16 @@ describe("Animations", () => {
 
 		it("should forward an inheritable region animation to the cue's own entity list", () => {
 			/*
-			 * tts:color is INHERITABLE and applies to "span". A <region> that
-			 * animates tts:color causes content to inherit the time-varying value
-			 * frame-by-frame (TTML2 §10.4.4.2 + §10.4.2.2 Region Style Inheritance).
+			 * tts:color and tts:fontFamily are both INHERITABLE and apply to "span".
+			 * A <region> that animates either property causes content to inherit the
+			 * time-varying value frame-by-frame (TTML2 §10.4.4.2 + §10.4.2.2).
 			 *
-			 * The cue itself must therefore receive an AnimationEntity with
-			 * styles["color"] so the renderer can apply the keyframe animation
-			 * to the span element.
+			 * Both animations must appear on the cue's entity list so the renderer
+			 * can apply each keyframe animation to the span element.
+			 *
+			 * Using two distinct properties confirms the filter is property-level,
+			 * not all-or-nothing: every inheritable property from the region crosses
+			 * the boundary independently.
 			 *
 			 * This is Track A from REGION_SCOPE_REFACTOR.md §9.
 			 */
@@ -2833,7 +2837,8 @@ describe("Animations", () => {
 					<head>
 						<layout>
 							<region xml:id="r1">
-								<animate dur="2s" calcMode="discrete" keyTimes="0;1" tts:color="white;yellow"/>
+								<animate xml:id="aColor" dur="2s" calcMode="discrete" keyTimes="0;1" tts:color="white;yellow"/>
+								<animate xml:id="aFont" dur="2s" calcMode="discrete" keyTimes="0;1" tts:fontFamily="default;monospaceSansSerif"/>
 							</region>
 						</layout>
 					</head>
@@ -2848,15 +2853,51 @@ describe("Animations", () => {
 			expect(cues.length).toBeGreaterThan(0);
 
 			/*
-			 * The animation must appear on the cue's entity list — not just on
-			 * region.entities — because the renderer applies it to the span element.
+			 * Both animations must appear on the cue's entity list — not just on
+			 * region.entities — because the renderer applies them to the span element.
 			 */
-			const cueAnimEntity = cues.flatMap((c) => c?.entities ?? []).find(Entities.isAnimationEntity);
+			const cueAnimEntities = cues
+				.flatMap((c) => c?.entities ?? [])
+				.filter(Entities.isAnimationEntity);
 
-			expect(cueAnimEntity).toBeDefined();
-			expect(cueAnimEntity.styles["color"]).toBeDefined();
+			const colorAnim = cueAnimEntities.find((e) => e.styles["color"] !== undefined);
+			const fontAnim = cueAnimEntities.find((e) => e.styles["font-family"] !== undefined);
+
+			expect(colorAnim).toBeDefined();
+			expect(fontAnim).toBeDefined();
 		});
 
+		it("should NOT forward a non-inheritable region animation to the cue's entity list", () => {
+			/*
+			 * tts:opacity is NOT inheritable (§10.4.2.2). An animation on a <region>
+			 * that targets a non-inheritable property must not propagate to content.
+			 * Only the region itself should carry that animation entity.
+			 */
+			const { data: cues } = new TTMLAdapter().parse(`
+				<tt xml:lang="en"
+					xmlns="http://www.w3.org/ns/ttml"
+					xmlns:tts="http://www.w3.org/ns/ttml#styling"
+				>
+					<head>
+						<layout>
+							<region xml:id="r1">
+								<animate dur="2s" calcMode="discrete" keyTimes="0;1" tts:opacity="0;1" />
+							</region>
+						</layout>
+					</head>
+					<body>
+						<div region="r1">
+							<p begin="0s" dur="2s">Text</p>
+						</div>
+					</body>
+				</tt>
+			`);
+
+			expect(cues.length).toBeGreaterThan(0);
+
+			const cueAnimEntity = cues.flatMap((c) => c?.entities ?? []).find(Entities.isAnimationEntity);
+			expect(cueAnimEntity?.styles["opacity"]).toBeUndefined();
+		});
 	});
 
 	describe("<set> single-value constraint (§13.1.3 + §13.3.1)", () => {
