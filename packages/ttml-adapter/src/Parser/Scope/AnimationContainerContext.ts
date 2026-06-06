@@ -3,6 +3,7 @@ import { onAttachedSymbol, onMergeSymbol } from "./Scope.js";
 import type { UniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import { isUniquelyAnnotatedNode } from "../namespaces/xml/id.js";
 import {
+	isInheritableStyle,
 	isPropertyContinuouslyAnimatable,
 	isPropertyDiscretelyAnimatable,
 	isStyleAttribute,
@@ -46,6 +47,16 @@ const animationContextSymbol = Symbol("animations");
 export interface AnimationContainerContextState {
 	element: "set" | "animate";
 	calcMode: string | undefined;
+
+	/**
+	 * Each inline animation is assigned to a specific element.
+	 * When the parent element (assignee element) is a region,
+	 * we have to determine whether its styles can be forwarded
+	 * to elements that flowed inside it by inheritance. Not all
+	 * of the styles can.
+	 */
+	ownerElement: string;
+
 	attributes: Record<string, string>;
 }
 
@@ -82,7 +93,7 @@ export function createAnimationContainerContext(
 				return contextState;
 			},
 			[onAttachedSymbol](): void {
-				for (const { calcMode = "linear", attributes, element } of contextState) {
+				for (const { calcMode = "linear", attributes, element, ownerElement } of contextState) {
 					try {
 						/**
 						 * Both sets and animate will get assigned a synthetic "xml:id" on parse,
@@ -107,7 +118,13 @@ export function createAnimationContainerContext(
 						}
 
 						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-						const animation = createAnimation(calcModeFactory, attributes, element, scope);
+						const animation = createAnimation(
+							calcModeFactory,
+							attributes,
+							element,
+							ownerElement,
+							scope,
+						);
 
 						if (!animation) {
 							continue;
@@ -122,7 +139,7 @@ export function createAnimationContainerContext(
 			[onMergeSymbol](incomingContext: AnimationContainerContext): void {
 				const { args } = incomingContext;
 
-				for (const { calcMode = "linear", attributes, element } of args) {
+				for (const { calcMode = "linear", attributes, element, ownerElement } of args) {
 					try {
 						/**
 						 * Both sets and animate will get assigned a synthetic "xml:id" on parse,
@@ -147,7 +164,13 @@ export function createAnimationContainerContext(
 						}
 
 						const calcModeFactory = getAnimationFactoryByCalcMode(calcMode);
-						const animation = createAnimation(calcModeFactory, attributes, element, scope);
+						const animation = createAnimation(
+							calcModeFactory,
+							attributes,
+							element,
+							ownerElement,
+							scope,
+						);
 
 						if (!animation) {
 							continue;
@@ -181,6 +204,7 @@ function createAnimation(
 	calcModeFactory: CalcModeFactory,
 	attributes: Record<string, string> & UniquelyAnnotatedNode,
 	sourceElement: "set" | "animate",
+	ownerElement: string,
 	scope: Scope,
 ): Animation | undefined {
 	const animationId = attributes["xml:id"];
@@ -245,12 +269,12 @@ function createAnimation(
 		},
 		apply: {
 			value(element: string): Record<string, string[]> {
-				if (this.cachedStylesByElement.has(element)) {
-					return this.cachedStylesByElement.get(element)!;
+				if (this.cachedStylesByElement.has(`${ownerElement}-${element}`)) {
+					return this.cachedStylesByElement.get(`${ownerElement}-${element}`)!;
 				}
 
-				const styles = convertAnimationStylesToCSS(stylesFrames, scope, element);
-				this.cachedStylesByElement.set(element, styles);
+				const styles = convertAnimationStylesToCSS(stylesFrames, scope, ownerElement, element);
+				this.cachedStylesByElement.set(`${ownerElement}-${element}`, styles);
 				return styles;
 			},
 		},
@@ -450,19 +474,33 @@ function isStyleAnimationCompatible(
 function convertAnimationStylesToCSS(
 	stylesFrames: Map<string, DerivedValue[][]>,
 	scope: Scope,
-	sourceElementName: string,
+	ownerElement: string,
+	appliedElementName: string,
 ): Record<string, string[]> {
 	const result: Record<string, string[]> = {};
 
 	for (const [ttmlProperty, keyframes] of stylesFrames) {
 		const definition = resolveStyleDefinitionByName(ttmlProperty);
 
-		if (!definition || !styleAppliesToElement(definition, scope, sourceElementName)) {
+		if (!definition || !styleAppliesToElement(definition, scope, appliedElementName)) {
+			continue;
+		}
+
+		/*
+		 * When a region animation is forwarded to content elements via the TAC parent
+		 * chain, only inheritable properties can cross the inheritability boundary (§10.4.2.2).
+		 * This does NOT apply to content-tree crossings (e.g. span child of a paragraph).
+		 */
+		if (
+			ownerElement === "region" &&
+			appliedElementName !== "region" &&
+			!isInheritableStyle(definition)
+		) {
 			continue;
 		}
 
 		for (const derivedValues of keyframes) {
-			const mapped = definition.toCSS(scope, derivedValues, sourceElementName);
+			const mapped = definition.toCSS(scope, derivedValues, appliedElementName);
 
 			if (mapped === null) {
 				continue;

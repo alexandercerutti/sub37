@@ -239,22 +239,31 @@ function resolveAnimationEntities(
 		return [];
 	}
 
-	return activeEntities
-		.filter((entity): entity is ResolvedAnimation => "startTime" in entity)
-		.map((animation) => {
-			const styles = animation.apply("span");
+	return activeEntities.reduce((acc, entity) => {
+		if (!("startTime" in entity)) {
+			return acc;
+		}
 
-			return Entities.createAnimationEntity({
-				id: animation.id,
-				duration: animation.duration,
-				keyTimes: animation.keyTimes,
-				fill: animation.fill === "freeze" ? "forwards" : "none",
-				splines: animation.keySplines,
-				kind: animation.calcMode === "discrete" ? "discrete" : "continuous",
-				delay: animation.startTime - intervalStart,
-				styles,
-			});
+		const styles = entity.apply("span");
+
+		if (!Object.keys(styles).length) {
+			return acc;
+		}
+
+		const animationEntity = Entities.createAnimationEntity({
+			id: entity.id,
+			duration: entity.duration,
+			keyTimes: entity.keyTimes,
+			fill: entity.fill === "freeze" ? "forwards" : "none",
+			splines: entity.keySplines,
+			kind: entity.calcMode === "discrete" ? "discrete" : "continuous",
+			delay: entity.startTime - intervalStart,
+			styles,
 		});
+
+		acc.push(animationEntity);
+		return acc;
+	}, [] as Entities.AllEntities[]);
 }
 
 function getSpanVisibilityIntervalsFromAnimations(

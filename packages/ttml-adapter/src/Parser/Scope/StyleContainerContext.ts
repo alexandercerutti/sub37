@@ -331,7 +331,7 @@ export interface TTMLStyle extends UniquelyAnnotatedNode, StyleTypology {
 	styleAttributes: Record<string, string>;
 
 	/**
-	 * Retrieves actualy styles for an element
+	 * Retrieves computed styles for an element
 	 *
 	 * @param element
 	 */

@@ -1254,7 +1254,9 @@ function extractOutOfLineAnimations(
 
 		const animationId = getInlineAnimationId(tokenContent, currentNode.content);
 
-		animations.push(getInlineAnimationFromToken(animationId, tokenContent));
+		animations.push(
+			getInlineAnimationFromToken(animationId, tokenContent, currentNode.content.content),
+		);
 	}
 
 	return animations;
@@ -1267,17 +1269,19 @@ function getInlineAnimationFromOpeningTag(
 
 	const animationId = getInlineAnimationId(content, parent?.content);
 
-	return getInlineAnimationFromToken(animationId, content);
+	return getInlineAnimationFromToken(animationId, content, parent?.content.content ?? "");
 }
 
 function getInlineAnimationFromToken(
 	animationId: string,
 	token: AnimateOrSetToken,
+	ownerElement: string,
 ): AnimationContainerContextState {
 	const tokenAttributes = token.attributes;
 
 	return {
 		element: token.content,
+		ownerElement,
 		attributes: Object.create(tokenAttributes, {
 			"xml:id": {
 				value: animationId,

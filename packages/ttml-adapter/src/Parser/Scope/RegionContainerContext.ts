@@ -201,6 +201,7 @@ function extractNestedAnimationsChildren(
 			tokenContent.attributes["xml:id"] || generateSyntheticId("region-animation");
 
 		animations.push({
+			ownerElement: "region",
 			element: tokenContent.content,
 			attributes: Object.create(tokenContent.attributes, {
 				"xml:id": {
@@ -406,7 +407,7 @@ function computeRegionVisualStylesByScope(scope: Scope): Record<string, string> 
 				}
 			}
 
-			const filteredStyle = Object.create(style, {
+			const filteredStyle: TTMLStyle = Object.create(style, {
 				styleAttributes: {
 					value: visualStyleAttributes,
 					enumerable: true,
