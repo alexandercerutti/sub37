@@ -1,5 +1,5 @@
 import "@sub37/captions-renderer";
-import { Server } from "@sub37/server";
+import { Server, SUB37_MARK_TTA_END, SUB37_MARK_TTA_START } from "@sub37/server";
 import { WebVTTAdapter } from "@sub37/webvtt-adapter";
 import { TTMLAdapter } from "@sub37/ttml-adapter";
 import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
@@ -190,7 +190,7 @@ scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 			},
 		]);
 		console.info(
-			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
+			`%c[DEBUG] TTA (Time-to-availability) is: ${performance.measure(SUB37_MARK_TTA_END, SUB37_MARK_TTA_START).duration}ms`,
 			"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
 		);
 	} catch (err) {
@@ -233,11 +233,14 @@ scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
-	console.info(
-		`%c[DEBUG] Cue rendering took: ${performance.now() - timeStart}ms`,
-		"background-color: #7900ff; color: #FFF; padding: 5px; margin: 5px",
-		cues,
-	);
+
+	setTimeout(() => {
+		console.info(
+			`%c[DEBUG] Cue rendering took: ${performance.now() - timeStart}ms`,
+			"background-color: #7900ff; color: #FFF; padding: 5px; margin: 5px",
+			cues,
+		);
+	}, 0);
 });
 
 server.addEventListener("cuestop", () => {

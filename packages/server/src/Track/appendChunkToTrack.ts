@@ -6,6 +6,7 @@ import {
 	UnexpectedParsingOutputFormatError,
 	UnparsableContentError,
 } from "../Errors";
+import { SUB37_MARK_TTA_END, SUB37_MARK_TTA_START } from "./index.js";
 import Track, { addCuesSymbol } from "./Track.js";
 
 /**
@@ -25,9 +26,18 @@ export function appendChunkToTrack(track: Track, content: unknown): void {
 		throw new Error("Can't use onSafeFailure. Provided element is not a function.");
 	}
 
+	performance.clearMarks(SUB37_MARK_TTA_START);
+	performance.clearMeasures(SUB37_MARK_TTA_START);
+	performance.clearMarks(SUB37_MARK_TTA_END);
+	performance.clearMeasures(SUB37_MARK_TTA_END);
+
 	try {
+		performance.mark(SUB37_MARK_TTA_START);
+
 		const parseResult = adapter.parse(content);
 		runParser(parseResult, track, adapter);
+
+		performance.mark(SUB37_MARK_TTA_END);
 	} catch (err: unknown) {
 		if (
 			err instanceof UnexpectedParsingOutputFormatError ||
