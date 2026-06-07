@@ -1,4 +1,4 @@
-import { ParseError, ParseResult } from "../BaseAdapter/index.js";
+import type { BaseAdapter, ParseGenerator } from "../BaseAdapter/index.js";
 import { CueNode } from "../CueNode.js";
 import {
 	UncaughtParsingExceptionError,
@@ -18,44 +18,16 @@ import Track, { addCuesSymbol } from "./Track.js";
  * 										which will be the ParseError object
  */
 
-export function appendChunkToTrack(
-	track: Track,
-	content: unknown,
-	onSafeFailure?: (error: ParseError) => void,
-): void {
-	const { adapter, lang } = track;
+export function appendChunkToTrack(track: Track, content: unknown): void {
+	const { adapter } = track;
+
+	if (track.onSafeFailure && typeof track.onSafeFailure !== "function") {
+		throw new Error("Can't use onSafeFailure. Provided element is not a function.");
+	}
 
 	try {
 		const parseResult = adapter.parse(content);
-
-		if (!(parseResult instanceof ParseResult)) {
-			/** If parser fails once for this reason, it is worth to stop the whole ride. */
-			throw new UnexpectedParsingOutputFormatError(adapter.toString(), lang, parseResult);
-		}
-
-		if (parseResult.data.length) {
-			for (const cue of parseResult.data) {
-				if (!(cue instanceof CueNode)) {
-					parseResult.errors.push({
-						error: new UnexpectedDataFormatError(adapter.toString()),
-						failedChunk: cue,
-						isCritical: false,
-					});
-
-					continue;
-				}
-
-				track[addCuesSymbol](cue);
-			}
-		} else if (parseResult.errors.length >= 1) {
-			throw new UnparsableContentError(adapter.toString(), parseResult.errors[0]);
-		}
-
-		if (typeof onSafeFailure === "function") {
-			for (const parseResultError of parseResult.errors) {
-				onSafeFailure(parseResultError);
-			}
-		}
+		runParser(parseResult, track, adapter);
 	} catch (err: unknown) {
 		if (
 			err instanceof UnexpectedParsingOutputFormatError ||
@@ -66,4 +38,36 @@ export function appendChunkToTrack(
 
 		throw new UncaughtParsingExceptionError(adapter.toString(), err);
 	}
+}
+
+function runParser(parser: ParseGenerator, track: Track, adapter: BaseAdapter): void {
+	const { value, done } = parser.next();
+
+	if (done || !Array.isArray(value)) {
+		return;
+	}
+
+	for (const item of value) {
+		if (item instanceof CueNode) {
+			track[addCuesSymbol](item);
+			continue;
+		}
+
+		if (item.error) {
+			if (item.isCritical) {
+				throw new UnparsableContentError(adapter.toString(), item);
+			}
+
+			track.onSafeFailure?.(item);
+			continue;
+		}
+
+		track.onSafeFailure?.({
+			error: new UnexpectedDataFormatError(adapter.toString()),
+			isCritical: false,
+			failedChunk: item,
+		});
+	}
+
+	setTimeout(() => runParser(parser, track, adapter), 0);
 }

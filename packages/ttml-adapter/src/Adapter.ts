@@ -1,4 +1,4 @@
-import { BaseAdapter, CueNode, ParseError, ParseResult } from "@sub37/server";
+import { BaseAdapter, CueNode, ParseGenerator } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import { createScope } from "./Parser/Scope/Scope.js";
@@ -190,39 +190,22 @@ export default class TTMLAdapter extends BaseAdapter {
 		return "application/ttml+xml";
 	}
 
-	public override parse(rawContent: string): ParseResult {
+	public override *parse(rawContent: string): ParseGenerator {
 		if (!rawContent) {
-			return new ParseResult(
-				[],
-				[
-					{
-						error: new MissingContentError(),
-						failedChunk: "",
-						isCritical: true,
-					},
-				],
-			);
+			return [
+				{
+					error: new MissingContentError(),
+					failedChunk: "",
+					isCritical: true,
+				},
+			];
 		}
 
-		let errors: ParseError[] = [];
 		let cues: CueNode[] = [];
 		const rootScope: Scope = createScope(
+			//
 			undefined,
-			createErrorContext({
-				onReport(error: Error, isCritical: boolean, offset: number) {
-					const failedChunk =
-						rawContent
-							.substring(offset, offset + 50)
-							.replace(/\s+/g, " ")
-							.trimStart() + "...";
-
-					errors.push({
-						error,
-						isCritical,
-						failedChunk,
-					});
-				},
-			}),
+			createErrorContext(),
 		);
 
 		const errorContext = readScopeErrorContext(rootScope)!;
@@ -239,15 +222,35 @@ export default class TTMLAdapter extends BaseAdapter {
 
 		while ((token = tokenizer.nextToken())) {
 			if (!treeScope) {
-				errors.push({
-					error: new Error(
-						`Tree scope became undefined. This is an internal error that should not happen. Please report it. The error happened after token ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column}).`,
-					),
-					isCritical: true,
-					failedChunk: `element: ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column})`,
-				});
+				yield [
+					{
+						error: new Error(
+							`Tree scope became undefined. This is an internal error that should not happen. Please report it. The error happened after token ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column}).`,
+						),
+						isCritical: true,
+						failedChunk: `element: ${token.content} at offset ${token.position.offset} (line ${token.position.line}, column ${token.position.column})`,
+					},
+				];
 
 				break;
+			}
+
+			if (errorContext.errors.length) {
+				for (const { error, critical: isCritical, currentTokenOffset } of errorContext.errors) {
+					const failedChunk =
+						rawContent
+							.substring(currentTokenOffset, currentTokenOffset + 50)
+							.replace(/\s+/g, " ")
+							.trimStart() + "...";
+
+					yield [
+						{
+							error,
+							isCritical,
+							failedChunk,
+						},
+					];
+				}
 			}
 
 			if (errorContext.hasCriticalError) {
@@ -805,7 +808,10 @@ export default class TTMLAdapter extends BaseAdapter {
 							},
 						});
 
-						cues = cues.concat(parseCue(nodeForParsing));
+						const nextCues = parseCue(nodeForParsing);
+						cues = cues.concat(nextCues);
+
+						yield nextCues;
 					}
 
 					break;
@@ -814,20 +820,22 @@ export default class TTMLAdapter extends BaseAdapter {
 		}
 
 		if (!readScopeDocumentContext(rootScope)) {
-			errors.push({
-				error: new Error("Document failed to parse: <tt> element is apparently missing."),
-				isCritical: true,
-				failedChunk: rawContent,
-			});
+			yield [
+				{
+					error: new Error("Document failed to parse: <tt> element is apparently missing."),
+					isCritical: true,
+					failedChunk: rawContent,
+				},
+			];
 		} else if (!cues.length) {
-			errors.push({
-				error: new Error("Document parsed successfully but no cues have been found."),
-				isCritical: false,
-				failedChunk: rawContent,
-			});
+			yield [
+				{
+					error: new Error("Document parsed successfully but no cues have been found."),
+					isCritical: false,
+					failedChunk: rawContent,
+				},
+			];
 		}
-
-		return new ParseResult(cues, errors);
 	}
 }
 

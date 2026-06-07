@@ -1,5 +1,5 @@
 import { AdapterNotOverridingSupportedTypesError } from "../Errors/index.js";
-import { ParseResult } from "./outcome.js";
+import type { ParseGenerator } from "./outcome.js";
 
 export interface BaseAdapterConstructor {
 	supportedType: string;
@@ -7,10 +7,10 @@ export interface BaseAdapterConstructor {
 }
 
 export interface BaseAdapter {
-	parse(rawContent: unknown): ParseResult;
+	parse(rawContent: unknown): ParseGenerator;
 }
 
-export { ParseError, ParseResult } from "./outcome.js";
+export type { ParseError, ParseGenerator } from "./outcome.js";
 
 /** By doing this way, we also have static props type-checking */
 export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements BaseAdapter {
@@ -51,9 +51,9 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 	 * @param rawContent
 	 */
 
-	public parse(_rawContent: unknown): ParseResult {
+	public *parse(_rawContent: unknown): ParseGenerator {
 		throw new Error(
-			"Adapter doesn't override parse method. Don't know how to parse the content. Content will be ignored.",
+			"Adapter doesn't override parse method. Can't parse the content. Track will have no cues.",
 		);
 	}
 };

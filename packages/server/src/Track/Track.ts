@@ -9,7 +9,7 @@ export const addCuesSymbol = Symbol("track.addcues");
 
 export default class Track implements Omit<TrackRecord, "content"> {
 	private readonly timeline: IntervalBinaryTree<CueNode>;
-	private readonly onSafeFailure: (error: ParseError) => void;
+	public readonly onSafeFailure: (error: ParseError) => void;
 	public readonly adapter: BaseAdapter;
 	public readonly lang: string;
 	public readonly mimeType: `${string}/${string}`;
@@ -40,7 +40,7 @@ export default class Track implements Omit<TrackRecord, "content"> {
 	}
 
 	public addChunk(content: unknown): void {
-		appendChunkToTrack(this, content, this.onSafeFailure);
+		appendChunkToTrack(this, content);
 	}
 
 	public get cues(): CueNode[] {

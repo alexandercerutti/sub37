@@ -1,4 +1,4 @@
-import { ParseError, ParseResult, Region } from "@sub37/server";
+import type { ParseGenerator, Region } from "@sub37/server";
 import { BaseAdapter, CueNode, Entities } from "@sub37/server";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
@@ -28,18 +28,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 		return "text/vtt";
 	}
 
-	override parse(rawContent: string): ParseResult {
+	override *parse(rawContent: string): ParseGenerator {
 		if (!rawContent) {
-			return new ParseResult(
-				[],
-				[
-					{
-						error: new MissingContentError(),
-						failedChunk: "",
-						isCritical: true,
-					},
-				],
-			);
+			return [
+				{
+					error: new MissingContentError(),
+					failedChunk: "",
+					isCritical: true,
+				},
+			];
 		}
 
 		const cueIdsList: Set<string> = new Set();
@@ -52,8 +49,6 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 		const regions: { [id: string]: Region } = Object.create(null);
 		const styles: Parser.Style[] = [];
-
-		const failures: ParseError[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -81,11 +76,13 @@ export default class WebVTTAdapter extends BaseAdapter {
 				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
 				if (isError(blockEvaluationResult)) {
-					failures.push({
-						error: blockEvaluationResult,
-						failedChunk: content.substring(block.start, block.cursor),
-						isCritical: false,
-					});
+					yield [
+						{
+							error: blockEvaluationResult,
+							failedChunk: content.substring(block.start, block.cursor),
+							isCritical: false,
+						},
+					];
 
 					/** Skipping \n\n and going to the next character */
 					block.cursor += 3;
@@ -116,11 +113,13 @@ export default class WebVTTAdapter extends BaseAdapter {
 					latestBlockPhase = blockType;
 
 					if (!parsedContent) {
-						failures.push({
-							error: new EmptyStyleDeclarationError(),
-							failedChunk: content.substring(block.start, block.cursor),
-							isCritical: false,
-						});
+						yield [
+							{
+								error: new EmptyStyleDeclarationError(),
+								failedChunk: content.substring(block.start, block.cursor),
+								isCritical: false,
+							},
+						];
 					} else {
 						styles.push(parsedContent);
 					}
@@ -149,13 +148,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
-							failures.push({
-								error: new Error(
-									`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
-								),
-								failedChunk: content.substring(block.start, block.cursor),
-								isCritical: false,
-							});
+							yield [
+								{
+									error: new Error(
+										`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
+									),
+									failedChunk: content.substring(block.start, block.cursor),
+									isCritical: false,
+								},
+							];
 
 							continue;
 						}
@@ -170,13 +171,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 */
 
 							if (!parsedCue.groupingIdentifier && cueIdsList.has(parsedCue.id)) {
-								failures.push({
-									error: new Error(
-										`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
-									),
-									failedChunk: content.substring(block.start, block.cursor),
-									isCritical: false,
-								});
+								yield [
+									{
+										error: new Error(
+											`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
+										),
+										failedChunk: content.substring(block.start, block.cursor),
+										isCritical: false,
+									},
+								];
 
 								continue;
 							}
@@ -278,6 +281,8 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 						cue.entities = entities;
 						cues.push(cue);
+
+						yield [cue];
 					}
 				}
 
@@ -287,20 +292,17 @@ export default class WebVTTAdapter extends BaseAdapter {
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-				return new ParseResult(
-					[],
-					[
-						{
-							error,
-							isCritical: true,
-							failedChunk: undefined,
-						},
-					],
-				);
+				return [
+					{
+						error,
+						isCritical: true,
+						failedChunk: undefined,
+					},
+				];
 			}
 		} while (block.cursor <= content.length);
 
-		return new ParseResult(cues, failures);
+		return;
 	}
 }
 
