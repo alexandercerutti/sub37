@@ -1,4 +1,4 @@
-import { CueNode, RenderingModifiers, Events, Server } from "@sub37/server";
+import { CueNode, RenderingModifiers, Events, Server, ParseError } from "@sub37/server";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,
@@ -9,7 +9,6 @@ import {
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
 import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
-import type { BaseAdapter } from "@sub37/server";
 
 export * from "./constants.js";
 export type { OrchestratorSettings };
@@ -233,7 +232,7 @@ sub37-region div > p.line-block > span {
 
 	public connect(
 		serverInstance: Server,
-		onError: (error: BaseAdapter.ParseError) => void,
+		onError: (error: ParseError) => void,
 	): { disconnect: () => void } {
 		const onCueStart = (cues: CueNode[]): void => {
 			this.setCue(cues);
@@ -243,7 +242,7 @@ sub37-region div > p.line-block > span {
 			this.setCue();
 		};
 
-		const onCueError = (parsingError: BaseAdapter.ParseError): void => {
+		const onCueError = (parsingError: ParseError): void => {
 			onError(parsingError);
 		};
 

@@ -1,6 +1,7 @@
 import type { TrackRecord } from "./Track/index.js";
 import { CueNode } from "./CueNode.js";
-import { BaseAdapterConstructor, ParseError } from "./BaseAdapter/index.js";
+import { BaseAdapterConstructor } from "./BaseAdapter/index.js";
+import type { ParseError } from "./BaseAdapter/outcome.js";
 import { ActiveTrackMissingError } from "./Errors/index.js";
 import { Track } from "./Track/index.js";
 

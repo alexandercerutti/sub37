@@ -1,11 +1,8 @@
-import type { CueNode } from "../CueNode.js";
 import { AdapterNotOverridingSupportedTypesError } from "../Errors/index.js";
+import { ParseResult } from "./outcome.js";
 
 export interface BaseAdapterConstructor {
 	supportedType: string;
-
-	ParseResult(data: CueNode[], errors: BaseAdapter.ParseError[]): ParseResult;
-
 	new (): BaseAdapter;
 }
 
@@ -13,10 +10,7 @@ export interface BaseAdapter {
 	parse(rawContent: unknown): ParseResult;
 }
 
-export declare namespace BaseAdapter {
-	type ParseResult = InstanceType<typeof ParseResult>;
-	type ParseError = InstanceType<typeof ParseError>;
-}
+export { ParseError, ParseResult } from "./outcome.js";
 
 /** By doing this way, we also have static props type-checking */
 export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements BaseAdapter {
@@ -27,22 +21,6 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 
 	public static get supportedType(): string {
 		throw new AdapterNotOverridingSupportedTypesError(this.toString());
-	}
-
-	/**
-	 * The result of any operation performed by any adapter that
-	 * extend BaseAdapter
-	 *
-	 * @param data
-	 * @param errors
-	 * @returns
-	 */
-
-	public static ParseResult(
-		data: CueNode[] = [],
-		errors: BaseAdapter.ParseError[] = [],
-	): ParseResult {
-		return new ParseResult(data, errors);
 	}
 
 	/**
@@ -79,18 +57,3 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 		);
 	}
 };
-
-export class ParseResult {
-	public constructor(
-		public data: CueNode[] = [],
-		public errors: BaseAdapter.ParseError[] = [],
-	) {}
-}
-
-export class ParseError {
-	public constructor(
-		public error: Error,
-		public isCritical: boolean,
-		public failedChunk: unknown,
-	) {}
-}

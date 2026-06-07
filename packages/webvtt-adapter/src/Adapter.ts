@@ -1,4 +1,4 @@
-import type { Region } from "@sub37/server";
+import { ParseError, ParseResult, Region } from "@sub37/server";
 import { BaseAdapter, CueNode, Entities } from "@sub37/server";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
@@ -28,9 +28,9 @@ export default class WebVTTAdapter extends BaseAdapter {
 		return "text/vtt";
 	}
 
-	override parse(rawContent: string): BaseAdapter.ParseResult {
+	override parse(rawContent: string): ParseResult {
 		if (!rawContent) {
-			return BaseAdapter.ParseResult(
+			return new ParseResult(
 				[],
 				[
 					{
@@ -53,7 +53,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 		const regions: { [id: string]: Region } = Object.create(null);
 		const styles: Parser.Style[] = [];
 
-		const failures: BaseAdapter.ParseError[] = [];
+		const failures: ParseError[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -287,7 +287,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-				return BaseAdapter.ParseResult(
+				return new ParseResult(
 					[],
 					[
 						{
@@ -300,7 +300,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			}
 		} while (block.cursor <= content.length);
 
-		return BaseAdapter.ParseResult(cues, failures);
+		return new ParseResult(cues, failures);
 	}
 }
 

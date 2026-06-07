@@ -1,4 +1,4 @@
-import { BaseAdapter, CueNode } from "@sub37/server";
+import { BaseAdapter, CueNode, ParseError, ParseResult } from "@sub37/server";
 import { MissingContentError } from "./MissingContentError.js";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import { createScope } from "./Parser/Scope/Scope.js";
@@ -190,9 +190,9 @@ export default class TTMLAdapter extends BaseAdapter {
 		return "application/ttml+xml";
 	}
 
-	public override parse(rawContent: string): BaseAdapter.ParseResult {
+	public override parse(rawContent: string): ParseResult {
 		if (!rawContent) {
-			return BaseAdapter.ParseResult(
+			return new ParseResult(
 				[],
 				[
 					{
@@ -204,7 +204,7 @@ export default class TTMLAdapter extends BaseAdapter {
 			);
 		}
 
-		let errors: BaseAdapter.ParseError[] = [];
+		let errors: ParseError[] = [];
 		let cues: CueNode[] = [];
 		const rootScope: Scope = createScope(
 			undefined,
@@ -827,7 +827,7 @@ export default class TTMLAdapter extends BaseAdapter {
 			});
 		}
 
-		return BaseAdapter.ParseResult(cues, errors);
+		return new ParseResult(cues, errors);
 	}
 }
 

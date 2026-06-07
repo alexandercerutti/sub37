@@ -1,12 +1,12 @@
-import { ParseError, ParseResult } from "../BaseAdapter";
-import { CueNode } from "../CueNode";
+import { ParseError, ParseResult } from "../BaseAdapter/index.js";
+import { CueNode } from "../CueNode.js";
 import {
 	UncaughtParsingExceptionError,
 	UnexpectedDataFormatError,
 	UnexpectedParsingOutputFormatError,
 	UnparsableContentError,
 } from "../Errors";
-import Track, { addCuesSymbol } from "./Track";
+import Track, { addCuesSymbol } from "./Track.js";
 
 /**
  *
