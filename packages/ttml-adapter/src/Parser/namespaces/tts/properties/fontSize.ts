@@ -49,23 +49,16 @@ export function cssTransform(
 		},
 	} = documentContext;
 
-	/**
-	 * @TODO how to handle default value here?
-	 */
-	// if (!splittedValue.length) {
-	// 	return fontSizeValueDefaultLength(exHeight, cellResolutionHeight).toString();
-	// }
-
 	if (value[1]) {
 		const [{ value: horizonalGlyphSizeParsed }, { value: verticalGlyphSizeParsed }] = value;
 
 		if (horizonalGlyphSizeParsed.metric !== verticalGlyphSizeParsed.metric) {
-			if (typeof extent?.[0] === "undefined" || !cellResolutionHeight) {
+			if (typeof extent?.[1] === "undefined" || !cellResolutionHeight) {
 				return null;
 			}
 
 			return [
-				["font-size", fontSizeValueDefaultLength(extent[0], cellResolutionHeight).toString()],
+				["font-size", fontSizeValueDefaultLength(extent[1], cellResolutionHeight).toString()],
 			];
 		}
 	}
@@ -73,12 +66,12 @@ export function cssTransform(
 	const [{ value: fontSize }] = value;
 
 	if (isCellScalar(fontSize)) {
-		if (typeof extent?.[0] === "undefined" || !cellResolutionHeight) {
+		if (typeof extent?.[1] === "undefined" || !cellResolutionHeight) {
 			return null;
 		}
 
 		const convertedPixelUnit = getCellScalarPixelConversion(
-			extent[0],
+			extent[1],
 			cellResolutionHeight,
 			fontSize,
 		);
