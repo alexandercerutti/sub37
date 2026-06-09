@@ -5,6 +5,7 @@ import { createUnit, Unit } from "../../../Unit.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import { isPercentage } from "../primitives/length.js";
 import { getPixelScalarPercentageConversion, isPixelScalar } from "../primitives/pixel.js";
+import { getCellScalarPercentageConversion, isCellScalar } from "../primitives/cell.js";
 import { alias } from "../structure/derivables/alias.js";
 import type { InferDerivableValue } from "../structure/operators.js";
 import { OriginGrammar } from "../syntax/origin.js";
@@ -59,11 +60,10 @@ function getOriginLengthDimension(
 	}
 
 	const errorContext = readScopeErrorContext(scope)!;
+	const documentContext = readScopeDocumentContext(scope)!;
+	const documentExtent = documentContext.attributes["tts:extent"];
 
 	if (isPixelScalar(originWithUnit)) {
-		const documentContext = readScopeDocumentContext(scope)!;
-		const documentExtent = documentContext.attributes["tts:extent"];
-
 		if (!documentExtent) {
 			errorContext.report(
 				new Error(
@@ -76,6 +76,29 @@ function getOriginLengthDimension(
 		}
 
 		return getPixelScalarPercentageConversion(documentExtent[axis].value, originWithUnit)!;
+	}
+
+	if (isCellScalar(originWithUnit)) {
+		if (!documentExtent) {
+			errorContext.report(
+				new Error(
+					`Origin ${axis === 0 ? "x" : "y"} uses a cell unit, but document extent is not defined. Will be treated as 0%.`,
+				),
+				false,
+			);
+
+			return createUnit(0, "%");
+		}
+
+		const cellResolution = documentContext.attributes["ttp:cellResolution"];
+
+		return (
+			getCellScalarPercentageConversion(
+				documentExtent[axis],
+				cellResolution[axis],
+				originWithUnit,
+			) ?? createUnit(0, "%")
+		);
 	}
 
 	/**

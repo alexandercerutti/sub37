@@ -10,6 +10,7 @@ import { PositionGrammar, normalizePositionValue } from "../syntax/position.js";
 import { isPercentage } from "../primitives/length.js";
 import type { Length } from "../primitives/length.js";
 import { isPixelScalar, getPixelScalarPercentageConversion } from "../primitives/pixel.js";
+import { getCellScalarPercentageConversion, isCellScalar } from "../primitives/cell.js";
 
 export const Grammar = alias("tts:position", PositionGrammar);
 
@@ -51,11 +52,13 @@ function getPositionLengthDimension(scope: Scope, length: Length, axis: 0 | 1): 
 		return length;
 	}
 
-	if (isPixelScalar(length)) {
-		const documentExtent = readScopeDocumentContext(scope)?.attributes["tts:extent"];
+	const errorContext = readScopeErrorContext(scope)!;
+	const documentContext = readScopeDocumentContext(scope)!;
+	const documentExtent = documentContext.attributes["tts:extent"];
 
+	if (isPixelScalar(length)) {
 		if (!documentExtent) {
-			readScopeErrorContext(scope)?.report(
+			errorContext.report(
 				new Error(
 					`Position ${axis === 0 ? "left" : "top"} uses pixel units but no document extent is declared. Passing px through — result may be incorrect.`,
 				),
@@ -67,6 +70,26 @@ function getPositionLengthDimension(scope: Scope, length: Length, axis: 0 | 1): 
 
 		return (
 			getPixelScalarPercentageConversion(documentExtent[axis].value, length) ?? createUnit(0, "%")
+		);
+	}
+
+	if (isCellScalar(length)) {
+		if (!documentExtent) {
+			errorContext.report(
+				new Error(
+					`Position ${axis === 0 ? "left" : "top"} uses a cell unit but no document extent is declared. Passing through — result may be incorrect.`,
+				),
+				false,
+			);
+
+			return length;
+		}
+
+		const cellResolution = documentContext!.attributes["ttp:cellResolution"];
+
+		return (
+			getCellScalarPercentageConversion(documentExtent[axis], cellResolution[axis], length) ??
+			createUnit(0, "%")
 		);
 	}
 

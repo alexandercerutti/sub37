@@ -3,8 +3,10 @@
  */
 
 import { createUnit } from "../../../Unit.js";
+import type { Unit } from "../../../Unit.js";
 import type { Length } from "./length.js";
 import { isScalar } from "./length.js";
+import { getPixelScalarPercentageConversion } from "./pixel.js";
 import type { PixelScalar } from "./pixel.js";
 
 export type CellScalar = Length & { metric: "c" };
@@ -48,4 +50,27 @@ export function getCellScalarPixelConversion(
 
 export function isCellScalar(value: unknown): value is CellScalar {
 	return isScalar(value) && value.metric === "c";
+}
+
+/**
+ * Converts a cell scalar directly to a container-relative percentage.
+ * Combines the c -> px and px -> % for geometry properties, like extent,
+ * origin and position.
+ *
+ * @param axisExtent  The container dimension for this axis (px)
+ * @param cellProgressionResolution  Cell count for this axis (columns or rows)
+ * @param cellScalar  The cell length value to convert
+ */
+export function getCellScalarPercentageConversion(
+	axisExtent: PixelScalar,
+	cellProgressionResolution: number,
+	cellScalar: Length,
+): Unit<"%"> | null {
+	const px = getCellScalarPixelConversion(axisExtent, cellProgressionResolution, cellScalar);
+
+	if (!px) {
+		return null;
+	}
+
+	return getPixelScalarPercentageConversion(axisExtent.value, px);
 }

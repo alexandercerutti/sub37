@@ -99,6 +99,47 @@ describe("tts:extent", () => {
 			]);
 		});
 	});
+
+	describe("cell lengths (c unit)", () => {
+		/*
+		 * Cell size per axis:
+		 *   cell width  = containerWidth  / cellColumns = 640 / 32 = 20px  → 20 / 640 = 3.125%
+		 *   cell height = containerHeight / cellRows    = 480 / 15 = 32px  → 32 / 480 ≈ 6.667%
+		 */
+		it("converts c units to % via axis-aware cell size", () => {
+			expect(
+				toCSS("1c 1c", {
+					"tts:extent": "640px 480px",
+					"ttp:cellResolution": "32 15",
+				}),
+			).toEqual([
+				["width", "3.125%"],
+				["height", `${(100 * 32) / 480}%`],
+			]);
+		});
+
+		it("uses width axis for width and height axis for height", () => {
+			/*
+			 * 1920×1080, cellResolution 40×22
+			 *   width:  1920/40 = 48px  → 48/1920 = 2.5%
+			 *   height: 1080/22 ≈ 49.09px → ≈ 4.545%
+			 */
+			const result = toCSS("1c 1c", {
+				"tts:extent": "1920px 1080px",
+				"ttp:cellResolution": "40 22",
+			});
+
+			expect(parseFloat(result[0][1])).toBeCloseTo(2.5, 5);
+			expect(parseFloat(result[1][1])).toBeCloseTo((100 * (1080 / 22)) / 1080, 5);
+		});
+
+		it("falls back to 100% when document extent is absent", () => {
+			expect(toCSS("1c 1c")).toEqual([
+				["width", "100%"],
+				["height", "100%"],
+			]);
+		});
+	});
 });
 
 describe("tts:extent on <tt> (document coordinate space)", () => {

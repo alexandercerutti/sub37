@@ -320,3 +320,48 @@ describe("tts:position", () => {
 		});
 	});
 });
+
+describe("cell lengths (c unit) in tts:position", () => {
+	/*
+	 * Cell size per axis:
+	 *   cell width  = containerWidth  / cellColumns = 640 / 32 = 20px  → 20 / 640 = 3.125%
+	 *   cell height = containerHeight / cellRows    = 480 / 15 = 32px  → 32 / 480 ≈ 6.667%
+	 */
+	it("converts c units to % via axis-aware cell size", () => {
+		expect(
+			toCSS("1c 1c", {
+				"tts:extent": "640px 480px",
+				"ttp:cellResolution": "32 15",
+			}),
+		).toEqual([
+			["position", "absolute"],
+			["left", "3.125%"],
+			["top", `${(100 * 32) / 480}%`],
+		]);
+	});
+
+	it("uses width axis for left and height axis for top", () => {
+		/*
+		 * 1920×1080, cellResolution 40×22
+		 *   left: 1920/40 = 48px → 48/1920 = 2.5%
+		 *   top:  1080/22 ≈ 49.09px → ≈ 4.545%
+		 */
+		const result = toCSS("1c 1c", {
+			"tts:extent": "1920px 1080px",
+			"ttp:cellResolution": "40 22",
+		});
+
+		expect(parseFloat(result[1][1])).toBeCloseTo(2.5, 5);
+		expect(parseFloat(result[2][1])).toBeCloseTo((100 * (1080 / 22)) / 1080, 5);
+	});
+
+	it("passes the c value through when document extent is absent", () => {
+		/*
+		 * No document extent → can't convert to %. The raw c value is
+		 * passed through unchanged (semantically wrong but the best available fallback).
+		 */
+		const result = toCSS("1c 1c");
+		expect(result[1][1]).toBe("1c");
+		expect(result[2][1]).toBe("1c");
+	});
+});
