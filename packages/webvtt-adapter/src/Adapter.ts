@@ -2,7 +2,7 @@ import type { ParseGenerator, Region } from "@sub37/server";
 import { BaseAdapter, CueNode, Entities } from "@sub37/server";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
-import { MissingContentError } from "./MissingContentError.js";
+import { MissingContentError } from "@sub37/adapter-utils";
 import * as Parser from "./Parser/index.js";
 
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;

@@ -1,5 +1,5 @@
 import { BaseAdapter, CueNode, ParseGenerator } from "@sub37/server";
-import { MissingContentError } from "./MissingContentError.js";
+import { MissingContentError } from "@sub37/adapter-utils";
 import { Tokenizer } from "./Parser/Tokenizer.js";
 import { createScope } from "./Parser/Scope/Scope.js";
 import type { Scope, ContextFactory } from "./Parser/Scope/Scope.js";
