@@ -79,16 +79,26 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(typescript@6.0.2)(vite@5.4.21(@types/node@20.10.5))
 
-  packages/server: {}
+  packages/server:
+    dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
 
   packages/ttml-adapter:
     dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
       '@sub37/server':
         specifier: workspace:^
         version: link:../server
 
   packages/webvtt-adapter:
     dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
       '@sub37/server':
         specifier: workspace:*
         version: link:../server
