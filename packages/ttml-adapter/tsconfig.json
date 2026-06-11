@@ -7,6 +7,7 @@
 	},
 	"include": ["./src/**/*"],
 	"references": [
+		{ "path": "../adapter-utils/tsconfig.json" },
 		{ "path": "../server/tsconfig.json" }
 	]
 }
