@@ -1,10 +1,11 @@
-import type { Track, TrackRecord } from "./Track/index.js";
-import { BaseAdapter, AdapterNotExtendingPrototypeError } from "@sub37/adapter-utils";
+import { BaseAdapter } from "@sub37/adapter-utils";
 import type { BaseAdapterConstructor, ParseError, CueNode } from "@sub37/adapter-utils";
+import type { Track, TrackRecord } from "./Track/index.js";
 import { SessionTrack, DistributionSession } from "./DistributionSession.js";
 import { SuspendableTimer } from "./SuspendableTimer.js";
 import {
 	AdaptersMissingError,
+	AdapterNotExtendingPrototypeError,
 	NoAdaptersFoundError,
 	UnsupportedContentError,
 	OutOfRangeFrequencyError,

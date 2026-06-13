@@ -1,10 +1,10 @@
 // @ts-check
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
+import { BaseAdapter, ParseResult } from "@sub37/adapter-utils/BaseAdapter";
+import { AdapterNotOverridingSupportedTypesError } from "@sub37/adapter-utils/Errors";
 import { Server, Events } from "../lib/Server";
 import {
 	AdapterNotExtendingPrototypeError,
-	AdapterNotOverridingSupportedTypesError,
 	SessionNotInitializedError,
 } from "../lib/Errors/index.js";
 import { CueNode } from "../lib/CueNode";
@@ -88,7 +88,7 @@ describe("Server", () => {
 		const error = jest.spyOn(console, "error");
 
 		/**
-		 * @type {Array<import("../lib").BaseAdapterConstructor>}
+		 * @type {Array<import("@sub37/adapter-utils/BaseAdapter").BaseAdapterConstructor>}
 		 */
 
 		const adapters = [

@@ -1,4 +1,5 @@
 export * from "./AdaptersMissingError.js";
+export * from "./AdapterNotExtendingPrototypeError.js";
 export * from "./NoAdaptersFoundError.js";
 export * from "./UnsupportedContentError.js";
 export * from "./OutOfRangeFrequencyError.js";
