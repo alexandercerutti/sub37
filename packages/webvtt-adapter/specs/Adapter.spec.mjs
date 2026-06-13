@@ -1,11 +1,37 @@
 // @ts-check
-import { Entities, CueNode, BaseAdapter } from "@sub37/server";
-import { ParseResult } from "@sub37/server/lib/BaseAdapter/index.js";
+import { Entities, BaseAdapter, CueNode } from "@sub37/adapter-utils";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTAdapter from "../lib/Adapter.js";
-import { MissingContentError } from "../lib/MissingContentError.js";
+import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
 import { InvalidFormatError } from "../lib/InvalidFormatError.js";
-import { TagType } from "@sub37/server/lib/Entities/Tag.js";
+import { TagType } from "@sub37/adapter-utils/Entities";
+
+/**
+ * @param {import("@sub37/adapter-utils").ParseGenerator} generator
+ * @returns {{ data: import("@sub37/adapter-utils").CueNode[], errors: import("@sub37/adapter-utils").ParseError[] }}
+ */
+function collectParseResult(generator) {
+	const data = [];
+	const errors = [];
+	let result;
+	do {
+		result = generator.next();
+		if (!result.done && result.value) {
+			for (const item of result.value) {
+				if (item instanceof CueNode) {
+					data.push(item);
+				} else {
+					errors.push(item);
+				}
+			}
+		}
+	} while (!result.done);
+	/* Generator return value carries critical ParseError[] */
+	if (Array.isArray(result.value)) {
+		errors.push(...result.value);
+	}
+	return { data, errors };
+}
 
 describe("WebVTTAdapter", () => {
 	/** @type {WebVTTAdapter} */
@@ -21,43 +47,41 @@ describe("WebVTTAdapter", () => {
 
 	describe("parse", () => {
 		it("should return an empty ParseResult if rawContent is falsy", () => {
-			const emptyParseResult = BaseAdapter.ParseResult(
-				[],
-				[
+			const emptyParseResult = {
+				data: [],
+				errors: [
 					{
 						error: new MissingContentError(),
 						failedChunk: "",
 						isCritical: true,
 					},
 				],
-			);
+			};
 
 			// @ts-expect-error
-			expect(adapter.parse(undefined)).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(undefined))).toEqual(emptyParseResult);
 			// @ts-expect-error
-			expect(adapter.parse(null)).toEqual(emptyParseResult);
-			expect(adapter.parse("")).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(null))).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(""))).toEqual(emptyParseResult);
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
 			// @ts-expect-error
-			expect(adapter.parse(true)).toBeInstanceOf(ParseResult);
+			expect(collectParseResult(adapter.parse(true)).data.length).toBe(0);
 			// @ts-expect-error
-			expect(adapter.parse(true).data.length).toBe(0);
+			expect(collectParseResult(adapter.parse(true)).errors.length).toBe(1);
 			// @ts-expect-error
-			expect(adapter.parse(true).errors.length).toBe(1);
-			// @ts-expect-error
-			expect(adapter.parse(true).errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse(true)).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 			// @ts-expect-error
-			expect(adapter.parse(true).errors[0].isCritical).toBe(true);
+			expect(collectParseResult(adapter.parse(true)).errors[0].isCritical).toBe(true);
 
 			// @ts-expect-error
-			expect(adapter.parse(10).errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse(10)).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
-			expect(adapter.parse("Look, a phoenix!").errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse("Look, a phoenix!")).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 		});
@@ -76,7 +100,7 @@ Never drink liquid nitrogen.
 00:00:10.000 --> 00:00:14.000
 The Organisation for Sample Public Service Announcements accepts no liability for the content of this advertisement, or for the consequences of any actions taken on the basis of the information provided.`;
 
-			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
 
 			expect(parseResult.data[2]).toBeTruthy();
 			expect(parseResult.data[2].content).toBe(
@@ -97,7 +121,7 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 — It will perforate your stomach.
 — You could die.`;
 
-			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
 
 			expect(parseResult.data.length).toBe(2);
 			expect(parseResult.data[0].startTime).toBe(1000);
@@ -120,7 +144,7 @@ This cue should never appear, right?
 ...Right?
 `;
 
-			const result = adapter.parse(SAME_START_END_TIMES_CONTENT);
+			const result = collectParseResult(adapter.parse(SAME_START_END_TIMES_CONTENT));
 			expect(result.data.length).toEqual(2);
 
 			expect(result.data[0].startTime).toEqual(6000);
@@ -156,7 +180,7 @@ id1
 <00:00:08.500> Test t2
 `;
 
-			const result = adapter.parse(SAME_IDS_CONTENT);
+			const result = collectParseResult(adapter.parse(SAME_IDS_CONTENT));
 			expect(result.data.length).toEqual(4);
 
 			expect(result.data[0].id).toEqual("id1");
@@ -186,8 +210,7 @@ WEBVTT
 00:00:00.000 --> 00:00:20.000 region:fred align:left
 <lang.mimmo en-US>Hi, my name is Fred</lang>`;
 
-			const parsingResult = adapter.parse(CLASSIC_CONTENT);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
+			const parsingResult = collectParseResult(adapter.parse(CLASSIC_CONTENT));
 			expect(parsingResult.data.length).toEqual(2);
 
 			expect(parsingResult.data[0]).toMatchObject({
@@ -197,7 +220,7 @@ WEBVTT
 				id: "cue-9-108",
 
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 98,
@@ -217,7 +240,7 @@ WEBVTT
 				id: "cue-110-207",
 
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 98,
@@ -243,8 +266,7 @@ WEBVTT
 <00:00:24.000>
 			`;
 
-			const parsingResult = adapter.parse(TIMESTAMPS_CUES_CONTENT);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
+			const parsingResult = collectParseResult(adapter.parse(TIMESTAMPS_CUES_CONTENT));
 			expect(parsingResult.data.length).toEqual(4);
 
 			expect(parsingResult.data[0]).toMatchObject({
@@ -253,7 +275,7 @@ WEBVTT
 				content: "This",
 				id: "cue-9-180",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -271,7 +293,7 @@ WEBVTT
 				content: "can",
 				id: "cue-9-180",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -292,8 +314,7 @@ WEBVTT
 <ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
 			`;
 
-			const parsingResult = adapter.parse(RUBY_RT_AUTOCLOSE);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
+			const parsingResult = collectParseResult(adapter.parse(RUBY_RT_AUTOCLOSE));
 			expect(parsingResult.data.length).toEqual(4);
 
 			expect(parsingResult.data[0]).toMatchObject({
@@ -302,7 +323,7 @@ WEBVTT
 				content: "漢 ",
 				id: "cue-9-79",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -320,7 +341,7 @@ WEBVTT
 				content: "kan",
 				id: "cue-9-79",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -340,7 +361,7 @@ WEBVTT
 				content: " 字 ",
 				id: "cue-9-79",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -357,7 +378,7 @@ WEBVTT
 				content: "ji",
 				id: "cue-9-79",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -390,7 +411,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 `;
 
-			const parsingResult = adapter.parse(REGION_WITH_ATTRIBUTES);
+			const parsingResult = collectParseResult(adapter.parse(REGION_WITH_ATTRIBUTES));
 
 			expect(parsingResult.data[0]).toMatchObject({
 				content:
@@ -400,7 +421,7 @@ Alberto, come to look at Marcello!
 				entities: [],
 				id: "cue-97-226",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -433,7 +454,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult = adapter.parse(CUE_WITH_STYLE_WITHOUT_ID);
+					const parsingResult = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITHOUT_ID));
 
 					const content =
 						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
@@ -449,7 +470,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "cue-53-187",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -484,7 +505,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID));
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content,
@@ -497,7 +518,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -527,7 +548,7 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
+					const parsingResult2 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID));
 
 					expect(parsingResult2.data[0]).toMatchObject({
 						content,
@@ -540,7 +561,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "123",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -571,7 +592,7 @@ STYLE
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG));
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content: "Mamma mia, Marcello",
@@ -585,7 +606,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "cue-103-244",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -603,7 +624,7 @@ Alberto, come to look at Marcello!
 						entities: [],
 						id: "cue-103-244",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -635,7 +656,7 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG));
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content: "Mamma mia, Marcello",
@@ -652,7 +673,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -674,7 +695,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -709,7 +730,9 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
+					const parsingResult1 = collectParseResult(
+						adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES),
+					);
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content,
@@ -721,7 +744,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -756,7 +779,9 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
+					const parsingResult2 = collectParseResult(
+						adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES),
+					);
 
 					expect(parsingResult2.data[0]).toMatchObject({
 						content,
@@ -773,7 +798,7 @@ Alberto, come to look at Marcello!
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -802,7 +827,7 @@ STYLE
 <v Bill>Hi, I’m Bill
 `;
 
-				const parsingResult = adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR);
+				const parsingResult = collectParseResult(adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR));
 
 				for (let i = 0; i < parsingResult.data.length; i++) {
 					const entities = parsingResult.data[i].entities;

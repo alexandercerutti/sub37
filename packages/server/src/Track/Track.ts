@@ -1,9 +1,8 @@
-import type { BaseAdapter, ParseError } from "../BaseAdapter";
-import type { CueNode } from "../CueNode";
+import type { BaseAdapter, ParseError, CueNode } from "@sub37/adapter-utils";
 import type { SessionTrack } from "../DistributionSession";
 import type { TrackRecord } from "./TrackRecord";
 import { appendChunkToTrack } from "./appendChunkToTrack";
-import { IntervalBinaryTree } from "../IntervalBinaryTree";
+import { IntervalBinaryLeaf, IntervalBinaryTree } from "../IntervalBinaryTree";
 
 export const addCuesSymbol = Symbol("track.addcues");
 
@@ -35,7 +34,10 @@ export default class Track implements Omit<TrackRecord, "content"> {
 
 	public [addCuesSymbol](...cues: CueNode[]): void {
 		for (const cue of cues) {
-			this.timeline.addNode(cue);
+			this.timeline.addNode(
+				//
+				convertCueNodeToLeaf(cue),
+			);
 		}
 	}
 
@@ -50,4 +52,19 @@ export default class Track implements Omit<TrackRecord, "content"> {
 	public getAdapterName(): string {
 		return this.adapter.toString();
 	}
+}
+
+function convertCueNodeToLeaf(cueNode: CueNode): IntervalBinaryLeaf<CueNode> {
+	return {
+		left: null,
+		right: null,
+		node: cueNode,
+		max: cueNode.endTime,
+		get low() {
+			return this.node.startTime;
+		},
+		get high() {
+			return this.node.endTime;
+		},
+	};
 }

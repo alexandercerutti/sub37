@@ -1,4 +1,4 @@
-import { AdapterNotOverridingSupportedTypesError } from "../Errors/index.js";
+import { AdapterNotOverridingSupportedTypesError } from "../Errors/AdapterNotOverridingSupportedTypesError.js";
 import type { ParseGenerator } from "./outcome.js";
 
 export interface BaseAdapterConstructor {

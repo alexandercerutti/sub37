@@ -1,6 +1,6 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
-import { TagType } from "@sub37/server/lib/Entities/Tag.js";
+import { TagType } from "@sub37/adapter-utils/lib/Entities/Tag.js";
 import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
 import { WebVTTRenderingModifiers } from "../lib/Parser/RenderingModifiers.js";
 import { InvalidStyleDeclarationError } from "../lib/InvalidStyleDeclarationError.js";

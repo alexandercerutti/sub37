@@ -1,10 +1,10 @@
-import { Entities } from "@sub37/server";
+import type { AnimationEntity } from "@sub37/adapter-utils/Entities";
 
 function toAnimationName(id: string): string {
 	return `s37-${id.replace(/[^a-zA-Z0-9-_]/g, "-")}`;
 }
 
-function buildKeyframesRule(animation: Entities.AnimationEntity): string {
+function buildKeyframesRule(animation: AnimationEntity): string {
 	const name = toAnimationName(animation.id);
 
 	return `
@@ -14,7 +14,7 @@ function buildKeyframesRule(animation: Entities.AnimationEntity): string {
 `;
 }
 
-function generateKeyFrames(animation: Entities.AnimationEntity): string {
+function generateKeyFrames(animation: AnimationEntity): string {
 	const { keyTimes, styles } = animation;
 
 	let css = "";
@@ -57,7 +57,7 @@ function getStylesForKeyframe(styles: Record<string, string[]>, keyframeIndex: n
 	return css;
 }
 
-function getTimingFunction(animation: Entities.AnimationEntity, currentKeyTime: number): string {
+function getTimingFunction(animation: AnimationEntity, currentKeyTime: number): string {
 	const isContinuous = animation.kind === "continuous";
 
 	if (isContinuous) {
@@ -68,7 +68,7 @@ function getTimingFunction(animation: Entities.AnimationEntity, currentKeyTime: 
 }
 
 function getContinuousTimingFunction(
-	spline: (Entities.AnimationEntity & { kind: "continuous" })["splines"][number],
+	spline: (AnimationEntity & { kind: "continuous" })["splines"][number],
 ): string {
 	const [x1, y1, x2, y2] = spline;
 	return `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
@@ -78,11 +78,11 @@ function getDiscreteTimingFunction(): string {
 	return "steps(1, start)";
 }
 
-export function buildKeyframesCSS(animations: Entities.AnimationEntity[]): string {
+export function buildKeyframesCSS(animations: AnimationEntity[]): string {
 	return animations.map(buildKeyframesRule).join("\n");
 }
 
-export function buildAnimationShorthand(animation: Entities.AnimationEntity): string {
+export function buildAnimationShorthand(animation: AnimationEntity): string {
 	const name = toAnimationName(animation.id);
 	const easing =
 		animation.kind === "discrete"
@@ -111,7 +111,7 @@ export function buildAnimationShorthand(animation: Entities.AnimationEntity): st
 	return `${name} ${duration} ${easing} ${delay} ${iterationCount} ${direction} ${fillMode}`;
 }
 
-export function buildAnimationSheet(animation: Entities.AnimationEntity): CSSStyleSheet {
+export function buildAnimationSheet(animation: AnimationEntity): CSSStyleSheet {
 	const sheet = new CSSStyleSheet();
 	sheet.insertRule(buildKeyframesRule(animation));
 	return sheet;

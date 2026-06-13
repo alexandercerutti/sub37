@@ -1,4 +1,4 @@
-import type { RenderingModifiers } from "@sub37/server";
+import type { RenderingModifiers } from "@sub37/adapter-utils/RenderingModifiers";
 
 // const GROWING_LEFT = "rl";
 // type GROWING_LEFT = typeof GROWING_LEFT;

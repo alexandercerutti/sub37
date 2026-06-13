@@ -1,4 +1,4 @@
-import { CueNode, Entities, Region } from "@sub37/server";
+import { CueNode, Entities, Region } from "@sub37/adapter-utils";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";

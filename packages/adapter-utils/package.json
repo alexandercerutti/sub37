@@ -21,5 +21,35 @@
 	"homepage": "https://github.com/alexandercerutti/sub37#readme",
 	"files": [
 		"lib/**/*.+(js|d.ts)!(*.map)"
-	]
+	],
+	"exports": {
+		".": {
+			"default": "./lib/index.js",
+			"types": "./lib/index.d.ts"
+		},
+		"./MissingContentError": {
+			"default": "./lib/MissingContentError.js",
+			"types": "./lib/MissingContentError.d.ts"
+		},
+		"./CueNode": {
+			"default": "./lib/CueNode.js",
+			"types": "./lib/CudeNode.d.ts"
+		},
+		"./Entities": {
+			"default": "./lib/Entities/index.js",
+			"types": "./lib/Entities/index.d.ts"
+		},
+		"./RenderingModifiers": {
+			"default": "./lib/RenderingModifiers.js",
+			"types": "./lib/RenderingModifiers.d.ts"
+		},
+		"./Errors": {
+			"default": "./lib/Errors/index.js",
+			"types": "./lib/Errors/index.d.ts"
+		},
+		"./BaseAdapter": {
+			"default": "./lib/BaseAdapter.js",
+			"types": "./lib/BaseAdapter.d.ts"
+		}
+	}
 }

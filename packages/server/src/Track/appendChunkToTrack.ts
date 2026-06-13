@@ -1,5 +1,5 @@
-import type { BaseAdapter, ParseGenerator } from "../BaseAdapter/index.js";
-import { CueNode } from "../CueNode.js";
+import type { BaseAdapter, ParseGenerator } from "@sub37/adapter-utils";
+import { CueNode } from "@sub37/adapter-utils/CueNode";
 import {
 	UncaughtParsingExceptionError,
 	UnexpectedDataFormatError,

@@ -1,4 +1,4 @@
-import { CueNode } from "../CueNode";
+import { CueNode } from "../CueNode.js";
 
 export type ParseGenerator = Generator<CueNode[] | ParseError[], void | ParseError[], unknown>;
 

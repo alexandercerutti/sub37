@@ -1,4 +1,4 @@
-import { Entities } from "@sub37/server";
+import * as Entities from "@sub37/adapter-utils/Entities";
 import { buildAnimationSheet, buildAnimationShorthand } from "./animationCSS.js";
 
 class Sub37Region extends HTMLElement {

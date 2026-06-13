@@ -1,10 +1,10 @@
 // @ts-check
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
-import { CueNode } from "../lib/CueNode.js";
+import { CueNode } from "@sub37/adapter-utils/CueNode";
 
 describe("IntervalBinaryTree", () => {
-	/** @type {IntervalBinaryTree} */
+	/** @type {IntervalBinaryTree<CueNode>} */
 	let tree;
 
 	beforeEach(() => {

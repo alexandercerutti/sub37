@@ -1,4 +1,6 @@
-import { CueNode, RenderingModifiers, Events, Server, ParseError } from "@sub37/server";
+import { Events } from "@sub37/server";
+import type { Server } from "@sub37/server";
+import type { ParseError, CueNode, RenderingModifiers } from "@sub37/adapter-utils";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,

@@ -2,8 +2,7 @@ import { expect } from "@playwright/test";
 import { RendererFixture as test } from "./RendererFixture.js";
 import type { Server } from "@sub37/server";
 import type { CaptionsRenderer } from "../lib/index.js";
-import type { Region } from "@sub37/server";
-import type { CueNode } from "@sub37/server";
+import type { Region, CueNode } from "@sub37/adapter-utils";
 
 declare global {
 	/**

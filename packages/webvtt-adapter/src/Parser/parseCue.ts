@@ -1,4 +1,4 @@
-import type { Entities, RenderingModifiers } from "@sub37/server";
+import type { Entities, RenderingModifiers } from "@sub37/adapter-utils";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";

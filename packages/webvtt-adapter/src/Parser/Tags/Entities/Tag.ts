@@ -6,7 +6,7 @@
  * with styles
  */
 
-import { Entities } from "@sub37/server";
+import * as Entities from "@sub37/adapter-utils/Entities";
 
 const WebVTTEntities = {
 	b: Entities.TagType.BOLD,

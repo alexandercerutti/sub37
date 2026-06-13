@@ -1,5 +1,5 @@
-import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
-import { Entities } from "@sub37/server";
+import type { CueNode, Region, RenderingModifiers } from "@sub37/adapter-utils";
+import { Entities } from "@sub37/adapter-utils";
 import { CSSVAR_TEXT_COLOR } from "./constants";
 import { buildKeyframesCSS, buildAnimationShorthand } from "./animationCSS.js";
 import type { Sub37Region } from "./RegionElement.js";

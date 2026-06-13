@@ -18,7 +18,7 @@ function toCSS(input, documentAttributes = {}) {
 	const scope = createScope(
 		undefined,
 		createDocumentContext(new NodeTree(), { "xml:lang": "", ...documentAttributes }),
-		createErrorContext({ onReport() {} }),
+		createErrorContext(),
 	);
 
 	return def.toCSS(scope, parseAttributeValue(def.syntax, input), "region");
@@ -351,8 +351,14 @@ describe("cell lengths (c unit) in tts:position", () => {
 			"ttp:cellResolution": "40 22",
 		});
 
-		expect(parseFloat(result[1][1])).toBeCloseTo(2.5, 5);
-		expect(parseFloat(result[2][1])).toBeCloseTo((100 * (1080 / 22)) / 1080, 5);
+		expect(parseFloat(/** @type {NonNullable<typeof result>} */ (result)[1][1])).toBeCloseTo(
+			2.5,
+			5,
+		);
+		expect(parseFloat(/** @type {NonNullable<typeof result>} */ (result)[2][1])).toBeCloseTo(
+			(100 * (1080 / 22)) / 1080,
+			5,
+		);
 	});
 
 	it("passes the c value through when document extent is absent", () => {
@@ -361,7 +367,7 @@ describe("cell lengths (c unit) in tts:position", () => {
 		 * passed through unchanged (semantically wrong but the best available fallback).
 		 */
 		const result = toCSS("1c 1c");
-		expect(result[1][1]).toBe("1c");
-		expect(result[2][1]).toBe("1c");
+		expect(/** @type {NonNullable<typeof result>} */ (result)[1][1]).toBe("1c");
+		expect(/** @type {NonNullable<typeof result>} */ (result)[2][1]).toBe("1c");
 	});
 });

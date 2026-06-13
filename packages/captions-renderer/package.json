@@ -6,6 +6,7 @@
 	"module": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
+		"@sub37/adapter-utils": "workspace:*",
 		"@sub37/server": "workspace:*"
 	},
 	"scripts": {

@@ -15,22 +15,16 @@ export interface IntervalBinaryLeaf<LeafShape extends object> {
 	get high(): number;
 }
 
-export interface Leafable<LeafShape extends object> {
-	toLeaf(): IntervalBinaryLeaf<LeafShape>;
-}
-
 export class IntervalBinaryTree<LeafShape extends object> {
 	private root: IntervalBinaryLeaf<LeafShape> | null = null;
 
-	public addNode(newNode: Leafable<LeafShape> | IntervalBinaryLeaf<LeafShape>): void {
-		const nextTreeNode = isLeafable(newNode) ? newNode.toLeaf() : newNode;
-
+	public addNode(newNode: IntervalBinaryLeaf<LeafShape>): void {
 		if (!this.root) {
-			this.root = nextTreeNode;
+			this.root = newNode;
 			return;
 		}
 
-		insert(this.root, nextTreeNode);
+		insert(this.root, newNode);
 	}
 
 	/**
@@ -160,8 +154,4 @@ function findAllInSubtree<LeafShape extends object>(
 	}
 
 	return [...findAllInSubtree(root.left), root.node, ...findAllInSubtree(root.right)];
-}
-
-function isLeafable(node: unknown): node is Leafable<object> {
-	return typeof (node as Leafable<object>).toLeaf === "function";
 }

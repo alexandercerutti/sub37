@@ -18,7 +18,7 @@ function toCSS(input, documentAttributes = {}) {
 	const scope = createScope(
 		undefined,
 		createDocumentContext(new NodeTree(), { "xml:lang": "", ...documentAttributes }),
-		createErrorContext({ onReport() {} }),
+		createErrorContext(),
 	);
 
 	return def.toCSS(scope, parseAttributeValue(def.syntax, input), "region");

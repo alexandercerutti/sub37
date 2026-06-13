@@ -1,4 +1,4 @@
-import type { Entities, Region } from "@sub37/server";
+import type { Entities, Region } from "@sub37/adapter-utils";
 
 /**
  * @param rawRegionData

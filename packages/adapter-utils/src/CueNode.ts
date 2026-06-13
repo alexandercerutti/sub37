@@ -1,7 +1,6 @@
-import type * as Entities from "./Entities";
-import type { IntervalBinaryLeaf, Leafable } from "./IntervalBinaryTree";
-import type { Region } from "./Region";
-import type { RenderingModifiers } from "./RenderingModifiers";
+import type * as Entities from "./Entities/index.js";
+import type { Region } from "./Region.js";
+import type { RenderingModifiers } from "./RenderingModifiers.js";
 
 const entitiesSymbol = Symbol("sub37.entities");
 const regionSymbol = Symbol("sub37.region");
@@ -16,7 +15,7 @@ interface CueProps {
 	region?: Region;
 }
 
-export class CueNode implements CueProps, Leafable<CueNode> {
+export class CueNode implements CueProps {
 	static from(cueNode: CueNode | undefined, data: CueProps): CueNode {
 		if (!cueNode) {
 			return new CueNode(data);
@@ -75,25 +74,5 @@ export class CueNode implements CueProps, Leafable<CueNode> {
 
 	public get region(): Region | undefined {
 		return this[regionSymbol];
-	}
-
-	/**
-	 * Method to convert it to an IntervalBinaryTree
-	 * @returns
-	 */
-
-	public toLeaf(): IntervalBinaryLeaf<CueNode> {
-		return {
-			left: null,
-			right: null,
-			node: this,
-			max: this.endTime,
-			get low() {
-				return this.node.startTime;
-			},
-			get high() {
-				return this.node.endTime;
-			},
-		};
 	}
 }

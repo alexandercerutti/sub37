@@ -1,5 +1,5 @@
-import type { Region } from "@sub37/server";
-import { Entities } from "@sub37/server";
+import * as Entities from "@sub37/adapter-utils/Entities";
+import type { Region } from "@sub37/adapter-utils";
 import { NodeWithRelationship } from "../Tags/NodeTree.js";
 import type { Token } from "../Token.js";
 import { isAnimateOrSetElement, nodeScopeSymbol } from "../../Adapter.js";

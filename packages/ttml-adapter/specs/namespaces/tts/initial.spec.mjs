@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { Entities } from "@sub37/server";
+import { Entities } from "@sub37/adapter-utils";
 import TTMLAdapter from "../../../lib/Adapter.js";
 
 /**

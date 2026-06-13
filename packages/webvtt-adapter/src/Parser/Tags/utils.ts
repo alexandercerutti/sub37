@@ -1,4 +1,4 @@
-import { Entities } from "@sub37/server";
+import { Entities } from "@sub37/adapter-utils";
 import { createTagEntity } from "./Entities/Tag.js";
 import type { CueParsedData } from "../parseCue.js";
 import type Node from "./Node.js";
