@@ -93,18 +93,12 @@ importers:
       '@sub37/adapter-utils':
         specifier: workspace:^
         version: link:../adapter-utils
-      '@sub37/server':
-        specifier: workspace:^
-        version: link:../server
 
   packages/webvtt-adapter:
     dependencies:
       '@sub37/adapter-utils':
         specifier: workspace:^
         version: link:../adapter-utils
-      '@sub37/server':
-        specifier: workspace:*
-        version: link:../server
 
 packages:
 

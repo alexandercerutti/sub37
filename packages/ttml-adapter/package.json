@@ -5,8 +5,7 @@
 	"main": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
-		"@sub37/adapter-utils": "workspace:^",
-		"@sub37/server": "workspace:^"
+		"@sub37/adapter-utils": "workspace:^"
 	},
 	"scripts": {
 		"build": "rm -rf lib && pnpm tsc --build --force",
