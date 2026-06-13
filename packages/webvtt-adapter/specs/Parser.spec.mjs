@@ -1,6 +1,5 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
-import { TagType } from "@sub37/adapter-utils/lib/Entities/Tag.js";
 import { parseCue, parseRegion, parseStyle } from "../lib/Parser/index.js";
 import { WebVTTRenderingModifiers } from "../lib/Parser/RenderingModifiers.js";
 import { InvalidStyleDeclarationError } from "../lib/InvalidStyleDeclarationError.js";
@@ -48,7 +47,7 @@ WEBVTT
 						},
 					],
 					/**
-					 * @type {import("@sub37/server").RenderingModifiers}
+					 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 					 */
 					renderingModifiers: {
 						id: 98,
@@ -90,7 +89,7 @@ WEBVTT
 				text: "Welcome Liquicity Airlines\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -108,7 +107,7 @@ WEBVTT
 				text: " Our destination: the galaxy of dreams\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -126,7 +125,7 @@ WEBVTT
 				text: " (Our destination: the galaxy of dreams)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -144,7 +143,7 @@ WEBVTT
 				text: " Estimated Time of Arrival: unknown\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -162,7 +161,7 @@ WEBVTT
 				text: " Please fasten your seatbelt\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -180,7 +179,7 @@ WEBVTT
 				text: " And get ready to take off\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -198,7 +197,7 @@ WEBVTT
 				text: " (Please fasten your seatbelt)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -216,7 +215,7 @@ WEBVTT
 				text: " (And get ready to take off)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -249,7 +248,7 @@ WEBVTT
 				text: "Welcome to the galaxy of dreams",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
