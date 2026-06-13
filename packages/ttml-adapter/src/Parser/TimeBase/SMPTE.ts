@@ -76,7 +76,7 @@ export function getMillisecondsByClockTime(
  */
 
 export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
-	throw new Error("WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.");
+	throw new InvalidSMPTETimeBaseWallClockTimeUsage();
 }
 
 /**
@@ -88,9 +88,7 @@ export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
  */
 
 export function getMillisecondsByOffsetTime(_match: OffsetTimeUnit): number {
-	throw new Error(
-		"OffsetTime is not supported when using SMPTE as 'ttp:timeBase' as deprecated in TTML standard.",
-	);
+	throw new InvalidSMPTETimeBaseOffsetTimeUsage();
 }
 
 /**
@@ -289,4 +287,23 @@ function getDropFrames(
 
 	// nonDrop mode
 	return 0;
+}
+
+class InvalidSMPTETimeBaseWallClockTimeUsage extends Error {
+	constructor() {
+		super();
+
+		this.name = "InvalidSMPTETimeBaseWallClockTimeUsage";
+		this.message = "WallClockTime is not supported when using SMPTE as 'ttp:timeBase'.";
+	}
+}
+
+class InvalidSMPTETimeBaseOffsetTimeUsage extends Error {
+	constructor() {
+		super();
+
+		this.name = "InvalidSMPTETimeBaseOffsetTimeUsage";
+		this.message =
+			"OffsetTime is not supported when using SMPTE as 'ttp:timeBase' as deprecated in TTML standard.";
+	}
 }

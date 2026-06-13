@@ -1,3 +1,4 @@
+import { AdapterNotOverridingParseGeneratorError } from "../Errors/AdapterNotOverridingParseGeneratorError.js";
 import { AdapterNotOverridingSupportedTypesError } from "../Errors/AdapterNotOverridingSupportedTypesError.js";
 import type { ParseGenerator } from "./outcome.js";
 
@@ -52,8 +53,6 @@ export const BaseAdapter: BaseAdapterConstructor = class BaseAdapter implements 
 	 */
 
 	public *parse(_rawContent: unknown): ParseGenerator {
-		throw new Error(
-			"Adapter doesn't override parse method. Can't parse the content. Track will have no cues.",
-		);
+		throw new AdapterNotOverridingParseGeneratorError(this.toString());
 	}
 };

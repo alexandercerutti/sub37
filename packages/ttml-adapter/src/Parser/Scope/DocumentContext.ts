@@ -47,9 +47,7 @@ export function createDocumentContext(
 ): ContextFactory<DocumentContext> {
 	return function (scope: Scope) {
 		if (typeof rawAttributes["xml:lang"] === "undefined") {
-			throw new Error(
-				"Document failed to parse: <tt> element is lacking of 'xml:lang' attribute. The attribute is required, even if empty.",
-			);
+			throw new MissingDocumentLanguageError();
 		}
 
 		const attributes = parseDocumentSupportedAttributes(rawAttributes, scope);
@@ -61,9 +59,7 @@ export function createDocumentContext(
 				return rawAttributes;
 			},
 			[onMergeSymbol](_incomingContext) {
-				throw new Error(
-					"A document context is already existing. One document (context) can exists per TTML track. Merging is not allowed",
-				);
+				throw new DuplicateDocumentContextError();
 			},
 			attributes,
 			get currentNode(): NodeWithRelationship<Token & NodeWithScope> {
@@ -399,5 +395,25 @@ function getDocumentExtentResolvedValue(
 		errorContext.report(err instanceof Error ? err : new Error(String(err)), false);
 
 		return undefined;
+	}
+}
+
+class DuplicateDocumentContextError extends Error {
+	constructor() {
+		super();
+
+		this.name = "DuplicateDocumentContextError";
+		this.message =
+			"A document context (<tt>) is already existing. One context can exists per TTML track. Merging is not allowed.";
+	}
+}
+
+class MissingDocumentLanguageError extends Error {
+	constructor() {
+		super();
+
+		this.name = "MissingDocumentLanguageError";
+		this.message =
+			"Document failed to parse: <tt> element is lacking of 'xml:lang' attribute. The attribute is required, even if empty.";
 	}
 }

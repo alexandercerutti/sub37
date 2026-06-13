@@ -32,9 +32,7 @@ function createOffsetTimeUnit(match: MatchedOffsetTime): OffsetTimeUnit {
 
 function assertRecognizedMetric(metric: string): asserts metric is OffsetTimeUnit["metric"] {
 	if (!["h", "m", "s", "ms", "f", "t"].includes(metric)) {
-		throw new Error(
-			`Metric not supported. Expected one of ["h" | "m" | "s" | "ms" | "f" | "t"], but received '${metric}'`,
-		);
+		throw new UnsupportedOffsetTimeMetricError(metric);
 	}
 }
 
@@ -50,4 +48,13 @@ export function matchOffsetTimeExpression(content: string): OffsetTimeUnit | nul
 	}
 
 	return createOffsetTimeUnit(match);
+}
+
+class UnsupportedOffsetTimeMetricError extends Error {
+	constructor(metric: string) {
+		super();
+
+		this.name = "UnsupportedOffsetTimeMetricError";
+		this.message = `The metric '${metric}' is not supported for offset time expressions. Supported metrics are: "h", "m", "s", "ms", "f", and "t".`;
+	}
 }

@@ -89,9 +89,7 @@ export function getMillisecondsByOffsetTime(
 		 * @see https://w3c.github.io/ttml2/#time-expression-semantics-clock
 		 */
 
-		throw new Error(
-			`Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics does not apply. Received "${timeCount}${metric}".`,
-		);
+		throw new NotAllowedClockTimeBaseFrameMetric(timeCount, metric);
 	}
 
 	if (metric === "ms") {
@@ -124,9 +122,7 @@ function assertClockTimeWithoutFrames(frames: number | undefined): asserts frame
 		return;
 	}
 
-	throw new Error(
-		`Cannot convert clock-time in milliseconds with Clock Time Base: 'frames' field is not allowed (received: '${frames}').`,
-	);
+	throw new InvalidClockTimeBaseFramesProvided(frames);
 }
 
 /**
@@ -146,7 +142,23 @@ function assertClockTimeWithoutSubframes(
 		return;
 	}
 
-	throw new Error(
-		`Cannot convert clock-time in milliseconds with Clock Time Base: 'subframes' field is not allowed (received: '${subframes}').`,
-	);
+	throw new InvalidClockTimeBaseFramesProvided(subframes);
+}
+
+class InvalidClockTimeBaseFramesProvided extends Error {
+	constructor(value: number) {
+		super();
+
+		this.name = "InvalidClockTimeBaseFramesProvided";
+		this.message = `Cannot convert clock-time in milliseconds with Clock Time Base: 'frames' and 'subframes' fields are not allowed. Received: '${value}'.`;
+	}
+}
+
+class NotAllowedClockTimeBaseFrameMetric extends Error {
+	constructor(timeCount: number, metric: string) {
+		super();
+
+		this.name = "NotAllowedClockTimeBaseFrameMetric";
+		this.message = `Cannot get milliseconds from offset-time when ttp:timeBase is 'clock'. Frame metrics does not apply. Received '${timeCount}${metric}'.`;
+	}
 }

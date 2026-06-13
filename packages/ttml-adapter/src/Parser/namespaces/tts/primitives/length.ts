@@ -51,9 +51,7 @@ export function toLength(value: string): Length | null {
 	}
 
 	if (!match[1] || !match[2]) {
-		throw new Error(
-			"Cannot create a length representation: malformed length string (missing unit or value).",
-		);
+		throw new InvalidLengthConversionError(value);
 	}
 
 	if (!(isPercentageUnit(match[2]) || isScalarUnit(match[2]))) {
@@ -105,4 +103,13 @@ export function subtract<L extends Length | DeferredLengthSubtraction>(a: L, b: 
 	}
 
 	return createUnit(a.value - b.value, a.metric) as L;
+}
+
+class InvalidLengthConversionError extends Error {
+	constructor(value: string) {
+		super();
+
+		this.name = "InvalidLengthConversionError";
+		this.message = `Cannot create a length representation: malformed length string (missing unit or value). Received: '${value}'.`;
+	}
 }

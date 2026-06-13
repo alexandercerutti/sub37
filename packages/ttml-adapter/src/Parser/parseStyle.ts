@@ -126,9 +126,6 @@ function createAttributeDefinition<
 				}
 
 				try {
-					/**
-					 * Should this be cached?
-					 */
 					return parseAttributeValue(syntax, defaultValue);
 				} catch (err) {
 					throw new Error(

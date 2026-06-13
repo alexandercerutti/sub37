@@ -78,9 +78,7 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 
 		if (isRejected(tokenDerivationResult)) {
 			// A token couldn't be derived, skip entire attribute
-			throw new Error(
-				`Can't parse attribute value ${value} according to syntax ${syntaxName}: token ${token} couldn't be derived`,
-			);
+			throw new StyleParsingUnrecognizedTokenError(value, syntaxName, token);
 		}
 
 		if (isDerived(tokenDerivationResult)) {
@@ -90,10 +88,7 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 		}
 
 		if (tokens.length > 0) {
-			// Derivation finished (done) but there are still tokens left, skip entire attribute
-			throw new Error(
-				`Can't parse attribute value ${value} according to syntax ${syntaxName}: extra tokens found after derivation finished`,
-			);
+			throw new StyleParsingExcessTokensError(value, syntaxName);
 		}
 
 		collectedValues = collectedValues.concat(tokenDerivationResult.values);
@@ -101,4 +96,22 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 
 	// Safe casting, but typescript cannot hold the reference.
 	return collectedValues as InferDerivableValue<Syntax["Grammar"]>;
+}
+
+class StyleParsingExcessTokensError extends Error {
+	constructor(value: string, syntaxName: string) {
+		super();
+
+		this.name = "StyleParsingExcessTokensError";
+		this.message = `Can't parse attribute value '${value}' according to syntax '${syntaxName}': extra unknown tokens found after parsing succeeded correctly. The whole attribute is ignored.`;
+	}
+}
+
+class StyleParsingUnrecognizedTokenError extends Error {
+	constructor(value: string, syntaxName: string, token: string) {
+		super();
+
+		this.name = "StyleParsingUnrecognizedTokenError";
+		this.message = `Can't parse attribute value '${value}' according to syntax '${syntaxName}': unrecognized token '${token}' found. The whole attribute is ignored.`;
+	}
 }

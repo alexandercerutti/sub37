@@ -368,11 +368,14 @@ function parseTimeString(
 		}
 	}
 
-	/**
-	 * @TODO improve error type here
-	 */
+	throw new UnrecognizedTimeFormatError(timeString);
+}
 
-	throw new Error(
-		"Time format didn't match any supported format (ClockTime, OffsetTime or WallClock);",
-	);
+class UnrecognizedTimeFormatError extends Error {
+	constructor(value: string) {
+		super();
+
+		this.name = "UnrecognizedTimeFormatError";
+		this.message = `The time format string '${value}' did not match any of the supported formats (ClockTime, OffsetTime or WallClock).`;
+	}
 }

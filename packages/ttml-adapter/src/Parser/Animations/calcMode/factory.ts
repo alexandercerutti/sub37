@@ -37,9 +37,7 @@ export function getAnimationFactoryByCalcMode(calcMode: string): CalcModeFactory
 
 		default: {
 			function noop(): undefined {
-				throw new Error(
-					"Found an animation definition with an unsupported 'calcMode' value. Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'. '<set>' is automatically considered as 'discrete'. Animation ignored.",
-				);
+				throw new UnsupportedCalcModeError();
 			}
 
 			return noop;
@@ -100,4 +98,17 @@ export function getFill(value: string | undefined): "freeze" | "remove" {
 	}
 
 	return value;
+}
+
+class UnsupportedCalcModeError extends Error {
+	constructor() {
+		super();
+
+		this.name = "UnsupportedCalcModeError";
+		this.message = `
+Found an animation definition with an unsupported 'calcMode' value.
+Allowed values are 'discrete' | 'linear' | 'paced' | 'spline'.
+'<set>' is automatically considered as 'discrete'. Animation ignored.
+`;
+	}
 }

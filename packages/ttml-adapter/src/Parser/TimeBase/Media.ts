@@ -50,7 +50,7 @@ export function getMillisecondsByClockTime(
  */
 
 export function getMillisecondsByWallClockTime(_date: WallClockUnit): number {
-	throw new Error("WallClockTime is not supported when using Media as 'ttp:timeBase'.");
+	throw new InvalidMediaTimeBaseWallclockTimeUsage();
 }
 
 /**
@@ -135,4 +135,13 @@ export function getMillisecondsByOffsetTime(
 	}
 
 	return referenceBegin + timeCount * 3600 * 1000;
+}
+
+class InvalidMediaTimeBaseWallclockTimeUsage extends Error {
+	constructor() {
+		super();
+
+		this.name = "InvalidMediaTimeBaseWallclockTimeUsage";
+		this.message = `WallClockTime is not supported when using Media as 'ttp:timeBase'.`;
+	}
 }
