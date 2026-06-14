@@ -235,8 +235,10 @@ export default class TTMLAdapter extends BaseAdapter {
 				break;
 			}
 
-			if (errorContext.errors.length) {
-				for (const { error, critical: isCritical, currentTokenOffset } of errorContext.errors) {
+			const pendingErrors = errorContext.errors;
+
+			if (pendingErrors.length) {
+				for (const { error, critical: isCritical, currentTokenOffset } of pendingErrors) {
 					const failedChunk =
 						rawContent
 							.substring(currentTokenOffset, currentTokenOffset + 50)
