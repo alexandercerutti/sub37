@@ -238,21 +238,19 @@ export default class TTMLAdapter extends BaseAdapter {
 			const pendingErrors = errorContext.errors;
 
 			if (pendingErrors.length) {
-				for (const { error, critical: isCritical, currentTokenOffset } of pendingErrors) {
+				yield pendingErrors.map(({ error, critical: isCritical, currentTokenOffset }) => {
 					const failedChunk =
 						rawContent
 							.substring(currentTokenOffset, currentTokenOffset + 50)
 							.replace(/\s+/g, " ")
 							.trimStart() + "...";
 
-					yield [
-						{
-							error,
-							isCritical,
-							failedChunk,
-						},
-					];
-				}
+					return {
+						error,
+						isCritical,
+						failedChunk,
+					};
+				});
 			}
 
 			if (errorContext.hasCriticalError) {
