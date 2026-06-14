@@ -1,46 +1,91 @@
-import type { DestinationFactory, Matchable } from "../../structure/kleene.js";
+import { DerivationState } from "../../namespaces/tts/structure/operators.js";
+import type {
+	Derivable,
+	DerivationResult,
+	DerivedValue,
+} from "../../namespaces/tts/structure/operators.js";
 
-export type NodeRepresentation<T extends string> = Matchable<{
-	nodeName: T | null;
-	matches(nodeName: string): boolean;
-	matchesAttribute(attribute: string): boolean;
-}>;
+export interface NodeDerivedValue {
+	nodeName: string;
+	attributes: Set<string>;
+	matchesAttribute(attr: string): boolean;
+}
+
+export type NodeRepresentation<ElementName extends string> = Derivable<
+	ElementName,
+	DerivedValue<"element", NodeDerivedValue>
+> & {
+	readonly nodeName: ElementName;
+};
 
 export function createNode<const T extends string>(
-	nodeName: T | null,
+	nodeName: T,
 	attributes: Set<string> = new Set<string>(),
-	destinationFactory: DestinationFactory<NodeRepresentation<T>> = () => [],
+	childrenFactory?: () => Derivable,
 ): NodeRepresentation<T> {
 	return {
-		nodeName: nodeName,
-		destinationFactory,
-		matches(nodeNameMatch: string): boolean {
-			return this.nodeName === nodeNameMatch;
+		nodeName,
+		get type(): T {
+			return nodeName as T;
 		},
-		matchesAttribute(attribute: string): boolean {
-			for (const attr of attributes) {
-				if (attr.endsWith("*") && attribute.startsWith(attr.slice(0, -1))) {
-					return true;
-				}
-
-				if (attr === attribute) {
-					return true;
-				}
+		derive(token: string): DerivationResult<DerivedValue<"element", NodeDerivedValue>> {
+			if (nodeName !== token) {
+				return {
+					state: DerivationState.REJECTED,
+					rejectionDetails: `Expected <${nodeName}>, got <${token}>`,
+				};
 			}
 
-			return false;
+			const children = childrenFactory?.();
+
+			if (!children) {
+				return {
+					state: DerivationState.DONE,
+					values: [
+						{
+							type: "element",
+							value: {
+								nodeName,
+								attributes,
+								matchesAttribute(attr: string) {
+									return matchesAttribute(attributes, attr);
+								},
+							},
+						},
+					],
+				};
+			}
+
+			return {
+				state: DerivationState.DERIVED,
+				nextNode: children,
+				values: [
+					{
+						type: "element",
+						value: {
+							nodeName,
+							attributes,
+							matchesAttribute(attr: string) {
+								return matchesAttribute(attributes, attr);
+							},
+						},
+					},
+				],
+			};
 		},
 	};
 }
 
-export function withSelfReference<const T extends string>(
-	node: NodeRepresentation<T>,
-): NodeRepresentation<T> {
-	const selfReferencedNode = Object.create(node, {
-		destinationFactory: {
-			value: () => [selfReferencedNode, ...(node.destinationFactory?.() ?? [])],
-		},
-	});
+function matchesAttribute(attributes: Set<string>, attribute: string): boolean {
+	for (const attr of attributes) {
+		if (attr.endsWith("*") && attribute.startsWith(attr.slice(0, -1))) {
+			return true;
+		}
 
-	return selfReferencedNode;
+		if (attr === attribute) {
+			return true;
+		}
+	}
+
+	return false;
 }

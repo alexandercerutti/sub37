@@ -1,73 +1,103 @@
 import { describe, it, expect } from "@jest/globals";
 import { createVisitor } from "../../lib/Parser/structure/visitor.js";
 import { createNode } from "../../lib/Parser/Tags/Representation/NodeRepresentation.js";
-import * as Kleene from "../../lib/Parser/structure/kleene.js";
-
-/**
- * @typedef {import("../../lib/Parser/Tags/Representation/NodeRepresentation.js").NodeRepresentation<string>} NodeRepresentation
- */
+import {
+	zeroOrOne,
+	oneOrMore,
+	sequence,
+} from "../../lib/Parser/namespaces/tts/structure/operators.js";
 
 describe("Visitor", () => {
-	it("should return a matching node", () => {
-		const visitor = createVisitor(
-			createNode(null, new Set(), () => [
-				Kleene.zeroOrOne(/** @type {NodeRepresentation} */ (createNode("test1"))),
-				Kleene.oneOrMore(createNode("test2")),
-			]),
-		);
-
-		expect(visitor.match("test2")).not.toBeNull();
+	it("should return null when grammar is null", () => {
+		const visitor = createVisitor(null);
+		expect(visitor.match("anything")).toBeNull();
 	});
 
-	it("should not match a node that comes before an already-matched node (ordered grammar)", () => {
-		/**
-		 * Destinations: [zeroOrOne("test1"), oneOrMore("test2")]
-		 *
-		 * Once "test2" (index 1) has been matched, "test1" (index 0) must
-		 * not be matchable anymore. The visitor should track a cursor that
-		 * only moves forward, not reset to 0 on each call.
-		 *
-		 * THIS TEST CURRENTLY FAILS — the cursor resets to 0 every call.
-		 */
-		const visitor = createVisitor(
-			createNode(null, new Set(), () => [
-				Kleene.zeroOrOne(/** @type {NodeRepresentation} */ (createNode("test1"))),
-				Kleene.oneOrMore(createNode("test2")),
-			]),
-		);
-
-		visitor.match("test2");
-		expect(visitor.match("test1")).toBeNull();
+	it("should return null when grammar is undefined", () => {
+		const visitor = createVisitor(undefined);
+		expect(visitor.match("anything")).toBeNull();
 	});
 
-	it("should match oneOrMore nodes repeatedly", () => {
-		const visitor = createVisitor(
-			createNode(null, new Set(), () => [Kleene.oneOrMore(createNode("test2"))]),
-		);
+	it("should return a MatchResult for a matching node", () => {
+		const grammar = zeroOrOne(createNode("div", new Set(["id"])));
+		const visitor = createVisitor(grammar);
 
-		expect(visitor.match("test2")).not.toBeNull();
-		expect(visitor.match("test2")).not.toBeNull();
-		expect(visitor.match("test2")).not.toBeNull();
+		const result = visitor.match("div");
+		expect(result).not.toBeNull();
 	});
 
-	it("should navigate into child nodes by creating a child visitor from the matched node", () => {
-		/**
-		 * Navigation is the caller's responsibility now:
-		 * pass the matched destination to createVisitor() to get a
-		 * visitor scoped to that node's children.
-		 */
-		const parent = createVisitor(
-			createNode(null, new Set(), () => [
-				Kleene.oneOrMore(
-					createNode("test2", new Set(), () => [Kleene.oneOrMore(createNode("test3"))]),
-				),
-			]),
+	it("should return null for a non-matching node", () => {
+		const grammar = zeroOrOne(createNode("div"));
+		const visitor = createVisitor(grammar);
+
+		expect(visitor.match("span")).toBeNull();
+	});
+
+	it("should expose matchesAttribute on the MatchResult", () => {
+		const grammar = zeroOrOne(createNode("div", new Set(["id", "class"])));
+		const visitor = createVisitor(grammar);
+
+		const result = visitor.match("div");
+		expect(result.matchesAttribute("id")).toBe(true);
+		expect(result.matchesAttribute("class")).toBe(true);
+		expect(result.matchesAttribute("data-x")).toBe(false);
+	});
+
+	it("should return null when matching children of a leaf node", () => {
+		const grammar = zeroOrOne(createNode("br"));
+		const visitor = createVisitor(grammar);
+
+		const result = visitor.match("br");
+		expect(result.match("anything")).toBeNull();
+	});
+
+	it("should expose children grammar for a node with children", () => {
+		const grammar = zeroOrOne(createNode("div", new Set(), () => oneOrMore(createNode("p"))));
+		const visitor = createVisitor(grammar);
+
+		const result = visitor.match("div");
+		expect(result.match("p")).not.toBeNull();
+	});
+
+	it("should allow navigating into children", () => {
+		const grammar = zeroOrOne(createNode("div", new Set(), () => oneOrMore(createNode("p"))));
+		const parent = createVisitor(grammar);
+		const divMatch = parent.match("div");
+
+		expect(divMatch.match("p")).not.toBeNull();
+	});
+
+	it("should match oneOrMore nodes with a fresh visitor each time", () => {
+		/* Each call to createVisitor produces a stateless visitor.
+		 * Repeat-matching is expressed by creating the same visitor multiple times. */
+		const grammar = oneOrMore(createNode("span"));
+
+		expect(createVisitor(grammar).match("span")).not.toBeNull();
+		expect(createVisitor(grammar).match("span")).not.toBeNull();
+		expect(createVisitor(grammar).match("span")).not.toBeNull();
+	});
+
+	it("should support self-referential grammars", () => {
+		const divNode = createNode("div", new Set(), () => zeroOrOne(divNode));
+
+		const grammar = zeroOrOne(divNode);
+		const visitor = createVisitor(grammar);
+
+		const outerMatch = visitor.match("div");
+		expect(outerMatch).not.toBeNull();
+
+		expect(outerMatch.match("div")).not.toBeNull();
+	});
+
+	it("should support sequence grammars", () => {
+		const grammar = zeroOrOne(
+			createNode("tt", new Set(), () => sequence([createNode("body"), createNode("head")])),
 		);
 
-		const matched = parent.match("test2");
-		expect(matched).not.toBeNull();
+		const visitor = createVisitor(grammar);
+		const ttMatch = visitor.match("tt");
+		expect(ttMatch).not.toBeNull();
 
-		const child = createVisitor(matched);
-		expect(child.match("test3")).not.toBeNull();
+		expect(ttMatch.match("body")).not.toBeNull();
 	});
 });

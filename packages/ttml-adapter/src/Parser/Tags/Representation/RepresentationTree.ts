@@ -1,5 +1,10 @@
-import { createNode, withSelfReference } from "./NodeRepresentation.js";
-import * as Kleene from "../../structure/kleene.js";
+import { createNode, NodeRepresentation } from "./NodeRepresentation.js";
+import {
+	oneOf,
+	sequence,
+	zeroOrMore,
+	zeroOrOne,
+} from "../../namespaces/tts/structure/operators.js";
 
 /**
  * This is a tree representing how elements are allowed to be disposed in a
@@ -43,55 +48,63 @@ const CONTENT_MODULE_ELEMENTS_ATTRIBUTES = new Set([
 	LAYOUT_ATTRIBUTES.style,
 ] as const);
 
-export const RepresentationTree = createNode(null, new Set([]), () => [
-	createNode("tt", new Set(["ttp:*", "tts:extent", "xml:lang"]), () => [
-		Kleene.zeroOrOne(
-			createNode("head", new Set([]), () => [
-				Kleene.zeroOrOne(
-					createNode("styling", new Set([]), () => [
-						Kleene.zeroOrMore(
-							//
-							createNode("initial", new Set([LAYOUT_ATTRIBUTES["tts:*"]])),
-						),
-						Kleene.zeroOrMore(Style()),
-					]),
-				),
-				Kleene.zeroOrOne(
-					createNode("layout", new Set([]), () => [
-						//
-						Kleene.zeroOrMore(LayoutClass()),
-					]),
-				),
-				Kleene.zeroOrOne(
-					createNode("animation", new Set([]), () => [
-						//
-						Kleene.zeroOrMore(AnimationClass()),
-					]),
-				),
-			]),
+export const RepresentationTree = zeroOrOne(
+	createNode("tt", new Set(["ttp:*", "tts:extent", "xml:lang"]), () =>
+		sequence([
+			//
+			zeroOrOne(headNode),
+			zeroOrOne(bodyNode),
+		]),
+	),
+);
+
+const headNode = createNode("head", new Set([]), () =>
+	sequence([
+		zeroOrOne(
+			createNode("styling", new Set([]), () =>
+				sequence([
+					zeroOrMore(createNode("initial", new Set([LAYOUT_ATTRIBUTES["tts:*"]]))),
+					zeroOrMore(Style()),
+				]),
+			),
 		),
-		Kleene.zeroOrOne(
-			createNode("body", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
-				Kleene.zeroOrMore(AnimationClass()),
-				Kleene.zeroOrMore(
-					withSelfReference(
-						createNode("div", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
-							Kleene.zeroOrMore(AnimationClass()),
-							Kleene.zeroOrOne(LayoutClass()),
-							Kleene.zeroOrMore(
-								createNode("p", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () => [
-									Kleene.zeroOrMore(AnimationClass()),
-									Kleene.zeroOrOne(LayoutClass()),
-									Kleene.zeroOrMore(InlineClass()),
-								]),
-							),
-						]),
-					),
-				),
-			]),
-		),
+		zeroOrOne(createNode("layout", new Set([]), () => zeroOrMore(LayoutClass()))),
+		zeroOrOne(createNode("animation", new Set([]), () => zeroOrMore(AnimationClass()))),
 	]),
-]);
+);
+
+const bodyNode = createNode("body", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () =>
+	sequence([
+		//
+		zeroOrMore(AnimationClass()),
+		zeroOrMore(divNode),
+	]),
+);
+
+/*
+ * div is self-referencing: it can contain other divs.
+ * Type here is required for typescript to not invalidate
+ * its type when recursively referencing itself.
+ */
+const divNode: NodeRepresentation<"div"> = createNode(
+	"div",
+	CONTENT_MODULE_ELEMENTS_ATTRIBUTES,
+	() =>
+		sequence([
+			zeroOrMore(AnimationClass()),
+			zeroOrOne(LayoutClass()),
+			zeroOrMore(divNode),
+			zeroOrMore(
+				createNode("p", CONTENT_MODULE_ELEMENTS_ATTRIBUTES, () =>
+					sequence([
+						zeroOrMore(AnimationClass()),
+						zeroOrOne(LayoutClass()),
+						zeroOrMore(InlineClass()),
+					]),
+				),
+			),
+		]),
+);
 
 /**
  * Layout.class
@@ -109,10 +122,13 @@ function LayoutClass() {
 		ANIMATION_ATTRIBUTES.animate,
 	] as const);
 
-	return createNode("region", REGION_ATTRIBUTES, () => [
-		Kleene.zeroOrMore(AnimationClass()),
-		Kleene.zeroOrMore(Style()),
-	]);
+	return createNode("region", REGION_ATTRIBUTES, () =>
+		sequence([
+			//
+			zeroOrMore(AnimationClass()),
+			zeroOrMore(Style()),
+		]),
+	);
 }
 
 /**
@@ -141,11 +157,11 @@ function AnimationClass() {
 		ANIMATION_ATTRIBUTES.fill,
 	] as const);
 
-	return Kleene.or(
+	return oneOf([
 		//
 		createNode("animate", ANIMATE_ATTRIBUTES),
 		createNode("set", SET_ATTRIBUTES),
-	);
+	]);
 }
 
 /**
@@ -164,18 +180,19 @@ function InlineClass() {
 		TIMING_ATTRIBUTES.timeContainer,
 	] as const);
 
-	return Kleene.or(
-		withSelfReference(
-			createNode("span", SPAN_ATTRIBUTES, () => [
-				//
-				Kleene.zeroOrMore(AnimationClass()),
-			]),
-		),
-		withSelfReference(
+	const spanNode: NodeRepresentation<"span"> = createNode("span", SPAN_ATTRIBUTES, () =>
+		sequence([
 			//
-			createNode("br"),
-		),
+			zeroOrMore(AnimationClass()),
+			zeroOrMore(InlineClass()),
+		]),
 	);
+
+	return oneOf([
+		//
+		spanNode,
+		createNode("br"),
+	]);
 }
 
 function Style() {

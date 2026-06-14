@@ -31,7 +31,6 @@ import {
 import { createVisitor } from "./Parser/structure/visitor.js";
 import type { Visitor } from "./Parser/structure/visitor.js";
 import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
-import type { NodeRepresentation } from "./Parser/Tags/Representation/NodeRepresentation.js";
 import {
 	AnimationContainerContextState,
 	createAnimationContainerContext,
@@ -134,12 +133,12 @@ function createNodeWithScope<NodeType extends object>(
 const nodeMatchSymbol = Symbol("nodeMatchSymbol");
 
 interface NodeWithDestinationMatch {
-	[nodeMatchSymbol]?: NodeRepresentation<string>;
+	[nodeMatchSymbol]?: Visitor;
 }
 
 function createNodeWithDestinationMatch<NodeType extends object>(
 	node: NodeType,
-	destination: NodeRepresentation<string>,
+	destination: Visitor,
 ): NodeType & NodeWithDestinationMatch {
 	return Object.create(node, {
 		[nodeMatchSymbol]: {
@@ -219,6 +218,7 @@ export default class TTMLAdapter extends BaseAdapter {
 		const tokenizer = new Tokenizer(rawContent);
 
 		let token: Token | null = null;
+		const rootVisitor = createVisitor(RepresentationTree);
 
 		while ((token = tokenizer.nextToken())) {
 			if (!treeScope) {
@@ -270,7 +270,7 @@ export default class TTMLAdapter extends BaseAdapter {
 					}
 
 					// Treating strings as Anonymous spans
-					const destinationMatch = getNextVisitor(nodeTree).match("span");
+					const destinationMatch = nodeTree.currentNode.content[nodeMatchSymbol]!.match("span");
 
 					if (!destinationMatch) {
 						continue;
@@ -304,7 +304,9 @@ export default class TTMLAdapter extends BaseAdapter {
 						continue;
 					}
 
-					const destinationMatch = getNextVisitor(nodeTree).match(token.content);
+					const destinationMatch = (
+						nodeTree.currentNode?.content[nodeMatchSymbol] ?? rootVisitor
+					).match(token.content);
 
 					if (!destinationMatch) {
 						/**
@@ -837,18 +839,6 @@ export default class TTMLAdapter extends BaseAdapter {
 			];
 		}
 	}
-}
-
-function getNextVisitor<T extends Token & NodeWithDestinationMatch>(
-	nodeTree: NodeTree<T>,
-): Visitor<NodeRepresentation<string>> {
-	if (!nodeTree.currentNode) {
-		return createVisitor(RepresentationTree);
-	}
-
-	const lastDestinationMatched = nodeTree.currentNode.content[nodeMatchSymbol]!;
-
-	return createVisitor(lastDestinationMatched);
 }
 
 // ******************************************** //
