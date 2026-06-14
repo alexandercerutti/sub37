@@ -53,7 +53,7 @@ export function appendChunkToTrack(track: Track, content: unknown): void {
 function runParser(parser: ParseGenerator, track: Track, adapter: BaseAdapter): void {
 	const { value, done } = parser.next();
 
-	if (done || !Array.isArray(value)) {
+	if (!Array.isArray(value)) {
 		return;
 	}
 
@@ -77,6 +77,10 @@ function runParser(parser: ParseGenerator, track: Track, adapter: BaseAdapter): 
 			isCritical: false,
 			failedChunk: item,
 		});
+	}
+
+	if (done) {
+		return;
 	}
 
 	setTimeout(() => runParser(parser, track, adapter), 0);
