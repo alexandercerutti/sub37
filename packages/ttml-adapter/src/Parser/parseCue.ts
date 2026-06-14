@@ -184,12 +184,14 @@ function processChildren(
 					}
 				}
 
-				let spanRegion: TTMLRegion | undefined;
+				let spanRegion: TTMLRegion | undefined = rootCue.region as TTMLRegion | undefined;
 
-				for (const [, , attrs, activeEntities] of intervals) {
-					if (attrs & ActiveTemporalEntities.REGION) {
-						spanRegion = activeEntities.find((e): e is TTMLRegion => e instanceof TTMLRegion);
-						break;
+				if (!spanRegion) {
+					for (const [, , attrs, activeEntities] of intervals) {
+						if (attrs & ActiveTemporalEntities.REGION) {
+							spanRegion = activeEntities.find((e): e is TTMLRegion => e instanceof TTMLRegion);
+							break;
+						}
 					}
 				}
 
@@ -704,11 +706,16 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 	);
 
 	const newGeometryStyles = Object.assign(
+		{},
 		baseRegion.geometryStyles ?? {},
 		computeRegionGeometryStylesByScope(newScope),
 	);
 
-	const region = new TTMLRegion(baseRegion.id, baseRegion.scope, baseRegion.timingAttributes);
+	const region = new TTMLRegion(
+		`derived:${baseRegion.id}`,
+		baseRegion.scope,
+		baseRegion.timingAttributes,
+	);
 
 	region.entities = baseRegion.entities;
 	region.styles = baseRegion.styles;
