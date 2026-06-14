@@ -1,6 +1,6 @@
 // @ts-check
 import { describe, it, expect } from "@jest/globals";
-import { Entities } from "../lib/index.js";
+import * as Entities from "../lib/Entities";
 
 describe("Tag entities", () => {
 	it("Building a tag entity, should not alter the properties", () => {

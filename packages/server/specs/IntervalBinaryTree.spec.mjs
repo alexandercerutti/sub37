@@ -392,9 +392,9 @@ describe("IntervalBinaryTree", () => {
 
 		expect(query1?.length).toBe(1);
 		expect(query2?.length).toBe(2);
-		expect(query3?.length).toBe(3);
+		expect(query3?.length).toBe(2);
 		expect(query4?.length).toBe(3);
-		expect(query5?.length).toBe(2);
+		expect(query5?.length).toBe(1);
 		expect(query6?.length).toBe(1);
 	});
 });

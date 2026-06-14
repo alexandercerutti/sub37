@@ -1,13 +1,13 @@
 // @ts-check
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { BaseAdapter, ParseResult } from "@sub37/adapter-utils/BaseAdapter";
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { BaseAdapter } from "@sub37/adapter-utils/BaseAdapter";
 import { AdapterNotOverridingSupportedTypesError } from "@sub37/adapter-utils/Errors";
 import { Server, Events } from "../lib/Server";
 import {
 	AdapterNotExtendingPrototypeError,
 	SessionNotInitializedError,
 } from "../lib/Errors/index.js";
-import { CueNode } from "../lib/CueNode";
+import { CueNode } from "@sub37/adapter-utils/CueNode";
 
 class MockedAdapterNoExtend {
 	static get supportedType() {
@@ -53,16 +53,8 @@ class MockedAdapter extends BaseAdapter {
 		return "MockedAdapter";
 	}
 
-	/**
-	 * @param {CueNode[]} content
-	 * @returns {ParseResult}
-	 */
-	parse(content) {
-		return BaseAdapter.ParseResult([], []);
-	}
+	*parse(content) {}
 }
-
-const originalAdapterParse = MockedAdapter.prototype.parse;
 
 function mockGetCurrentPositionFactory() {
 	let second = 0;
@@ -144,41 +136,34 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			MockedAdapter.prototype.parse = function () {
-				// Low times to reduce test duration
-				// Mocked position factory steps by 1,
-				// but video tags step 4 times per second
-
-				return BaseAdapter.ParseResult(
-					[
-						new CueNode({
-							content: "This is a sample cue",
-							startTime: 0,
-							endTime: 1,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue second",
-							startTime: 0.4,
-							endTime: 1,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue third",
-							startTime: 1,
-							endTime: 2.5,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue fourth",
-							startTime: 2.5,
-							endTime: 4,
-							id: "any",
-						}),
-					],
-					[],
-				);
-			};
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* () {
+				yield [
+					new CueNode({
+						content: "This is a sample cue",
+						startTime: 0,
+						endTime: 1,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue second",
+						startTime: 0.4,
+						endTime: 1,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue third",
+						startTime: 1,
+						endTime: 2.5,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue fourth",
+						startTime: 2.5,
+						endTime: 4,
+						id: "any",
+					}),
+				];
+			});
 		});
 
 		beforeEach(() => {
@@ -194,7 +179,7 @@ describe("Server", () => {
 		});
 
 		afterAll(() => {
-			MockedAdapter.prototype.parse = originalAdapterParse;
+			jest.restoreAllMocks();
 		});
 
 		it("should allow updating the manually the time if the server is paused", () => {
@@ -220,6 +205,8 @@ describe("Server", () => {
 	});
 
 	describe("start", () => {
+		afterEach(() => jest.restoreAllMocks());
+
 		it("should throw if no session has been created first", () => {
 			const server = new Server(MockedAdapter);
 
@@ -233,41 +220,38 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			MockedAdapter.prototype.parse = function () {
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* () {
 				// Low times to reduce test duration
 				// Mocked position factory steps by 1,
 				// but video tags step 4 times per second
 
-				return BaseAdapter.ParseResult(
-					[
-						new CueNode({
-							content: "This is a sample cue",
-							startTime: 0,
-							endTime: 1,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue second",
-							startTime: 0.4,
-							endTime: 1,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue third",
-							startTime: 1,
-							endTime: 2.5,
-							id: "any",
-						}),
-						new CueNode({
-							content: "This is a sample cue fourth",
-							startTime: 2.5,
-							endTime: 4,
-							id: "any",
-						}),
-					],
-					[],
-				);
-			};
+				yield [
+					new CueNode({
+						content: "This is a sample cue",
+						startTime: 0,
+						endTime: 1,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue second",
+						startTime: 0.4,
+						endTime: 1,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue third",
+						startTime: 1,
+						endTime: 2.5,
+						id: "any",
+					}),
+					new CueNode({
+						content: "This is a sample cue fourth",
+						startTime: 2.5,
+						endTime: 4,
+						id: "any",
+					}),
+				];
+			});
 
 			// ******************* //
 			// *** MOCKING END *** //
@@ -297,7 +281,6 @@ describe("Server", () => {
 
 				if (currentCues === expectedCues) {
 					done();
-					MockedAdapter.prototype.parse = originalAdapterParse;
 				}
 			});
 
@@ -309,14 +292,9 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			/**
-			 * @param {CueNode[]} content
-			 * @returns
-			 */
-
-			MockedAdapter.prototype.parse = function (content) {
-				return BaseAdapter.ParseResult(content, []);
-			};
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* (content) {
+				yield content;
+			});
 
 			// ******************* //
 			// *** MOCKING END *** //
@@ -480,7 +458,6 @@ describe("Server", () => {
 					expect(activeTracks[0].lang).toBe("ita");
 
 					done();
-					MockedAdapter.prototype.parse = originalAdapterParse;
 				}
 			});
 
@@ -492,14 +469,9 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			/**
-			 * @param {CueNode[]} content
-			 * @returns
-			 */
-
-			MockedAdapter.prototype.parse = function (content) {
-				return BaseAdapter.ParseResult(content, []);
-			};
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* (content) {
+				yield content;
+			});
 
 			// ******************* //
 			// *** MOCKING END *** //
@@ -557,7 +529,6 @@ describe("Server", () => {
 						const checkInterval = window.setInterval(() => {
 							if (currentCues > 2) {
 								window.clearInterval(checkInterval);
-								MockedAdapter.prototype.parse = originalAdapterParse;
 								done();
 							}
 						}, 0);
@@ -573,14 +544,9 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			/**
-			 * @param {CueNode[]} content
-			 * @returns
-			 */
-
-			MockedAdapter.prototype.parse = function (content) {
-				return BaseAdapter.ParseResult(content, []);
-			};
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* (content) {
+				yield content;
+			});
 
 			// ******************* //
 			// *** MOCKING END *** //
@@ -646,14 +612,9 @@ describe("Server", () => {
 			// *** MOCKING START *** //
 			// ********************* //
 
-			/**
-			 * @param {CueNode[]} content
-			 * @returns
-			 */
-
-			MockedAdapter.prototype.parse = function (content) {
-				return BaseAdapter.ParseResult(content, []);
-			};
+			jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* (content) {
+				yield content;
+			});
 
 			// ******************* //
 			// *** MOCKING END *** //
