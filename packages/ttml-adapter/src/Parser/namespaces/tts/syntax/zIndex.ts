@@ -1,6 +1,6 @@
 import { integer } from "../structure/derivables/integer";
 import { keyword } from "../structure/derivables/keyword";
-import { oneOf } from "../structure/operators";
+import { oneOf } from "../../../structure/grammar";
 
 /**
  * @syntax \<z-index>

@@ -1,4 +1,4 @@
-import { oneOf, sequence } from "../structure/operators.js";
+import { oneOf, sequence } from "../../../structure/grammar.js";
 import { length } from "../structure/derivables/length.js";
 import { alias } from "../structure/derivables/alias.js";
 

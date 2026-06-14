@@ -1,5 +1,5 @@
-import { DerivationState } from "../structure/operators.js";
-import type { Derivable, DerivationResult } from "../structure/operators.js";
+import { DerivationState } from "../../../structure/grammar.js";
+import type { Derivable, DerivationResult } from "../../../structure/grammar.js";
 
 /**
  * This syntax acts like a placeholder, because

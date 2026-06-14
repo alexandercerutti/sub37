@@ -1,9 +1,5 @@
-import { DerivationState } from "../../namespaces/tts/structure/operators.js";
-import type {
-	Derivable,
-	DerivationResult,
-	DerivedValue,
-} from "../../namespaces/tts/structure/operators.js";
+import { DerivationState } from "../structure/grammar.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../structure/grammar.js";
 
 export interface NodeDerivedValue {
 	nodeName: string;

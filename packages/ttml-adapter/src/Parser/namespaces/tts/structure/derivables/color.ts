@@ -1,7 +1,7 @@
 import { isValidColor } from "../../primitives/color.js";
 import type { Color } from "../../primitives/color.js";
-import { DerivationState } from "../operators.js";
-import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
+import { DerivationState } from "../../../../structure/grammar.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../../../../structure/grammar.js";
 
 export function color(): Derivable<"<color>", DerivedValue<"color", Color>> {
 	return Object.create(null, {

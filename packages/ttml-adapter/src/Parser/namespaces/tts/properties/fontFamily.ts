@@ -1,7 +1,7 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { DerivedValue, InferDerivableValue } from "../structure/operators.js";
+import type { DerivedValue, InferDerivableValue } from "../../../structure/grammar.js";
 import { FontFamiliesGrammar } from "../syntax/font-family.js";
 
 export const Grammar = alias("tts:fontFamily", FontFamiliesGrammar);

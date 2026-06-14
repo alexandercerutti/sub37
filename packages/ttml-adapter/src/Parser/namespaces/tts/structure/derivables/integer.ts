@@ -1,5 +1,5 @@
-import { DerivationState } from "../operators.js";
-import type { DerivationResult, Derivable, DerivedValue } from "../operators.js";
+import { DerivationState } from "../../../../structure/grammar.js";
+import type { DerivationResult, Derivable, DerivedValue } from "../../../../structure/grammar.js";
 
 export function integer(): Derivable<"<integer>", DerivedValue<"integer", number>> {
 	return Object.create(null, {

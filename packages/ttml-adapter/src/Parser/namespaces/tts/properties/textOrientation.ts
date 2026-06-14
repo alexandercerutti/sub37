@@ -1,7 +1,7 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { TextOrientationGrammar } from "../syntax/text-orientation.js";
 
 export const Grammar = alias("tts:textOrientation", TextOrientationGrammar);

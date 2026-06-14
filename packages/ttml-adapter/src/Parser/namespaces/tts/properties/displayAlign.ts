@@ -1,7 +1,7 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { DisplayAlignGrammar } from "../syntax/display-align.js";
 
 export const Grammar = alias("tts:displayAlign", DisplayAlignGrammar);

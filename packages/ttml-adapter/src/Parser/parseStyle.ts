@@ -3,7 +3,7 @@ import type { Scope } from "./Scope/Scope.js";
 import type { NodeWithRelationship } from "./Tags/NodeTree.js";
 import type { Token } from "./Token.js";
 import * as Syntaxes from "./namespaces/tts/properties/index.js";
-import type { Derivable } from "./namespaces/tts/structure/operators.js";
+import type { Derivable } from "./structure/grammar.js";
 import type { GrammarDefinition } from "./grammar/parseAttributeValue.js";
 import { parseAttributeValue } from "./grammar/parseAttributeValue.js";
 

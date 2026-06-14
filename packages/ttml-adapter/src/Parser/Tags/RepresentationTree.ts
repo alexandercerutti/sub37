@@ -1,10 +1,5 @@
 import { createNode, NodeRepresentation } from "./NodeRepresentation.js";
-import {
-	oneOf,
-	sequence,
-	zeroOrMore,
-	zeroOrOne,
-} from "../../namespaces/tts/structure/operators.js";
+import { oneOf, sequence, zeroOrMore, zeroOrOne } from "../structure/grammar.js";
 
 /**
  * This is a tree representing how elements are allowed to be disposed in a

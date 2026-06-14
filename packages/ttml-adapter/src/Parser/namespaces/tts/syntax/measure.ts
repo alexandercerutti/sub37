@@ -1,7 +1,7 @@
 import { alias } from "../structure/derivables/alias.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
-import { oneOf } from "../structure/operators.js";
+import { oneOf } from "../../../structure/grammar.js";
 
 /**
  *

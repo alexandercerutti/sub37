@@ -1,5 +1,5 @@
 import { keyword } from "../structure/derivables/keyword.js";
-import { oneOf } from "../structure/operators.js";
+import { oneOf } from "../../../structure/grammar.js";
 
 /**
  * @syntax <font-weight> : "normal" | "bold"

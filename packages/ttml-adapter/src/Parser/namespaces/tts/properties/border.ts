@@ -1,5 +1,5 @@
 import type { Scope } from "../../../Scope/Scope.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import { BorderGrammar } from "../syntax/border.js";
 import { alias } from "../structure/derivables/alias.js";

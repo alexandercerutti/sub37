@@ -1,4 +1,4 @@
-import { oneOf, someOf } from "../structure/operators.js";
+import { oneOf, someOf } from "../../../structure/grammar.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { QuotedString } from "../structure/derivables/quoted-string.js";
 import { AnnotationColor, AnnotationPosition } from "../structure/derivables/annotation.js";

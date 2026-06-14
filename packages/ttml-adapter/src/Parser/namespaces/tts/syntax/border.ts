@@ -4,8 +4,8 @@ import { as } from "../structure/derivables/tag.js";
 import { color } from "../structure/derivables/color.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length, ScalarConstraint } from "../structure/derivables/length.js";
-import type { Derivable, DerivationResult, DerivedValue } from "../structure/operators.js";
-import { oneOf, someOf, DerivationState } from "../structure/operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../../../structure/grammar.js";
+import { oneOf, someOf, DerivationState } from "../../../structure/grammar.js";
 
 /**
  * @syntax thin | medium | thick | \<length>

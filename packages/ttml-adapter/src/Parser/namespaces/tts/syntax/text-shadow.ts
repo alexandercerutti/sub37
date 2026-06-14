@@ -1,4 +1,4 @@
-import { oneOf, sequence, zeroOrMore, zeroOrOne } from "../structure/operators.js";
+import { oneOf, sequence, zeroOrMore, zeroOrOne } from "../../../structure/grammar.js";
 import { length, NonNegativeConstraint } from "../structure/derivables/length.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { color } from "../structure/derivables/color.js";

@@ -1,6 +1,6 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { createUnit, toClamped } from "../../../Unit.js";
 import { isLength, isPercentage } from "../primitives/length.js";
 import type { Length } from "../primitives/length.js";

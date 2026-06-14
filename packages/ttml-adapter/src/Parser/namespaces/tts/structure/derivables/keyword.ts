@@ -1,5 +1,5 @@
-import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
-import { DerivationState } from "../operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../../../../structure/grammar.js";
+import { DerivationState } from "../../../../structure/grammar.js";
 
 export function keyword<N extends string>(content: N): Derivable<N, DerivedValue<"keyword", N>> {
 	const loweredContent = content.toLowerCase();

@@ -1,5 +1,5 @@
-import { oneOf, sequence } from "../structure/operators.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import { oneOf, sequence } from "../../../structure/grammar.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { length } from "../structure/derivables/length.js";
 import { isLength, subtract } from "../primitives/length.js";

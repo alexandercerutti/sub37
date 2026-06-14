@@ -1,5 +1,5 @@
-import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
-import { isRejected } from "../operators.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../../../../structure/grammar.js";
+import { isRejected } from "../../../../structure/grammar.js";
 
 /**
  * Wraps the single result value in an object { type: tagName, value: originalValue }

@@ -2,7 +2,7 @@ import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import { createUnit } from "../../../Unit.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { LetterSpacingGrammar } from "../syntax/letter-spacing.js";
 
 export const Grammar = alias("tts:letterSpacing", LetterSpacingGrammar);

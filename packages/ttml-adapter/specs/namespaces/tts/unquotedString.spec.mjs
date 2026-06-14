@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { UnquotedString } from "../../../lib/Parser/namespaces/tts/structure/derivables/unquoted-string.js";
-import { DerivationState } from "../../../lib/Parser/namespaces/tts/structure/operators.js";
+import { DerivationState } from "../../../lib/Parser/structure/grammar.js";
 
 const derivable = UnquotedString();
 

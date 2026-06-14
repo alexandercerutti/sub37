@@ -1,4 +1,4 @@
-import { oneOf, sequence, zeroOrMore } from "../structure/operators.js";
+import { oneOf, sequence, zeroOrMore } from "../../../structure/grammar.js";
 import { keyword } from "../structure/derivables/keyword.js";
 import { QuotedString } from "../structure/derivables/quoted-string.js";
 import { UnquotedString } from "../structure/derivables/unquoted-string.js";

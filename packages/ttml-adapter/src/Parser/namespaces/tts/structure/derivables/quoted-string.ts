@@ -1,4 +1,10 @@
-import { Derivable, DerivationResult, DerivationState, DerivedValue, oneOf } from "../operators.js";
+import {
+	Derivable,
+	DerivationResult,
+	DerivationState,
+	DerivedValue,
+	oneOf,
+} from "../../../../structure/grammar.js";
 
 export type DoubleQuotedString = DerivedValue<"double-quoted-string", string>;
 export type SingleQuotedString = DerivedValue<"single-quoted-string", string>;

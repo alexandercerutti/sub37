@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { createNode } from "../../lib/Parser/Tags/Representation/NodeRepresentation.js";
+import { createNode } from "../../lib/Parser/Tags/NodeRepresentation.js";
 import {
 	oneOf,
 	sequence,
@@ -8,7 +8,7 @@ import {
 	isDone,
 	isDerived,
 	isRejected,
-} from "../../lib/Parser/namespaces/tts/structure/operators.js";
+} from "../../lib/Parser/structure/grammar.js";
 
 describe("createNode as Derivable", () => {
 	describe("derive()", () => {

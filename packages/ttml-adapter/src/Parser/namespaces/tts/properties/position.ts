@@ -5,7 +5,7 @@ import type { Unit } from "../../../Unit.js";
 import { readScopeDocumentContext } from "../../../Scope/DocumentContext.js";
 import { readScopeErrorContext } from "../../../Scope/ErrorContext.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { PositionGrammar, normalizePositionValue } from "../syntax/position.js";
 import { isPercentage } from "../primitives/length.js";
 import type { Length } from "../primitives/length.js";

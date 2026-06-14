@@ -7,7 +7,7 @@ import { isPercentage } from "../primitives/length.js";
 import { getPixelScalarPercentageConversion, isPixelScalar } from "../primitives/pixel.js";
 import { getCellScalarPercentageConversion, isCellScalar } from "../primitives/cell.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { OriginGrammar } from "../syntax/origin.js";
 
 export const Grammar = alias("tts:origin", OriginGrammar);

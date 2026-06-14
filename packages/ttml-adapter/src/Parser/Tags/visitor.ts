@@ -1,6 +1,6 @@
-import { isDerived, isRejected } from "../namespaces/tts/structure/operators.js";
-import type { Derivable, DerivedValue } from "../namespaces/tts/structure/operators.js";
-import type { NodeDerivedValue } from "../Tags/Representation/NodeRepresentation.js";
+import { isDerived, isRejected } from "../structure/grammar.js";
+import type { Derivable, DerivedValue } from "../structure/grammar.js";
+import type { NodeDerivedValue } from "./NodeRepresentation.js";
 
 export interface Visitor {
 	matchesAttribute(attr: string): boolean;

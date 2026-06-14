@@ -1,5 +1,5 @@
 import { keyword } from "../structure/derivables/keyword.js";
-import { oneOf, sequence, zeroOrOne } from "../structure/operators.js";
+import { oneOf, sequence, zeroOrOne } from "../../../structure/grammar.js";
 import { color } from "../structure/derivables/color.js";
 import { length } from "../structure/derivables/length.js";
 import { alias } from "../structure/derivables/alias.js";

@@ -1,5 +1,5 @@
-import { DerivationState } from "../operators.js";
-import type { Derivable, DerivationResult, DerivedValue } from "../operators.js";
+import { DerivationState } from "../../../../structure/grammar.js";
+import type { Derivable, DerivationResult, DerivedValue } from "../../../../structure/grammar.js";
 
 export type UnquotedString = DerivedValue<"unquoted-string", string>;
 

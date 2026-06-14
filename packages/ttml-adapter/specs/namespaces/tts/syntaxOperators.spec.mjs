@@ -10,7 +10,7 @@ import {
 	sequence,
 	oneOf,
 	someOf,
-} from "../../../lib/Parser/namespaces/tts/structure/operators.js";
+} from "../../../lib/Parser/structure/grammar.js";
 
 function createTokenNode(expectedToken, name = expectedToken) {
 	return Object.create(null, {

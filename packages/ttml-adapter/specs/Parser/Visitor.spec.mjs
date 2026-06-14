@@ -1,11 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
-import { createVisitor } from "../../lib/Parser/structure/visitor.js";
-import { createNode } from "../../lib/Parser/Tags/Representation/NodeRepresentation.js";
-import {
-	zeroOrOne,
-	oneOrMore,
-	sequence,
-} from "../../lib/Parser/namespaces/tts/structure/operators.js";
+import { createVisitor } from "../../lib/Parser/Tags/visitor.js";
+import { createNode } from "../../lib/Parser/Tags/NodeRepresentation.js";
+import { zeroOrOne, oneOrMore, sequence } from "../../lib/Parser/structure/grammar.js";
 
 describe("Visitor", () => {
 	it("should return null when grammar is null", () => {

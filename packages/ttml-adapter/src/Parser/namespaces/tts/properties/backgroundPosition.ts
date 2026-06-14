@@ -1,7 +1,7 @@
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import type { Scope } from "../../../Scope/Scope.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { normalizePositionValue } from "../syntax/position.js";
 import { PositionGrammar } from "../syntax/position.js";
 

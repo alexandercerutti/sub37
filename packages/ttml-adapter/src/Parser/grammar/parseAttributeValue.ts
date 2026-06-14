@@ -1,9 +1,5 @@
-import type {
-	Derivable,
-	DerivedValue,
-	InferDerivableValue,
-} from "../namespaces/tts/structure/operators.js";
-import { isDerived, isRejected } from "../namespaces/tts/structure/operators.js";
+import type { Derivable, DerivedValue, InferDerivableValue } from "../structure/grammar.js";
+import { isDerived, isRejected } from "../structure/grammar.js";
 import { getSplittedLinearWhitespaceValues } from "../lwsp.js";
 
 export interface GrammarDefinition<Grammar extends Derivable = Derivable> {

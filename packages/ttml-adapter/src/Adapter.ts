@@ -28,9 +28,9 @@ import {
 	createTemporalActiveContext,
 	readScopeTemporalActiveContext,
 } from "./Parser/Scope/TemporalActiveContext.js";
-import { createVisitor } from "./Parser/structure/visitor.js";
-import type { Visitor } from "./Parser/structure/visitor.js";
-import { RepresentationTree } from "./Parser/Tags/Representation/RepresentationTree.js";
+import { createVisitor } from "./Parser/Tags/visitor.js";
+import type { Visitor } from "./Parser/Tags/visitor.js";
+import { RepresentationTree } from "./Parser/Tags/RepresentationTree.js";
 import {
 	AnimationContainerContextState,
 	createAnimationContainerContext,

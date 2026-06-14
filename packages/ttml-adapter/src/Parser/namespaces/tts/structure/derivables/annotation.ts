@@ -1,4 +1,4 @@
-import { oneOf } from "../operators.js";
+import { oneOf } from "../../../../structure/grammar.js";
 import { alias } from "./alias.js";
 import { color } from "./color.js";
 import { keyword } from "./keyword.js";

@@ -1,7 +1,7 @@
 import type { Scope } from "../../../Scope/Scope.js";
 import type { PropertiesCollection } from "../../../parseStyle.js";
 import { alias } from "../structure/derivables/alias.js";
-import type { InferDerivableValue } from "../structure/operators.js";
+import type { InferDerivableValue } from "../../../structure/grammar.js";
 import { FontSizeGrammar } from "../syntax/font-size.js";
 import type { Length } from "../primitives/length.js";
 import { readScopeDocumentContext } from "../../../Scope/DocumentContext.js";
