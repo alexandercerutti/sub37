@@ -223,7 +223,7 @@ export class Tokenizer {
 
 		let attributes: KnownAttributesNames = {} as KnownAttributesNames;
 		let currentAttributeName = "";
-		let currentAttributeValue = "";
+		let currentAttributeValueDelimiter = "";
 
 		this.line = this.sourceWindow.line;
 		this.column = this.sourceWindow.column;
@@ -651,33 +651,46 @@ export class Tokenizer {
 					}
 
 					if (isQuotationMark(char) || this.sourceWindow.peekAdvance(QUOTATION_MARK_CHECKER)) {
-						if (!result.length && !currentAttributeValue) {
-							currentAttributeValue = this.sourceWindow.char;
+						if (!result.length && !currentAttributeValueDelimiter) {
+							currentAttributeValueDelimiter = this.sourceWindow.char;
 
 							this.sourceWindow.advance();
 							break;
 						}
 
-						if (this.sourceWindow.char === currentAttributeValue) {
+						if (this.sourceWindow.char === currentAttributeValueDelimiter) {
 							/**
 							 * If this happens, the char got updated through peek
 							 */
 							state = TokenizerState.START_TAG_ANNOTATION;
-							attributes[currentAttributeName] = result + char;
+
+							const fullAttributeValue = result + char;
 
 							if (
 								currentAttributeName === "xml:space" &&
-								["preserve", "default"].includes(
-									attributes[currentAttributeName] as "preserve" | "default",
-								)
+								["preserve", "default"].includes(fullAttributeValue as "preserve" | "default")
 							) {
-								this.xmlSpaceStack[this.xmlSpaceStack.length - 1] = attributes[
-									currentAttributeName
-								] as "preserve" | "default";
+								this.xmlSpaceStack[this.xmlSpaceStack.length - 1] = fullAttributeValue as
+									| "preserve"
+									| "default";
 							}
 
+							if (currentAttributeName === "xml:id") {
+								if (fullAttributeValue.includes(":")) {
+									console.warn(
+										`The value "${fullAttributeValue}" of the "xml:id" attribute contains a colon, which is not allowed.`,
+									);
+
+									result = "";
+									currentAttributeValueDelimiter = "";
+									currentAttributeName = "";
+									continue;
+								}
+							}
+
+							attributes[currentAttributeName] = result + char;
 							result = "";
-							currentAttributeValue = "";
+							currentAttributeValueDelimiter = "";
 							currentAttributeName = "";
 
 							/**

@@ -514,4 +514,40 @@ describe("Tokenizer", () => {
 			expect(strings[1].content).toBe(" kept ");
 		});
 	});
+
+	describe("xml:id validation", () => {
+		it("should drop an xml:id attribute whose value contains a colon", () => {
+			/*
+			 * NCName (the required type for xml:id values) forbids colons.
+			 * @see https://www.w3.org/TR/xml-id/
+			 */
+			const content = `<p xml:id="ns:local" begin="0s"></p>`;
+			const tokenizer = new Tokenizer(content);
+			const token = tokenizer.nextToken();
+
+			expect(token?.type).toBe(TokenType.START_TAG);
+			expect(token?.attributes).not.toHaveProperty("xml:id");
+			expect(token?.attributes).toHaveProperty("begin", "0s");
+		});
+
+		it("should accept a valid xml:id attribute value", () => {
+			const content = `<p xml:id="sub-1" begin="0s"></p>`;
+			const tokenizer = new Tokenizer(content);
+			const token = tokenizer.nextToken();
+
+			expect(token?.type).toBe(TokenType.START_TAG);
+			expect(token?.attributes).toHaveProperty("xml:id", "sub-1");
+			expect(token?.attributes).toHaveProperty("begin", "0s");
+		});
+
+		it("should drop xml:id and still parse subsequent attributes", () => {
+			const content = `<p xml:id="bad:id" end="5s"></p>`;
+			const tokenizer = new Tokenizer(content);
+			const token = tokenizer.nextToken();
+
+			expect(token?.type).toBe(TokenType.START_TAG);
+			expect(token?.attributes).not.toHaveProperty("xml:id");
+			expect(token?.attributes).toHaveProperty("end", "5s");
+		});
+	});
 });
