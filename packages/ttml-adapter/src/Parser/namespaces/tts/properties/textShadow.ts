@@ -86,10 +86,11 @@ export function validateAnimation(
 	 */
 	const SHADOW_COMPONENTS_TOTAL_WITH_COMMA = 5;
 
-	let previousShadow = replaceNoneWithEquivalent(keyframes[0]!);
+	let previousShadow = keyframes[0]![0].value === "none" ? NONE_SHADOW_EQUIVALENT : keyframes[0]!;
 
 	for (let i = 1; i < keyframes.length; i++) {
-		const currentShadow = replaceNoneWithEquivalent(keyframes[i]!);
+		const shadow = keyframes[i]!;
+		const currentShadow = shadow[0].value === "none" ? NONE_SHADOW_EQUIVALENT : shadow;
 
 		const currentAmountOfCommaSeparatedShadows = Math.ceil(
 			currentShadow.length / SHADOW_COMPONENTS_TOTAL_WITH_COMMA,
@@ -139,23 +140,9 @@ export function validateAnimation(
 	return true;
 }
 
-function replaceNoneWithEquivalent(
-	shadow: InferDerivableValue<typeof TextShadowGrammar>,
-): InferDerivableValue<typeof TextShadowGrammar> {
-	if (shadow[0].value !== "none") {
-		return shadow;
-	}
-
-	/**
-	 * For CSS, text-shadow none is equivalent to 0 0 0 transparent
-	 * and it interpolates correctly.
-	 */
-
-	return [
-		{ type: "length", value: createUnit(0, "px") },
-		{ type: "length", value: createUnit(0, "px") },
-		{ type: "length", value: createUnit(0, "px") },
-		{ type: "color", value: "transparent" },
-		undefined,
-	];
-}
+const NONE_SHADOW_EQUIVALENT: SingleShadowComponent = [
+	{ type: "length", value: createUnit(0, "px") },
+	{ type: "length", value: createUnit(0, "px") },
+	{ type: "length", value: createUnit(0, "px") },
+	{ type: "color", value: "transparent" },
+];
