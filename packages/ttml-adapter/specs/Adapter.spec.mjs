@@ -678,7 +678,7 @@ describe("Cues", () => {
 				`
 				<tt xml:lang="en"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
-					tts:extent="480px 320px"
+					tts:extent="480px 480px"
 					ttp:cellResolution="32 15"
 				>
 					<head>
@@ -697,7 +697,7 @@ describe("Cues", () => {
 			`,
 			).data;
 			const styles = cues[0]?.entities.find((e) => "styles" in e)?.styles;
-			/* 1c = extent_width / rows = 480px / 15 = 32px */
+			/* 1c = extent_height / rows = 480px / 15 = 32px */
 			expect(styles?.["font-size"]).toBe("32px");
 		});
 	});
