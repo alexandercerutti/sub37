@@ -48,8 +48,8 @@
 			"types": "./lib/Errors/index.d.ts"
 		},
 		"./BaseAdapter": {
-			"default": "./lib/BaseAdapter.js",
-			"types": "./lib/BaseAdapter.d.ts"
+			"default": "./lib/BaseAdapter/index.js",
+			"types": "./lib/BaseAdapter/index.d.ts"
 		}
 	}
 }
