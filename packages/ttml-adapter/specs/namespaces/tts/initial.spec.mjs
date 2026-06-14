@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { Entities } from "@sub37/adapter-utils";
 import TTMLAdapter from "../../../lib/Adapter.js";
+import { parseResult } from "../../helpers/parseResult.mjs";
 
 /**
  * Tests for the <initial> element in <styling>.
@@ -11,7 +12,9 @@ import TTMLAdapter from "../../../lib/Adapter.js";
 
 function parseDoc(stylingContent, bodyContent) {
 	const adapter = new TTMLAdapter();
-	const { data: cues } = adapter.parse(`
+	const { data: cues } = parseResult(
+		adapter,
+		`
 		<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 			<head>
 				<styling>
@@ -27,7 +30,8 @@ function parseDoc(stylingContent, bodyContent) {
 				</div>
 			</body>
 		</tt>
-	`);
+	`,
+	);
 	return cues;
 }
 

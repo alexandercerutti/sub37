@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { readdirSync, readFileSync } from "node:fs";
 import TTMLAdapter from "../../lib/Adapter.js";
+import { parseResult } from "../helpers/parseResult.mjs";
 
 /**
  * Recursively collect all .ttml files under a directory.
@@ -46,7 +47,7 @@ for (const { topic, file, fullPath } of entries) {
 		it(file, () => {
 			const content = readFileSync(fullPath, "utf-8");
 			const adapter = new TTMLAdapter();
-			const result = adapter.parse(content);
+			const result = parseResult(adapter, content);
 			expect(result.errors.filter((e) => e.isCritical)).toHaveLength(0);
 		});
 	});

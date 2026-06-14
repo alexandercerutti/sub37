@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { readdirSync, readFileSync } from "node:fs";
 import TTMLAdapter from "../../../lib/Adapter.js";
+import { parseResult } from "../../helpers/parseResult.mjs";
 
 function isTTMLFile(name) {
 	return name.endsWith(".ttml") || name.endsWith(".xml");
@@ -98,7 +99,7 @@ for (const [topic, entries] of groups) {
 			it(file, () => {
 				const content = readFileSync(fullPath, "utf-8");
 				const adapter = new TTMLAdapter();
-				const result = adapter.parse(content);
+				const result = parseResult(adapter, content);
 
 				/*
 				 * When no cues are produced, the adapter always appends one

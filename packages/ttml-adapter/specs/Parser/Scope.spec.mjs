@@ -1,5 +1,6 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import TTMLAdapter from "../../lib/Adapter.js";
+import { parseResult } from "../helpers/parseResult.mjs";
 import { createScope, onMergeSymbol } from "../../lib/Parser/Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "../../lib/Parser/Scope/TimeContext.js";
 import {
@@ -183,7 +184,9 @@ describe("Scope and contexts", () => {
 			});
 
 			it("integration", () => {
-				const cues = new TTMLAdapter().parse(`
+				const cues = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="">
 						<body>
 							<div>
@@ -193,7 +196,8 @@ describe("Scope and contexts", () => {
 							</div>
 						</body>
 					</tt>
-				`).data;
+				`,
+				).data;
 				expect(cues[0].endTime).toBe(10000);
 			});
 		});
@@ -219,7 +223,9 @@ describe("Scope and contexts", () => {
 			});
 
 			it("integration", () => {
-				const cues = new TTMLAdapter().parse(`
+				const cues = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="">
 						<body>
 							<div>
@@ -229,7 +235,8 @@ describe("Scope and contexts", () => {
 							</div>
 						</body>
 					</tt>
-				`).data;
+				`,
+				).data;
 				expect(cues[0].endTime).toBe(15000);
 			});
 		});
@@ -256,7 +263,9 @@ describe("Scope and contexts", () => {
 			});
 
 			it("integration", () => {
-				const cues = new TTMLAdapter().parse(`
+				const cues = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="">
 						<body>
 							<div>
@@ -266,7 +275,8 @@ describe("Scope and contexts", () => {
 							</div>
 						</body>
 					</tt>
-				`).data;
+				`,
+				).data;
 				expect(cues[0].endTime).toBe(20000);
 			});
 		});
@@ -314,7 +324,9 @@ describe("Scope and contexts", () => {
 				 * A child <span> gets its own TimeContext with state.timeContainer=undefined,
 				 * so its anonymous text reads "par" from the span's state — not "seq" from <p>.
 				 */
-				const cues = new TTMLAdapter().parse(`
+				const cues = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="">
 						<body>
 							<div>
@@ -322,7 +334,8 @@ describe("Scope and contexts", () => {
 							</div>
 						</body>
 					</tt>
-				`).data;
+				`,
+				).data;
 				expect(cues.length).toBe(0);
 			});
 		});

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import { Entities } from "@sub37/adapter-utils";
 import TTMLAdapter from "../lib/Adapter.js";
+import { parseResult } from "./helpers/parseResult.mjs";
 import { KeyTimesPacedNotAllowedError } from "../lib/Parser/Animations/keyTimes/KeyTimesNotAllowedError.js";
 import { KeySplinesNotAllowedError } from "../lib/Parser/Animations/keySplines/KeySplinesNotAllowedError.js";
 import { KeySplinesRequiredError } from "../lib/Parser/Animations/keySplines/KeySplinesRequiredError.js";
@@ -14,7 +15,9 @@ import { KeySplinesCoordinateOutOfBoundaryError } from "../lib/Parser/Animations
 describe("General", () => {
 	it("should report a critical error if the track does not start with a <tt> element", () => {
 		const adapter = new TTMLAdapter();
-		const result = adapter.parse(`
+		const result = parseResult(
+			adapter,
+			`
 			<head>
 				<layout></layout>
 			</head>
@@ -23,7 +26,8 @@ describe("General", () => {
 					<p>Some Content that won't be used</p>
 				</div>
 			</body>
-		`);
+		`,
+		);
 
 		expect(result.errors.length).toBeGreaterThan(0);
 		expect(result.errors.some((e) => e.isCritical)).toBe(true);
@@ -38,7 +42,9 @@ describe("Cues", () => {
 			describe("Out-of-line regions", () => {
 				it("should let cue inherit them from an out-of-line region", () => {
 					const adapter = new TTMLAdapter();
-					const { data: cues } = adapter.parse(`
+					const { data: cues } = parseResult(
+						adapter,
+						`
 							<tt xml:lang="en">
 								<head>
 									<layout>
@@ -64,7 +70,8 @@ describe("Cues", () => {
 									</div>
 								</body>
 							</tt>
-							`);
+							`,
+					);
 
 					expect(cues.length).toBe(3);
 					expect(cues[0]).toMatchObject({
@@ -83,7 +90,9 @@ describe("Cues", () => {
 
 				it("should let timestamp cues inherit from an out-of-line region", () => {
 					const adapter = new TTMLAdapter();
-					const { data: cues } = adapter.parse(`
+					const { data: cues } = parseResult(
+						adapter,
+						`
 							<tt xml:lang="en">
 								<head>
 									<layout>
@@ -106,7 +115,8 @@ describe("Cues", () => {
 									</div>
 								</body>
 							</tt>
-							`);
+							`,
+					);
 
 					/**
 					 * No other cues are emitted, as they are outside of region range
@@ -123,7 +133,9 @@ describe("Cues", () => {
 				it("should not let cue inherit them from an inline region", () => {
 					const adapter = new TTMLAdapter();
 
-					const { data: cues } = adapter.parse(`
+					const { data: cues } = parseResult(
+						adapter,
+						`
 						<tt xml:lang="en">
 							<body>
 								<div>
@@ -135,7 +147,8 @@ describe("Cues", () => {
 								</div>
 							</body>
 						</tt>
-					`);
+					`,
+					);
 
 					expect(cues.length).toBe(1);
 					expect(cues[0]).toMatchObject({
@@ -150,7 +163,9 @@ describe("Cues", () => {
 		describe("ttp:timeBase 'media'", () => {
 			it("should not emit a cue when the paragraph is a direct child of a sequential container with no timing attributes", () => {
 				const adapter = new TTMLAdapter();
-				const { data: cues } = adapter.parse(`
+				const { data: cues } = parseResult(
+					adapter,
+					`
 						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
@@ -158,14 +173,17 @@ describe("Cues", () => {
 								</div>
 							</body>
 						</tt>
-						`);
+						`,
+				);
 
 				expect(cues.length).toBe(0);
 			});
 
 			it("should emit a cue with indefinite duration when the paragraph is inside a par container nested in a sequential one", () => {
 				const adapter = new TTMLAdapter();
-				const { data: cues } = adapter.parse(`
+				const { data: cues } = parseResult(
+					adapter,
+					`
 						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
@@ -175,7 +193,8 @@ describe("Cues", () => {
 								</div>
 							</body>
 						</tt>
-						`);
+						`,
+				);
 
 				expect(cues.length).toBe(1);
 				expect(cues[0]).toMatchObject({
@@ -186,7 +205,9 @@ describe("Cues", () => {
 
 			it("should not emit a cue from anonymous span with active duration of 0s when parent is sequential", () => {
 				const adapter = new TTMLAdapter();
-				const { data: cues } = adapter.parse(`
+				const { data: cues } = parseResult(
+					adapter,
+					`
 						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div>
@@ -196,14 +217,17 @@ describe("Cues", () => {
 								</div>
 							</body>
 						</tt>
-						`);
+						`,
+				);
 
 				expect(cues.length).toBe(0);
 			});
 
 			it("should emit a cue from anonymous span with active duration of 3s when parent is sequential", () => {
 				const adapter = new TTMLAdapter();
-				const { data: cues } = adapter.parse(`
+				const { data: cues } = parseResult(
+					adapter,
+					`
 						<tt ttp:timeBase="media" xml:lang="">
 							<body>
 								<div begin="0s" timeContainer="seq">
@@ -211,7 +235,8 @@ describe("Cues", () => {
 								</div>
 							</body>
 						</tt>
-						`);
+						`,
+				);
 
 				expect(cues.length).toBe(1);
 				expect(cues[0]).toMatchObject({
@@ -227,7 +252,9 @@ describe("Cues", () => {
 				 * of the previous sibling (accumulated offset).
 				 */
 				const adapter = new TTMLAdapter();
-				const { data: cues } = adapter.parse(`
+				const { data: cues } = parseResult(
+					adapter,
+					`
 					<tt ttp:timeBase="media" xml:lang="">
 						<body>
 							<div begin="0s" timeContainer="seq">
@@ -236,7 +263,8 @@ describe("Cues", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 
 				expect(cues.length).toBe(2);
 				expect(cues[0]).toMatchObject({ startTime: 0, endTime: 3000 });
@@ -250,7 +278,9 @@ describe("Cues", () => {
 		it("should emit an element nested inside a parent when both have the same region attribute", () => {
 			const adapter = new TTMLAdapter();
 
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 					<tt xml:lang="">
 						<head>
 							<layout>
@@ -265,7 +295,8 @@ describe("Cues", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+			);
 
 			expect(cues.length).toBe(1);
 			expect(cues[0]).toMatchObject({ content: "Content" });
@@ -280,7 +311,8 @@ describe("Cues", () => {
 
 				const adapter = new TTMLAdapter();
 
-				const { data: cues } = adapter.parse(
+				const { data: cues } = parseResult(
+					adapter,
 					`
 							<tt xml:lang="en">
 								<head>
@@ -329,7 +361,8 @@ describe("Cues", () => {
 
 				const adapter = new TTMLAdapter();
 
-				adapter.parse(
+				parseResult(
+					adapter,
 					`
 							<tt xml:lang="en">
 								<head>
@@ -358,7 +391,8 @@ describe("Cues", () => {
 
 				const adapter = new TTMLAdapter();
 
-				adapter.parse(
+				parseResult(
+					adapter,
 					`
 							<tt xml:lang="en">
 								<head>
@@ -389,7 +423,8 @@ describe("Cues", () => {
 
 				const adapter = new TTMLAdapter();
 
-				adapter.parse(
+				parseResult(
+					adapter,
 					`
 							<tt xml:lang="en">
 								<head>
@@ -417,7 +452,8 @@ describe("Cues", () => {
 
 		const adapter = new TTMLAdapter();
 
-		adapter.parse(
+		parseResult(
+			adapter,
 			`
 							<tt xml:lang="en">
 								<head>
@@ -440,7 +476,9 @@ describe("Cues", () => {
 
 	it("should apply inline tts:* styles from a span element onto the cue", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -455,7 +493,8 @@ describe("Cues", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = cue?.entities.find(Entities.isLocalStyleEntity)?.styles;
@@ -465,7 +504,7 @@ describe("Cues", () => {
 
 	describe("parseCue", () => {
 		function parse(xml) {
-			return new TTMLAdapter().parse(xml).data;
+			return parseResult(new TTMLAdapter(), xml).data;
 		}
 
 		it("should be coherent with anonymous span", () => {
@@ -634,7 +673,9 @@ describe("Cues", () => {
 		 * Formula: 1c = extent_height_px / cellResolution_rows
 		 */
 		it("should convert a cell-sized font to pixels using extent and cellResolution", () => {
-			const cues = new TTMLAdapter().parse(`
+			const cues = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
 					tts:extent="480px 320px"
@@ -653,7 +694,8 @@ describe("Cues", () => {
 						</div>
 					</body>
 				</tt>
-			`).data;
+			`,
+			).data;
 			const styles = cues[0]?.entities.find((e) => "styles" in e)?.styles;
 			/* 1c = extent_width / rows = 480px / 15 = 32px */
 			expect(styles?.["font-size"]).toBe("32px");
@@ -670,7 +712,9 @@ describe("Cues", () => {
 		 * If it did pop, </layout> would advance treeScope to undefined,
 		 * causing the next element to throw before producing any cue.
 		 */
-		const { data: cues } = new TTMLAdapter().parse(`
+		const { data: cues } = parseResult(
+			new TTMLAdapter(),
+			`
 			<tt xml:lang="">
 				<head>
 					<layout>
@@ -684,7 +728,8 @@ describe("Cues", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBe(1);
 		expect(cues[0].startTime).toBe(0);
@@ -702,7 +747,9 @@ describe("Cues", () => {
 		 * After r1 closes, treeScope must be restored to the layout level so r2's
 		 * begin/end are resolved independently and not stacked on r1's scope.
 		 */
-		const { data: cues } = new TTMLAdapter().parse(`
+		const { data: cues } = parseResult(
+			new TTMLAdapter(),
+			`
 			<tt xml:lang="">
 				<head>
 					<layout>
@@ -717,7 +764,8 @@ describe("Cues", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBe(2);
 		expect(cues[0].startTime).toBe(0);
@@ -767,7 +815,7 @@ describe("Regions", () => {
 
 		const adapter = new TTMLAdapter();
 
-		const { data: cues } = adapter.parse(track);
+		const { data: cues } = parseResult(adapter, track);
 
 		expect(cues.length).toBe(3);
 
@@ -814,7 +862,7 @@ describe("Regions", () => {
 
 		const adapter = new TTMLAdapter();
 
-		const { data: cues } = adapter.parse(track);
+		const { data: cues } = parseResult(adapter, track);
 
 		expect(cues.length).toBe(1);
 		expect(cues[0]).toMatchObject({
@@ -824,7 +872,9 @@ describe("Regions", () => {
 
 	it("should assign the span's region to the cue when region is on a deeply nested span (ISD rule 3)", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -839,7 +889,8 @@ describe("Regions", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBeGreaterThan(0);
 		expect(cues[0].region).toBeDefined();
@@ -848,7 +899,9 @@ describe("Regions", () => {
 
 	it("should assign the span's region to the cue when parent <p> has no region (ISD rule 3)", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -863,7 +916,8 @@ describe("Regions", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBeGreaterThan(0);
 		expect(cues[0].region).toBeDefined();
@@ -872,7 +926,9 @@ describe("Regions", () => {
 
 	it("should assign correct regions to sibling spans each one level deep and flowing into different regions", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -889,7 +945,8 @@ describe("Regions", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBe(2);
 		expect(cues[0].region).toBeDefined();
@@ -902,7 +959,9 @@ describe("Regions", () => {
 
 	it("should read tts:origin and tts:extent from a region into getOrigin() and width", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -920,7 +979,8 @@ describe("Regions", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBeGreaterThan(0);
 		const region = cues[0].region;
@@ -945,7 +1005,9 @@ describe("Animations", () => {
 			 * Span 3: set begin="3s" dur="1s"  → absolute 6000–7000 ms
 			 */
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -974,7 +1036,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			// Each span produces exactly one cue, shifted to its animation window.
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
@@ -1002,7 +1065,9 @@ describe("Animations", () => {
 
 		it("should not include display:none in the cue's style entity when revealed by animation", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -1023,7 +1088,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
 			expect(textCues.length).toBeGreaterThan(0);
@@ -1037,7 +1103,9 @@ describe("Animations", () => {
 
 		it("should not emit a cue for a span that is permanently hidden (no display animation)", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -1051,7 +1119,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
 			expect(textCues.every((c) => c.content.trim() !== "Never shown")).toBe(true);
@@ -1068,7 +1137,9 @@ describe("Animations", () => {
 		 */
 		it("should emit one cue per span covering the full paragraph duration", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -1097,7 +1168,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
 
@@ -1111,7 +1183,9 @@ describe("Animations", () => {
 
 		it("should include visibility:hidden in each cue's local style", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -1132,7 +1206,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
 			expect(textCues.length).toBeGreaterThan(0);
@@ -1144,7 +1219,9 @@ describe("Animations", () => {
 
 		it("should attach a discrete animation entity that sets visibility:visible at the right delay", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -1173,7 +1250,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
 
@@ -1193,7 +1271,9 @@ describe("Animations", () => {
 
 	describe("TTML Continuous Animations - Linear", () => {
 		it("should animate tts:color correctly", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1209,7 +1289,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
@@ -1217,7 +1298,9 @@ describe("Animations", () => {
 		});
 
 		it("should silently drop tts:border when width/style change in a continuous animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1233,14 +1316,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:border when only style changes in a continuous animation", () => {
 			/* border-style changes across keyframes — validateAnimation returns false, style is silently dropped */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1256,13 +1342,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:textOutline when thickness changes in a continuous animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1278,13 +1367,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		it("should animate tts:textOutline correctly with only color changes", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1300,14 +1392,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
 		});
 
 		it("should silently drop tts:border with missing required components", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1323,14 +1418,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeUndefined();
 		});
 
 		it("should animate tts:textShadow correctly with only color changes", () => {
 			/* tts:textShadow syntax: <length> <length> [<color>]? — color goes last */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1346,7 +1444,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
@@ -1354,7 +1453,9 @@ describe("Animations", () => {
 
 		it("should silently drop tts:textShadow with continuous change in non-animatable components", () => {
 			/* offset changes across keyframes — validateAnimation returns false, style silently dropped */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1370,14 +1471,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		describe("keyTimes", () => {
 			it("should animate tts:color with keyTimes", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1393,7 +1497,8 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.keyTimes).toEqual([0, 0.5, 1]);
@@ -1401,7 +1506,9 @@ describe("Animations", () => {
 
 			it("should silently drop tts:color when keyTimes count does not match value count", () => {
 				/* 3 keyTimes but only 2 color values — style dropped, no remaining styles, no entity */
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1417,14 +1524,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeUndefined();
 			});
 
 			it("should silently drop styles with mismatched value counts across attributes", () => {
 				/* color has 2 values, backgroundColor has 4 — both dropped, no entity */
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1440,13 +1550,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeUndefined();
 			});
 
 			it("should report an error when keySplines is defined on a linear animation", () => {
-				const { errors } = new TTMLAdapter().parse(`
+				const { errors } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1462,12 +1575,15 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				expect(errors.some((e) => e.error instanceof KeySplinesNotAllowedError)).toBe(true);
 			});
 
 			it("should infer keyTimes when not provided", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1483,14 +1599,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.keyTimes).toEqual([0, 0.5, 1]);
 			});
 
 			it("should animate tts:color with more than 3 keyTimes", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1506,14 +1625,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.keyTimes).toEqual([0, 0.33, 0.66, 1]);
 			});
 
 			it("should animate tts:border correctly with only color changes and starting point", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -1529,7 +1651,8 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.styles?.["border-color"]).toBeDefined();
@@ -1539,7 +1662,9 @@ describe("Animations", () => {
 
 	describe("TTML Continuous Animations - Paced", () => {
 		it("should animate tts:color correctly with paced timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1555,7 +1680,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
@@ -1563,7 +1689,9 @@ describe("Animations", () => {
 		});
 
 		it("should silently drop tts:border when width/style changes in a paced animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1579,13 +1707,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:border with only style changes in a paced animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1601,13 +1732,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:textOutline when thickness changes in a paced animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1623,13 +1757,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		it("should animate tts:textOutline correctly with only color changes with paced timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1645,14 +1782,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
 		});
 
 		it("should silently drop invalid tts:border and tts:textOutline with missing required components", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1668,14 +1808,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeUndefined();
 		});
 
 		it("should animate tts:textShadow correctly with only color changes with paced timing", () => {
 			/* tts:textShadow syntax: <length> <length> [<color>]? — color goes last */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1691,14 +1834,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
 		});
 
 		it("should silently drop tts:textShadow when offset changes in a paced animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1714,13 +1860,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		it("should report an error when keyTimes is defined on a paced animation", () => {
-			const { errors } = new TTMLAdapter().parse(`
+			const { errors } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1736,7 +1885,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			expect(errors.some((e) => e.error instanceof KeyTimesPacedNotAllowedError)).toBe(true);
 		});
 
@@ -1749,7 +1899,9 @@ describe("Animations", () => {
 			 * first attribute (color: 2 values) and drops any other attribute whose
 			 * count differs (backgroundColor: 4 values).
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1765,7 +1917,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.styles["color"]).toBeDefined();
@@ -1773,7 +1926,9 @@ describe("Animations", () => {
 		});
 
 		it("should animate tts:border correctly with only color changes and starting point with paced timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1789,7 +1944,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.styles?.["border-color"]).toBeDefined();
@@ -1799,7 +1955,9 @@ describe("Animations", () => {
 	describe("TTML Continuous Animations - Spline", () => {
 		it("should animate tts:color correctly with spline timing", () => {
 			/* 3 keyTimes → 2 keySplines required (N-1) */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1815,7 +1973,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
@@ -1826,7 +1985,9 @@ describe("Animations", () => {
 		it("should silently drop tts:border when width/style change in a spline animation", () => {
 			/* 1 keySpline is valid here because 2 keyTimes → 1 spline (N-1) would be correct,
 			 * but this test has 3 keyTimes → need to use 2 keySplines for this to not throw */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1842,13 +2003,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:textOutline when thickness changes in a spline animation", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1864,7 +2028,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
@@ -1872,7 +2037,9 @@ describe("Animations", () => {
 		it("should silently drop tts:textShadow when offset changes in a spline animation", () => {
 			/* 1 keySpline ok here: this test already has correct 1 keySpline for its 2-interval range,
 			 * but we have 3 keyTimes → needs 2. Keeping the original correct-count version. */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1888,13 +2055,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		it("should animate tts:border correctly with only color changes with spline timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1910,14 +2080,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.styles?.["border-color"]).toBeDefined();
 		});
 
 		it("should animate tts:textOutline correctly with only color changes with spline timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1933,14 +2106,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
 		});
 
 		it("should animate tts:textShadow correctly with only color changes with spline timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1956,14 +2132,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("continuous");
 		});
 
 		it("should animate tts:border correctly with only color changes and starting point with spline timing", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -1979,14 +2158,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.styles?.["border-color"]).toBeDefined();
 		});
 
 		it("should properly parse valid keySplines", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2002,7 +2184,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.splines).toEqual([
@@ -2014,7 +2197,9 @@ describe("Animations", () => {
 		it("should throw when keySplines count does not match keyTimes count minus one", () => {
 			/* 3 keyTimes → needs 2 keySplines, but only 1 provided */
 			expect(() =>
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2030,13 +2215,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`),
+				`,
+				),
 			).toThrow(KeySplinesAmountNotMatchingKeyTimesError);
 		});
 
 		it("should throw when keySplines control points are not exactly 4", () => {
 			expect(() =>
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2052,13 +2240,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`),
+				`,
+				),
 			).toThrow(KeySplinesInvalidControlsAmountError);
 		});
 
 		it("should throw when a keySplines coordinate is out of [0,1] range", () => {
 			expect(() =>
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2074,12 +2265,15 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`),
+				`,
+				),
 			).toThrow(KeySplinesCoordinateOutOfBoundaryError);
 		});
 
 		it("should report an error when calcMode is spline but keySplines is missing", () => {
-			const { errors } = new TTMLAdapter().parse(`
+			const { errors } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2095,12 +2289,15 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			expect(errors.some((e) => e.error instanceof KeySplinesRequiredError)).toBe(true);
 		});
 
 		it("should silently drop tts:border when width/style change in a spline animation (duplicate set)", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2116,13 +2313,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:textOutline when thickness changes in a spline animation (duplicate set)", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2138,13 +2338,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
 
 		it("should silently drop tts:textShadow when offset changes in a spline animation (duplicate set)", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2160,7 +2363,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 		});
@@ -2169,7 +2373,9 @@ describe("Animations", () => {
 	describe("TTML Repeated Animations", () => {
 		describe("repeatCount", () => {
 			it("should animate tts:color with repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2185,14 +2391,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.styles["color"]).toBeDefined();
 			});
 
 			it("should silently drop tts:border when width/style change with repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2208,13 +2417,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity?.styles?.["border-color"]).toBeUndefined();
 			});
 
 			it("should silently drop tts:border with only style changes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2230,13 +2442,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity?.styles?.["border-color"]).toBeUndefined();
 			});
 
 			it("should silently drop tts:textOutline when thickness changes with repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2252,13 +2467,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 			});
 
 			it("should animate tts:textOutline correctly with only color changes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2274,14 +2492,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 			});
 
 			it("should silently drop invalid tts:border with missing components and repeatCount", () => {
 				/* border dropped — no remaining styles, no entity */
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2297,13 +2518,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeUndefined();
 			});
 
 			it("should animate tts:textShadow correctly with only color changes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2319,13 +2543,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 			});
 
 			it("should silently drop tts:textShadow when offset changes with repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2341,13 +2568,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity?.styles?.["text-shadow"]).toBeUndefined();
 			});
 
 			it("should animate tts:color with more than 3 keyTimes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2363,14 +2593,17 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 				expect(entity.keyTimes).toHaveLength(4);
 			});
 
 			it("should silently drop tts:border with non-uniform style changes and 4 keyTimes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2386,13 +2619,16 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity?.styles?.["border-color"]).toBeUndefined();
 			});
 
 			it("should animate tts:textOutline with more than 3 keyTimes and repeatCount", () => {
-				const { data: cues } = new TTMLAdapter().parse(`
+				const { data: cues } = parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 						<head>
 							<layout>
@@ -2408,7 +2644,8 @@ describe("Animations", () => {
 							</div>
 						</body>
 					</tt>
-				`);
+				`,
+				);
 				const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 				expect(entity).toBeDefined();
 			});
@@ -2417,7 +2654,9 @@ describe("Animations", () => {
 
 	describe("TTML Discrete Animations", () => {
 		it("should animate tts:border with discrete changes", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2433,14 +2672,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
 		});
 
 		it("should animate tts:textOutline with discrete changes", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2456,7 +2698,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
@@ -2464,7 +2707,9 @@ describe("Animations", () => {
 
 		it("should silently drop styles with invalid discrete values (missing components)", () => {
 			/* tts:border needs both style and color; bare style tokens are invalid */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2480,13 +2725,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 		});
 
 		it("should animate tts:border with keyTimes in discrete mode", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2502,7 +2750,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
@@ -2510,7 +2759,9 @@ describe("Animations", () => {
 		});
 
 		it("should animate tts:textOutline with keyTimes in discrete mode", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2526,7 +2777,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
@@ -2534,7 +2786,9 @@ describe("Animations", () => {
 		});
 
 		it("should silently drop styles with mismatched value counts across attributes", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2550,7 +2804,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 		});
@@ -2559,7 +2814,9 @@ describe("Animations", () => {
 			/*
 			 * 3 keyTimes but only 2 values — count mismatch causes style to be dropped.
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2575,13 +2832,16 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity?.styles?.["border-color"]).toBeUndefined();
 		});
 
 		it("should animate tts:border with more than 3 keyTimes in discrete mode", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2597,14 +2857,17 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.keyTimes).toHaveLength(4);
 		});
 
 		it("should animate tts:textOutline with more than 3 keyTimes in discrete mode", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2620,7 +2883,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.keyTimes).toHaveLength(4);
@@ -2628,7 +2892,9 @@ describe("Animations", () => {
 
 		it("should animate tts:border with discrete changes using <set>", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2646,7 +2912,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
@@ -2654,7 +2921,9 @@ describe("Animations", () => {
 
 		it("should animate tts:textOutline with discrete changes using <set>", () => {
 			const adapter = new TTMLAdapter();
-			const { data: cues } = adapter.parse(`
+			const { data: cues } = parseResult(
+				adapter,
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<layout>
@@ -2672,7 +2941,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
 			expect(entity).toBeDefined();
 			expect(entity.kind).toBe("discrete");
@@ -2681,7 +2951,9 @@ describe("Animations", () => {
 
 	describe("Region animations", () => {
 		it("should produce a continuous animation entity on the region for <animate> tts:opacity", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2699,7 +2971,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const region = cues[0]?.region;
 			expect(region).toBeDefined();
@@ -2710,7 +2983,9 @@ describe("Animations", () => {
 		});
 
 		it("should produce a discrete animation entity on the region for <set> tts:origin", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2728,7 +3003,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const region = cues[0]?.region;
 			expect(region).toBeDefined();
@@ -2747,7 +3023,9 @@ describe("Animations", () => {
 			 * not 2000ms, which would result from subtracting regionStart=0 (root
 			 * TimeContext) instead of regionStart=2000 (the region's own TimeContext).
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2765,7 +3043,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const region = cues[0]?.region;
 			expect(region).toBeDefined();
@@ -2783,7 +3062,9 @@ describe("Animations", () => {
 			 * Known bug: buildContexts crashes with a null access on <animate> children
 			 * of a region with timeContainer="seq" (RegionContainerContext.ts:295).
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2802,7 +3083,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			const region = cues[0]?.region;
 			expect(region).toBeDefined();
@@ -2829,7 +3111,9 @@ describe("Animations", () => {
 			 *
 			 * This is Track A from REGION_SCOPE_REFACTOR.md §9.
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2848,7 +3132,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			expect(cues.length).toBeGreaterThan(0);
 
@@ -2873,7 +3158,9 @@ describe("Animations", () => {
 			 * that targets a non-inheritable property must not propagate to content.
 			 * Only the region itself should carry that animation entity.
 			 */
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2891,7 +3178,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			expect(cues.length).toBeGreaterThan(0);
 
@@ -2908,7 +3196,9 @@ describe("Animations", () => {
 			 * an unescaped semicolon — that separator belongs to <animation-value-list>
 			 * (§13.3.2), which is the syntax for <animate>, not <set>.
 			 */
-			const { data: cues, errors } = new TTMLAdapter().parse(`
+			const { data: cues, errors } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en"
 					xmlns="http://www.w3.org/ns/ttml"
 					xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -2929,7 +3219,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			/* The cue must still be emitted — bad animation must not swallow the cue. */
 			const textCues = cues.filter((c) => c.content.trim().length > 0);
@@ -2943,7 +3234,9 @@ describe("Animations", () => {
 
 	describe("Out-of-line animations (<animation> container)", () => {
 		it("should attach a continuous animation entity from a <head><animation><animate> reference", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<animation>
@@ -2959,7 +3252,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			expect(cues.length).toBeGreaterThan(0);
 			const entity = cues[0]?.entities?.find(Entities.isAnimationEntity);
@@ -2969,7 +3263,9 @@ describe("Animations", () => {
 		});
 
 		it("should attach a discrete animation entity from a <head><animation><set> reference", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<animation>
@@ -2985,7 +3281,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			expect(cues.length).toBeGreaterThan(0);
 			/*
@@ -3000,7 +3297,9 @@ describe("Animations", () => {
 		});
 
 		it("should attach multiple animation entities when animate contains space-separated IDREFS", () => {
-			const { data: cues } = new TTMLAdapter().parse(`
+			const { data: cues } = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
 					<head>
 						<animation>
@@ -3017,7 +3316,8 @@ describe("Animations", () => {
 						</div>
 					</body>
 				</tt>
-			`);
+			`,
+			);
 
 			expect(cues.length).toBeGreaterThan(0);
 
@@ -3040,7 +3340,9 @@ describe("Style inheritance", () => {
 
 	it("merges a linear style chain onto the cue", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3056,7 +3358,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3066,7 +3369,9 @@ describe("Style inheritance", () => {
 
 	it("own attributes override inherited ones", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3091,7 +3396,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3109,7 +3415,9 @@ describe("Style inheritance", () => {
 		 */
 
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3128,7 +3436,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3140,7 +3449,9 @@ describe("Style inheritance", () => {
 
 	it("merges multiple directly referenced styles onto the cue", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3157,7 +3468,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3167,7 +3479,9 @@ describe("Style inheritance", () => {
 
 	it("ignores cyclic style references", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3183,7 +3497,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3195,7 +3510,9 @@ describe("Style inheritance", () => {
 
 	it("does not expose a style defined inside a region to elements outside it", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<layout>
@@ -3212,7 +3529,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3226,7 +3544,9 @@ describe("Style inheritance", () => {
 		 * set of the region R into which the element is flowed, then P is
 		 * inherited from R.
 		 */
-		const { data: cues } = new TTMLAdapter().parse(`
+		const { data: cues } = parseResult(
+			new TTMLAdapter(),
+			`
 			<tt xml:lang="en"
 				xmlns="http://www.w3.org/ns/ttml"
 				xmlns:tts="http://www.w3.org/ns/ttml#styling"
@@ -3242,7 +3562,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		expect(cues.length).toBeGreaterThan(0);
 
@@ -3253,7 +3574,9 @@ describe("Style inheritance", () => {
 
 	it("should allow a region-nested style to inherit from a global style via the style attribute", () => {
 		const adapter = new TTMLAdapter();
-		const { data: cues } = adapter.parse(`
+		const { data: cues } = parseResult(
+			adapter,
+			`
 			<tt xml:lang="en">
 				<head>
 					<styling>
@@ -3271,7 +3594,8 @@ describe("Style inheritance", () => {
 					</div>
 				</body>
 			</tt>
-		`);
+		`,
+		);
 
 		const cue = cues.find((c) => c.content.trim() === "Hello");
 		const styles = getStyleEntity(cue)?.styles;
@@ -3290,7 +3614,9 @@ describe("Time container", () => {
 
 	describe("sequential (seq)", () => {
 		it("first child in seq starts at 0 when no explicit begin", () => {
-			const cues = new TTMLAdapter().parse(`
+			const cues = parseResult(
+				new TTMLAdapter(),
+				`
 				<tt xml:lang="" ttp:timeBase="media">
 					<body>
 						<div begin="0s" timeContainer="seq">
@@ -3298,13 +3624,16 @@ describe("Time container", () => {
 						</div>
 					</body>
 				</tt>
-			`).data;
+			`,
+			).data;
 			expect(cues[0]).toMatchObject({ startTime: 0, endTime: 3000 });
 		});
 
 		it("second child starts at the active end of the first", () => {
 			const cues = cuesWithContent(
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="" ttp:timeBase="media">
 						<body>
 							<div begin="0s" timeContainer="seq">
@@ -3313,7 +3642,8 @@ describe("Time container", () => {
 							</div>
 						</body>
 					</tt>
-				`).data,
+				`,
+				).data,
 			);
 			expect(cues[0]).toMatchObject({ startTime: 0, endTime: 3000 });
 			expect(cues[1]).toMatchObject({ startTime: 3000, endTime: 5000 });
@@ -3321,7 +3651,9 @@ describe("Time container", () => {
 
 		it("accumulates across three siblings", () => {
 			const cues = cuesWithContent(
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="" ttp:timeBase="media">
 						<body>
 							<div begin="0s" timeContainer="seq">
@@ -3331,7 +3663,8 @@ describe("Time container", () => {
 							</div>
 						</body>
 					</tt>
-				`).data,
+				`,
+				).data,
 			);
 			expect(cues[0]).toMatchObject({ startTime: 0, endTime: 2000 });
 			expect(cues[1]).toMatchObject({ startTime: 2000, endTime: 5000 });
@@ -3346,7 +3679,9 @@ describe("Time container", () => {
 			 * Second child: referenceBegin=end of first=4000ms, begin="1s" → startTime=5000
 			 */
 			const cues = cuesWithContent(
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="" ttp:timeBase="media">
 						<body>
 							<div begin="0s" timeContainer="seq">
@@ -3355,7 +3690,8 @@ describe("Time container", () => {
 							</div>
 						</body>
 					</tt>
-				`).data,
+				`,
+				).data,
 			);
 			expect(cues[0]).toMatchObject({ startTime: 1000, endTime: 4000 });
 			expect(cues[1]).toMatchObject({ startTime: 5000, endTime: 7000 });
@@ -3365,7 +3701,9 @@ describe("Time container", () => {
 	describe("parallel (par)", () => {
 		it("siblings in a par container share the same reference point", () => {
 			const cues = cuesWithContent(
-				new TTMLAdapter().parse(`
+				parseResult(
+					new TTMLAdapter(),
+					`
 					<tt xml:lang="" ttp:timeBase="media">
 						<body>
 							<div>
@@ -3374,7 +3712,8 @@ describe("Time container", () => {
 							</div>
 						</body>
 					</tt>
-				`).data,
+				`,
+				).data,
 			);
 			expect(cues[0]).toMatchObject({ startTime: 0, endTime: 3000 });
 			/* par: Second is NOT offset by First */
