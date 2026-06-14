@@ -1260,7 +1260,7 @@ function extractOutOfLineAnimations(
 			continue;
 		}
 
-		const animationId = getInlineAnimationId(tokenContent, currentNode.content);
+		const animationId = tokenContent.attributes["xml:id"];
 
 		animations.push(
 			getInlineAnimationFromToken(animationId, tokenContent, currentNode.content.content),
@@ -1301,7 +1301,12 @@ function getInlineAnimationFromToken(
 
 function getInlineAnimationId(token: Token, parent?: Token): string {
 	if (token.attributes["xml:id"]) {
-		return token.attributes["xml:id"];
+		/*
+		 * Always prefix with "in:animation-" even when the element has its own xml:id.
+		 * ":" is not valid in XML NCNames, so this ID cannot be authored in TTML
+		 * and cannot accidentally collide with out-of-line animation IDs.
+		 */
+		return `in:animation-${token.attributes["xml:id"]}`;
 	}
 
 	if (parent?.attributes["xml:id"]) {
