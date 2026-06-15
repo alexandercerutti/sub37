@@ -10,10 +10,11 @@ import {
 	CSSVAR_SPAN_PADDING_X,
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
-import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
+import TreeOrchestrator from "./TreeOrchestrator.js";
+import type { OrchestratorSettings } from "./TreeOrchestrator.js";
 
 export * from "./constants.js";
-export type { OrchestratorSettings };
+export type { OrchestratorSettings } from "./TreeOrchestrator.js";
 
 class Renderer extends HTMLElement {
 	private container = Object.assign(document.createElement("main"), {
