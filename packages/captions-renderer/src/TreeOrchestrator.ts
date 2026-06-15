@@ -6,6 +6,7 @@ import type { Sub37Region } from "./RegionElement.js";
 import "./RegionElement.js";
 
 const rootElementSymbol = Symbol("to.root.element");
+const scrollRootSymbol = Symbol("to.scroll.root");
 
 export interface OrchestratorSettings {
 	/**
@@ -67,16 +68,18 @@ export default class TreeOrchestrator {
 
 	private [rootElementSymbol]: HTMLDivElement;
 
+	/**
+	 * The element that allows scrolling the content of the region
+	 * when the content is too long and goes on a new line, achieving
+	 * Roll-up effect.
+	 */
+	private [scrollRootSymbol]: HTMLDivElement;
+
 	private settings: OrchestratorSettings;
 	private shiftDownFirstLine: boolean = false;
 	private animatedElements: HTMLElement[] = [];
 
-	public constructor(
-		parent: HTMLElement,
-		trackRegionSettings?: Region,
-		trackRenderingModifiers?: RenderingModifiers,
-		settings?: Partial<OrchestratorSettings>,
-	) {
+	public constructor(trackRegionSettings?: Region, settings?: Partial<OrchestratorSettings>) {
 		const root = document.createElement(ROOT_TAG_NAME) as Sub37Region;
 
 		root.dataset["trackRegionId"] = trackRegionSettings?.id ?? "";
@@ -84,7 +87,8 @@ export default class TreeOrchestrator {
 		const regionScrollElement = document.createElement("div");
 		regionScrollElement.classList.add("scroll-root");
 
-		this[rootElementSymbol] = root.appendChild(regionScrollElement);
+		this[scrollRootSymbol] = root.appendChild(regionScrollElement);
+		this[rootElementSymbol] = this[scrollRootSymbol];
 
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
@@ -92,11 +96,17 @@ export default class TreeOrchestrator {
 			lines:
 				trackRegionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
+	}
 
-		let [originX, originY] = trackRegionSettings?.getOrigin(
-			parent.offsetWidth,
-			parent.offsetHeight,
-		) ?? ["0%", "70%"];
+	public paint(
+		parent: HTMLElement,
+		region?: Region,
+		trackRenderingModifiers?: RenderingModifiers,
+	): void {
+		let [originX, originY] = region?.getOrigin(parent.offsetWidth, parent.offsetHeight) ?? [
+			"0%",
+			"70%",
+		];
 
 		if (typeof originX === "number" || !UNIT_REGEX.test(originX)) {
 			originX = `${originX}%`;
@@ -112,9 +122,8 @@ export default class TreeOrchestrator {
 		 * to height derived by lines.
 		 */
 		const authoredHeight =
-			typeof trackRegionSettings?.height === "number"
-				? `${trackRegionSettings.height}%`
-				: trackRegionSettings?.height;
+			typeof region?.height === "number" ? `${region.height}%` : region?.height;
+
 		let regionHeight = authoredHeight ?? `${this.settings.lines * DEFAULT_LINE_HEIGHT_EM}em`;
 
 		if (!authoredHeight && this.settings.roundRegionHeightLineFit) {
@@ -128,17 +137,17 @@ export default class TreeOrchestrator {
 		this.shiftDownFirstLine = shiftDownFirstLine;
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
-			width:
-				typeof trackRegionSettings?.width === "number"
-					? `${trackRegionSettings.width}%`
-					: (trackRegionSettings?.width ?? "100%"),
+			width: typeof region?.width === "number" ? `${region.width}%` : (region?.width ?? "100%"),
 			height: regionHeight,
 			left: originX,
 			top: originY,
 		};
 
-		Object.assign(root.style, rootStyles);
-		root.applyEntities(trackRegionSettings?.entities ?? []);
+		Object.assign(this.root.style, rootStyles);
+		this.root.applyEntities(region?.entities ?? []);
+
+		/* Reset to scroll-root so cached reuse doesn't nest modifier divs */
+		this[rootElementSymbol] = this[scrollRootSymbol];
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
@@ -160,14 +169,14 @@ export default class TreeOrchestrator {
 		this.root.remove();
 	}
 
-	public get root(): HTMLElement {
+	public get root(): Sub37Region {
 		let root: HTMLElement = this[rootElementSymbol];
 
 		while (root.tagName.toLowerCase() !== ROOT_TAG_NAME) {
 			root = root.parentElement!;
 		}
 
-		return root;
+		return root as Sub37Region;
 	}
 
 	public wipeTree(): void {

@@ -198,13 +198,10 @@ sub37-region div > p.line-block > span {
 			if (this.activeRegions[regionId]) {
 				tree = this.activeRegions[regionId];
 			} else {
-				tree = new TreeOrchestrator(
-					this.container,
-					cues[0]!.region,
-					cues[0]!.renderingModifiers,
-					this.regionsProperties,
-				);
+				tree = new TreeOrchestrator(cues[0]!.region, this.regionsProperties);
 			}
+
+			tree.paint(this.container, cues[0]!.region, cues[0]!.renderingModifiers);
 
 			/**
 			 * Appending is required to happen before wiping
