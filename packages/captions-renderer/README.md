@@ -86,13 +86,14 @@ import type { OrchestratorSettings } from "@sub37/captions-renderer";
 import { CSSVAR_TEXT_COLOR, ... } from "@sub37/captions-renderer";
 ```
 
-| CSS Variable Name           |  Javascript Constant Name  |      Default      | Description                                                                                                                                      |
-| :-------------------------- | :------------------------: | :---------------: | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--sub37-text-color`        |    `CSSVAR_TEXT_COLOR`     |      `#FFF`       | Allows changing the color of text. This text overrides the color harcoded into provided tracks                                                   |
-| `--sub37-text-bg-color`     |   `CSSVAR_TEXT_BG_COLOR`   | `rgba(0,0,0,0.7)` | This is the background color. Set to `transparent` to remove it.                                                                                 |
-| `--sub37-region-bg-color`   |  `CSSVAR_REGION_BG_COLOR`  | `rgba(0,0,0,0.4)` | This is the background color of the regions. Set to `transparent` to remove it.                                                                  |
-| `--sub37-bottom-spacing`    |  `CSSVAR_BOTTOM_SPACING`   |       `0px`       | This is the amount of space that regions should leave from bottom. This might be useful to make the regions move, for example, to show controls. |
-| `--sub37-bottom-transition` | `CSSVAR_BOTTOM_TRANSITION` |    `0s linear`    | This is the `transition` proprieties that can be applied to regions when `--sub37-bottom-spacing` gets changed. Make it smoooooth, baby!         |
+| CSS Variable Name           |  Javascript Constant Name  |                 Default                 | Description                                                                                                                                        |
+| :-------------------------- | :------------------------: | :-------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--sub37-text-color`        |    `CSSVAR_TEXT_COLOR`     |                 `#FFF`                  | Allows changing the color of text. This text overrides the color harcoded into provided tracks                                                     |
+| `--sub37-text-bg-color`     |   `CSSVAR_TEXT_BG_COLOR`   |            `rgba(0,0,0,0.7)`            | This is the background color. Set to `transparent` to remove it.                                                                                   |
+| `--sub37-region-bg-color`   |  `CSSVAR_REGION_BG_COLOR`  |            `rgba(0,0,0,0.4)`            | This is the background color of the regions. Set to `transparent` to remove it.                                                                    |
+| `--sub37-bottom-spacing`    |  `CSSVAR_BOTTOM_SPACING`   |                  `0px`                  | This is the amount of space that regions should leave from bottom. This might be useful to make the regions move, for example, to show controls.   |
+| `--sub37-bottom-transition` | `CSSVAR_BOTTOM_TRANSITION` |               `0s linear`               | This is the `transition` proprieties that can be applied to regions when `--sub37-bottom-spacing` gets changed. Make it smoooooth, baby!           |
+| `--sub37-span-padding-x`    |  `CSSVAR_SPAN_PADDING_X`   | Track-defined padding; `15px` otherwise | This is the amount of space that is left between the left and right edges of each span. Useful when there is a background color applied (default). |
 
 ## Testing
 

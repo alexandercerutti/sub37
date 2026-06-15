@@ -66,7 +66,7 @@ main#caption-window {
 	 * Positive calculations because people might want
 	 * to pull up the rendering area and not push it down
 	 */
-	height: calc(100% + var(${CSSVAR_BOTTOM_SPACING}, 0px));
+	height: calc(100% - var(${CSSVAR_BOTTOM_SPACING}, 0px));
 	transition: height var(${CSSVAR_BOTTOM_TRANSITION}, 0s linear);
 	overflow: hidden;
 }
