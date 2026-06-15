@@ -442,11 +442,11 @@ function createLine(lineEntities: Entities.LineStyleEntity[]): HTMLElement {
 		 * Here below, we suppress our internal styles when authored styles are present.
 		 */
 		if (key === "background-color") {
-			lineNode.style.setProperty("--s37-int-bgcolor", "transparent");
+			lineNode.style.setProperty("--s37__internal__bgcolor", "transparent");
 		}
 
 		if (key.startsWith("padding")) {
-			lineNode.style.setProperty("--s37-int-padding", "0px");
+			lineNode.style.setProperty("--s37__internal__padding", "0px");
 		}
 	}
 

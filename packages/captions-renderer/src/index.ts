@@ -99,25 +99,25 @@ sub37-region div > p {
 
 sub37-region div > p.line-block {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
-	--s37-int-bgcolor: rgba(0, 0, 0, 0.7);
+	--s37__internal__bgcolor: rgba(0, 0, 0, 0.7);
 }
 	
 sub37-region div > p.line-block > span {
 		/**
 		 * Giving priority to user customization, then to the internal color and
 		 * then to the default.
-		 * --sub37-int-bgcolor is defined on the p.line-block as the fallback
+		 * --sub37__internal__bgcolor is defined on the p.line-block as the fallback
 		 * and will be replaced when the line is created when needed (so, if
 		 * the line has a specific background-color). By doing this way, this
 		 * variable cannot get overridden from outside.
 		 */
-		background-color: var(${CSSVAR_TEXT_BG_COLOR}, var(--s37-int-bgcolor));
+		background-color: var(${CSSVAR_TEXT_BG_COLOR}, var(--s37__internal__bgcolor));
 	
 		/**
-		 * Priority: user (${CSSVAR_SPAN_PADDING_X}) → document (--s37-int-padding) → default.
+		 * Priority: user (${CSSVAR_SPAN_PADDING_X}) → document (--s37__internal__padding) → default.
 		 * FCC 47 CFR § 79.103 requires user settings to always prevail over authored ones.
 		 */
-		padding: 0 var(${CSSVAR_SPAN_PADDING_X}, var(--s37-int-padding, 15px));
+		padding: 0 var(${CSSVAR_SPAN_PADDING_X}, var(--s37__internal__padding, 15px));
 
 		line-height: 1.5em;
 		word-wrap: break-word;
