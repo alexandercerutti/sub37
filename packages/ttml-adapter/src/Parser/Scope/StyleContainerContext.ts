@@ -313,7 +313,7 @@ function processStylesByTopology(
 			continue;
 		}
 
-		onErrorReport(new Error(`Style '${id}' forms a cyclic reference. Will be ignored.`));
+		onErrorReport(new StyleCyclicReferenceError(id));
 	}
 
 	return resolvedStyles;
@@ -439,4 +439,12 @@ function convertAttributesToCSS(
 	}
 
 	return convertedAttributes;
+}
+
+class StyleCyclicReferenceError extends Error {
+	constructor(styleId: string) {
+		super();
+		this.name = "StyleCyclicReferenceError";
+		this.message = `Style '${styleId}' forms a cyclic reference. Will be ignored.`;
+	}
 }
