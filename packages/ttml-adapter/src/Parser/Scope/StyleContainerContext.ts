@@ -402,7 +402,7 @@ function convertAttributesToCSS(
 		const value = attributes[attributeKey]!;
 
 		if (definition.syntax.Grammar.type === "unavailable") {
-			errorContext.report(new Error(`Style attribute '${attributeKey}' is not supported.`), false);
+			errorContext.report(new UnsupportedStyleAttributeError(attributeKey), false);
 
 			continue;
 		}
@@ -446,5 +446,13 @@ class StyleCyclicReferenceError extends Error {
 		super();
 		this.name = "StyleCyclicReferenceError";
 		this.message = `Style '${styleId}' forms a cyclic reference. Will be ignored.`;
+	}
+}
+
+class UnsupportedStyleAttributeError extends Error {
+	constructor(attributeName: string) {
+		super();
+		this.name = "UnsupportedStyleAttributeError";
+		this.message = `Style attribute '${attributeName}' is not supported.`;
 	}
 }
