@@ -39,3 +39,54 @@ The following are not yet implemented:
 - Audio styling (`tta:` namespace properties);
 - 3D stereoscopic offset (`tts:disparity`).
 - `ttp:profile` enforcement;
+
+### Errors
+
+All errors produced during parsing are surfaced as `ParseError` objects through the `parse` generator. Non-critical errors are emitted as `CUE_ERROR` events by `@sub37/server` and do not halt parsing. Critical errors stop parsing immediately.
+
+#### Critical
+
+| Error name                      | Trigger                                                                           |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `MissingContentError`           | The content passed to the adapter is empty                                        |
+| `MissingDocumentLanguageError`  | `<tt>` is missing the required `xml:lang` attribute                               |
+| `DuplicateDocumentContextError` | A second `<tt>` element is encountered; one document context per track is allowed |
+
+#### Non-critical — time expressions
+
+All of these cause the affected cue or element to be skipped or have its timing ignored.
+
+| Error name                               | Trigger                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| `UnsupportedOffsetTimeMetricError`       | An offset-time expression uses a metric other than `h`, `m`, `s`, `ms`, `f`, `t`       |
+| `InvalidMediaTimeBaseWallclockTimeUsage` | Wallclock time is used when `ttp:timeBase` is `media`                                  |
+| `InvalidSMPTETimeBaseWallClockTimeUsage` | Wallclock time is used when `ttp:timeBase` is `smpte`                                  |
+| `InvalidSMPTETimeBaseOffsetTimeUsage`    | Offset time is used when `ttp:timeBase` is `smpte` (deprecated by the standard)        |
+| `InvalidClockTimeBaseFramesProvided`     | `frames` or `subframes` fields are used in a clock-time expression                     |
+| `NotAllowedClockTimeBaseFrameMetric`     | Frame metric (`f`) is used in an offset-time expression when `ttp:timeBase` is `clock` |
+
+#### Non-critical — animations
+
+All of these cause the affected animation to be skipped. Remaining animations and cues are unaffected.
+
+| Error name                                 | Trigger                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `UnsupportedCalcModeError`                 | `calcMode` has a value other than `discrete`, `linear`, `paced`, or `spline` |
+| `KeySplinesRequiredError`                  | `calcMode="spline"` is used but `keySplines` is absent                       |
+| `KeySplinesNotAllowedError`                | `keySplines` is present on a non-spline animation                            |
+| `KeySplinesInvalidControlsAmountError`     | A spline control does not have exactly 4 coordinates                         |
+| `KeySplinesCoordinateOutOfBoundaryError`   | A spline coordinate falls outside `[0, 1]`                                   |
+| `KeySplinesAmountNotMatchingKeyTimesError` | The number of splines is not exactly `keyTimes.length − 1`                   |
+| `KeyTimesFirstValueNotZeroError`           | The first `keyTimes` value is not `0`                                        |
+| `KeyTimesLastValueNotOneError`             | The last `keyTimes` value is not `1`                                         |
+| `KeyTimesComponentOutOfBoundaryError`      | A `keyTimes` value falls outside `[0, 1]`                                    |
+| `KeyTimesAscendingOrderViolationError`     | `keyTimes` values are not in strictly ascending order                        |
+| `KeyTimesInferredMinimumUnmatchedError`    | Fewer than two `keyTimes` values are present                                 |
+| `KeyTimesPacedNotAllowedError`             | `keyTimes` is set on a `calcMode="paced"` animation (not allowed)            |
+
+#### Non-critical — styles and document
+
+| Error name / message             | Trigger                                                |
+| -------------------------------- | ------------------------------------------------------ |
+| `StyleCyclicReferenceError`      | A style references itself or creates a reference cycle |
+| `UnsupportedStyleAttributeError` | A `tts:*` attribute is recognized but not implemented  |
