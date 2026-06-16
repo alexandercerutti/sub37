@@ -50,6 +50,9 @@
 		"./BaseAdapter": {
 			"default": "./lib/BaseAdapter/index.js",
 			"types": "./lib/BaseAdapter/index.d.ts"
+		},
+		"./Region": {
+			"types": "./lib/Region.d.ts"
 		}
 	}
 }
