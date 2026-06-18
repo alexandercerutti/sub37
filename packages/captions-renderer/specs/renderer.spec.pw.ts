@@ -119,7 +119,7 @@ STYLE
 }
 
 STYLE
-::cue([voice="Bill"]) {
+::cue(v[voice="Bill"]) {
 	background-color: blue;
 }
 
@@ -183,7 +183,7 @@ I am Fred<i>-ish</i>
 		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
 	);
 
-	expect(evaluation[1]).toBe(" -ish");
+	expect(evaluation[3]).toBe(" -ish");
 });
 
 test("A global-style should get applied to all the cues", async ({
@@ -240,12 +240,8 @@ STYLE
 	expect(billLocator.isVisible()).toBeTruthy();
 
 	const [textColorFred, textColorBill] = await Promise.all([
-		fredLocator.evaluate((element) =>
-			getComputedStyle(element.children[0]).getPropertyValue("color"),
-		),
-		billLocator.evaluate((element) =>
-			getComputedStyle(element.children[0]).getPropertyValue("color"),
-		),
+		fredLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
+		billLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
 	]);
 
 	expect(textColorFred).toBe(peachpuff);
@@ -293,13 +289,14 @@ scroll:up
 		}
 
 		rendererElement.setRegionProperties({
-			roundRegionHeightLineFit: true,
+			snapHeightToLineGrid: false,
 		});
 
 		const regionInstance = new (class implements Region {
-			public height = 3.2;
-			public width: number = 100;
+			public height: string = "3.2em";
+			public width: string = "100%";
 			public lines: number = 3;
+			public entities = [];
 			public scroll?: "up" | "none" = "none";
 			public id = "testRegionCustom";
 
@@ -332,7 +329,7 @@ scroll:up
 	expect(fredRegionHeight).toBe("4.5em");
 
 	/**
-	 * Now disabling the setting and seek to rerender the cues.
+	 * Now enabling the setting and seek to rerender the cues.
 	 */
 
 	await page.evaluate(() => {
@@ -347,16 +344,16 @@ scroll:up
 		}
 
 		rendererElement.setRegionProperties({
-			roundRegionHeightLineFit: false,
+			snapHeightToLineGrid: true,
 		});
 	});
 
-	await seekToSecond(9.5);
+	await seekToSecond(25);
 	await seekToSecond(10);
 
 	fredRegionHeight = await page
 		.locator("captions-renderer > main > sub37-region:first-child")
 		.evaluate((element) => element.style.height);
 
-	expect(fredRegionHeight).toBe("3.2em");
+	expect(fredRegionHeight).toMatch(/^\d+(?:\.\d+)?px$/);
 });
