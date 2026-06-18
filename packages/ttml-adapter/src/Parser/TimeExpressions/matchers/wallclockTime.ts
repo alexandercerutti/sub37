@@ -85,11 +85,18 @@ function toWallClockDateMatch(match: [year: string, month: string, day: string])
 function createWallClockDateTimeUnit(match: RegExpMatchArray): WallClockUnit {
 	const [, year, month, day, hours, minutes, seconds, fraction] = match;
 
-	const summedTimestamps =
-		toWallClockDateMatch([year!, month!, day!]).getTime() +
-		toWallClockWallTimeMatch([hours!, minutes!, seconds!, fraction]).getTime();
-
-	return createUnit(summedTimestamps, "date");
+	return createUnit(
+		new Date(
+			parseInt(year!),
+			parseInt(month!) - 1,
+			parseInt(day!),
+			parseInt(hours!),
+			parseInt(minutes!),
+			parseInt(seconds || "0"),
+			parseInt(fraction || "0"),
+		).getTime(),
+		"date",
+	);
 }
 
 export function matchWallClockTimeExpression(content: string): WallClockUnit | null {
