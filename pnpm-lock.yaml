@@ -42,8 +42,13 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
 
+  packages/adapter-utils: {}
+
   packages/captions-renderer:
     dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:*
+        version: link:../adapter-utils
       '@sub37/server':
         specifier: workspace:*
         version: link:../server
@@ -60,6 +65,9 @@ importers:
       '@sub37/server':
         specifier: workspace:^
         version: link:../server
+      '@sub37/ttml-adapter':
+        specifier: workspace:^
+        version: link:../ttml-adapter
       '@sub37/webvtt-adapter':
         specifier: workspace:^
         version: link:../webvtt-adapter
@@ -74,13 +82,23 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(typescript@6.0.2)(vite@5.4.21(@types/node@20.10.5))
 
-  packages/server: {}
+  packages/server:
+    dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
+
+  packages/ttml-adapter:
+    dependencies:
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
 
   packages/webvtt-adapter:
     dependencies:
-      '@sub37/server':
-        specifier: workspace:*
-        version: link:../server
+      '@sub37/adapter-utils':
+        specifier: workspace:^
+        version: link:../adapter-utils
 
 packages:
 

@@ -1,10 +1,37 @@
 // @ts-check
-import { Entities, CueNode, BaseAdapter } from "@sub37/server";
-import { ParseResult } from "@sub37/server/lib/BaseAdapter/index.js";
+import { Entities, BaseAdapter, CueNode } from "@sub37/adapter-utils";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTAdapter from "../lib/Adapter.js";
-import { MissingContentError } from "../lib/MissingContentError.js";
+import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
 import { InvalidFormatError } from "../lib/InvalidFormatError.js";
+import { TagType } from "@sub37/adapter-utils/Entities";
+
+/**
+ * @param {import("@sub37/adapter-utils").ParseGenerator} generator
+ * @returns {{ data: import("@sub37/adapter-utils").CueNode[], errors: import("@sub37/adapter-utils").ParseError[] }}
+ */
+function collectParseResult(generator) {
+	const data = [];
+	const errors = [];
+	let result;
+	do {
+		result = generator.next();
+		if (!result.done && result.value) {
+			for (const item of result.value) {
+				if (item instanceof CueNode) {
+					data.push(item);
+				} else {
+					errors.push(item);
+				}
+			}
+		}
+	} while (!result.done);
+	/* Generator return value carries critical ParseError[] */
+	if (Array.isArray(result.value)) {
+		errors.push(...result.value);
+	}
+	return { data, errors };
+}
 
 describe("WebVTTAdapter", () => {
 	/** @type {WebVTTAdapter} */
@@ -20,43 +47,41 @@ describe("WebVTTAdapter", () => {
 
 	describe("parse", () => {
 		it("should return an empty ParseResult if rawContent is falsy", () => {
-			const emptyParseResult = BaseAdapter.ParseResult(
-				[],
-				[
+			const emptyParseResult = {
+				data: [],
+				errors: [
 					{
 						error: new MissingContentError(),
 						failedChunk: "",
 						isCritical: true,
 					},
 				],
-			);
+			};
 
 			// @ts-expect-error
-			expect(adapter.parse(undefined)).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(undefined))).toEqual(emptyParseResult);
 			// @ts-expect-error
-			expect(adapter.parse(null)).toEqual(emptyParseResult);
-			expect(adapter.parse("")).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(null))).toEqual(emptyParseResult);
+			expect(collectParseResult(adapter.parse(""))).toEqual(emptyParseResult);
 		});
 
 		it("should throw if it receives a string that does not start with 'WEBTT' header", () => {
 			// @ts-expect-error
-			expect(adapter.parse(true)).toBeInstanceOf(ParseResult);
+			expect(collectParseResult(adapter.parse(true)).data.length).toBe(0);
 			// @ts-expect-error
-			expect(adapter.parse(true).data.length).toBe(0);
+			expect(collectParseResult(adapter.parse(true)).errors.length).toBe(1);
 			// @ts-expect-error
-			expect(adapter.parse(true).errors.length).toBe(1);
-			// @ts-expect-error
-			expect(adapter.parse(true).errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse(true)).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 			// @ts-expect-error
-			expect(adapter.parse(true).errors[0].isCritical).toBe(true);
+			expect(collectParseResult(adapter.parse(true)).errors[0].isCritical).toBe(true);
 
 			// @ts-expect-error
-			expect(adapter.parse(10).errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse(10)).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
-			expect(adapter.parse("Look, a phoenix!").errors[0].error).toEqual(
+			expect(collectParseResult(adapter.parse("Look, a phoenix!")).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
 		});
@@ -75,7 +100,7 @@ Never drink liquid nitrogen.
 00:00:10.000 --> 00:00:14.000
 The Organisation for Sample Public Service Announcements accepts no liability for the content of this advertisement, or for the consequences of any actions taken on the basis of the information provided.`;
 
-			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
 
 			expect(parseResult.data[2]).toBeTruthy();
 			expect(parseResult.data[2].content).toBe(
@@ -96,7 +121,7 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 — It will perforate your stomach.
 — You could die.`;
 
-			const parseResult = adapter.parse(GENERIC_RAW_VTT_CONTENT);
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
 
 			expect(parseResult.data.length).toBe(2);
 			expect(parseResult.data[0].startTime).toBe(1000);
@@ -119,7 +144,7 @@ This cue should never appear, right?
 ...Right?
 `;
 
-			const result = adapter.parse(SAME_START_END_TIMES_CONTENT);
+			const result = collectParseResult(adapter.parse(SAME_START_END_TIMES_CONTENT));
 			expect(result.data.length).toEqual(2);
 
 			expect(result.data[0].startTime).toEqual(6000);
@@ -155,7 +180,7 @@ id1
 <00:00:08.500> Test t2
 `;
 
-			const result = adapter.parse(SAME_IDS_CONTENT);
+			const result = collectParseResult(adapter.parse(SAME_IDS_CONTENT));
 			expect(result.data.length).toEqual(4);
 
 			expect(result.data[0].id).toEqual("id1");
@@ -185,8 +210,7 @@ WEBVTT
 00:00:00.000 --> 00:00:20.000 region:fred align:left
 <lang.mimmo en-US>Hi, my name is Fred</lang>`;
 
-			const parsingResult = adapter.parse(CLASSIC_CONTENT);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
+			const parsingResult = collectParseResult(adapter.parse(CLASSIC_CONTENT));
 			expect(parsingResult.data.length).toEqual(2);
 
 			expect(parsingResult.data[0]).toMatchObject({
@@ -196,7 +220,7 @@ WEBVTT
 				id: "cue-9-108",
 
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 98,
@@ -206,15 +230,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [
-					new Entities.Tag({
-						offset: 0,
-						length: 31,
-						tagType: 1,
-						attributes: new Map([["voice", "Fred>"]]),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map([["voice", "Fred>"]]), [])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
@@ -224,7 +240,7 @@ WEBVTT
 				id: "cue-110-207",
 
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 98,
@@ -234,15 +250,7 @@ WEBVTT
 					leftOffset: 0,
 				},
 
-				entities: [
-					new Entities.Tag({
-						offset: 0,
-						length: 19,
-						tagType: 2,
-						attributes: new Map([["lang", "en-US"]]),
-						classes: ["mimmo"],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map([["lang", "en-US"]]), ["mimmo"])],
 			});
 		});
 
@@ -258,17 +266,16 @@ WEBVTT
 <00:00:24.000>
 			`;
 
-			const parsingResult = adapter.parse(TIMESTAMPS_CUES_CONTENT);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
+			const parsingResult = collectParseResult(adapter.parse(TIMESTAMPS_CUES_CONTENT));
 			expect(parsingResult.data.length).toEqual(4);
 
 			expect(parsingResult.data[0]).toMatchObject({
 				startTime: 16000,
 				endTime: 24000,
-				content: " This\n",
+				content: "This",
 				id: "cue-9-180",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -277,24 +284,16 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						offset: 1,
-						length: 4,
-						tagType: 16,
-						attributes: new Map(),
-						classes: ["mimmo"],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map(), ["mimmo"])],
 			});
 
 			expect(parsingResult.data[1]).toMatchObject({
 				startTime: 18000,
 				endTime: 24000,
-				content: " can\n",
+				content: "can",
 				id: "cue-9-180",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -303,15 +302,7 @@ WEBVTT
 					width: 100,
 					leftOffset: 0,
 				},
-				entities: [
-					new Entities.Tag({
-						offset: 1,
-						length: 3,
-						tagType: 16,
-						attributes: new Map(),
-						classes: [],
-					}),
-				],
+				entities: [Entities.createTagEntity(TagType.SPAN, new Map(), [])],
 			});
 		});
 
@@ -323,17 +314,34 @@ WEBVTT
 <ruby>漢 <rt>kan</rt> 字 <rt>ji</ruby>
 			`;
 
-			const parsingResult = adapter.parse(RUBY_RT_AUTOCLOSE);
-			expect(parsingResult).toBeInstanceOf(ParseResult);
-			expect(parsingResult.data.length).toEqual(1);
+			const parsingResult = collectParseResult(adapter.parse(RUBY_RT_AUTOCLOSE));
+			expect(parsingResult.data.length).toEqual(4);
 
 			expect(parsingResult.data[0]).toMatchObject({
 				startTime: 5000,
 				endTime: 10000,
-				content: "漢 kan 字 ji\n",
+				content: "漢 ",
 				id: "cue-9-79",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [Entities.createTagEntity(Entities.TagType.RUBY, new Map(), [])],
+			});
+
+			expect(parsingResult.data[1]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: "kan",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -343,30 +351,45 @@ WEBVTT
 					leftOffset: 0,
 				},
 				entities: [
-					new Entities.Tag({
-						tagType: Entities.TagType.RUBY,
-						offset: 0,
-						length: 10,
-						attributes: new Map(),
-						classes: [],
-						styles: {},
-					}),
-					new Entities.Tag({
-						tagType: Entities.TagType.RT,
-						offset: 2,
-						length: 3,
-						attributes: new Map(),
-						classes: [],
-						styles: {},
-					}),
-					new Entities.Tag({
-						tagType: Entities.TagType.RT,
-						offset: 8,
-						length: 2,
-						attributes: new Map(),
-						classes: [],
-						styles: {},
-					}),
+					Entities.createTagEntity(Entities.TagType.RUBY, new Map(), []),
+					Entities.createTagEntity(Entities.TagType.RT, new Map(), []),
+				],
+			});
+			expect(parsingResult.data[2]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: " 字 ",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [Entities.createTagEntity(Entities.TagType.RUBY, new Map(), [])],
+			});
+			expect(parsingResult.data[3]).toMatchObject({
+				startTime: 5000,
+				endTime: 10000,
+				content: "ji",
+				id: "cue-9-79",
+				/**
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
+				 */
+				renderingModifiers: {
+					id: 97,
+					regionIdentifier: undefined,
+					textAlignment: "center",
+					width: 100,
+					leftOffset: 0,
+				},
+				entities: [
+					Entities.createTagEntity(Entities.TagType.RUBY, new Map(), []),
+					Entities.createTagEntity(Entities.TagType.RT, new Map(), []),
 				],
 			});
 		});
@@ -388,18 +411,17 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 `;
 
-			const parsingResult = adapter.parse(REGION_WITH_ATTRIBUTES);
+			const parsingResult = collectParseResult(adapter.parse(REGION_WITH_ATTRIBUTES));
 
 			expect(parsingResult.data[0]).toMatchObject({
 				content:
-					"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-					"Alberto, come to look at Marcello!\n",
+					"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
 				startTime: 5000,
 				endTime: 10000,
 				entities: [],
 				id: "cue-97-226",
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -410,7 +432,7 @@ Alberto, come to look at Marcello!
 				},
 				region: {
 					id: "fred",
-					width: 40,
+					width: "40%",
 					lines: 3,
 				},
 			});
@@ -432,33 +454,23 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult = adapter.parse(CUE_WITH_STYLE_WITHOUT_ID);
+					const parsingResult = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITHOUT_ID));
 
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					expect(parsingResult.data[0]).toMatchObject({
 						content,
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								styles: {
-									"background-color": "purple",
-								},
-								attributes: new Map(),
-								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
-								classes: [],
+							Entities.createLineStyleEntity({
+								"background-color": "purple",
 							}),
 						],
 						id: "cue-53-187",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -472,8 +484,7 @@ Alberto, come to look at Marcello!
 
 				it("should add only style that matches the id", () => {
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					const CUE_WITH_STYLE_WITH_CSS_ID = `
 WEBVTT
@@ -494,29 +505,20 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_ID));
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content,
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								styles: {
-									"background-color": "purple",
-								},
-								tagType: Entities.TagType.SPAN,
-								attributes: new Map(),
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
-								classes: [],
+							Entities.createLineStyleEntity({
+								"background-color": "purple",
 							}),
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -546,29 +548,20 @@ Mamma mia, Marcello, that's not how you hold a gun.
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID);
+					const parsingResult2 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_ESCAPED_ID));
 
 					expect(parsingResult2.data[0]).toMatchObject({
 						content,
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length:
-									"Mamma mia, Marcello, that's not how you hold a gun.\n".length +
-									"Alberto, come to look at Marcello!\n".length,
-								attributes: new Map(),
-								styles: {
-									"background-color": "red",
-								},
-								classes: [],
+							Entities.createLineStyleEntity({
+								"background-color": "red",
 							}),
 						],
 						id: "123",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -581,10 +574,6 @@ Alberto, come to look at Marcello!
 				});
 
 				it("should add only style that matches the tag", () => {
-					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
-
 					const CUE_WITH_STYLE_WITH_CSS_TAG = `
 WEBVTT
 
@@ -603,27 +592,39 @@ STYLE
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG));
 
 					expect(parsingResult1.data[0]).toMatchObject({
-						content,
+						content: "Mamma mia, Marcello",
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: 32,
-								styles: {
-									"background-color": "purple",
-								},
-								offset: 0,
-								length: 19,
-								attributes: new Map(),
-								classes: [],
+							Entities.createTagEntity(TagType.BOLD, new Map(), []),
+							Entities.createLocalStyleEntity({
+								"background-color": "purple",
 							}),
 						],
 						id: "cue-103-244",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							id: 97,
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
+
+					expect(parsingResult1.data[1]).toMatchObject({
+						content: ", that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
+						startTime: 5000,
+						endTime: 10000,
+						entities: [],
+						id: "cue-103-244",
+						/**
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -636,10 +637,6 @@ Alberto, come to look at Marcello!
 				});
 
 				it("should apply all styles and tags", () => {
-					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
-
 					const CUE_WITH_STYLE_WITH_CSS_TAG = `
 WEBVTT
 
@@ -659,37 +656,46 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG);
+					const parsingResult1 = collectParseResult(adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG));
 
 					expect(parsingResult1.data[0]).toMatchObject({
-						content,
+						content: "Mamma mia, Marcello",
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: Entities.TagType.BOLD,
-								offset: 0,
-								length: 19,
-								attributes: new Map(),
-								styles: {
-									"background-color": "purple",
-								},
-								classes: [],
+							Entities.createLineStyleEntity({
+								"background-color": "red",
 							}),
-							new Entities.Tag({
-								tagType: Entities.TagType.SPAN,
-								offset: 0,
-								length: content.length,
-								attributes: new Map(),
-								styles: {
-									"background-color": "red",
-								},
-								classes: [],
+							Entities.createTagEntity(Entities.TagType.BOLD, new Map(), []),
+							Entities.createLocalStyleEntity({
+								"background-color": "purple",
 							}),
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
+						 */
+						renderingModifiers: {
+							id: 97,
+							regionIdentifier: "fred",
+							textAlignment: "center",
+							width: 100,
+							leftOffset: 0,
+						},
+					});
+
+					expect(parsingResult1.data[1]).toMatchObject({
+						content: ", that's not how you hold a gun.\nAlberto, come to look at Marcello!\n",
+						startTime: 5000,
+						endTime: 10000,
+						entities: [
+							Entities.createLineStyleEntity({
+								"background-color": "red",
+							}),
+						],
+						id: "test",
+						/**
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -703,8 +709,7 @@ Alberto, come to look at Marcello!
 
 				it("should apply all styles for tags with the same attributes", () => {
 					const content =
-						"Mamma mia, Marcello, that's not how you hold a gun.\n" +
-						"Alberto, come to look at Marcello!\n";
+						"Mamma mia, Marcello, that's not how you hold a gun.\nAlberto, come to look at Marcello!\n";
 
 					const CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES = `
 WEBVTT
@@ -725,27 +730,21 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult1 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES);
+					const parsingResult1 = collectParseResult(
+						adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_NO_ATTRIBUTES),
+					);
 
 					expect(parsingResult1.data[0]).toMatchObject({
 						content,
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: 1,
-								offset: 0,
-								length: 87,
-								attributes: new Map(),
-								styles: {
-									"background-color": "purple",
-								},
-								classes: [],
-							}),
+							Entities.createTagEntity(TagType.SPAN, new Map(), []),
+							Entities.createLocalStyleEntity("background-color: purple"),
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -780,27 +779,26 @@ test
 Alberto, come to look at Marcello!
 					`;
 
-					const parsingResult2 = adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES);
+					const parsingResult2 = collectParseResult(
+						adapter.parse(CUE_WITH_STYLE_WITH_CSS_TAG_ATTRIBUTES),
+					);
 
 					expect(parsingResult2.data[0]).toMatchObject({
 						content,
 						startTime: 5000,
 						endTime: 10000,
 						entities: [
-							new Entities.Tag({
-								tagType: 1,
-								offset: 0,
-								length: 87,
-								attributes: new Map([["voice", "Fred"]]),
-								styles: {
-									"background-color": "pink",
-								},
-								classes: [],
+							Entities.createTagEntity(TagType.SPAN, new Map([["voice", "Fred"]]), []),
+							Entities.createLocalStyleEntity({
+								"background-color": "red",
+							}),
+							Entities.createLocalStyleEntity({
+								"background-color": "pink",
 							}),
 						],
 						id: "test",
 						/**
-						 * @type {import("@sub37/server").RenderingModifiers}
+						 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 						 */
 						renderingModifiers: {
 							id: 97,
@@ -829,21 +827,13 @@ STYLE
 <v Bill>Hi, I’m Bill
 `;
 
-				const parsingResult = adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR);
+				const parsingResult = collectParseResult(adapter.parse(TRACK_WITH_WRONG_STYLE_SELECTOR));
 
-				const entities = parsingResult.data
-					.flatMap((cue) => cue.entities)
-					.filter((entity) => entity.type === 1);
+				for (let i = 0; i < parsingResult.data.length; i++) {
+					const entities = parsingResult.data[i].entities;
 
-				for (let i = 0; i < entities.length; i++) {
-					if (entities[i].type !== 1) {
-						continue;
-					}
-
-					expect(/** @type {Entities.Tag} */ (entities[i]).styles).toEqual({});
+					expect(entities.filter(Entities.isLocalStyleEntity)).toEqual([]);
 				}
-
-				expect(entities[0].type);
 			});
 		});
 	});

@@ -1,8 +1,8 @@
-import type { Region } from "@sub37/server";
-import { BaseAdapter, CueNode, Entities } from "@sub37/server";
+import { BaseAdapter, CueNode, Entities } from "@sub37/adapter-utils";
+import type { ParseGenerator, Region } from "@sub37/adapter-utils";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
-import { MissingContentError } from "./MissingContentError.js";
+import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
 import * as Parser from "./Parser/index.js";
 
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
@@ -28,18 +28,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 		return "text/vtt";
 	}
 
-	override parse(rawContent: string): BaseAdapter.ParseResult {
+	override *parse(rawContent: string): ParseGenerator {
 		if (!rawContent) {
-			return BaseAdapter.ParseResult(
-				[],
-				[
-					{
-						error: new MissingContentError(),
-						failedChunk: "",
-						isCritical: true,
-					},
-				],
-			);
+			return [
+				{
+					error: new MissingContentError(),
+					failedChunk: "",
+					isCritical: true,
+				},
+			];
 		}
 
 		const cueIdsList: Set<string> = new Set();
@@ -52,8 +49,6 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 		const regions: { [id: string]: Region } = Object.create(null);
 		const styles: Parser.Style[] = [];
-
-		const failures: BaseAdapter.ParseError[] = [];
 
 		/**
 		 * Phase indicator to ignore unordered blocks.
@@ -81,11 +76,13 @@ export default class WebVTTAdapter extends BaseAdapter {
 				const blockEvaluationResult = evaluateBlock(content, block.start, block.cursor);
 
 				if (isError(blockEvaluationResult)) {
-					failures.push({
-						error: blockEvaluationResult,
-						failedChunk: content.substring(block.start, block.cursor),
-						isCritical: false,
-					});
+					yield [
+						{
+							error: blockEvaluationResult,
+							failedChunk: content.substring(block.start, block.cursor),
+							isCritical: false,
+						},
+					];
 
 					/** Skipping \n\n and going to the next character */
 					block.cursor += 3;
@@ -116,11 +113,13 @@ export default class WebVTTAdapter extends BaseAdapter {
 					latestBlockPhase = blockType;
 
 					if (!parsedContent) {
-						failures.push({
-							error: new EmptyStyleDeclarationError(),
-							failedChunk: content.substring(block.start, block.cursor),
-							isCritical: false,
-						});
+						yield [
+							{
+								error: new EmptyStyleDeclarationError(),
+								failedChunk: content.substring(block.start, block.cursor),
+								isCritical: false,
+							},
+						];
 					} else {
 						styles.push(parsedContent);
 					}
@@ -139,15 +138,25 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 					let latestRootCue: CueNode | undefined = undefined;
 
+					/**
+					 * @TODO performing a filter and a remap for each parsed cue might be useless
+					 */
+
+					const globalStylesEntities = styles
+						.filter((style) => style.type === Parser.StyleDomain.GLOBAL)
+						.map((style) => Entities.createLineStyleEntity(style.styleString));
+
 					for (const parsedCue of parsedContent) {
 						if (parsedCue.startTime >= parsedCue.endTime) {
-							failures.push({
-								error: new Error(
-									`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
-								),
-								failedChunk: content.substring(block.start, block.cursor),
-								isCritical: false,
-							});
+							yield [
+								{
+									error: new Error(
+										`A cue cannot start (${parsedCue.startTime}) after its end time (${parsedCue.endTime})`,
+									),
+									failedChunk: content.substring(block.start, block.cursor),
+									isCritical: false,
+								},
+							];
 
 							continue;
 						}
@@ -162,13 +171,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 							 */
 
 							if (!parsedCue.groupingIdentifier && cueIdsList.has(parsedCue.id)) {
-								failures.push({
-									error: new Error(
-										`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
-									),
-									failedChunk: content.substring(block.start, block.cursor),
-									isCritical: false,
-								});
+								yield [
+									{
+										error: new Error(
+											`A WebVTT cue identifier must be unique amongst all the cue identifiers of a WebVTT file. Double id found: '${parsedCue.id}'`,
+										),
+										failedChunk: content.substring(block.start, block.cursor),
+										isCritical: false,
+									},
+								];
 
 								continue;
 							}
@@ -197,50 +208,32 @@ export default class WebVTTAdapter extends BaseAdapter {
 							latestRootCue = cue;
 						}
 
-						const stylesEntities = styles
-							.filter((style) => {
-								return (
-									(style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id) ||
-									style.type === Parser.StyleDomain.GLOBAL
-								);
-							})
-							.sort(styleSpecificitySorter);
+						const stylesById = styles
+							.filter(
+								(style) => style.type === Parser.StyleDomain.ID && style.selector === parsedCue.id,
+							)
+							.map((style) => Entities.createLineStyleEntity(style.styleString));
 
-						const entities: Entities.Tag[] = [];
-
-						if (stylesEntities.length) {
-							/**
-							 * Having the same length of the style entities here allows
-							 * us to prevent having several elements with the same styles
-							 * in renderer.
-							 */
-
-							const superCue = Object.getPrototypeOf(cue);
-							const length =
-								superCue instanceof CueNode ? superCue.content.length : parsedCue.text.length;
-
-							entities.push(
-								new Entities.Tag({
-									offset: 0,
-									length,
-									tagType: Entities.TagType.SPAN,
-									attributes: new Map(),
-									classes: [],
-								}),
-							);
-
-							for (let style of stylesEntities) {
-								entities[0]!.setStyles(style.styleString);
-							}
-						}
+						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
 
 						for (const tag of parsedCue.tags) {
-							entities.push(tag);
+							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
+							entities.push(originalEntity);
 
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
 								}
+
+								/**
+								 * Looking for a matching tag that has the same:
+								 *  - tag name
+								 *  - number of attributes
+								 *  - exact matching attributes
+								 *  - classes amount
+								 *  - exact matching classes
+								 *  - A nice smile :)
+								 */
 
 								if (style.tagName && style.tagName !== tag.tagType) {
 									continue;
@@ -278,12 +271,18 @@ export default class WebVTTAdapter extends BaseAdapter {
 									}
 								}
 
-								tag.setStyles(style.styleString);
+								/**
+								 * YAY 🎉 We found a matching tag for a style!
+								 */
+
+								entities.push(Entities.createLocalStyleEntity(style.styleString));
 							}
 						}
 
 						cue.entities = entities;
 						cues.push(cue);
+
+						yield [cue];
 					}
 				}
 
@@ -293,20 +292,17 @@ export default class WebVTTAdapter extends BaseAdapter {
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(JSON.stringify(err));
 
-				return BaseAdapter.ParseResult(
-					[],
-					[
-						{
-							error,
-							isCritical: true,
-							failedChunk: undefined,
-						},
-					],
-				);
+				return [
+					{
+						error,
+						isCritical: true,
+						failedChunk: undefined,
+					},
+				];
 			}
 		} while (block.cursor <= content.length);
 
-		return BaseAdapter.ParseResult(cues, failures);
+		return;
 	}
 }
 
@@ -418,25 +414,4 @@ function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 
 function isError(evaluation: BlockTuple | Error): evaluation is Error {
 	return !Array.isArray(evaluation) && evaluation instanceof Error;
-}
-
-/**
- * Reorders styles so that Global styles are placed
- * before id styles
- *
- * @param s1
- * @param s2
- * @returns
- */
-
-function styleSpecificitySorter(s1: Parser.Style, s2: Parser.Style) {
-	if (s1.type === s2.type) {
-		return 0;
-	}
-
-	if (s1.type === Parser.StyleDomain.ID && s2.type === Parser.StyleDomain.GLOBAL) {
-		return 1;
-	}
-
-	return -1;
 }

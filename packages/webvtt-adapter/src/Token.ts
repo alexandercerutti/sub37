@@ -8,8 +8,8 @@ export enum TokenType {
 type Boundaries = { start: number; end: number };
 
 export class Token {
-	public annotations: string[] = [];
-	public classes: string[] = [];
+	public annotations?: string[];
+	public classes?: string[];
 	public offset: number = 0;
 	public length: number = 0;
 

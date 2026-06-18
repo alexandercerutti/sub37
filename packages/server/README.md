@@ -215,3 +215,27 @@ These are the errors that might get fired. Some might just get logged in console
 | `UnexpectedParsingOutputFormatError`      | When an adapter didn't return the expected data structure when it ended the parsing phase. Data cannot be read an it is not possible to proceed. |
 | `UnparsableContentError`                  | The chosen adapter wasn't able to parse the provided content. Something is wrong here, either the adapter support or the track format.           |
 | `UnsupportedContentError`                 | When looking for a suitable Adapter, Server wasn't able to find an adapter that matches content's mimetype with adapters `supportedTypes`.       |
+
+## Wallclock-timed tracks (live broadcast / EBU-TT-D)
+
+TTML documents using `ttp:timeBase="clock"` and `wallclock(...)` time expressions are primarily used in live broadcast contexts — for example, EBU-TT-D subtitles distributed over DVB or HbbTV. In this mode, cue timing is anchored to a real-world UTC clock rather than to a media timeline.
+
+This has a direct consequence for how `Server.start()` must be called: `CueNode.startTime` and `endTime` will be Unix epoch timestamps (milliseconds since 1970-01-01), not media-relative offsets. Passing `() => videoElement.currentTime * 1000` as the position getter will result in cues never being served, because the player position (~0–duration ms) will never match the cue timestamps (~1.7 trillion ms).
+
+For wallclock-timed tracks, the position getter must return a wall-clock value:
+
+```typescript
+server.start(() => Date.now());
+```
+
+### DVR / replay
+
+In a DVR scenario, where a viewer seeks back into a live stream, the origin server may handle timing in one of two ways:
+
+- **UTC timestamps preserved**: the original documents are re-served as-is. The position getter must still return a wall-clock value aligned to the broadcast clock — typically `Date.now()` when watching live, or a seek-offset equivalent when replaying.
+- **Repackaged with media-relative timing**: the origin server rewrites the timing before delivery. Wallclock expressions are no longer present; the integration works as normal.
+
+### Known limitation
+
+There is currently no mechanism in `@sub37/server` to auto-detect which time base a track uses, or to enforce the correct position getter at runtime. This is an integration responsibility: the consumer must know whether the track is wallclock-timed and configure the position getter accordingly.
+

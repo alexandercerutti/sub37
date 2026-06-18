@@ -1,8 +1,8 @@
-import type { TrackRecord } from "./Track";
-import { CueNode } from "./CueNode.js";
-import { BaseAdapterConstructor } from "./BaseAdapter/index.js";
+import { CueNode } from "@sub37/adapter-utils/CueNode";
+import type { ParseError, BaseAdapterConstructor } from "@sub37/adapter-utils";
 import { ActiveTrackMissingError } from "./Errors/index.js";
-import { Track } from "./Track";
+import type { TrackRecord } from "./Track/index.js";
+import { Track } from "./Track/index.js";
 
 export interface SessionTrack extends TrackRecord {
 	adapter: InstanceType<BaseAdapterConstructor>;
@@ -10,7 +10,7 @@ export interface SessionTrack extends TrackRecord {
 
 export class DistributionSession {
 	private tracks: Track[] = [];
-	private onSafeFailure: (error: Error) => void;
+	private onSafeFailure: (error: ParseError) => void;
 
 	constructor(tracks: SessionTrack[], onSafeFailure: DistributionSession["onSafeFailure"]) {
 		this.onSafeFailure = onSafeFailure;

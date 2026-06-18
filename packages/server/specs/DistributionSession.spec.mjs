@@ -1,13 +1,10 @@
 // @ts-check
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, afterEach, jest } from "@jest/globals";
 import { DistributionSession } from "../lib/DistributionSession.js";
 import { IntervalBinaryTree } from "../lib/IntervalBinaryTree.js";
-import { BaseAdapter, ParseResult } from "../lib/BaseAdapter";
-import { CueNode } from "../lib/CueNode.js";
-import {
-	UnexpectedParsingOutputFormatError,
-	UncaughtParsingExceptionError,
-} from "../lib/Errors/index.js";
+import { BaseAdapter } from "@sub37/adapter-utils/BaseAdapter";
+import { CueNode } from "@sub37/adapter-utils/CueNode";
+import { UncaughtParsingExceptionError } from "../lib/Errors/index.js";
 
 class MockedAdapter extends BaseAdapter {
 	static toString() {
@@ -18,14 +15,7 @@ class MockedAdapter extends BaseAdapter {
 		return "Mocked Adapter";
 	}
 
-	/**
-	 *
-	 * @param {*} content
-	 * @returns {ParseResult}
-	 */
-	parse(content) {
-		return BaseAdapter.ParseResult([], []);
-	}
+	*parse(content) {}
 }
 
 class MockedAdapterWithParseResultError {
@@ -37,33 +27,22 @@ class MockedAdapterWithParseResultError {
 		return "Mocked Adapter With Parse Result Error";
 	}
 
-	/**
-	 *
-	 * @param {string} content
-	 * @returns {ParseResult}
-	 */
-	parse(content) {
-		return BaseAdapter.ParseResult(
-			[
-				new CueNode({
-					content,
-					endTime: 0,
-					startTime: 0,
-					id: "mocked",
-				}),
-			],
-			[
-				{
-					error: new Error("mocked adapter error"),
-					failedChunk: "",
-					isCritical: false,
-				},
-			],
-		);
+	*parse(content) {
+		yield [
+			new CueNode({
+				content,
+				endTime: 0,
+				startTime: 0,
+				id: "mocked",
+			}),
+			{
+				error: new Error("mocked adapter error"),
+				failedChunk: "",
+				isCritical: false,
+			},
+		];
 	}
 }
-
-const originalParseMethod = MockedAdapter.prototype.parse;
 
 describe("DistributionSession", () => {
 	/** @type {import("../lib/Track").TrackRecord[]} */
@@ -94,24 +73,17 @@ describe("DistributionSession", () => {
 		},
 	];
 
-	beforeEach(() => {
-		MockedAdapter.prototype.parse = originalParseMethod;
-	});
+	afterEach(() => jest.restoreAllMocks());
 
 	it("Should throw if adapter doesn't return expected data structure", () => {
 		// ********************* //
 		// *** MOCKING START *** //
 		// ********************* //
 
-		/**
-		 * @param {CueNode[]} content
-		 * @returns
-		 */
-
 		// @ts-expect-error
-		MockedAdapter.prototype.parse = function (content) {
+		jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function (content) {
 			return content;
-		};
+		});
 
 		// ******************* //
 		// *** MOCKING END *** //
@@ -129,9 +101,7 @@ describe("DistributionSession", () => {
 				],
 				() => {},
 			);
-		}).toThrow(UnexpectedParsingOutputFormatError);
-
-		MockedAdapter.prototype.parse = originalParseMethod;
+		}).toThrow(UncaughtParsingExceptionError);
 	});
 
 	it("Should throw if adapter crashes", () => {
@@ -139,14 +109,9 @@ describe("DistributionSession", () => {
 		// *** MOCKING START *** //
 		// ********************* //
 
-		/**
-		 * @param {CueNode[]} content
-		 * @returns
-		 */
-
-		MockedAdapter.prototype.parse = function (content) {
+		jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* (content) {
 			throw new Error("Mocked Error");
-		};
+		});
 
 		// ******************* //
 		// *** MOCKING END *** //
@@ -165,8 +130,6 @@ describe("DistributionSession", () => {
 				() => {},
 			);
 		}).toThrowError(UncaughtParsingExceptionError);
-
-		MockedAdapter.prototype.parse = originalParseMethod;
 	});
 
 	it("should create a track for each provided session track that has content and didn't throw", () => {
@@ -174,19 +137,16 @@ describe("DistributionSession", () => {
 		// *** MOCKING *** //
 		// *************** //
 
-		MockedAdapter.prototype.parse = function () {
-			return BaseAdapter.ParseResult(
-				[
-					new CueNode({
-						id: "any",
-						startTime: 0,
-						endTime: 2000,
-						content: "Whatever is your content, it will be displayed here",
-					}),
-				],
-				[],
-			);
-		};
+		jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* () {
+			yield [
+				new CueNode({
+					id: "any",
+					startTime: 0,
+					endTime: 2000,
+					content: "Whatever is your content, it will be displayed here",
+				}),
+			];
+		});
 
 		// ******************* //
 		// *** MOCKING END *** //
@@ -223,19 +183,16 @@ describe("DistributionSession", () => {
 		// *** MOCKING *** //
 		// *************** //
 
-		MockedAdapter.prototype.parse = function () {
-			return BaseAdapter.ParseResult(
-				[
-					new CueNode({
-						id: "any",
-						startTime: 0,
-						endTime: 2000,
-						content: "Whatever is your content, it will be displayed here",
-					}),
-				],
-				[],
-			);
-		};
+		jest.spyOn(MockedAdapter.prototype, "parse").mockImplementation(function* () {
+			yield [
+				new CueNode({
+					id: "any",
+					startTime: 0,
+					endTime: 2000,
+					content: "Whatever is your content, it will be displayed here",
+				}),
+			];
+		});
 
 		// ******************* //
 		// *** MOCKING END *** //
@@ -285,6 +242,6 @@ describe("DistributionSession", () => {
 		new DistributionSession(trackRecords, mockObject.onSafeFailureCb);
 
 		expect(spy).toHaveBeenCalledTimes(2); /** One error per track */
-		expect(spy).toHaveBeenCalledWith(mockedError);
+		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ error: mockedError }));
 	});
 });

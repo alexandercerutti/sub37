@@ -16,11 +16,15 @@
 				</div>
 			</div>
 			<!-- form id and input names are hardcoded inside the code -->
-			<form id="content-type">
+			<form id="content-type" is="processor-selector">
 				<h4>Content type:</h4>
 				<div>
 					<input type="radio" id="webvtt" name="caption-type" value="text/vtt" checked />
 					<label for="webvtt">WebVTT (text/vtt)</label>
+				</div>
+				<div>
+					<input type="radio" id="ttml" name="caption-type" value="application/ttml+xml" />
+					<label for="ttml">TTML (application/ttml+xml)</label>
 				</div>
 				<div>
 					<!-- <input type="radio" id="ttml" name="caption-type" value="text/xml+ttml" />

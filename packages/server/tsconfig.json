@@ -5,5 +5,12 @@
 		"rootDir": "./src",
 		"composite": true
 	},
-	"include": ["./src/**/*"]
+	"include": [
+		"./src/**/*",
+		"../adapter-utils/src/CueNode.ts",
+		"../adapter-utils/src/Entities",
+		"../adapter-utils/src/Region.ts",
+		"../adapter-utils/src/RenderingModifiers.ts"
+	],
+	"references": [{ "path": "../adapter-utils/tsconfig.json" }]
 }

@@ -1,10 +1,12 @@
 import "@sub37/captions-renderer";
-import { Server } from "@sub37/server";
+import { Server, SUB37_MARK_TTA_END, SUB37_MARK_TTA_START } from "@sub37/server";
 import { WebVTTAdapter } from "@sub37/webvtt-adapter";
+import { TTMLAdapter } from "@sub37/ttml-adapter";
 import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
 import "../../src/components/customElements/scheduled-textarea";
 import "../../src/components/customElements/fake-video";
+import "../../src/components/customElements/processorSelector";
 
 /**
  * @typedef {import("../../src/components/customElements/fake-video").FakeHTMLVideoElement} FakeHTMLVideoElement
@@ -22,7 +24,7 @@ const defaultTrackLoadBtn = document.getElementById("load-default-track");
  * @type {Server}
  */
 
-const server = new Server(WebVTTAdapter);
+const server = new Server(WebVTTAdapter, TTMLAdapter);
 
 /**
  * Instance to let tests access to the server instance
@@ -48,6 +50,10 @@ const scheduledTextArea = document.getElementsByTagName("scheduled-textarea")?.[
  */
 
 const presenter = document.getElementById("presenter");
+
+presenter.connect(server, (parseError) => {
+	console.warn(parseError);
+});
 
 /**
  * @param {FakeHTMLVideoElement} videoElement
@@ -91,7 +97,7 @@ defaultTrackLoadBtn.addEventListener("click", async () => {
 	// 00:00:04.000 --> 00:10:00.000 region:fred align:left
 	// Hello world, bibi
 
-	document.querySelector('input[name="caption-type"][id="webvtt"]').setAttribute("checked", true);
+	document.forms["content-type"].elements.webvtt.checked = true;
 	defaultTrackLoadBtn.disabled = true;
 
 	const [vttTrack, vttChunk] = await Promise.all([
@@ -138,14 +144,15 @@ videoTag.addEventListener("seeked", () => {
 });
 
 videoTag.addEventListener("playing", () => {
-	if (server.isRunning) {
-		server.resume();
+	if (!server.isStarted) {
+		server.start(() => {
+			return parseFloat(videoTag.currentTime) * 1000;
+		});
+
 		return;
 	}
 
-	server.start(() => {
-		return parseFloat(videoTag.currentTime) * 1000;
-	});
+	server.resume();
 });
 
 videoTag.addEventListener("pause", () => {
@@ -154,10 +161,8 @@ videoTag.addEventListener("pause", () => {
 	}
 });
 
-scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
+scheduledTextArea.addEventListener("commit", async ({ detail: track }) => {
 	const contentMimeType = document.forms["content-type"].elements["caption-type"].value;
-
-	const timeStart = performance.now();
 
 	try {
 		/**
@@ -171,19 +176,21 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 
 		presenter.setCue();
 
-		server.createSession(
-			[
-				{
-					lang: "any",
-					content: vttTrack,
-					mimeType: "text/vtt",
-					active: true,
-				},
-			],
-			contentMimeType,
-		);
+		const timeStart = performance.now();
+
+		const isWebVTTTrackSelected = contentMimeType === "text/vtt";
+		const isTTMLTrackSelected = contentMimeType === "application/ttml+xml";
+
+		server.createSession([
+			{
+				lang: "any",
+				content: track,
+				mimeType: contentMimeType,
+				active: true,
+			},
+		]);
 		console.info(
-			`%c[DEBUG] Track parsing took: ${performance.now() - timeStart}ms`,
+			`%c[DEBUG] TTA (Time-to-availability) is: ${performance.measure(SUB37_MARK_TTA_END, SUB37_MARK_TTA_START).duration}ms`,
 			"background-color: #af0000; color: #FFF; padding: 5px; margin: 5px",
 		);
 	} catch (err) {
@@ -224,24 +231,20 @@ scheduledTextArea.addEventListener("commit", async ({ detail: vttTrack }) => {
 // 	"text/vtt",
 // );
 
-server.addEventListener("cueerror", (error) => {
-	console.warn(error);
-});
-
 server.addEventListener("cuestart", (cues) => {
 	const timeStart = performance.now();
-	// console.log("CUE START:", cues);
-	presenter.setCue(cues);
-	console.info(
-		`%c[DEBUG] Cue rendering took: ${performance.now() - timeStart}ms`,
-		"background-color: #7900ff; color: #FFF; padding: 5px; margin: 5px",
-		cues,
-	);
+
+	setTimeout(() => {
+		console.info(
+			`%c[DEBUG] Cue rendering took: ${performance.now() - timeStart}ms`,
+			"background-color: #7900ff; color: #FFF; padding: 5px; margin: 5px",
+			cues,
+		);
+	}, 0);
 });
 
 server.addEventListener("cuestop", () => {
 	console.log("CUES STOP");
-	presenter.setCue();
 });
 
 function applyRendererSettings() {
@@ -253,8 +256,12 @@ function applyRendererSettings() {
 	presenter.setRegionProperties({ lines, shiftDownFirstLine, snapHeightToLineGrid });
 	presenter.setCue();
 
-	if (server.isRunning) {
-		server.updateTime(videoTag.currentTime * 1000);
+	/**
+	 * Random amount, we expect it to be enough to see the effect of
+	 * render settings being applied.
+	 */
+	if (!videoTag.paused) {
+		videoTag.currentTime = videoTag.currentTime - 10;
 	}
 }
 

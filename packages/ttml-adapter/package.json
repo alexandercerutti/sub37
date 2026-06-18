@@ -1,0 +1,28 @@
+{
+	"name": "@sub37/ttml-adapter",
+	"version": "0.0.0",
+	"description": "TTML Adapter for sub37 subtitles system",
+	"main": "lib/index.js",
+	"type": "module",
+	"peerDependencies": {
+		"@sub37/adapter-utils": "workspace:^"
+	},
+	"scripts": {
+		"build": "rm -rf lib && pnpm tsc --build --force",
+		"test": "pnpm build && pnpm -C ../.. run test",
+		"prepublishOnly": "pnpm build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alexandercerutti/sub37.git"
+	},
+	"author": "Alexander P. Cerutti <cerutti.alexander@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/alexandercerutti/sub37/issues"
+	},
+	"homepage": "https://github.com/alexandercerutti/sub37#readme",
+	"files": [
+		"lib/**/*.+(js|d.ts)!(*.map)"
+	]
+}

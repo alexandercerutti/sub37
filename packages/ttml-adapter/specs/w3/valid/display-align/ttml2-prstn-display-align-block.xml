@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xml:lang="en"
+	xmlns="http://www.w3.org/ns/ttml"
+	xmlns:ttm="http://www.w3.org/ns/ttml#metadata"
+	xmlns:ttp="http://www.w3.org/ns/ttml#parameter"
+	xmlns:tts="http://www.w3.org/ns/ttml#styling"
+	ttp:profile="ttml2-presentation"
+	tts:extent="1280px 720px"
+	xmlns:ttva="http://skynav.com/ns/ttv/annotations" ttva:warnOn="all"
+	ttva:expectedErrors="0" ttva:expectedWarnings="0" ttva:model="ttml2">
+	<head>
+		<metadata>
+			<ttm:desc>#display-align (block)</ttm:desc>
+		</metadata>
+		<styling>
+			<style xml:id="sBackground" tts:backgroundColor="#A0A0A0" />
+			<style xml:id="sBody" tts:fontSize="10rh" tts:lineHeight="12rh" tts:color="black"
+				tts:textAlign="center" />
+			<style xml:id="sGeometry" tts:extent="320px 240px" />
+			<style xml:id="sR1" tts:position="left 10% top 10%" tts:displayAlign="before" />
+			<style xml:id="sR2" tts:position="left 10% top 50%" tts:displayAlign="center" />
+			<style xml:id="sR3" tts:position="right 10% top 10%" tts:displayAlign="after" />
+		</styling>
+		<layout>
+			<region xml:id="r1" style="sBackground sGeometry sR1" />
+			<region xml:id="r2" style="sBackground sGeometry sR2" />
+			<region xml:id="r3" style="sBackground sGeometry sR3" />
+		</layout>
+	</head>
+	<body style="sBody">
+		<div begin="0s" end="1s">
+			<p region="r1">Before</p>
+			<p region="r2">Center</p>
+			<p region="r3">After</p>
+		</div>
+	</body>
+</tt>
