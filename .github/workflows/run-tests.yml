@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install
-          pnpm dlx playwright install --with-deps
+          pnpx playwright install --with-deps
 
       - name: Build monorepo
         run: pnpm build
@@ -40,5 +40,4 @@ jobs:
 
       - name: Run e2e tests
         run: |
-          cd packages/captions-renderer
-          pnpm test:e2e
+          pnpm -C packages/captions-renderer test:e2e
