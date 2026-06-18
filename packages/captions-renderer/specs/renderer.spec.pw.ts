@@ -54,7 +54,7 @@ scroll:up
 	await pauseServing();
 	await seekToSecond(3);
 
-	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
+	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
 });
 
 test("Renderer should render two regions, one of them is the default one", async ({
@@ -89,7 +89,7 @@ scroll:up
 	await pauseServing();
 	await seekToSecond(3);
 
-	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
+	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
 });
 
 test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
@@ -138,7 +138,7 @@ STYLE
 	await pauseServing();
 	await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > .region");
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region");
 
 	const [bgColor1, bgColor2] = await Promise.all([
 		regionsLocator
@@ -178,12 +178,12 @@ I am Fred<i>-ish</i>
 	await pauseServing();
 	await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > .region span");
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
 	const evaluation = await regionsLocator.evaluate((element) =>
 		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
 	);
 
-	expect(evaluation[3]).toBe(" -ish");
+	expect(evaluation[1]).toBe(" -ish");
 });
 
 test("A global-style should get applied to all the cues", async ({
@@ -231,7 +231,7 @@ STYLE
 	await pauseServing();
 	await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > .region span");
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
 
 	const fredLocator = regionsLocator.locator('span[voice="Fred"]');
 	const billLocator = regionsLocator.locator('span[voice="Bill"]');
@@ -326,7 +326,7 @@ scroll:up
 	await seekToSecond(10);
 
 	let fredRegionHeight = await page
-		.locator("captions-renderer > main > .region:first-child")
+		.locator("captions-renderer > main > sub37-region:first-child")
 		.evaluate((element) => element.style.height);
 
 	expect(fredRegionHeight).toBe("4.5em");
@@ -355,7 +355,7 @@ scroll:up
 	await seekToSecond(10);
 
 	fredRegionHeight = await page
-		.locator("captions-renderer > main > .region:first-child")
+		.locator("captions-renderer > main > sub37-region:first-child")
 		.evaluate((element) => element.style.height);
 
 	expect(fredRegionHeight).toBe("3.2em");
