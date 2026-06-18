@@ -2,6 +2,7 @@
 	"name": "sub37",
 	"description": "",
 	"private": true,
+	"packageManager": "pnpm@11.8.0",
 	"workspaces": [
 		"packages/*"
 	],
@@ -12,7 +13,10 @@
 	"keywords": [
 		"vtt",
 		"subtitles",
-		"srt"
+		"srt",
+		"ttml",
+		"webvtt",
+		"captions"
 	],
 	"scripts": {
 		"build": "pnpm lerna run build",
