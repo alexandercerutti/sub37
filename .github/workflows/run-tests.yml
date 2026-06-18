@@ -18,13 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           check-latest: true
           cache: "pnpm"
-
-      - uses: pnpm/action-setup@v6
 
       - name: Install dependencies
         run: |
