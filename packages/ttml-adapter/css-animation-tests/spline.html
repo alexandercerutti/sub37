@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Spline animation — per-interval cubic-bezier</title>
+		<style>
+			/**
+			 * TTML source equivalent:
+			 *
+			 * <animate
+			 *   calcMode="spline"
+			 *   keyTimes="0; 0.3; 0.7; 1"
+			 *   keySplines="0.4 0 0.2 1;   <- interval 0→0.3  ease-out fast then slow
+			 *               0   0 1   1;   <- interval 0.3→0.7 linear
+			 *               0.8 0 0.2 1"   <- interval 0.7→1   strong ease-in-out
+			 *   tts:color="red; orange; steelblue; green"
+			 *   dur="4s"
+			 * />
+			 *
+			 * CSS @keyframes mapping:
+			 *
+			 *  index │ keyTime │ animation-timing-function
+			 *  ──────┼─────────┼──────────────────────────────────
+			 *    0   │   0%    │ cubic-bezier(0.4, 0, 0.2, 1)
+			 *    1   │  30%    │ cubic-bezier(0,   0, 1,   1)
+			 *    2   │  70%    │ cubic-bezier(0.8, 0, 0.2, 1)
+			 *    3   │ 100%    │ (none — last keyframe, no outgoing interval)
+			 */
+			@keyframes spline-color {
+				0% {
+					color: red;
+					animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+				}
+				30% {
+					color: orange;
+					animation-timing-function: cubic-bezier(0, 0, 1, 1);
+				}
+				70% {
+					color: steelblue;
+					animation-timing-function: cubic-bezier(0.8, 0, 0.2, 1);
+				}
+				100% {
+					color: green;
+				}
+			}
+
+			@keyframes spline-position {
+				0% {
+					left: 0px;
+					animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+				}
+				30% {
+					left: 200px;
+					animation-timing-function: cubic-bezier(0, 0, 1, 1);
+				}
+				70% {
+					left: 500px;
+					animation-timing-function: cubic-bezier(0.8, 0, 0.2, 1);
+				}
+				100% {
+					left: 700px;
+				}
+			}
+
+			body {
+				font-family: monospace;
+				background: #111;
+				color: #eee;
+				padding: 2rem;
+			}
+
+			.stage {
+				position: relative;
+				height: 60px;
+				margin-bottom: 3rem;
+			}
+
+			.box {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 50px;
+				height: 50px;
+				background: currentColor;
+				animation:
+					spline-position 4s linear infinite,
+					spline-color 4s linear infinite;
+				/* Note: animation-timing-function on the element is "linear" here —
+       the actual per-interval easing is embedded in the @keyframes above. */
+			}
+
+			table {
+				border-collapse: collapse;
+				margin-top: 1rem;
+				font-size: 0.85rem;
+			}
+			th,
+			td {
+				border: 1px solid #444;
+				padding: 0.4rem 0.8rem;
+				text-align: left;
+			}
+			th {
+				background: #222;
+			}
+			.c0 {
+				color: red;
+			}
+			.c1 {
+				color: orange;
+			}
+			.c2 {
+				color: steelblue;
+			}
+			.c3 {
+				color: green;
+			}
+		</style>
+	</head>
+	<body>
+		<h2>Spline animation: per-interval <code>cubic-bezier</code></h2>
+		<p>
+			Each interval between keyframes uses a <em>different</em> easing curve, exactly as TTML
+			<code>calcMode="spline"</code> with distinct <code>keySplines</code> controls.
+		</p>
+
+		<div class="stage">
+			<div class="box"></div>
+		</div>
+
+		<table>
+			<thead>
+				<tr>
+					<th>index</th>
+					<th>keyTime</th>
+					<th>color</th>
+					<th>animation-timing-function (outgoing)</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>0</td>
+					<td>0%</td>
+					<td class="c0">red</td>
+					<td><code>cubic-bezier(0.4, 0, 0.2, 1)</code> — fast then slow</td>
+				</tr>
+				<tr>
+					<td>1</td>
+					<td>30%</td>
+					<td class="c1">orange</td>
+					<td><code>cubic-bezier(0, 0, 1, 1)</code> — linear</td>
+				</tr>
+				<tr>
+					<td>2</td>
+					<td>70%</td>
+					<td class="c2">steelblue</td>
+					<td><code>cubic-bezier(0.8, 0, 0.2, 1)</code> — strong ease-in-out</td>
+				</tr>
+				<tr>
+					<td>3</td>
+					<td>100%</td>
+					<td class="c3">green</td>
+					<td><em>(none — last keyframe)</em></td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>

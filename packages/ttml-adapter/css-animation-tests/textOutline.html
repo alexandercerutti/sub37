@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Test: textOutline.html</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .target {
+            width: 400px;
+            height: 400px;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+             /* text-align: center; ensure text flows nicely */
+            text-align: center;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            /* Base Styles */
+            -webkit-text-stroke: 1px black; color: white; font-size: 40px; font-weight: bold;
+            
+            animation: test-anim 3s infinite;
+        }
+
+        @keyframes test-anim {
+            0% {
+                -webkit-text-stroke-width: 1px;
+                -webkit-text-stroke-color: red;
+            }
+            50% {
+                -webkit-text-stroke-width: 3px;
+                -webkit-text-stroke-color: green;
+            }
+            100% {
+                -webkit-text-stroke-width: 5px;
+                -webkit-text-stroke-color: blue;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>textOutline.html</h1>
+    <div class="target">
+        Lorem ipsum dolor sit amet.
+    </div>
+</body>
+</html>

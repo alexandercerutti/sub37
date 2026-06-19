@@ -1,15 +1,14 @@
-import type { BaseAdapter } from "../BaseAdapter";
-import type { CueNode } from "../CueNode";
+import type { BaseAdapter, ParseError, CueNode } from "@sub37/adapter-utils";
 import type { SessionTrack } from "../DistributionSession";
 import type { TrackRecord } from "./TrackRecord";
 import { appendChunkToTrack } from "./appendChunkToTrack";
-import { IntervalBinaryTree } from "../IntervalBinaryTree";
+import { IntervalBinaryLeaf, IntervalBinaryTree } from "../IntervalBinaryTree";
 
 export const addCuesSymbol = Symbol("track.addcues");
 
 export default class Track implements Omit<TrackRecord, "content"> {
 	private readonly timeline: IntervalBinaryTree<CueNode>;
-	private readonly onSafeFailure: (error: Error) => void;
+	public readonly onSafeFailure: (error: ParseError) => void;
 	public readonly adapter: BaseAdapter;
 	public readonly lang: string;
 	public readonly mimeType: `${string}/${string}`;
@@ -20,7 +19,7 @@ export default class Track implements Omit<TrackRecord, "content"> {
 		lang: string,
 		mimeType: SessionTrack["mimeType"],
 		adapter: BaseAdapter,
-		onSafeFailure: (error: Error) => void,
+		onSafeFailure: (error: ParseError) => void,
 	) {
 		this.adapter = adapter;
 		this.timeline = new IntervalBinaryTree();
@@ -35,12 +34,15 @@ export default class Track implements Omit<TrackRecord, "content"> {
 
 	public [addCuesSymbol](...cues: CueNode[]): void {
 		for (const cue of cues) {
-			this.timeline.addNode(cue);
+			this.timeline.addNode(
+				//
+				convertCueNodeToLeaf(cue),
+			);
 		}
 	}
 
 	public addChunk(content: unknown): void {
-		appendChunkToTrack(this, content, this.onSafeFailure);
+		appendChunkToTrack(this, content);
 	}
 
 	public get cues(): CueNode[] {
@@ -50,4 +52,19 @@ export default class Track implements Omit<TrackRecord, "content"> {
 	public getAdapterName(): string {
 		return this.adapter.toString();
 	}
+}
+
+function convertCueNodeToLeaf(cueNode: CueNode): IntervalBinaryLeaf<CueNode> {
+	return {
+		left: null,
+		right: null,
+		node: cueNode,
+		max: cueNode.endTime,
+		get low() {
+			return this.node.startTime;
+		},
+		get high() {
+			return this.node.endTime;
+		},
+	};
 }

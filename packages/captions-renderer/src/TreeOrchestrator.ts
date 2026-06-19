@@ -1,8 +1,12 @@
-import type { CueNode, Region, RenderingModifiers } from "@sub37/server";
-import { IntervalBinaryTree, Entities } from "@sub37/server";
+import type { CueNode, Region, RenderingModifiers } from "@sub37/adapter-utils";
+import { Entities } from "@sub37/adapter-utils";
 import { CSSVAR_TEXT_COLOR } from "./constants";
+import { buildKeyframesCSS, buildAnimationShorthand } from "./animationCSS.js";
+import type { Sub37Region } from "./RegionElement.js";
+import "./RegionElement.js";
 
 const rootElementSymbol = Symbol("to.root.element");
+const scrollRootSymbol = Symbol("to.scroll.root");
 
 export interface OrchestratorSettings {
 	/**
@@ -49,10 +53,10 @@ export interface OrchestratorSettings {
  */
 
 const LINES_TRANSITION_TIME_MS = 250;
-const ROOT_CLASS_NAME = "region";
+const ROOT_TAG_NAME = "sub37-region";
 const DEFAULT_LINE_HEIGHT_EM = 1.5;
 
-const UNIT_REGEX = /\d+\.?\d+?[a-zA-Z%]+$/;
+const UNIT_REGEX = /\d+(?:\.\d+)?[a-zA-Z%]+$/;
 
 export default class TreeOrchestrator {
 	private static DEFAULT_SETTINGS: OrchestratorSettings = {
@@ -64,23 +68,27 @@ export default class TreeOrchestrator {
 
 	private [rootElementSymbol]: HTMLDivElement;
 
+	/**
+	 * The element that allows scrolling the content of the region
+	 * when the content is too long and goes on a new line, achieving
+	 * Roll-up effect.
+	 */
+	private [scrollRootSymbol]: HTMLDivElement;
+
 	private settings: OrchestratorSettings;
 	private shiftDownFirstLine: boolean = false;
+	private animatedElements: HTMLElement[] = [];
 
-	public constructor(
-		parent: HTMLElement,
-		trackRegionSettings?: Region,
-		trackRenderingModifiers?: RenderingModifiers,
-		settings?: Partial<OrchestratorSettings>,
-	) {
-		const root = Object.assign(document.createElement("div"), {
-			className: ROOT_CLASS_NAME,
-		});
+	public constructor(trackRegionSettings?: Region, settings?: Partial<OrchestratorSettings>) {
+		const root = document.createElement(ROOT_TAG_NAME) as Sub37Region;
+
+		root.dataset["trackRegionId"] = trackRegionSettings?.id ?? "";
 
 		const regionScrollElement = document.createElement("div");
-		regionScrollElement.dataset["role"] = "scroll-root";
+		regionScrollElement.classList.add("scroll-root");
 
-		this[rootElementSymbol] = root.appendChild(regionScrollElement);
+		this[scrollRootSymbol] = root.appendChild(regionScrollElement);
+		this[rootElementSymbol] = this[scrollRootSymbol];
 
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
@@ -88,11 +96,17 @@ export default class TreeOrchestrator {
 			lines:
 				trackRegionSettings?.lines || settings?.lines || TreeOrchestrator.DEFAULT_SETTINGS.lines,
 		};
+	}
 
-		let [originX, originY] = trackRegionSettings?.getOrigin(
-			parent.offsetWidth,
-			parent.offsetHeight,
-		) ?? ["0%", "70%"];
+	public paint(
+		parent: HTMLElement,
+		region?: Region,
+		trackRenderingModifiers?: RenderingModifiers,
+	): void {
+		let [originX, originY] = region?.getOrigin(parent.offsetWidth, parent.offsetHeight) ?? [
+			"0%",
+			"70%",
+		];
 
 		if (typeof originX === "number" || !UNIT_REGEX.test(originX)) {
 			originX = `${originX}%`;
@@ -108,9 +122,8 @@ export default class TreeOrchestrator {
 		 * to height derived by lines.
 		 */
 		const authoredHeight =
-			typeof trackRegionSettings?.height === "number"
-				? `${trackRegionSettings.height}%`
-				: trackRegionSettings?.height;
+			typeof region?.height === "number" ? `${region.height}%` : region?.height;
+
 		let regionHeight = authoredHeight ?? `${this.settings.lines * DEFAULT_LINE_HEIGHT_EM}em`;
 
 		if (!authoredHeight && this.settings.roundRegionHeightLineFit) {
@@ -124,20 +137,21 @@ export default class TreeOrchestrator {
 		this.shiftDownFirstLine = shiftDownFirstLine;
 
 		const rootStyles: Partial<CSSStyleDeclaration> = {
-			width:
-				typeof trackRegionSettings?.width === "number"
-					? `${trackRegionSettings.width}%`
-					: (trackRegionSettings?.width ?? "100%"),
+			width: typeof region?.width === "number" ? `${region.width}%` : (region?.width ?? "100%"),
 			height: regionHeight,
 			left: originX,
 			top: originY,
 		};
 
-		Object.assign(root.style, rootStyles);
+		Object.assign(this.root.style, rootStyles);
+		this.root.applyEntities(region?.entities ?? []);
+
+		/* Reset to scroll-root so cached reuse doesn't nest modifier divs */
+		this[rootElementSymbol] = this[scrollRootSymbol];
 
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
-			modifiersElement.dataset["role"] = "rendering-modifier";
+			modifiersElement.classList.add("rendering-modifier");
 
 			const styles: Partial<CSSStyleDeclaration> = {
 				position: "relative",
@@ -155,20 +169,22 @@ export default class TreeOrchestrator {
 		this.root.remove();
 	}
 
-	public get root(): HTMLElement {
+	public get root(): Sub37Region {
 		let root: HTMLElement = this[rootElementSymbol];
 
-		while (!root.classList.contains(ROOT_CLASS_NAME)) {
+		while (root.tagName.toLowerCase() !== ROOT_TAG_NAME) {
 			root = root.parentElement!;
 		}
 
-		return root;
+		return root as Sub37Region;
 	}
 
 	public wipeTree(): void {
 		for (let node: Node | null; (node = this[rootElementSymbol].firstChild); ) {
 			this[rootElementSymbol].removeChild(node);
 		}
+
+		this.animatedElements = [];
 	}
 
 	public renderCuesToHTML(cueNodes: CueNode[]): void {
@@ -181,18 +197,14 @@ export default class TreeOrchestrator {
 				continue;
 			}
 
-			const entitiesTree = new IntervalBinaryTree<Entities.GenericEntity>();
-
-			for (let i = 0; i < cueNode.entities.length; i++) {
-				entitiesTree.addNode(cueNode.entities[i]!);
-			}
-
-			cues.push(...splitCueNodeByBreakpoints(cueNode, entitiesTree));
+			cues.push(...splitCueNodeByBreakpoints(cueNode));
 		}
 
 		let latestCueId = "";
 		let latestNode: HTMLElement | undefined = undefined;
 		let latestHeight: number = 0;
+
+		const animationKeyframesStyleElement = document.createElement("style");
 
 		for (let i = 0; i < cues.length; i++) {
 			const cue = cues[i]!;
@@ -202,14 +214,33 @@ export default class TreeOrchestrator {
 				latestHeight = 0;
 			}
 
-			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
-			const [cueRootDomNode, textNode] = getCueNodeFragmentSubtree(cue, firstDifferentEntityIndex);
+			/**
+			 * Checking first the difference between the
+			 * entities of two cues. Such index will be used
+			 * as insertion point of the structure inside
+			 * the line.
+			 */
 
-			let line: HTMLElement = latestNode || createLine();
+			const firstDifferentEntityIndex = getCueNodeEntitiesDifferenceIndex(cue, cues[i - 1]);
+			const [cueRootDomNode, textNode, cueKeyframesCSS] = getCueNodeFragmentSubtree(
+				cue,
+				firstDifferentEntityIndex,
+				(element) => {
+					this.animatedElements.push(element);
+				},
+			);
+
+			let line: HTMLElement =
+				latestNode || createLine(cue.entities.filter(Entities.isLineStyleEntity));
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
 				this[rootElementSymbol].appendChild(line);
+			}
+
+			if (cueKeyframesCSS) {
+				animationKeyframesStyleElement.textContent += cueKeyframesCSS;
+				this[rootElementSymbol].appendChild(animationKeyframesStyleElement);
 			}
 
 			/**
@@ -226,9 +257,15 @@ export default class TreeOrchestrator {
 
 			if (shouldCreateNewLine) {
 				let textParentNode = textNode.parentNode as HTMLElement;
-				const subTreeClone = wrapIntoEntitiesDocumentFragment(textNode, cue.entities);
+				const [subTreeClone] = wrapIntoEntitiesDocumentFragment(
+					textNode,
+					cue.entities,
+					(element) => {
+						this.animatedElements.push(element);
+					},
+				);
 
-				line = createLine();
+				line = createLine(cue.entities.filter(Entities.isLineStyleEntity));
 				commitFragmentOnLine(line, subTreeClone, cue.entities.length);
 
 				while (!textParentNode.childNodes.length) {
@@ -260,10 +297,11 @@ export default class TreeOrchestrator {
 
 		/**
 		 * To achieve a Youtube-like subtitle effect, when a cue is alone
-		 * is it translated to the bottom of the X visible rows. A.k.a. 1.5em
-		 * (at the current moment). Hence, we need to traslate vertically the
-		 * whole block in steps of 1.5em (or "one line"), starting from 1.5 and
-		 * then going negatively.
+		 * is it translated to the bottom of the X visible rows. Hence, we
+		 * need to traslate vertically the whole block in steps of one line's
+		 * height starting from the original height and then going negatively.
+		 *
+		 * If height is 1.5, for example:
 		 *
 		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
 		 */
@@ -276,7 +314,7 @@ export default class TreeOrchestrator {
 			/**
 			 * We need to obtain the number of rows we should scroll of.
 			 *
-			 * - CHILDREN_AMOUNT + MAXIMUM_VISIBLE_ELEMENTS
+			 * (-CHILDREN_AMOUNT + VISIBLE_LINES)
 			 *
 			 * (-1) + 2 =  1  =>  1.5 *  1 =  1.5
 			 * (-2) + 2 =  0  =>  1.5 *  0 =  0.0
@@ -288,16 +326,19 @@ export default class TreeOrchestrator {
 			 * 0 otherwise.
 			 */
 
+			const visibleLines = this.settings.lines;
+
 			const upperBoundLimit = Number(
-				this.shiftDownFirstLine && childrenAmount === 1 && this.settings.lines > 1,
+				this.shiftDownFirstLine && childrenAmount === 1 && visibleLines > 1,
 			);
-			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + this.settings.lines);
+
+			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + visibleLines);
 
 			const lineHeightPx =
 				(this[rootElementSymbol].firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
 
 			if (this.settings.snapHeightToLineGrid && lineHeightPx > 0) {
-				const wholeLines = Math.floor(this.root.offsetHeight / lineHeightPx);
+				const wholeLines = Math.round(this.root.offsetHeight / lineHeightPx);
 
 				if (wholeLines > 0) {
 					this.root.style.height = `${wholeLines * lineHeightPx}px`;
@@ -315,107 +356,62 @@ export default class TreeOrchestrator {
 			}
 		}
 	}
+
+	public setAnimationActivity(active: boolean) {
+		for (const element of this.animatedElements) {
+			element.style.animationPlayState = active ? "running" : "paused";
+		}
+	}
 }
 
-function splitCueNodeByBreakpoints(
-	cueNode: CueNode,
-	entitiesTree: IntervalBinaryTree<Entities.GenericEntity>,
-): CueNode[] {
+function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 	let idVariations = 0;
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
 
 	for (let i = 0; i < cueNode.content.length; i++) {
+		if (!shouldCueNodeBreak(cueNode.content, i)) {
+			continue;
+		}
+
+		const content = cueNode.content.substring(previousContentBreakIndex, i + 1).trim();
+
+		const cue = Object.create(cueNode, {
+			content: {
+				value: content,
+			},
+		});
+
+		if (idVariations > 0) {
+			cue.id = `${cue.id}/${idVariations}`;
+		}
+
 		/**
-		 * Reordering because IBT serves nodes from left to right,
-		 * but left nodes are the smallest. In case of a global entity,
-		 * it is inserted as the first node. Hence, it will will result
-		 * as the last entity here. If so, we render wrong elements.
-		 *
-		 * Getting all the current entities and next entities so we can
-		 * check if this is the last character before an entity begin
-		 * (i.e. we have to break).
+		 * If we detect a new line, we want to force the creation
+		 * of a new line on the next content. So we increase the variation
+		 * so that rendering will break line on a different cue id.
 		 */
 
-		const entitiesAtCoordinates = (entitiesTree.getCurrentNodes([i, i + 1]) ?? []).sort(
-			reorderEntitiesComparisonFn,
-		);
-
-		if (shouldCueNodeBreak(cueNode.content, entitiesAtCoordinates, i)) {
-			const content = cueNode.content.slice(previousContentBreakIndex, i + 1).trim();
-
-			const cue = Object.create(cueNode, {
-				content: {
-					value: content,
-				},
-				entities: {
-					value: entitiesAtCoordinates.filter((entity) => entity.offset <= i),
-				},
-			});
-
-			if (idVariations > 0) {
-				cue.id = `${cue.id}/${idVariations}`;
-			}
-
-			/**
-			 * If we detect a new line, we want to force the creation
-			 * of a new line on the next content. So we increase the variation
-			 * so that rendering will break line on a different cue id.
-			 */
-
-			if (cueNode.content[i] === "\x0A") {
-				idVariations++;
-			}
-
-			cues.push(cue);
-
-			previousContentBreakIndex = i + 1;
+		if (cueNode.content[i] === "\x0A") {
+			idVariations++;
 		}
+
+		cues.push(cue);
+
+		previousContentBreakIndex = i + 1;
 	}
 
 	return cues;
 }
 
-function shouldCueNodeBreak(
-	cueNodeContent: string,
-	entitiesAtCoordinates: Entities.GenericEntity[],
-	currentIndex: number,
-): boolean {
+function shouldCueNodeBreak(cueNodeContent: string, currentIndex: number): boolean {
 	const char = cueNodeContent[currentIndex]!;
 
-	return (
-		isCharacterWhitespace(char) ||
-		indexMatchesEntityBegin(currentIndex, entitiesAtCoordinates) ||
-		indexMatchesEntityEnd(currentIndex, entitiesAtCoordinates) ||
-		isCueContentEnd(cueNodeContent, currentIndex)
-	);
+	return isCharacterWhitespace(char) || isCueContentEnd(cueNodeContent, currentIndex);
 }
 
 function isCharacterWhitespace(char: string): boolean {
 	return char === "\x20" || char === "\x09" || char === "\x0C" || char === "\x0A";
-}
-
-function indexMatchesEntityBegin(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	for (const entity of entities) {
-		if (index + 1 === entity.offset) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-function indexMatchesEntityEnd(index: number, entities: Entities.GenericEntity[]): boolean {
-	if (!entities.length) {
-		return false;
-	}
-
-	const lastEntity = entities[entities.length - 1]!;
-	return lastEntity.offset + lastEntity.length === index;
 }
 
 function isCueContentEnd(cueNodeContent: string, index: number): boolean {
@@ -426,11 +422,36 @@ function commitFragmentOnLine(lineRootNode: Node, cueSubTreeRoot: Node, diffDept
 	getNodeAtDepth(diffDepth, lineRootNode.lastChild!).appendChild(cueSubTreeRoot);
 }
 
-function createLine() {
-	const node = document.createElement("p");
-	node.appendChild(document.createElement("span"));
+function createLine(lineEntities: Entities.LineStyleEntity[]): HTMLElement {
+	/**
+	 * LineNode is needed to have an precise place
+	 * where to put block styles.
+	 */
+	const lineNode = document.createElement("p");
+	lineNode.classList.add("line-block");
 
-	return node;
+	const lineStylesEntries = Object.assign({}, ...lineEntities.map((e) => e.styles));
+
+	for (const [key, value] of Object.entries(lineStylesEntries)) {
+		lineNode.style.cssText += `${key}:${value};`;
+
+		/**
+		 * FCC 47 CFR § 79.103 mandates user settings to be able to override authored ones,
+		 * so we need to make sure that some important styles can be overridden by users.
+		 *
+		 * Here below, we suppress our internal styles when authored styles are present.
+		 */
+		if (key === "background-color") {
+			lineNode.style.setProperty("--s37__internal__bgcolor", "transparent");
+		}
+
+		if (key.startsWith("padding")) {
+			lineNode.style.setProperty("--s37__internal__padding", "0px");
+		}
+	}
+
+	lineNode.appendChild(document.createElement("span"));
+	return lineNode;
 }
 
 function getLineHeight(line: HTMLElement) {
@@ -454,10 +475,43 @@ function getNodeAtDepth(depth: number, node: Node): Node {
 
 function wrapIntoEntitiesDocumentFragment(
 	rootNode: Node,
-	entities: Entities.GenericEntity[],
-): Node {
+	entities: Entities.AllEntities[],
+	onAnimationRegister: (element: HTMLElement) => void,
+): [element: Node, keyframeString: string] {
 	const fragment = new DocumentFragment();
 	let latestNode: Node = rootNode;
+
+	const styleEntities = entities
+		.filter(Entities.isLocalStyleEntity)
+		.flatMap((entity) => Object.entries(entity.styles));
+	const tagEntities = entities.filter(Entities.isTagEntity);
+	const animationEntities = entities.filter(Entities.isAnimationEntity);
+
+	if (styleEntities.length || animationEntities.length) {
+		const styleNode = document.createElement("span");
+
+		for (const [key, value] of styleEntities) {
+			switch (key) {
+				case "color": {
+					/** Otherwise user cannot override the default style and track style */
+					styleNode.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
+					break;
+				}
+
+				default: {
+					styleNode.style.cssText += `${key}:${value};`;
+				}
+			}
+		}
+
+		if (animationEntities.length) {
+			styleNode.style.animation = animationEntities.map(buildAnimationShorthand).join(", ");
+			onAnimationRegister(styleNode);
+		}
+
+		styleNode.appendChild(latestNode);
+		latestNode = styleNode;
+	}
 
 	/**
 	 * Rebuilding the Document from the last entity
@@ -465,10 +519,10 @@ function wrapIntoEntitiesDocumentFragment(
 	 * wrap the final root node inside them all.
 	 */
 
-	for (let i = entities.length - 1; i >= 0; i--) {
-		const entity = entities[i]!;
+	for (let i = tagEntities.length - 1; i >= 0; i--) {
+		const entity = tagEntities[i]!;
 
-		const node = getNodeFromEntity(entity);
+		const node = getHTMLElementByEntity(entity);
 
 		if (!node) {
 			continue;
@@ -479,68 +533,31 @@ function wrapIntoEntitiesDocumentFragment(
 	}
 
 	fragment.appendChild(latestNode);
-	return fragment;
-}
-
-function getNodeFromEntity(entity: Entities.GenericEntity): Node | undefined {
-	if (!(entity instanceof Entities.Tag)) {
-		return undefined;
-	}
-
-	const node = getHTMLElementByEntity(entity);
-
-	if (!entity.styles) {
-		return node;
-	}
-
-	for (const [key, value] of Object.entries(entity.styles) as [string, string][]) {
-		switch (key) {
-			case "color": {
-				/** Otherwise user cannot override the default style and track style */
-				node.style.cssText += `${key}:var(${CSSVAR_TEXT_COLOR}, ${value});`;
-				break;
-			}
-
-			default: {
-				node.style.cssText += `${key}:${value};`;
-			}
-		}
-	}
-
-	return node;
-}
-
-function LangVoiceTagEntityProcessor(entity: Entities.Tag) {
-	const node = document.createElement("span");
-
-	for (let [key, value] of entity.attributes) {
-		node.setAttribute(key, value ? value : "");
-	}
-
-	return node;
-}
-
-function ClassTagEntityProcessor() {
-	return document.createElement("span");
+	return [fragment, buildKeyframesCSS(animationEntities)];
 }
 
 const TAG_TYPE_ENTITY_DOM_MAP = {
-	[Entities.TagType.BOLD]: (_entity: Entities.Tag) => document.createElement("b"),
-	[Entities.TagType.ITALIC]: (_entity: Entities.Tag) => document.createElement("i"),
-	[Entities.TagType.UNDERLINE]: (_entity: Entities.Tag) => document.createElement("u"),
-	[Entities.TagType.RT]: (_entity: Entities.Tag) => document.createElement("rt"),
-	[Entities.TagType.RUBY]: (_entity: Entities.Tag) => document.createElement("ruby"),
-	[Entities.TagType.LANG]: LangVoiceTagEntityProcessor,
-	[Entities.TagType.VOICE]: LangVoiceTagEntityProcessor,
-	[Entities.TagType.CLASS]: ClassTagEntityProcessor,
-	[Entities.TagType.SPAN]: (_entity: Entities.Tag) => document.createElement("span"),
+	[Entities.TagType.BOLD]: (_entity: Entities.TagEntity) => document.createElement("b"),
+	[Entities.TagType.ITALIC]: (_entity: Entities.TagEntity) => document.createElement("i"),
+	[Entities.TagType.UNDERLINE]: (_entity: Entities.TagEntity) => document.createElement("u"),
+	[Entities.TagType.RT]: (_entity: Entities.TagEntity) => document.createElement("rt"),
+	[Entities.TagType.RUBY]: (_entity: Entities.TagEntity) => document.createElement("ruby"),
+	[Entities.TagType.SPAN]: (_entity: Entities.TagEntity) => document.createElement("span"),
 } as const;
 
-function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
+function getHTMLElementByEntity(entity: Entities.TagEntity): HTMLElement | undefined {
 	const elementProcessor =
 		TAG_TYPE_ENTITY_DOM_MAP[entity.tagType] || TAG_TYPE_ENTITY_DOM_MAP[Entities.TagType.SPAN];
 
 	const element: HTMLElement = elementProcessor(entity);
+
+	if (!element) {
+		return undefined;
+	}
+
+	for (let [key, value] of entity.attributes) {
+		element.setAttribute(key, value ? value : "");
+	}
 
 	for (const className of entity.classes) {
 		element.classList.add(className);
@@ -553,6 +570,10 @@ function getHTMLElementByEntity(entity: Entities.Tag): HTMLElement {
  * Compares two cues and retrieves the index (which
  * is the DOM line depth level) at which the first
  * different entity should be inserted.
+ *
+ * Entities should always be in the same and same
+ * position when they are in similar cues in order
+ * for rendering to work properly.
  *
  * @param currentCue
  * @param previousCue
@@ -573,13 +594,10 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 
 	let entityDifferenceIndex = 0;
 
-	const longestCueEntitiesLength = Math.max(
-		currentCue.entities.length,
-		previousCue.entities.length,
-	);
+	const currentEntities = currentCue.entities.filter(isTagEntityOrLocalStyleOrAnimationEntity);
+	const previousEntities = previousCue.entities.filter(isTagEntityOrLocalStyleOrAnimationEntity);
 
-	const currentEntities = currentCue.entities;
-	const previousEntities = previousCue.entities;
+	const longestCueEntitiesLength = Math.max(currentEntities.length, previousEntities.length);
 
 	for (let i = entityDifferenceIndex; i < longestCueEntitiesLength; i++, entityDifferenceIndex++) {
 		if (!currentEntities[i] || !previousEntities[i]) {
@@ -589,9 +607,16 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 		const currentCueEntity = currentEntities[i]!;
 		const previousCueEntity = previousEntities[i]!;
 
+		if (currentCueEntity !== previousCueEntity) {
+			break;
+		}
+
 		if (
-			currentCueEntity.length !== previousCueEntity.length ||
-			currentCueEntity.offset !== previousCueEntity.offset
+			Entities.isTagEntity(currentCueEntity) &&
+			// this is always true for the condition above
+			// but typescript doesn't know it and keeps throwing error
+			Entities.isTagEntity(previousCueEntity) &&
+			currentCueEntity.tagType !== previousCueEntity.tagType
 		) {
 			break;
 		}
@@ -612,36 +637,28 @@ function getCueNodeEntitiesDifferenceIndex(currentCue: CueNode, previousCue?: Cu
 function getCueNodeFragmentSubtree(
 	currentCue: CueNode,
 	entityDifferenceIndex: number,
-): [root: Node, textNode: Text] {
+	onAnimationRegister: (element: HTMLElement) => void,
+): [root: Node, textNode: Text, keyframesCSS: string] {
 	const textNode = document.createTextNode(currentCue.content);
 
-	return [
-		wrapIntoEntitiesDocumentFragment(textNode, currentCue.entities.slice(entityDifferenceIndex)),
+	const filteredEntities = currentCue.entities
+		.filter(isTagEntityOrLocalStyleOrAnimationEntity)
+		.slice(entityDifferenceIndex);
+
+	const [fragment, keyframesCSS] = wrapIntoEntitiesDocumentFragment(
 		textNode,
-	];
+		filteredEntities,
+		onAnimationRegister,
+	);
+	return [fragment, textNode, keyframesCSS];
 }
 
-function reorderEntitiesComparisonFn(e1: Entities.GenericEntity, e2: Entities.GenericEntity) {
-	if (e1.offset < e2.offset) {
-		/** e1 starts before e2 */
-		return -1;
-	}
-
-	/**
-	 * The condition `e1.offset > e2.offset` is not possible.
-	 * Otherwise there would be an issue with parser. Tags open
-	 * and close like onions. Hence, here we have `e1.offset == e2.offset`
-	 */
-
-	if (e1.length < e2.length) {
-		/** e1 ends before e2, so it must be set last */
-		return 1;
-	}
-
-	if (e1.length > e2.length) {
-		/** e2 ends before e1, so it must be set first */
-		return -1;
-	}
-
-	return 0;
+function isTagEntityOrLocalStyleOrAnimationEntity(
+	entity: Entities.AllEntities,
+): entity is Entities.TagEntity | Entities.LocalStyleEntity | Entities.AnimationEntity {
+	return (
+		Entities.isTagEntity(entity) ||
+		Entities.isLocalStyleEntity(entity) ||
+		Entities.isAnimationEntity(entity)
+	);
 }

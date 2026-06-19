@@ -52,3 +52,21 @@ button#load-default-track {
 	resize: both;
 	overflow: hidden;
 }
+
+#renderer-settings h4 {
+	margin: 10px 0 5px;
+}
+
+#renderer-settings div {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 4px;
+}
+
+#renderer-settings input[type="number"] {
+	width: 4em;
+	padding: 2px 4px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+}

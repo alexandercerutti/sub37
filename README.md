@@ -89,12 +89,19 @@ const captionServer = new Server(WebVTTAdapter);
  */
 const captionServer = new Server(WebVTTAdapter, MyCustomAdapter, ...);
 
+/**
+ * This method makes easy to connect once to the event
+ * listeners you would otherwise have to set up manually.
+ * You still can... but why?
+ */
+const renderingLink = rendererElement.connect(captionServer);
 
-
-captionServer.addEventListener(Events.CUE_START, rendererElement.setCue);
-captionServer.addEventListener(Events.CUE_STOP, rendererElement.setCue);
-captionServer.addEventListener(Events.CUE_ERROR, (/** @type {Error} */ error) => {
-	console.error(error);
+videoElement.addEventListener("emptied", () => {
+	/**
+	 * Once disconnected, link is gone and must be created again
+	 * with a new `.connect()` call.
+	 */
+	renderingLink.disconnect();
 });
 
 /**

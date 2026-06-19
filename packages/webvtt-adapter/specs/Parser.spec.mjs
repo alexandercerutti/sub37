@@ -41,15 +41,13 @@ WEBVTT
 					text: "Would you like to get < coffee?",
 					tags: [
 						{
-							type: 1,
-							offset: 0,
-							length: 31,
+							type: 2,
 							attributes: new Map([["voice", "Fred>"]]),
-							tagType: 1,
+							tagType: "v",
 						},
 					],
 					/**
-					 * @type {import("@sub37/server").RenderingModifiers}
+					 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 					 */
 					renderingModifiers: {
 						id: 98,
@@ -91,7 +89,7 @@ WEBVTT
 				text: "Welcome Liquicity Airlines\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -109,7 +107,7 @@ WEBVTT
 				text: " Our destination: the galaxy of dreams\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -127,7 +125,7 @@ WEBVTT
 				text: " (Our destination: the galaxy of dreams)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -145,7 +143,7 @@ WEBVTT
 				text: " Estimated Time of Arrival: unknown\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -163,7 +161,7 @@ WEBVTT
 				text: " Please fasten your seatbelt\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -181,7 +179,7 @@ WEBVTT
 				text: " And get ready to take off\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -199,7 +197,7 @@ WEBVTT
 				text: " (Please fasten your seatbelt)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -217,7 +215,7 @@ WEBVTT
 				text: " (And get ready to take off)\n",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -250,7 +248,7 @@ WEBVTT
 				text: "Welcome to the galaxy of dreams",
 				tags: [],
 				/**
-				 * @type {import("@sub37/server").RenderingModifiers}
+				 * @type {import("@sub37/adapter-utils").RenderingModifiers}
 				 */
 				renderingModifiers: {
 					id: 97,
@@ -285,60 +283,48 @@ WEBVTT
 
 			expect(parsingResult[0].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 0,
-					length: 27,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
 			expect(parsingResult[1].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 0,
-					length: 39,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
 			expect(parsingResult[2].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 0,
-					length: 40,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer"]]),
 				},
 			]);
 
 			expect(parsingResult[3].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 0,
-					length: 36,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
 
 			expect(parsingResult[4].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 0,
-					length: 28,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer2"]]),
 				},
 			]);
 
 			expect(parsingResult[5].tags).toMatchObject([
 				{
-					type: 1,
-					tagType: 1,
-					offset: 1,
-					length: 26,
+					type: 2,
+					tagType: "v",
 					attributes: new Map([["voice", "Announcer3"]]),
 				},
 			]);
@@ -363,7 +349,7 @@ scroll:up
 		it("should return a custom region with converted attributes if string is separated by newlines", () => {
 			expect(parseRegion(REGION_WITH_ATTRIBUTES_NEWLINES)).toMatchObject({
 				id: "fred",
-				width: 40,
+				width: "40%",
 				lines: 3,
 			});
 		});
@@ -371,7 +357,7 @@ scroll:up
 		it("should return a custom region with converted attributes if string is separated by spaces", () => {
 			expect(parseRegion(REGION_WITH_ATTRIBUTES_SPACES)).toMatchObject({
 				id: "fred",
-				width: 40,
+				width: "40%",
 				lines: 3,
 			});
 		});
@@ -548,7 +534,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_NO_ATTRIBUTES)).toEqual({
 				type: 2,
-				tagName: 32,
+				tagName: "b",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map(),
@@ -566,7 +552,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ONE_ATTRIBUTE)).toEqual({
 				type: 2,
-				tagName: 1,
+				tagName: "v",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([["voice", "Esme"]]),
@@ -582,7 +568,7 @@ color: papayawhip;
 
 			expect(parseStyle(STYLE_WITH_SELECTOR_ATTRIBUTES)).toEqual({
 				type: 2,
-				tagName: 1,
+				tagName: "v",
 				styleString:
 					"background-image:linear-gradient(to bottom, dimgray, lightgray);color:papayawhip;",
 				attributes: new Map([

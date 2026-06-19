@@ -1,16 +1,20 @@
-import type { CueNode, RenderingModifiers } from "@sub37/server";
+import { Events } from "@sub37/server";
+import type { Server } from "@sub37/server";
+import type { ParseError, CueNode, RenderingModifiers } from "@sub37/adapter-utils";
 import {
 	CSSVAR_BOTTOM_SPACING,
 	CSSVAR_BOTTOM_TRANSITION,
 	CSSVAR_REGION_AREA_BG_COLOR,
 	CSSVAR_REGION_BG_COLOR,
 	CSSVAR_TEXT_BG_COLOR,
+	CSSVAR_SPAN_PADDING_X,
 	CSSVAR_TEXT_COLOR,
 } from "./constants.js";
-import TreeOrchestrator, { OrchestratorSettings } from "./TreeOrchestrator.js";
+import TreeOrchestrator from "./TreeOrchestrator.js";
+import type { OrchestratorSettings } from "./TreeOrchestrator.js";
 
 export * from "./constants.js";
-export type { OrchestratorSettings };
+export type { OrchestratorSettings } from "./TreeOrchestrator.js";
 
 class Renderer extends HTMLElement {
 	private container = Object.assign(document.createElement("main"), {
@@ -62,7 +66,7 @@ main#caption-window {
 	 * Positive calculations because people might want
 	 * to pull up the rendering area and not push it down
 	 */
-	height: calc(100% + var(${CSSVAR_BOTTOM_SPACING}, 0px));
+	height: calc(100% - var(${CSSVAR_BOTTOM_SPACING}, 0px));
 	transition: height var(${CSSVAR_BOTTOM_TRANSITION}, 0s linear);
 	overflow: hidden;
 }
@@ -75,7 +79,7 @@ main#caption-window.active {
 	display: block;
 }
 
-div.region {
+sub37-region {
 	position: absolute;
 	overflow-y: hidden;
 	min-height: 1.5em;
@@ -83,27 +87,46 @@ div.region {
 	background-color: var(${CSSVAR_REGION_AREA_BG_COLOR}, transparent);
 }
 
-div.region > div {
+sub37-region > div.scroll-root {
 	background-color: var(${CSSVAR_REGION_BG_COLOR}, rgba(0,0,0,0.4));
 	scroll-behavior: smooth;
 }
 
-div.region div > p {
+sub37-region div > p {
 	margin: 0;
 	box-sizing: border-box;
 }
 
-div.region div > p > span {
+sub37-region div > p.line-block {
 	color: var(${CSSVAR_TEXT_COLOR}, #FFF);
-	background-color: var(${CSSVAR_TEXT_BG_COLOR}, rgba(0,0,0,0.7));
-	padding: 0px 15px;
-	line-height: 1.5em;
-	word-wrap: break-word;
-	/**
-	 * Change this to display:block for pop-on captions
-	 * and whole background
-	 */
-	display: inline-block;
+	--s37__internal__bgcolor: rgba(0, 0, 0, 0.7);
+}
+	
+sub37-region div > p.line-block > span {
+		/**
+		 * Giving priority to user customization, then to the internal color and
+		 * then to the default.
+		 * --sub37__internal__bgcolor is defined on the p.line-block as the fallback
+		 * and will be replaced when the line is created when needed (so, if
+		 * the line has a specific background-color). By doing this way, this
+		 * variable cannot get overridden from outside.
+		 */
+		background-color: var(${CSSVAR_TEXT_BG_COLOR}, var(--s37__internal__bgcolor));
+	
+		/**
+		 * Priority: user (${CSSVAR_SPAN_PADDING_X}) → document (--s37__internal__padding) → default.
+		 * FCC 47 CFR § 79.103 requires user settings to always prevail over authored ones.
+		 */
+		padding: 0 var(${CSSVAR_SPAN_PADDING_X}, var(--s37__internal__padding, 15px));
+
+		line-height: 1.5em;
+		word-wrap: break-word;
+		/**
+		 * Change this to display:block for pop-on captions
+		 * and whole background. Tho, this is not exposed.
+		 * Should we?
+		 */
+		display: inline-block;
 }
 `;
 
@@ -158,11 +181,10 @@ div.region div > p > span {
 			const cue = cueData[i]!;
 			const prevCue = cueData[i - 1];
 
-			const modifierId =
-				getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers) || i;
+			const modifierId = getRegionModifierId(cue.renderingModifiers, prevCue?.renderingModifiers);
 
 			const regionIdentifier = cue.region?.id || "default";
-			const region = `${regionIdentifier}-${modifierId}`;
+			const region = modifierId ? `${regionIdentifier}-${modifierId}` : regionIdentifier;
 
 			if (!cueGroupsByRegion[region]) {
 				cueGroupsByRegion[region] = [];
@@ -177,13 +199,10 @@ div.region div > p > span {
 			if (this.activeRegions[regionId]) {
 				tree = this.activeRegions[regionId];
 			} else {
-				tree = new TreeOrchestrator(
-					this.container,
-					cues[0]!.region,
-					cues[0]!.renderingModifiers,
-					this.regionsProperties,
-				);
+				tree = new TreeOrchestrator(cues[0]!.region, this.regionsProperties);
 			}
+
+			tree.paint(this.container, cues[0]!.region, cues[0]!.renderingModifiers);
 
 			/**
 			 * Appending is required to happen before wiping
@@ -209,6 +228,66 @@ div.region div > p > span {
 
 	private appendTree(tree: TreeOrchestrator): void {
 		this.container.appendChild(tree.root);
+	}
+
+	public connect(
+		serverInstance: Server,
+		onError: (error: ParseError) => void,
+	): { disconnect: () => void } {
+		const onCueStart = (cues: CueNode[]): void => {
+			this.setCue(cues);
+		};
+
+		const onCueStop = (): void => {
+			this.setCue();
+		};
+
+		const onCueError = (parsingError: ParseError): void => {
+			onError(parsingError);
+		};
+
+		const onUserPause = (): void => {
+			for (const regionId in this.activeRegions) {
+				const region = this.activeRegions[regionId]!;
+
+				region.setAnimationActivity(false);
+			}
+		};
+
+		const onUserResume = (): void => {
+			for (const regionId in this.activeRegions) {
+				const region = this.activeRegions[regionId]!;
+
+				region.setAnimationActivity(true);
+			}
+		};
+
+		serverInstance.addEventListener(Events.CUE_START, onCueStart);
+		serverInstance.addEventListener(Events.CUE_STOP, onCueStop);
+		serverInstance.addEventListener(Events.CUE_ERROR, onCueError);
+		serverInstance.addEventListener(Events.USER_PAUSE, onUserPause);
+		serverInstance.addEventListener(Events.USER_RESUME, onUserResume);
+
+		let active = true;
+
+		return {
+			disconnect: () => {
+				if (!active) {
+					return;
+				}
+
+				active = false;
+
+				serverInstance.removeEventListener(Events.CUE_START, onCueStart);
+				serverInstance.removeEventListener(Events.CUE_STOP, onCueStop);
+				serverInstance.removeEventListener(Events.CUE_ERROR, onCueError);
+				serverInstance.removeEventListener(Events.USER_PAUSE, onUserPause);
+				serverInstance.removeEventListener(Events.USER_RESUME, onUserResume);
+
+				/** @ts-ignore - breaking the reference if the user keeps the object */
+				serverInstance = undefined;
+			},
+		};
 	}
 }
 

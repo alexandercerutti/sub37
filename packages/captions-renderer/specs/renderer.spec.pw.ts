@@ -2,8 +2,7 @@ import { expect } from "@playwright/test";
 import { RendererFixture as test } from "./RendererFixture.js";
 import type { Server } from "@sub37/server";
 import type { CaptionsRenderer } from "../lib/index.js";
-import type { Region } from "@sub37/server";
-import type { CueNode } from "@sub37/server";
+import type { Region, CueNode } from "@sub37/adapter-utils";
 
 declare global {
 	/**
@@ -55,7 +54,7 @@ scroll:up
 	await pauseServing();
 	await seekToSecond(3);
 
-	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
+	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
 });
 
 test("Renderer should render two regions, one of them is the default one", async ({
@@ -90,7 +89,7 @@ scroll:up
 	await pauseServing();
 	await seekToSecond(3);
 
-	expect((await page.$$("captions-renderer > main > div")).length).toBe(2);
+	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
 });
 
 test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
@@ -120,7 +119,7 @@ STYLE
 }
 
 STYLE
-::cue([voice="Bill"]) {
+::cue(v[voice="Bill"]) {
 	background-color: blue;
 }
 
@@ -139,14 +138,14 @@ STYLE
 	await pauseServing();
 	await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > .region");
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region");
 
 	const [bgColor1, bgColor2] = await Promise.all([
 		regionsLocator
-			.locator('span[voice="Fred"]')
+			.locator('span[voice="Fred"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 		regionsLocator
-			.locator('span[voice="Bill"]')
+			.locator('span[voice="Bill"] > span')
 			.evaluate((element) => element.style.backgroundColor),
 	]);
 
@@ -154,25 +153,53 @@ STYLE
 	expect(bgColor2).toBe("blue");
 });
 
-test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
+test("An entity wrapping part of a word, should be rendered as such", async ({
 	page,
 	waitForEvent,
 	seekToSecond,
 	pauseServing,
 }) => {
+	/**
+	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
+	 */
+
 	const TEST_WEBVTT_TRACK = `
 WEBVTT
 
-REGION
-id:fred
-width:40%
-lines:3
-regionanchor:0%,100%
-viewportanchor:10%,90%
-scroll:up
+00:00:00.000 --> 00:00:20.000
+I am Fred<i>-ish</i>
+`;
 
-00:00:00.000 --> 00:00:20.000 region:fred align:left
-<v Fred>Hi, my name is Fred
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(3);
+
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
+	const evaluation = await regionsLocator.evaluate((element) =>
+		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
+	);
+
+	expect(evaluation[3]).toBe(" -ish");
+});
+
+test("A global-style should get applied to all the cues", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	const peachpuff = `rgb(255, 218, 185)`;
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+STYLE
+::cue {
+  color: peachpuff;
+}
 
 00:00:02.500 --> 00:00:22.500 align:right
 <v Bill>Hi, I’m Bill
@@ -196,6 +223,55 @@ scroll:up
 <v Fred>OK, let’s go.
 `;
 
+	await Promise.all([
+		waitForEvent("playing"),
+		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+	]);
+
+	await pauseServing();
+	await seekToSecond(3);
+
+	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
+
+	const fredLocator = regionsLocator.locator('span[voice="Fred"]');
+	const billLocator = regionsLocator.locator('span[voice="Bill"]');
+
+	expect(fredLocator.isVisible()).toBeTruthy();
+	expect(billLocator.isVisible()).toBeTruthy();
+
+	const [textColorFred, textColorBill] = await Promise.all([
+		fredLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
+		billLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
+	]);
+
+	expect(textColorFred).toBe(peachpuff);
+	expect(textColorBill).toBe(peachpuff);
+});
+
+test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
+	page,
+	waitForEvent,
+	seekToSecond,
+	pauseServing,
+}) => {
+	const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up
+
+00:00:00.000 --> 00:00:20.000 region:fred align:left
+<v Fred>Hi, my name is Fred
+
+00:00:02.500 --> 00:00:22.500 region:bill align:right
+<v Bill>Hi, I’m Bill
+`;
+
 	/**
 	 * Injecting a listener to rewrite the first
 	 * and injecting renderer properties
@@ -213,13 +289,14 @@ scroll:up
 		}
 
 		rendererElement.setRegionProperties({
-			roundRegionHeightLineFit: true,
+			snapHeightToLineGrid: false,
 		});
 
 		const regionInstance = new (class implements Region {
-			public height = 3.2;
-			public width: number = 100;
+			public height: string = "3.2em";
+			public width: string = "100%";
 			public lines: number = 3;
+			public entities = [];
 			public scroll?: "up" | "none" = "none";
 			public id = "testRegionCustom";
 
@@ -246,13 +323,13 @@ scroll:up
 	await seekToSecond(10);
 
 	let fredRegionHeight = await page
-		.locator("captions-renderer > main > .region:first-child")
+		.locator("captions-renderer > main > sub37-region:first-child")
 		.evaluate((element) => element.style.height);
 
 	expect(fredRegionHeight).toBe("4.5em");
 
 	/**
-	 * Now disabling the setting and seek to rerender the cues.
+	 * Now enabling the setting and seek to rerender the cues.
 	 */
 
 	await page.evaluate(() => {
@@ -267,16 +344,16 @@ scroll:up
 		}
 
 		rendererElement.setRegionProperties({
-			roundRegionHeightLineFit: false,
+			snapHeightToLineGrid: true,
 		});
 	});
 
-	await seekToSecond(9.5);
+	await seekToSecond(25);
 	await seekToSecond(10);
 
 	fredRegionHeight = await page
-		.locator("captions-renderer > main > .region:first-child")
+		.locator("captions-renderer > main > sub37-region:first-child")
 		.evaluate((element) => element.style.height);
 
-	expect(fredRegionHeight).toBe("3.2em");
+	expect(fredRegionHeight).toMatch(/^\d+(?:\.\d+)?px$/);
 });

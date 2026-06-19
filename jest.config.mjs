@@ -10,6 +10,8 @@ export default {
 	moduleFileExtensions: ["js", "mjs"],
 	// The test environment that will be used for testing
 	testEnvironment: "jsdom",
+	// Polyfill APIs missing from jsdom (e.g. performance.clearMarks)
+	setupFiles: ["./jest.setup.mjs"],
 	// The glob patterns Jest uses to detect test files
 	testMatch: ["**/specs/**/*.spec.mjs"],
 
