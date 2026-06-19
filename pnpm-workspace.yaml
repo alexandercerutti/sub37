@@ -4,6 +4,13 @@ packages:
 allowBuilds:
   esbuild: true
 
+minimumReleaseAgeExclude:
+  - "@sub37/adapter-utils"
+  - "@sub37/server"
+  - "@sub37/webvtt-adapter"
+  - "@sub37/ttml-adapter"
+  - "@sub37/captions-renderer"
+
 onlyBuiltDependencies:
   - esbuild
   - nx

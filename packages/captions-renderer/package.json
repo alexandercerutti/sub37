@@ -9,6 +9,9 @@
 		"@sub37/adapter-utils": "workspace:*",
 		"@sub37/server": "workspace:*"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "rm -rf lib && pnpm tsc --build --force",
 		"test": "pnpm build && pnpm test:e2e",
