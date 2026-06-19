@@ -1,7 +1,7 @@
 {
 	"name": "@sub37/sample-app",
 	"private": true,
-	"version": "1.0.6",
+	"version": "1.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm vite",
@@ -15,7 +15,7 @@
 	"dependencies": {
 		"@sub37/captions-renderer": "workspace:^",
 		"@sub37/server": "workspace:^",
-		"@sub37/webvtt-adapter": "workspace:^",
-		"@sub37/ttml-adapter": "workspace:^"
+		"@sub37/ttml-adapter": "workspace:^",
+		"@sub37/webvtt-adapter": "workspace:^"
 	}
 }

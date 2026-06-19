@@ -1,6 +1,6 @@
 {
 	"name": "@sub37/adapter-utils",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"description": "Utilities to build adapters",
 	"main": "lib/index.js",
 	"type": "module",
