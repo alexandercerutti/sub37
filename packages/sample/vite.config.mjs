@@ -35,5 +35,5 @@ export default defineConfig({
 			},
 		},
 	},
-	assetsInclude: ["**/*.vtt"],
+	assetsInclude: ["**/*.vtt", "**/*.ttml"],
 });

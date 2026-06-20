@@ -4,6 +4,7 @@ import { WebVTTAdapter } from "@sub37/webvtt-adapter";
 import { TTMLAdapter } from "@sub37/ttml-adapter";
 import longTextTrackVTTPath from "../../src/longtexttrack.vtt";
 import longTextTrackVTTPathChunk from "../../src/longtexttrack-chunk1.vtt";
+import longTextTrackTTMLPath from "../../src/ttml_blindspot_track_netflix.ttml";
 import "../../src/components/customElements/scheduled-textarea";
 import "../../src/components/customElements/fake-video";
 import "../../src/components/customElements/processorSelector";
@@ -15,10 +16,10 @@ import "../../src/components/customElements/processorSelector";
  */
 
 /**
- * @type {HTMLButtonElement}
+ * @type {HTMLSelectElement}
  */
 
-const defaultTrackLoadBtn = document.getElementById("load-default-track");
+const defaultTrackLoadSelect = document.getElementById("load-default-track");
 
 /**
  * @type {Server}
@@ -67,50 +68,48 @@ function togglePlayback(videoElement) {
 	}
 }
 
-defaultTrackLoadBtn.addEventListener("click", async () => {
-	// 			WEBVTT
+const DEFAULT_TRACKS_LOAD_MAP = new Map([
+	[
+		"webvtt",
+		{
+			getFormElement() {
+				return document.forms["content-type"].elements.webvtt;
+			},
+			loader() {
+				return fetch(longTextTrackVTTPath).then((e) => e.text());
+			},
+		},
+	],
+	[
+		"ttml",
+		{
+			getFormElement() {
+				return document.forms["content-type"].elements.ttml;
+			},
+			loader() {
+				return fetch(longTextTrackTTMLPath).then((e) => e.text());
+			},
+		},
+	],
+]);
 
-	// REGION
-	// id:fred
-	// width:40%
-	// lines:3
-	// align:center
-	// regionanchor:0%,100%
-	// viewportanchor:10%,90%
-	// scroll:up
+defaultTrackLoadSelect.addEventListener("change", async () => {
+	const resolvedFormat = DEFAULT_TRACKS_LOAD_MAP.get(
+		defaultTrackLoadSelect[defaultTrackLoadSelect.options.selectedIndex].id,
+	);
 
-	// REGION
-	// id:bill
-	// align:right
-	// width:40%
-	// lines:3
-	// regionanchor:0%,100%
-	// viewportanchor:10%,90%
-	// scroll:up
+	if (!resolvedFormat) {
+		throw new Error(`No default track loader found for ${defaultTrackLoadSelect.value}`);
+	}
 
-	// 00:00:00.000 --> 00:10:00.000 region:fred align:left
-	// Hello world.
+	defaultTrackLoadSelect.disabled = true;
+	const formElement = resolvedFormat.getFormElement();
+	formElement.checked = true;
 
-	// 00:00:03.000 --> 00:10:00.000 region:bill align:right
-	// Hello milady ;)
+	const trackContent = await resolvedFormat.loader();
 
-	// 00:00:04.000 --> 00:10:00.000 region:fred align:left
-	// Hello world, bibi
-
-	document.forms["content-type"].elements.webvtt.checked = true;
-	defaultTrackLoadBtn.disabled = true;
-
-	const [vttTrack, vttChunk] = await Promise.all([
-		fetch(longTextTrackVTTPath).then((e) => e.text()),
-		fetch(longTextTrackVTTPathChunk).then((e) => e.text()),
-	]);
-
-	setTimeout(() => {
-		server.tracks[0].addChunk(vttChunk);
-	}, 3000);
-
-	scheduledTextArea.value = vttTrack;
-	defaultTrackLoadBtn.disabled = false;
+	scheduledTextArea.value = trackContent;
+	defaultTrackLoadSelect.disabled = false;
 });
 
 document.addEventListener("keydown", ({ code }) => {
