@@ -19,7 +19,7 @@ import "../../src/components/customElements/processorSelector";
  * @type {HTMLSelectElement}
  */
 
-const defaultTrackLoadSelect = document.getElementById("load-default-track");
+const loadSampleLinks = document.querySelectorAll("[data-load-sample]");
 
 /**
  * @type {Server}
@@ -93,24 +93,32 @@ const DEFAULT_TRACKS_LOAD_MAP = new Map([
 	],
 ]);
 
-defaultTrackLoadSelect.addEventListener("change", async () => {
-	const resolvedFormat = DEFAULT_TRACKS_LOAD_MAP.get(
-		defaultTrackLoadSelect[defaultTrackLoadSelect.options.selectedIndex].id,
-	);
+let sampleLoading = false;
 
-	if (!resolvedFormat) {
-		throw new Error(`No default track loader found for ${defaultTrackLoadSelect.value}`);
-	}
+for (const link of loadSampleLinks) {
+	link.addEventListener("click", async (e) => {
+		e.preventDefault();
 
-	defaultTrackLoadSelect.disabled = true;
-	const formElement = resolvedFormat.getFormElement();
-	formElement.checked = true;
+		if (sampleLoading) {
+			return;
+		}
 
-	const trackContent = await resolvedFormat.loader();
+		const formatId = e.currentTarget.dataset.loadSample;
+		const resolvedFormat = DEFAULT_TRACKS_LOAD_MAP.get(formatId);
 
-	scheduledTextArea.value = trackContent;
-	defaultTrackLoadSelect.disabled = false;
-});
+		if (!resolvedFormat) {
+			throw new Error(`No default track loader found for ${formatId}`);
+		}
+
+		sampleLoading = true;
+		resolvedFormat.getFormElement().checked = true;
+
+		const trackContent = await resolvedFormat.loader();
+
+		scheduledTextArea.value = trackContent;
+		sampleLoading = false;
+	});
+}
 
 document.addEventListener("keydown", ({ code }) => {
 	if (
