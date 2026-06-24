@@ -365,9 +365,19 @@ export default class TreeOrchestrator {
 }
 
 function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
-	let idVariations = 0;
+	let nextVariationId: string = "";
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
+
+	/**
+	 * A cue ending with a new line characters means that the next cue
+	 * will have to be rendered on a different line. This means that
+	 * all the subcues of this cue will have to have the same variation
+	 * ID, unless one of them has a new line character.
+	 */
+	if (cueNode.content.endsWith("\x0A")) {
+		nextVariationId = `${Math.floor(Math.random() * 3700)}`;
+	}
 
 	for (let i = 0; i < cueNode.content.length; i++) {
 		if (!shouldCueNodeBreak(cueNode.content, i)) {
@@ -382,8 +392,12 @@ function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 			},
 		});
 
-		if (idVariations > 0) {
-			cue.id = `${cue.id}/${idVariations}`;
+		if (nextVariationId) {
+			/**
+			 * Hopefully, generated ID won't clash with another cue coming from
+			 * the same parent.
+			 */
+			cue.id = `${cue.id}/${nextVariationId}`;
 		}
 
 		/**
@@ -392,8 +406,8 @@ function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 		 * so that rendering will break line on a different cue id.
 		 */
 
-		if (cueNode.content[i] === "\x0A") {
-			idVariations++;
+		if (cueNode.content[i] === "\x0A" && !cueNode.content.endsWith("\x0A")) {
+			nextVariationId = `${Math.floor(Math.random() * 3700)}`;
 		}
 
 		cues.push(cue);
