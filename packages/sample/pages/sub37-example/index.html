@@ -21,25 +21,18 @@
 				<div>
 					<input type="radio" id="webvtt" name="caption-type" value="text/vtt" checked />
 					<label for="webvtt">WebVTT (text/vtt)</label>
+					<a href="#" data-load-sample="webvtt">(load sample)</a>
 				</div>
 				<div>
 					<input type="radio" id="ttml" name="caption-type" value="application/ttml+xml" />
 					<label for="ttml">TTML (application/ttml+xml)</label>
+					<a href="#" data-load-sample="ttml">(load sample)</a>
 				</div>
 				<div>
 					<!-- <input type="radio" id="ttml" name="caption-type" value="text/xml+ttml" />
 					<label for="ttml">TTML (text/xml+ttml)</label> -->
 				</div>
 			</form>
-			<div>
-				<div>
-					<label for="load-default-track">Load a default track:</label>
-				</div>
-				<select id="load-default-track" placeholder="Load a default track">
-					<option id="ttml">TTML</option>
-					<option id="webvtt">WEBVTT</option>
-				</select>
-			</div>
 			<form id="renderer-settings">
 				<h4>Renderer settings:</h4>
 				<div>
