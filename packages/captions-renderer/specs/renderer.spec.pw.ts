@@ -14,13 +14,14 @@ declare global {
 	}
 }
 
-test("Renderer should render two regions if the tracks owns two regions", async ({
-	page,
-	waitForEvent,
-	pauseServing,
-	seekToSecond,
-}) => {
-	const TEST_WEBVTT_TRACK = `
+test.describe("WebVTT", () => {
+	test("Renderer should render two regions if the tracks owns two regions", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 REGION
@@ -46,24 +47,24 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	await pauseServing();
-	await seekToSecond(3);
+		await pauseServing();
+		await seekToSecond(3);
 
-	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
-});
+		expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
+	});
 
-test("Renderer should render two regions, one of them is the default one", async ({
-	page,
-	waitForEvent,
-	seekToSecond,
-	pauseServing,
-}) => {
-	const TEST_WEBVTT_TRACK = `
+	test("Renderer should render two regions, one of them is the default one", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 REGION
@@ -81,28 +82,28 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	await pauseServing();
-	await seekToSecond(3);
+		await pauseServing();
+		await seekToSecond(3);
 
-	expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
-});
+		expect(await page.locator("captions-renderer > main > sub37-region").count()).toBe(2);
+	});
 
-test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
-	page,
-	waitForEvent,
-	seekToSecond,
-	pauseServing,
-}) => {
-	/**
-	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
-	 */
+	test("Renderer should render 'Fred' region with a red background color and a 'Bill' region with a blue background color", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		/**
+		 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
+		 */
 
-	const TEST_WEBVTT_TRACK = `
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 REGION
@@ -130,70 +131,70 @@ STYLE
 <v Bill>Hi, I’m Bill
 `;
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	await pauseServing();
-	await seekToSecond(3);
+		await pauseServing();
+		await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > sub37-region");
+		const regionsLocator = page.locator("captions-renderer > main > sub37-region");
 
-	const [bgColor1, bgColor2] = await Promise.all([
-		regionsLocator
-			.locator('span[voice="Fred"] > span')
-			.evaluate((element) => element.style.backgroundColor),
-		regionsLocator
-			.locator('span[voice="Bill"] > span')
-			.evaluate((element) => element.style.backgroundColor),
-	]);
+		const [bgColor1, bgColor2] = await Promise.all([
+			regionsLocator
+				.locator('span[voice="Fred"] > span')
+				.evaluate((element) => element.style.backgroundColor),
+			regionsLocator
+				.locator('span[voice="Bill"] > span')
+				.evaluate((element) => element.style.backgroundColor),
+		]);
 
-	expect(bgColor1).toBe("red");
-	expect(bgColor2).toBe("blue");
-});
+		expect(bgColor1).toBe("red");
+		expect(bgColor2).toBe("blue");
+	});
 
-test("An entity wrapping part of a word, should be rendered as such", async ({
-	page,
-	waitForEvent,
-	seekToSecond,
-	pauseServing,
-}) => {
-	/**
-	 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
-	 */
+	test("An entity wrapping part of a word, should be rendered as such", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		/**
+		 * @typedef {import("../../sample/src/customElements/fake-video")} FakeHTMLVideoElement
+		 */
 
-	const TEST_WEBVTT_TRACK = `
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 00:00:00.000 --> 00:00:20.000
 I am Fred<i>-ish</i>
 `;
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	await pauseServing();
-	await seekToSecond(3);
+		await pauseServing();
+		await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
-	const evaluation = await regionsLocator.evaluate((element) =>
-		Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
-	);
+		const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
+		const evaluation = await regionsLocator.evaluate((element) =>
+			Array.prototype.map.call(element.childNodes, (e: HTMLElement) => e.textContent),
+		);
 
-	expect(evaluation[3]).toBe(" -ish");
-});
+		expect(evaluation[3]).toBe(" -ish");
+	});
 
-test("A global-style should get applied to all the cues", async ({
-	page,
-	waitForEvent,
-	seekToSecond,
-	pauseServing,
-}) => {
-	const peachpuff = `rgb(255, 218, 185)`;
-	const TEST_WEBVTT_TRACK = `
+	test("A global-style should get applied to all the cues", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		const peachpuff = `rgb(255, 218, 185)`;
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 STYLE
@@ -223,38 +224,38 @@ STYLE
 <v Fred>OK, let’s go.
 `;
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	await pauseServing();
-	await seekToSecond(3);
+		await pauseServing();
+		await seekToSecond(3);
 
-	const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
+		const regionsLocator = page.locator("captions-renderer > main > sub37-region span");
 
-	const fredLocator = regionsLocator.locator('span[voice="Fred"]');
-	const billLocator = regionsLocator.locator('span[voice="Bill"]');
+		const fredLocator = regionsLocator.locator('span[voice="Fred"]');
+		const billLocator = regionsLocator.locator('span[voice="Bill"]');
 
-	expect(fredLocator.isVisible()).toBeTruthy();
-	expect(billLocator.isVisible()).toBeTruthy();
+		expect(fredLocator.isVisible()).toBeTruthy();
+		expect(billLocator.isVisible()).toBeTruthy();
 
-	const [textColorFred, textColorBill] = await Promise.all([
-		fredLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
-		billLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
-	]);
+		const [textColorFred, textColorBill] = await Promise.all([
+			fredLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
+			billLocator.evaluate((element) => getComputedStyle(element).getPropertyValue("color")),
+		]);
 
-	expect(textColorFred).toBe(peachpuff);
-	expect(textColorBill).toBe(peachpuff);
-});
+		expect(textColorFred).toBe(peachpuff);
+		expect(textColorBill).toBe(peachpuff);
+	});
 
-test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
-	page,
-	waitForEvent,
-	seekToSecond,
-	pauseServing,
-}) => {
-	const TEST_WEBVTT_TRACK = `
+	test("Renderer with a region of 3.2em height should be rounded to 4.5 to fit the whole next line if the line height is 1.5em and roundRegionHeightLineFit is set", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		const TEST_WEBVTT_TRACK = `
 WEBVTT
 
 REGION
@@ -272,88 +273,170 @@ scroll:up
 <v Bill>Hi, I’m Bill
 `;
 
-	/**
-	 * Injecting a listener to rewrite the first
-	 * and injecting renderer properties
-	 */
+		/**
+		 * Injecting a listener to rewrite the first
+		 * and injecting renderer properties
+		 */
 
-	await page.evaluate(() => {
-		function isRendererElement(element: Element | null): element is InstanceType<CaptionsRenderer> {
-			return typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function";
-		}
-
-		const rendererElement = document.querySelector("captions-renderer");
-
-		if (!isRendererElement(rendererElement)) {
-			throw new Error("No renderer element found.");
-		}
-
-		rendererElement.setRegionProperties({
-			snapHeightToLineGrid: false,
-		});
-
-		const regionInstance = new (class implements Region {
-			public height: string = "3.2em";
-			public width: string = "100%";
-			public lines: number = 3;
-			public entities = [];
-			public scroll?: "up" | "none" = "none";
-			public id = "testRegionCustom";
-
-			getOrigin(): [x: string, y: string] {
-				return ["0%", "0%"];
+		await page.evaluate(() => {
+			function isRendererElement(
+				element: Element | null,
+			): element is InstanceType<CaptionsRenderer> {
+				return (
+					typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function"
+				);
 			}
-		})();
 
-		window.captionsServer.addEventListener("cuestart", (cues: CueNode[]) => {
-			for (const cue of cues) {
-				if (cue.region?.id === "fred") {
-					cue.region = regionInstance;
+			const rendererElement = document.querySelector("captions-renderer");
+
+			if (!isRendererElement(rendererElement)) {
+				throw new Error("No renderer element found.");
+			}
+
+			rendererElement.setRegionProperties({
+				snapHeightToLineGrid: false,
+			});
+
+			const regionInstance = new (class implements Region {
+				public height: string = "3.2em";
+				public width: string = "100%";
+				public lines: number = 3;
+				public entities = [];
+				public scroll?: "up" | "none" = "none";
+				public id = "testRegionCustom";
+
+				getOrigin(): [x: string, y: string] {
+					return ["0%", "0%"];
 				}
+			})();
+
+			window.captionsServer.addEventListener("cuestart", (cues: CueNode[]) => {
+				for (const cue of cues) {
+					if (cue.region?.id === "fred") {
+						cue.region = regionInstance;
+					}
+				}
+			});
+		});
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(10);
+
+		let fredRegionHeight = await page
+			.locator("captions-renderer > main > sub37-region:first-child")
+			.evaluate((element) => element.style.height);
+
+		expect(fredRegionHeight).toBe("4.5em");
+
+		/**
+		 * Now enabling the setting and seek to rerender the cues.
+		 */
+
+		await page.evaluate(() => {
+			function isRendererElement(
+				element: Element | null,
+			): element is InstanceType<CaptionsRenderer> {
+				return (
+					typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function"
+				);
 			}
+
+			const rendererElement = document.querySelector("captions-renderer");
+
+			if (!isRendererElement(rendererElement)) {
+				throw new Error("No renderer element found.");
+			}
+
+			rendererElement.setRegionProperties({
+				snapHeightToLineGrid: true,
+			});
 		});
+
+		await seekToSecond(25);
+		await seekToSecond(10);
+
+		fredRegionHeight = await page
+			.locator("captions-renderer > main > sub37-region:first-child")
+			.evaluate((element) => element.style.height);
+
+		expect(fredRegionHeight).toMatch(/^\d+(?:\.\d+)?px$/);
 	});
 
-	await Promise.all([
-		waitForEvent("playing"),
-		page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
-	]);
+	test("WebVTT cue with a newline in the middle should render on two separate lines", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		/*
+		 * No trailing newline: a cue content that ends with \x0A causes
+		 * splitCueNodeByBreakpoints to assign the same variation ID to all
+		 * sub-cues, collapsing them onto one line.
+		 */
+		const TEST_WEBVTT_TRACK = `WEBVTT
 
-	await pauseServing();
-	await seekToSecond(10);
+00:00:00.000 --> 00:00:20.000
+Hello.
+First, this lunchtime,`;
 
-	let fredRegionHeight = await page
-		.locator("captions-renderer > main > sub37-region:first-child")
-		.evaluate((element) => element.style.height);
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
 
-	expect(fredRegionHeight).toBe("4.5em");
+		await pauseServing();
+		await seekToSecond(3);
 
-	/**
-	 * Now enabling the setting and seek to rerender the cues.
-	 */
+		const lineCount = await page
+			.locator("captions-renderer > main > sub37-region .line-block")
+			.count();
 
-	await page.evaluate(() => {
-		function isRendererElement(element: Element | null): element is InstanceType<CaptionsRenderer> {
-			return typeof (element as InstanceType<CaptionsRenderer>)?.setRegionProperties === "function";
-		}
-
-		const rendererElement = document.querySelector("captions-renderer");
-
-		if (!isRendererElement(rendererElement)) {
-			throw new Error("No renderer element found.");
-		}
-
-		rendererElement.setRegionProperties({
-			snapHeightToLineGrid: true,
-		});
+		expect(lineCount).toBe(2);
 	});
+}); // WebVTT
 
-	await seekToSecond(25);
-	await seekToSecond(10);
+test.describe("TTML", () => {
+	test("TTML cue with <br /> between two spans should render on two separate lines", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		const TEST_TTML_TRACK = `<?xml version="1.0" encoding="utf-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml"
+    xmlns:ttp="http://www.w3.org/ns/ttml#parameter"
+    ttp:timeBase="media"
+    xml:lang="">
+  <body>
+    <div>
+      <p xml:id="subtitle1" begin="00:00:00.000" end="00:00:10.000">
+        <span>Hello.</span>
+        <br />
+        <span>First, this lunchtime,</span>
+      </p>
+    </div>
+  </body>
+</tt>`;
 
-	fredRegionHeight = await page
-		.locator("captions-renderer > main > sub37-region:first-child")
-		.evaluate((element) => element.style.height);
+		await page.getByRole("radio", { name: "TTML (application/ttml+xml)" }).click();
 
-	expect(fredRegionHeight).toMatch(/^\d+(?:\.\d+)?px$/);
-});
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_TTML_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const lineCount = await page
+			.locator("captions-renderer > main > sub37-region .line-block")
+			.count();
+
+		expect(lineCount).toBe(2);
+	});
+}); // TTML
