@@ -228,6 +228,8 @@ export default class WebVTTAdapter extends BaseAdapter {
 										entities.push(
 											Entities.createLocalStyleEntity({
 												color: knownTextColor,
+												"text-decoration-color": knownTextColor,
+												"text-decoration-line": "inherit",
 											}),
 										);
 
