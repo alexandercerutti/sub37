@@ -125,7 +125,13 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 		};
 	}
 
-	const selectorComponents = getSelectorComponents(selector);
+	/**
+	 * Class-only selectors, like `::cue(.yellow)`, are valid but the tag is not specified (empty):
+	 * we only have classes.
+	 */
+	const selectorComponents = selector.length
+		? getSelectorComponents(selector)
+		: { tagName: "", attributes: new Map<string, string>() };
 
 	if (
 		!selectorComponents ||
@@ -147,11 +153,6 @@ function getSelectorComponents(
 ): Omit<Extract<SelectorTarget, { type: StyleDomain.TAG }>, "type" | "classes"> | undefined {
 	let selector: string = "";
 	const attributes: [string, string][] = [];
-
-	/**
-	 * This is too recent and will likely require a polyfill from
-	 * users. But it fulfill a requirement when matching things with regex.
-	 */
 
 	const matchIterator = rawSelector.matchAll(CSS_SELECTOR_ATTRIBUTES_REGEX);
 
