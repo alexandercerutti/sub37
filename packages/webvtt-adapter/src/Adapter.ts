@@ -289,12 +289,12 @@ export default class WebVTTAdapter extends BaseAdapter {
 									}
 								}
 
-								if (style.classes.length !== tag.classes.length) {
-									continue;
-								}
-
-								for (const className of tag.classes) {
-									if (!style.classes.includes(className)) {
+								/*
+								 * CSS class selectors are subset matches. `::cue(.yellow)` must
+								 * match <c.yellow.bg_blue>.
+								 */
+								for (const className of style.classes) {
+									if (!tag.classes.includes(className)) {
 										continue stylesLoop;
 									}
 								}
