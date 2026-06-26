@@ -220,6 +220,34 @@ export default class WebVTTAdapter extends BaseAdapter {
 							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
 							entities.push(originalEntity);
 
+							if (tag.classes) {
+								for (const className of tag.classes) {
+									const knownTextColor = Parser.resolveClassDefaultTextColor(className);
+
+									if (knownTextColor) {
+										entities.push(
+											Entities.createLocalStyleEntity({
+												color: knownTextColor,
+											}),
+										);
+
+										continue;
+									}
+
+									const knownBackgroundColor = Parser.resolveClassDefaultBackgroundColor(className);
+
+									if (knownBackgroundColor) {
+										entities.push(
+											Entities.createLocalStyleEntity({
+												"background-color": knownBackgroundColor,
+											}),
+										);
+
+										continue;
+									}
+								}
+							}
+
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
