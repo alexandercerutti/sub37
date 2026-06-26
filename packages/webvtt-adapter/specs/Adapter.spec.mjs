@@ -822,7 +822,11 @@ WEBVTT
 					const result = collectParseResult(adapter.parse(VTT));
 
 					expect(result.data[0].entities).toContainEqual(
-						Entities.createLocalStyleEntity({ color: "rgba(255,255,0,1)" }),
+						Entities.createLocalStyleEntity({
+							color: "rgba(255,255,0,1)",
+							"text-decoration-color": "rgba(255,255,0,1)",
+							"text-decoration-line": "inherit",
+						}),
 					);
 				});
 
