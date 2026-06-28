@@ -16,6 +16,9 @@ export interface OrchestratorSettings {
 	/**
 	 * Allows enabling a Youtube-like mode, for which the first line
 	 * is shifted down when nothing else if available.
+	 *
+	 * This is not available when a region defines an height.
+	 *
 	 * Defaults to `false`.
 	 */
 	shiftDownFirstLine?: boolean;
@@ -126,6 +129,10 @@ export default class TreeOrchestrator {
 			regionHeight = `${rounded}em`;
 		}
 
+		/**
+		 * When authored height of the region is defined, we cannot shift down the first line,
+		 * as it would break the expected result
+		 */
 		const shiftDownFirstLine = !authoredHeight && (this.settings.shiftDownFirstLine ?? false);
 
 		this.shiftDownFirstLine = shiftDownFirstLine;
