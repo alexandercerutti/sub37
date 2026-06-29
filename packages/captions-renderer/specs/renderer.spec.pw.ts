@@ -398,6 +398,83 @@ First, this lunchtime,`;
 
 		expect(lineCount).toBe(2);
 	});
+
+	test("Default class colors should inject the correct color and background-color CSS values", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+00:00:00.000 --> 00:00:20.000
+<c.yellow>yellow text</c> <c.bg_blue>blue bg text</c>
+`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const regionSpan = page.locator("captions-renderer > main > sub37-region span");
+
+		const [textColor, bgColor] = await Promise.all([
+			/*
+			 * color is wrapped in var(--sub37-text-color, ...) by the renderer.
+			 * When the CSS variable is unset, getComputedStyle resolves the fallback.
+			 */
+			regionSpan.locator("span.yellow > span").evaluate((el) => getComputedStyle(el).color),
+			regionSpan
+				.locator("span.bg_blue > span")
+				.evaluate((el) => getComputedStyle(el).backgroundColor),
+		]);
+
+		expect(textColor).toBe("rgb(255, 255, 0)");
+		expect(bgColor).toBe("rgb(0, 0, 255)");
+	});
+
+	test("A STYLE block override for a class should take precedence over the default class color", async ({
+		page,
+		waitForEvent,
+		seekToSecond,
+		pauseServing,
+	}) => {
+		const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+STYLE
+::cue(.yellow) {
+	color: cyan;
+}
+
+00:00:00.000 --> 00:00:20.000
+<c.yellow>yellow text</c>
+`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const regionSpan = page.locator("captions-renderer > main > sub37-region span");
+
+		const textColor = await regionSpan
+			.locator("span.yellow > span")
+			.evaluate((el) => getComputedStyle(el).color);
+
+		/*
+		 * cyan = rgb(0, 255, 255). The STYLE block entity is placed after the
+		 * default color entity in the array, so it wins via cssText append order.
+		 */
+		expect(textColor).toBe("rgb(0, 255, 255)");
+	});
 }); // WebVTT
 
 test.describe("TTML", () => {

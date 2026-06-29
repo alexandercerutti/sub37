@@ -220,6 +220,36 @@ export default class WebVTTAdapter extends BaseAdapter {
 							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
 							entities.push(originalEntity);
 
+							if (tag.classes) {
+								for (const className of tag.classes) {
+									const knownTextColor = Parser.resolveClassDefaultTextColor(className);
+
+									if (knownTextColor) {
+										entities.push(
+											Entities.createLocalStyleEntity({
+												color: knownTextColor,
+												"text-decoration-color": knownTextColor,
+												"text-decoration-line": "inherit",
+											}),
+										);
+
+										continue;
+									}
+
+									const knownBackgroundColor = Parser.resolveClassDefaultBackgroundColor(className);
+
+									if (knownBackgroundColor) {
+										entities.push(
+											Entities.createLocalStyleEntity({
+												"background-color": knownBackgroundColor,
+											}),
+										);
+
+										continue;
+									}
+								}
+							}
+
 							stylesLoop: for (const style of styles) {
 								if (style.type !== Parser.StyleDomain.TAG) {
 									continue;
@@ -261,12 +291,12 @@ export default class WebVTTAdapter extends BaseAdapter {
 									}
 								}
 
-								if (style.classes.length !== tag.classes.length) {
-									continue;
-								}
-
-								for (const className of tag.classes) {
-									if (!style.classes.includes(className)) {
+								/*
+								 * CSS class selectors are subset matches. `::cue(.yellow)` must
+								 * match <c.yellow.bg_blue>.
+								 */
+								for (const className of style.classes) {
+									if (!tag.classes.includes(className)) {
 										continue stylesLoop;
 									}
 								}

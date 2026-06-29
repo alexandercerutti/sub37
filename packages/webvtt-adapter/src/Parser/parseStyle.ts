@@ -32,6 +32,40 @@ export type Style = SelectorTarget & {
 };
 
 /**
+ * § 5.1. Default text colors
+ * @see https://www.w3.org/TR/webvtt1/#default-text-color
+ */
+const DEFAULT_TEXT_COLOR_CLASSES_MAP = {
+	white: "rgba(255,255,255,1)",
+	lime: "rgba(0,255,0,1)",
+	cyan: "rgba(0,255,255,1)",
+	red: "rgba(255,0,0,1)",
+	yellow: "rgba(255,255,0,1)",
+	magenta: "rgba(255,0,255,1)",
+	blue: "rgba(0,0,255,1)",
+	black: "rgba(0,0,0,1)",
+} as const;
+
+type DEFAULT_TEXT_COLOR_CLASSES_MAP = typeof DEFAULT_TEXT_COLOR_CLASSES_MAP;
+
+/**
+ * § 5.2. Default text background colors
+ * @see https://www.w3.org/TR/webvtt1/#default-text-background
+ */
+const DEFAULT_BACKGROUND_COLOR_CLASSES_MAP = {
+	bg_white: "rgba(255,255,255,1)",
+	bg_lime: "rgba(0,255,0,1)",
+	bg_cyan: "rgba(0,255,255,1)",
+	bg_red: "rgba(255,0,0,1)",
+	bg_yellow: "rgba(255,255,0,1)",
+	bg_magenta: "rgba(255,0,255,1)",
+	bg_blue: "rgba(0,0,255,1)",
+	bg_black: "rgba(0,0,0,1)",
+} as const;
+
+type DEFAULT_BACKGROUND_COLOR_CLASSES_MAP = typeof DEFAULT_BACKGROUND_COLOR_CLASSES_MAP;
+
+/**
  * @see https://www.w3.org/TR/webvtt1/#the-cue-pseudo-element
  */
 
@@ -125,7 +159,13 @@ function getParsedSelector(selector: string, classesChain: string): SelectorTarg
 		};
 	}
 
-	const selectorComponents = getSelectorComponents(selector);
+	/**
+	 * Class-only selectors, like `::cue(.yellow)`, are valid but the tag is not specified (empty):
+	 * we only have classes.
+	 */
+	const selectorComponents = selector.length
+		? getSelectorComponents(selector)
+		: { tagName: "", attributes: new Map<string, string>() };
 
 	if (
 		!selectorComponents ||
@@ -147,11 +187,6 @@ function getSelectorComponents(
 ): Omit<Extract<SelectorTarget, { type: StyleDomain.TAG }>, "type" | "classes"> | undefined {
 	let selector: string = "";
 	const attributes: [string, string][] = [];
-
-	/**
-	 * This is too recent and will likely require a polyfill from
-	 * users. But it fulfill a requirement when matching things with regex.
-	 */
 
 	const matchIterator = rawSelector.matchAll(CSS_SELECTOR_ATTRIBUTES_REGEX);
 
@@ -246,4 +281,18 @@ function filterUnsupportedStandardProperties(styleString: string) {
 
 function stripEscapedCodePoint(string: string) {
 	return string.replace(CODEPOINT_ESCAPE_REPLACE_REGEX, "$1$2");
+}
+
+export function resolveClassDefaultTextColor(className: string): string | undefined {
+	return DEFAULT_TEXT_COLOR_CLASSES_MAP[className as keyof DEFAULT_TEXT_COLOR_CLASSES_MAP];
+}
+
+export function resolveClassDefaultBackgroundColor(className: string): string | undefined {
+	if (!className.startsWith("bg_")) {
+		return undefined;
+	}
+
+	return DEFAULT_BACKGROUND_COLOR_CLASSES_MAP[
+		className as keyof DEFAULT_BACKGROUND_COLOR_CLASSES_MAP
+	];
 }
