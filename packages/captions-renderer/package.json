@@ -1,6 +1,6 @@
 {
 	"name": "@sub37/captions-renderer",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "A caption renderer written with Web Components",
 	"main": "lib/index.js",
 	"module": "lib/index.js",
