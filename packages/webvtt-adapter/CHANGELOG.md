@@ -1,5 +1,17 @@
 # @sub37/webvtt-adapter
 
+## **2.1.0** (30 Jun 2026)
+
+- Added support to default class names to make color appear (#20)
+
+---
+
+## **2.0.0** (19 Jun 2026)
+
+This release introduces some breaking changes. Refer to [Migration guide](https://github.com/alexandercerutti/sub37/wiki/Migrating-from-v1-to-v2) for all the details. This version requires upgrading all the packages to `v2.0.0`.
+
+---
+
 ## **1.1.1** (12 Feb 2025)
 
 **Bug fix**:

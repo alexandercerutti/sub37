@@ -6,7 +6,8 @@
 	"includeMergedTags": true,
 	"command": {
 		"version": {
-			"allowBranch": "master"
+			"allowBranch": "master",
+			"ignore": ["**/*.md"]
 		}
 	}
 }

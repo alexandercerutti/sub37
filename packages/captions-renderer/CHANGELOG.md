@@ -1,5 +1,18 @@
 # @sub37/captions-renderer
 
+## **2.0.1** (30 Jun 2026)
+
+- Fixed the support to new lines for TTML, when a `<br />` is placed between two `<span />`s (#19)
+- Fixed background appearance when `shiftDownFirstLine` is enabled ( #21 )
+
+---
+
+## **2.0.0** (19 Jun 2026)
+
+This release introduces some breaking changes. Refer to [Migration guide](https://github.com/alexandercerutti/sub37/wiki/Migrating-from-v1-to-v2) for all the details. This version requires upgrading all the packages to `v2.0.0`.
+
+---
+
 ## **1.1.1** (08 Feb 2025)
 
 **Changes**:
@@ -7,9 +20,7 @@
 - Refactored entity difference calculation;
 - Refactored entity conversion to DOM elements;
 - Refactored line creation and entities association;
--
-
-**Bug fix**:
+- **Bug fix**:
 
 - Fixed [Issue #11](https://github.com/alexandercerutti/sub37/issues/11);
 
