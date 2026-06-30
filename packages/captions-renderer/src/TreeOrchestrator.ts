@@ -5,9 +5,6 @@ import { buildKeyframesCSS, buildAnimationShorthand } from "./animationCSS.js";
 import type { Sub37Region } from "./RegionElement.js";
 import "./RegionElement.js";
 
-const rootElementSymbol = Symbol("to.root.element");
-const scrollRootSymbol = Symbol("to.scroll.root");
-
 export interface OrchestratorSettings {
 	/**
 	 * The maximum amount of lines on which the cue should be rendered on.
@@ -19,6 +16,9 @@ export interface OrchestratorSettings {
 	/**
 	 * Allows enabling a Youtube-like mode, for which the first line
 	 * is shifted down when nothing else if available.
+	 *
+	 * This is not available when a region defines an height.
+	 *
 	 * Defaults to `false`.
 	 */
 	shiftDownFirstLine?: boolean;
@@ -66,29 +66,26 @@ export default class TreeOrchestrator {
 		snapHeightToLineGrid: true,
 	};
 
-	private [rootElementSymbol]: HTMLDivElement;
-
-	/**
-	 * The element that allows scrolling the content of the region
-	 * when the content is too long and goes on a new line, achieving
-	 * Roll-up effect.
-	 */
-	private [scrollRootSymbol]: HTMLDivElement;
+	private insertionRootElement: HTMLElement;
 
 	private settings: OrchestratorSettings;
 	private shiftDownFirstLine: boolean = false;
 	private animatedElements: HTMLElement[] = [];
 
 	public constructor(trackRegionSettings?: Region, settings?: Partial<OrchestratorSettings>) {
-		const root = document.createElement(ROOT_TAG_NAME) as Sub37Region;
+		const regionElement = document.createElement(ROOT_TAG_NAME) as Sub37Region;
 
-		root.dataset["trackRegionId"] = trackRegionSettings?.id ?? "";
+		regionElement.dataset["trackRegionId"] = trackRegionSettings?.id ?? "";
 
+		/**
+		 * The element that allows scrolling the content of the region
+		 * when the content is too long and goes on a new line, achieving
+		 * Roll-up effect. It also allows Youtube-like effect to happen.
+		 */
 		const regionScrollElement = document.createElement("div");
 		regionScrollElement.classList.add("scroll-root");
 
-		this[scrollRootSymbol] = root.appendChild(regionScrollElement);
-		this[rootElementSymbol] = this[scrollRootSymbol];
+		this.insertionRootElement = regionElement.appendChild(regionScrollElement);
 
 		this.settings = {
 			...TreeOrchestrator.DEFAULT_SETTINGS,
@@ -132,6 +129,10 @@ export default class TreeOrchestrator {
 			regionHeight = `${rounded}em`;
 		}
 
+		/**
+		 * When authored height of the region is defined, we cannot shift down the first line,
+		 * as it would break the expected result
+		 */
 		const shiftDownFirstLine = !authoredHeight && (this.settings.shiftDownFirstLine ?? false);
 
 		this.shiftDownFirstLine = shiftDownFirstLine;
@@ -146,9 +147,6 @@ export default class TreeOrchestrator {
 		Object.assign(this.root.style, rootStyles);
 		this.root.applyEntities(region?.entities ?? []);
 
-		/* Reset to scroll-root so cached reuse doesn't nest modifier divs */
-		this[rootElementSymbol] = this[scrollRootSymbol];
-
 		if (trackRenderingModifiers) {
 			const modifiersElement = document.createElement("div");
 			modifiersElement.classList.add("rendering-modifier");
@@ -161,7 +159,7 @@ export default class TreeOrchestrator {
 			};
 
 			Object.assign(modifiersElement.style, styles);
-			this[rootElementSymbol] = this[rootElementSymbol].appendChild(modifiersElement);
+			this.insertionRootElement.appendChild(modifiersElement);
 		}
 	}
 
@@ -170,7 +168,7 @@ export default class TreeOrchestrator {
 	}
 
 	public get root(): Sub37Region {
-		let root: HTMLElement = this[rootElementSymbol];
+		let root: HTMLElement = this.insertionRootElement;
 
 		while (root.tagName.toLowerCase() !== ROOT_TAG_NAME) {
 			root = root.parentElement!;
@@ -180,8 +178,8 @@ export default class TreeOrchestrator {
 	}
 
 	public wipeTree(): void {
-		for (let node: Node | null; (node = this[rootElementSymbol].firstChild); ) {
-			this[rootElementSymbol].removeChild(node);
+		for (let node: Node | null; (node = this.insertionRootElement.firstChild); ) {
+			this.insertionRootElement.removeChild(node);
 		}
 
 		this.animatedElements = [];
@@ -203,6 +201,12 @@ export default class TreeOrchestrator {
 		let latestCueId = "";
 		let latestNode: HTMLElement | undefined = undefined;
 		let latestHeight: number = 0;
+
+		/**
+		 * This assumes we have wiped the tree before
+		 */
+		const renderingRoot = (this.insertionRootElement.lastChild ??
+			this.insertionRootElement) as HTMLElement;
 
 		const animationKeyframesStyleElement = document.createElement("style");
 
@@ -235,12 +239,12 @@ export default class TreeOrchestrator {
 			commitFragmentOnLine(line, cueRootDomNode, firstDifferentEntityIndex);
 
 			if (!line.parentNode) {
-				this[rootElementSymbol].appendChild(line);
+				renderingRoot.appendChild(line);
 			}
 
 			if (cueKeyframesCSS) {
 				animationKeyframesStyleElement.textContent += cueKeyframesCSS;
-				this[rootElementSymbol].appendChild(animationKeyframesStyleElement);
+				renderingRoot.appendChild(animationKeyframesStyleElement);
 			}
 
 			/**
@@ -279,7 +283,7 @@ export default class TreeOrchestrator {
 					textNode.textContent = textNode.textContent.slice(1);
 				}
 
-				this[rootElementSymbol].appendChild(line);
+				renderingRoot.appendChild(line);
 			}
 
 			if (nextHeight >= latestHeight * 2) {
@@ -306,10 +310,10 @@ export default class TreeOrchestrator {
 		 * 1.5 -> 0 -> -1.5 -> -3 -> -4.5
 		 */
 
-		if (this[rootElementSymbol].children.length) {
+		if (renderingRoot.children.length) {
 			const {
 				children: { length: childrenAmount },
-			} = this[rootElementSymbol];
+			} = renderingRoot;
 
 			/**
 			 * We need to obtain the number of rows we should scroll of.
@@ -334,8 +338,7 @@ export default class TreeOrchestrator {
 
 			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + visibleLines);
 
-			const lineHeightPx =
-				(this[rootElementSymbol].firstElementChild as HTMLElement | null)?.offsetHeight ?? 0;
+			const lineHeightPx = this.insertionRootElement.offsetHeight ?? 0;
 
 			if (this.settings.snapHeightToLineGrid && lineHeightPx > 0) {
 				const wholeLines = Math.round(this.root.offsetHeight / lineHeightPx);
@@ -348,11 +351,11 @@ export default class TreeOrchestrator {
 			const translateStep =
 				lineHeightPx > 0 ? `${lineHeightPx * linesToBeScrolled}px` : `${1.5 * linesToBeScrolled}em`;
 
-			this[rootElementSymbol].style.transform = `translateY(${translateStep})`;
+			this.insertionRootElement.style.transform = `translateY(${translateStep})`;
 
 			if (linesToBeScrolled <= 0) {
 				const transformCSS = `transform ${LINES_TRANSITION_TIME_MS}ms cubic-bezier(0.25, 0.46, 0.2, 1.0) 0s`;
-				this[rootElementSymbol].style.transition = transformCSS;
+				this.insertionRootElement.style.transition = transformCSS;
 			}
 		}
 	}
@@ -365,9 +368,19 @@ export default class TreeOrchestrator {
 }
 
 function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
-	let idVariations = 0;
+	let nextVariationId: string = "";
 	let previousContentBreakIndex: number = 0;
 	const cues: CueNode[] = [];
+
+	/**
+	 * A cue ending with a new line characters means that the next cue
+	 * will have to be rendered on a different line. This means that
+	 * all the subcues of this cue will have to have the same variation
+	 * ID, unless one of them has a new line character.
+	 */
+	if (cueNode.content.endsWith("\x0A")) {
+		nextVariationId = `${Math.floor(Math.random() * 3700)}`;
+	}
 
 	for (let i = 0; i < cueNode.content.length; i++) {
 		if (!shouldCueNodeBreak(cueNode.content, i)) {
@@ -382,8 +395,12 @@ function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 			},
 		});
 
-		if (idVariations > 0) {
-			cue.id = `${cue.id}/${idVariations}`;
+		if (nextVariationId) {
+			/**
+			 * Hopefully, generated ID won't clash with another cue coming from
+			 * the same parent.
+			 */
+			cue.id = `${cue.id}/${nextVariationId}`;
 		}
 
 		/**
@@ -392,8 +409,8 @@ function splitCueNodeByBreakpoints(cueNode: CueNode): CueNode[] {
 		 * so that rendering will break line on a different cue id.
 		 */
 
-		if (cueNode.content[i] === "\x0A") {
-			idVariations++;
+		if (cueNode.content[i] === "\x0A" && !cueNode.content.endsWith("\x0A")) {
+			nextVariationId = `${Math.floor(Math.random() * 3700)}`;
 		}
 
 		cues.push(cue);

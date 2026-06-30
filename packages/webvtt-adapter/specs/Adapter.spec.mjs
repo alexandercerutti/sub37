@@ -811,6 +811,93 @@ Alberto, come to look at Marcello!
 				});
 			});
 
+			describe("default class colors", () => {
+				it("should apply default text color entity for known color class names", () => {
+					const VTT = `
+WEBVTT
+
+00:00:05.000 --> 00:00:10.000
+<c.yellow>Yellow text</c>`;
+
+					const result = collectParseResult(adapter.parse(VTT));
+
+					expect(result.data[0].entities).toContainEqual(
+						Entities.createLocalStyleEntity({
+							color: "rgba(255,255,0,1)",
+							"text-decoration-color": "rgba(255,255,0,1)",
+							"text-decoration-line": "inherit",
+						}),
+					);
+				});
+
+				it("should apply default background color entity for bg_ class names", () => {
+					const VTT = `
+WEBVTT
+
+00:00:05.000 --> 00:00:10.000
+<c.bg_blue>Blue bg text</c>`;
+
+					const result = collectParseResult(adapter.parse(VTT));
+
+					/*
+					 * Note: the correct CSS property is "background-color" (kebab-case).
+					 * If this test fails with { backgroundColor: ... }, the key in Adapter.ts is wrong.
+					 */
+					expect(result.data[0].entities).toContainEqual(
+						Entities.createLocalStyleEntity({ "background-color": "rgba(0,0,255,1)" }),
+					);
+				});
+
+				it("should place default color entity before a STYLE block override so the STYLE wins", () => {
+					const VTT = `
+WEBVTT
+
+STYLE
+::cue(.yellow) {
+  color: cyan;
+}
+
+00:00:05.000 --> 00:00:10.000
+<c.yellow>Yellow text</c>`;
+
+					const result = collectParseResult(adapter.parse(VTT));
+					const entities = result.data[0].entities;
+
+					const defaultColorIndex = entities.findIndex(
+						(e) => Entities.isLocalStyleEntity(e) && e.styles["color"] === "rgba(255,255,0,1)",
+					);
+					const overrideIndex = entities.findIndex(
+						(e) => Entities.isLocalStyleEntity(e) && e.styles["color"] === "cyan",
+					);
+
+					expect(defaultColorIndex).toBeGreaterThanOrEqual(0);
+					expect(overrideIndex).toBeGreaterThan(defaultColorIndex);
+				});
+
+				it("should match a class-only ::cue() selector against a tag with additional classes", () => {
+					/*
+					 * CSS class selectors are subset matches — ::cue(.yellow) must match <c.yellow.bg_blue>.
+					 * The stylesLoop previously required an exact class count, which is incorrect.
+					 */
+					const VTT = `
+WEBVTT
+
+STYLE
+::cue(.yellow) {
+  color: cyan;
+}
+
+00:00:05.000 --> 00:00:10.000
+<c.yellow.bg_blue>text</c>`;
+
+					const result = collectParseResult(adapter.parse(VTT));
+
+					expect(result.data[0].entities).toContainEqual(
+						Entities.createLocalStyleEntity({ color: "cyan" }),
+					);
+				});
+			});
+
 			it("shouldn't be applied to an entity if the selector is wrong", () => {
 				const TRACK_WITH_WRONG_STYLE_SELECTOR = `
 WEBVTT
