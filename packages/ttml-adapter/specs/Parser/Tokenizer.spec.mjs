@@ -289,6 +289,24 @@ describe("Tokenizer", () => {
 			expect(result?.type).toBe(TokenType.START_TAG);
 			expect(result?.attributes["repeatCount"]).toBe("2");
 		});
+
+		it("should decode predefined named entities in text content", () => {
+			const tokenizer = new Tokenizer(`<p>Hello &amp; World</p>`);
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("Hello & World");
+		});
+
+		it("should decode multiple predefined named entities in the same text node", () => {
+			const tokenizer = new Tokenizer(`<p>&lt;strong&gt;</p>`);
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("<strong>");
+		});
 	});
 
 	describe("String token (DATA state)", () => {

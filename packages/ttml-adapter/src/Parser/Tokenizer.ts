@@ -18,13 +18,17 @@ const NAME_CHAR_REGEX = new RegExp(
 const NAME_REGEX = new RegExp(`${NAME_START_CHAR_REGEX.source}(${NAME_CHAR_REGEX.source})*`);
 
 interface PeekEvaluator<Search extends string> {
-	check(chars: Search): boolean;
+	/**
+	 * Returns the number of characters consumed on a successful match,
+	 * or false if the check did not match.
+	 */
+	check(chars: Search): number;
 	skipWhitespaces?: boolean;
 	readonly requestedCharacters: number;
 }
 
 function createEvaluator<Search extends string>(
-	evaluationFn: (chars: string) => boolean,
+	evaluationFn: (chars: string) => number,
 	charsAmount: number,
 	skipWhitespaces = true,
 ): PeekEvaluator<Search> {
@@ -41,10 +45,68 @@ function createCheckForString<Search extends string>(
 ): PeekEvaluator<Search> {
 	return createEvaluator(
 		function check(chars: string) {
-			return chars === evalString;
+			return chars === evalString ? evalString.length : 0;
 		},
 		evalString.length,
 		skipWhitespaces,
+	);
+}
+
+const XML_PREDEFINED_ENTITIES: Record<string, string> = {
+	amp: "&",
+	lt: "<",
+	gt: ">",
+	apos: "'",
+	quot: '"',
+};
+
+function resolveXmlEntity(name: string): string | null {
+	if (name.startsWith("#x") || name.startsWith("#X")) {
+		const codePoint = parseInt(name.slice(2), 16);
+
+		return Number.isNaN(codePoint) ? null : String.fromCodePoint(codePoint);
+	}
+
+	if (name.startsWith("#")) {
+		const codePoint = parseInt(name.slice(1), 10);
+
+		return Number.isNaN(codePoint) ? null : String.fromCodePoint(codePoint);
+	}
+
+	return XML_PREDEFINED_ENTITIES[name] ?? null;
+}
+
+function createEntityReferenceChecker() {
+	/*
+	 * "&quot;" is the longest named entity (5 chars after "&").
+	 * Numeric refs can reach up to "#x10FFFF;" (9 chars after "&").
+	 */
+	const MAX_LENGTH = 9;
+
+	return createEvaluator(
+		function check(chars: string) {
+			let entityNameSize = 0;
+
+			while (entityNameSize < chars.length && chars[entityNameSize] !== ";") {
+				const currentChar = chars[entityNameSize];
+
+				if (Tokenizer.isWhitespace(currentChar) || Tokenizer.isNewLine(currentChar)) {
+					return 0;
+				}
+
+				entityNameSize++;
+			}
+
+			const resolved = resolveXmlEntity(chars.slice(0, entityNameSize));
+
+			if (resolved === null) {
+				return 0;
+			}
+
+			return entityNameSize + 1;
+		},
+		MAX_LENGTH,
+		false,
 	);
 }
 
@@ -61,17 +123,16 @@ const CLOSE_TAG_CHECKER = createCheckForString(">");
 const EMPTY_TAG_CHECKER = createCheckForString("/>");
 const ATTRIBUTE_SEPARATOR_CHECKER = createCheckForString("=");
 const QUOTATION_MARK_CHECKER = createEvaluator(isQuotationMark, 1);
+const ENTITY_REFERENCE_CHECKER = createEntityReferenceChecker();
 
-function isQuotationMark(character: string): boolean {
-	return (
-		/* " */ character === "\u0022"
+function isQuotationMark(character: string): number {
+	return /* " */ Number(character === "\u0022");
 
-		// Unsupported by XML
-		/* “ */ /* character === "\u201C" ||*/
-		/* ” */ /* character === "\u201D" ||*/
-		/* „ */ /* character === "\u201E" ||*/
-		/* ‟ */ /* character === "\u201F"*/
-	);
+	// Unsupported by XML
+	/* “ */ /* character === "\u201C" ||*/
+	/* ” */ /* character === "\u201D" ||*/
+	/* „ */ /* character === "\u201E" ||*/
+	/* ‟ */ /* character === "\u201F"*/
 }
 
 function createTextSlidingWindow(content: string, startingIndex: number) {
@@ -124,7 +185,8 @@ function createTextSlidingWindow(content: string, startingIndex: number) {
 				return false;
 			}
 
-			const newCursor = requestedCharacters + nextCharIndexNoSpaces;
+			/* evaluation is the number of characters consumed by check */
+			const newCursor = evaluation + nextCharIndexNoSpaces;
 
 			for (let i = cursor; i < newCursor; i++) {
 				if (Tokenizer.isNewLine(content[i])) {
@@ -230,7 +292,7 @@ export class Tokenizer {
 		this.offset = this.sourceWindow.cursor;
 
 		while (this.sourceWindow.cursor <= this.sourceWindow.content.length) {
-			const { char } = this.sourceWindow;
+			const { char, cursor: characterCursor } = this.sourceWindow;
 
 			switch (state) {
 				case TokenizerState.UNKNOWN_CONTENT: {
@@ -494,7 +556,18 @@ export class Tokenizer {
 				}
 
 				case TokenizerState.DATA: {
-					result += char;
+					if (char === "&" && this.sourceWindow.peekAdvance(ENTITY_REFERENCE_CHECKER)) {
+						const entityStartingIndex = characterCursor + 1;
+						// Cursor got increased to skip ";", so we can use it as the last index of slice to omit it
+						const entityLastIndex = this.sourceWindow.cursor;
+
+						result += resolveXmlEntity(
+							this.sourceWindow.content.slice(entityStartingIndex, entityLastIndex),
+						);
+					} else {
+						result += char;
+					}
+
 					this.line = this.sourceWindow.line;
 					this.column = this.sourceWindow.column;
 					this.offset = this.sourceWindow.cursor;
@@ -708,6 +781,19 @@ export class Tokenizer {
 						/**
 						 * @TODO should we throw an error in this case?
 						 */
+
+						this.sourceWindow.advance();
+						break;
+					}
+
+					if (char === "&" && this.sourceWindow.peekAdvance(ENTITY_REFERENCE_CHECKER)) {
+						const entityStartingIndex = characterCursor + 1;
+						// Cursor got increased to skip ";", so we can use it as the last index of slice to omit it
+						const entityLastIndex = this.sourceWindow.cursor;
+
+						result += resolveXmlEntity(
+							this.sourceWindow.content.slice(entityStartingIndex, entityLastIndex),
+						);
 
 						this.sourceWindow.advance();
 						break;
