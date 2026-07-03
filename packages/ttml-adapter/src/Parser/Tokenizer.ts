@@ -692,7 +692,7 @@ export class Tokenizer {
 
 				case TokenizerState.ATTRIBUTE_VALUE: {
 					if (this.sourceWindow.peekAdvance(EMPTY_TAG_CHECKER)) {
-						attributes[currentAttributeName] = result.trimEnd();
+						attributes[currentAttributeName] = result;
 
 						/**
 						 * No need to advance, we need to recognize ">" to emit
@@ -708,7 +708,7 @@ export class Tokenizer {
 					}
 
 					if (this.sourceWindow.peekAdvance(CLOSE_TAG_CHECKER)) {
-						attributes[currentAttributeName] = result.trimEnd();
+						attributes[currentAttributeName] = result;
 
 						this.sourceWindow.advance();
 						return Token.StartTag(
