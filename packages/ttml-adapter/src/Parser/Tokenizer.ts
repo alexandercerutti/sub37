@@ -218,9 +218,6 @@ enum TokenizerState {
 	/** Starting point... */
 	UNKNOWN_CONTENT,
 
-	// UNRECOGNIZED_CONTENT /** ...but we didn't recognize what are we reading */,
-	HTML_CHARACTER_REFERENCE_ANNOTATION /** A sequence that starts with "&" */,
-
 	/**
 	 * All the contents, to be valid, must start with "<".
 	 * Some requires just "<", others requires a difference precise sequence.
