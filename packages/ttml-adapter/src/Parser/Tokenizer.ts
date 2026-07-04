@@ -560,7 +560,7 @@ export class Tokenizer {
 				case TokenizerState.DATA: {
 					if (char === "&" && this.sourceWindow.peekAdvance(ENTITY_REFERENCE_CHECKER)) {
 						const entityStartingIndex = characterCursor + 1;
-						// Cursor got increased to skip ";", so we can use it as the last index of slice to omit it
+						// Cursor got increased to ";", so we can use it as the last index of slice to omit it
 						const entityLastIndex = this.sourceWindow.cursor;
 
 						result += resolveXmlEntity(
@@ -790,7 +790,7 @@ export class Tokenizer {
 
 					if (char === "&" && this.sourceWindow.peekAdvance(ENTITY_REFERENCE_CHECKER)) {
 						const entityStartingIndex = characterCursor + 1;
-						// Cursor got increased to skip ";", so we can use it as the last index of slice to omit it
+						// Cursor got increased to ";", so we can use it as the last index of slice to omit it
 						const entityLastIndex = this.sourceWindow.cursor;
 
 						result += resolveXmlEntity(
