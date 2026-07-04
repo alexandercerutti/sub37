@@ -216,7 +216,13 @@ export default class WebVTTAdapter extends BaseAdapter {
 							)
 							.map((style) => Entities.createLineStyleEntity(style.styleString));
 
-						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
+						const entities: Entities.AllEntities[] = [
+							...globalStylesEntities,
+							...stylesById,
+							Entities.createLineStyleEntity({
+								"text-align": parsedCue.settings["align"] ?? "center",
+							}),
+						];
 
 						for (const tag of parsedCue.tags) {
 							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
