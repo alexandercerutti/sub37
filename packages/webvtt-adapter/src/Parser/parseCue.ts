@@ -1,10 +1,9 @@
-import type { Entities, RenderingModifiers } from "@sub37/adapter-utils";
+import type { Entities } from "@sub37/adapter-utils";
 import type { Token } from "../Token.js";
 import { Tokenizer } from "../Tokenizer.js";
 import { TokenType } from "../Token.js";
 import * as Tags from "./Tags/index.js";
 import * as Timestamps from "./Timestamps.utils.js";
-import { WebVTTRenderingModifiers } from "./RenderingModifiers.js";
 
 /** This structure is compliant with the resulting one from Regex groups property */
 export interface CueRawData {
@@ -19,10 +18,9 @@ export interface CueParsedData {
 	id?: string;
 	startTime: number;
 	endTime: number;
-	regionName?: string;
+	settings: Record<string, string>;
 	tags: Entities.TagEntity[];
 	text: string;
-	renderingModifiers?: RenderingModifiers | undefined;
 
 	/**
 	 * Grouping identifier allows us to skip
@@ -33,17 +31,19 @@ export interface CueParsedData {
 }
 
 export function parseCue(data: CueRawData): CueParsedData[] {
-	const { starttime, endtime, text } = data;
+	const { starttime, endtime, text, attributes } = data;
 
 	const hsCues: CueParsedData[] = [];
 	const tokenizer = new Tokenizer(text);
+
+	const parsedCueSettings = parseCueSettingsString(attributes);
 
 	let token: Token | null = null;
 	let currentCue = createCue(
 		Timestamps.parseMs(starttime),
 		Timestamps.parseMs(endtime),
+		parsedCueSettings,
 		data.cueid,
-		WebVTTRenderingModifiers.fromString(data.attributes),
 	);
 
 	const openTagsQueue = new Tags.NodeQueue();
@@ -58,8 +58,8 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue = createCue(
 						currentCue.startTime,
 						currentCue.endTime,
+						parsedCueSettings,
 						currentCue.id,
-						currentCue.renderingModifiers,
 						currentCue.groupingIdentifier,
 					);
 				}
@@ -95,8 +95,8 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 					currentCue = createCue(
 						currentCue.startTime,
 						currentCue.endTime,
+						parsedCueSettings,
 						currentCue.id,
-						currentCue.renderingModifiers,
 						currentCue.groupingIdentifier,
 					);
 
@@ -137,8 +137,8 @@ export function parseCue(data: CueRawData): CueParsedData[] {
 				currentCue = createCue(
 					Timestamps.parseMs(token.content),
 					currentCue.endTime,
+					parsedCueSettings,
 					currentCue.id,
-					currentCue.renderingModifiers,
 					currentCue.groupingIdentifier,
 				);
 				addCueEntities(currentCue, Tags.createTagEntitiesFromUnpaired(openTagsQueue, currentCue));
@@ -180,8 +180,8 @@ function addCueEntities(cue: CueParsedData, entities: Entities.TagEntity[]) {
 function createCue(
 	startTime: number,
 	endTime: number,
+	cueSettings: Record<string, string>,
 	id?: string,
-	renderingModifiers?: RenderingModifiers,
 	groupingIdentifier?: string,
 ): CueParsedData {
 	return {
@@ -190,7 +190,7 @@ function createCue(
 		text: "",
 		tags: [],
 		id,
-		renderingModifiers,
+		settings: cueSettings,
 		groupingIdentifier,
 	};
 }
@@ -199,4 +199,15 @@ const EMPTY_STRING_REGEX = /\x0A|\x09|\x20|\x0C|/;
 
 function isCueDataTextEmpty(cue: CueParsedData): boolean {
 	return !cue.text.length || !cue.text.replace(EMPTY_STRING_REGEX, "").length;
+}
+
+function parseCueSettingsString(rawAttributes: string): Record<string, string> {
+	if (!rawAttributes?.length) {
+		return {};
+	}
+
+	return rawAttributes.split(/\s+/).reduce((acc, curr) => {
+		const [key, value] = curr.split(":");
+		return (key && value && { ...acc, [key]: value }) || acc;
+	}, {});
 }
