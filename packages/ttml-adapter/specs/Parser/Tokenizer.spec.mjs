@@ -307,6 +307,30 @@ describe("Tokenizer", () => {
 			expect(string?.type).toBe(TokenType.STRING);
 			expect(string?.content).toBe("<strong>");
 		});
+
+		it("should decode predefined named entities in attribute values", () => {
+			const tokenizer = new Tokenizer(`<p xml:id="a&amp;b"/>`);
+			const token = tokenizer.nextToken();
+
+			expect(token?.attributes["xml:id"]).toBe("a&b");
+		});
+
+		it("should decode numeric character references in attribute values", () => {
+			const tokenizer = new Tokenizer(`<p tts:color="&#x23;fff"/>`);
+			const token = tokenizer.nextToken();
+
+			expect(token?.attributes["tts:color"]).toBe("#fff");
+		});
+
+		it("should leave a non-terminated entity reference as literal text", () => {
+			const tokenizer = new Tokenizer(`<p>&amp</p>`);
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("&amp");
+		});
+
 		it("should not crash on an out-of-range numeric character reference", () => {
 			const tokenizer = new Tokenizer(`<p>&#x200000;</p>`);
 			tokenizer.nextToken(); // <p>
