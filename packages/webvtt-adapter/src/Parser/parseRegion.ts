@@ -202,6 +202,10 @@ export function deriveRegionFromCueSettings(
 	];
 
 	derivedRegion.id = `derived:${region?.id ?? "default"}`;
+	derivedRegion.lines = region?.lines ?? derivedRegion.lines;
+	derivedRegion.scroll = region?.scroll ?? derivedRegion.scroll;
+	derivedRegion.regionanchor = region?.regionanchor ?? derivedRegion.regionanchor;
+	derivedRegion.entities = region?.entities ?? [];
 
 	return derivedRegion;
 }
