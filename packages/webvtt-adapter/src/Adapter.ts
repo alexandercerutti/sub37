@@ -1,5 +1,5 @@
 import { BaseAdapter, CueNode, Entities } from "@sub37/adapter-utils";
-import type { ParseGenerator, Region } from "@sub37/adapter-utils";
+import type { ParseGenerator } from "@sub37/adapter-utils";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
@@ -47,7 +47,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			cursor: 0,
 		};
 
-		const regions: { [id: string]: Region } = Object.create(null);
+		const regions: { [id: string]: Parser.WebVTTRegion } = Object.create(null);
 		const styles: Parser.Style[] = [];
 
 		/**
@@ -338,7 +338,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 type CueBlockTuple = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
 type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: undefined];
-type RegionBlockTuple = [blockType: BlockType.REGION, payload: Region];
+type RegionBlockTuple = [blockType: BlockType.REGION, payload: Parser.WebVTTRegion];
 type StyleBlockTuple = [blockType: BlockType.STYLE, payload: Parser.Style];
 type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
 

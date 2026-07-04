@@ -94,7 +94,7 @@ export function parseRegion(rawRegionData: string | undefined): Region | undefin
 
 const VH_LINE_HEIGHT = 5.33;
 
-class WebVTTRegion implements Region {
+export class WebVTTRegion implements Region {
 	public id: string = "";
 
 	public entities: Entities.AllEntities[] = [];
