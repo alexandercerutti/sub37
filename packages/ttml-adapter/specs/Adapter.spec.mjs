@@ -989,6 +989,32 @@ describe("Regions", () => {
 		expect(region.getOrigin()).toEqual(["10%", "20%"]);
 		expect(region.width).toBe("80%");
 	});
+
+	it("should create a derived region from the default region when tts:extent and tts:origin are on <p> (default region mode)", () => {
+		const adapter = new TTMLAdapter();
+		const { data: cues } = parseResult(
+			adapter,
+			`
+			<tt xml:lang="en"
+				xmlns="http://www.w3.org/ns/ttml"
+				xmlns:tts="http://www.w3.org/ns/ttml#styling"
+			>
+				<body>
+					<div>
+						<p begin="0s" end="5s" tts:origin="10% 20%" tts:extent="80% 60%">Hello</p>
+					</div>
+				</body>
+			</tt>
+		`,
+		);
+
+		expect(cues.length).toBeGreaterThan(0);
+		const region = cues[0].region;
+
+		expect(region).toBeDefined();
+		expect(region.getOrigin()).toEqual(["10%", "20%"]);
+		expect(region.width).toBe("80%");
+	});
 });
 // #endregion
 
