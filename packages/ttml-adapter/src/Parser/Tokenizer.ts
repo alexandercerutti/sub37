@@ -97,6 +97,11 @@ function createEntityReferenceChecker() {
 				entityNameSize++;
 			}
 
+			/* If we exhausted the window (so the document terminated), there might be no terminator (";") */
+			if (entityNameSize === chars.length) {
+				return 0;
+			}
+
 			const resolved = resolveXmlEntity(chars.slice(0, entityNameSize));
 
 			if (resolved === null) {
