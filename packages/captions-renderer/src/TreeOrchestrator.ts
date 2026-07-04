@@ -98,6 +98,10 @@ export default class TreeOrchestrator {
 	public paint(
 		parent: HTMLElement,
 		region?: Region,
+
+		/**
+		 * @deprecated Use `region` instead and assign it the right properties
+		 */
 		trackRenderingModifiers?: RenderingModifiers,
 	): void {
 		let [originX, originY] = region?.getOrigin(parent.offsetWidth, parent.offsetHeight) ?? [

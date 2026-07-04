@@ -3,6 +3,8 @@
  * Each adapter should be able to define the properties
  * in the structure, but letting us to use them
  * through a common interface.
+ *
+ * @deprecated Use Regions instead and assign them the right properties.
  */
 
 export interface RenderingModifiers {
