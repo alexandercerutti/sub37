@@ -192,17 +192,19 @@ export default class WebVTTAdapter extends BaseAdapter {
 							cueIdsList.add(parsedCue.id);
 						}
 
+						const regionName = parsedCue.settings["region"];
+						const resolvedRegion = Parser.deriveRegionFromCueSettings(
+							regionName ? regions[regionName] : undefined,
+							parsedCue.settings,
+						);
+
 						const cue = CueNode.from(latestRootCue, {
 							id: parsedCue.id || `cue-${block.start}-${block.cursor}`,
 							startTime: parsedCue.startTime,
 							endTime: parsedCue.endTime,
 							content: parsedCue.text,
-							renderingModifiers: parsedCue.renderingModifiers,
+							region: resolvedRegion,
 						});
-
-						if (parsedCue.renderingModifiers?.regionIdentifier) {
-							cue.region = regions[parsedCue.renderingModifiers.regionIdentifier];
-						}
 
 						if (!latestRootCue) {
 							latestRootCue = cue;
