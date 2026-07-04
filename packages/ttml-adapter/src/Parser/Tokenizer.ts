@@ -19,8 +19,8 @@ const NAME_REGEX = new RegExp(`${NAME_START_CHAR_REGEX.source}(${NAME_CHAR_REGEX
 
 interface PeekEvaluator<Search extends string> {
 	/**
-	 * Returns the number of characters consumed on a successful match,
-	 * or false if the check did not match.
+	 * Returns the number of characters consumed on a successful match.
+	 * 0 if no match was found and therefore no characters were consumed.
 	 */
 	check(chars: Search): number;
 	skipWhitespaces?: boolean;
