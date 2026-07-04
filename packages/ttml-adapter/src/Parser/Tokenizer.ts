@@ -64,13 +64,23 @@ function resolveXmlEntity(name: string): string | null {
 	if (name.startsWith("#x") || name.startsWith("#X")) {
 		const codePoint = parseInt(name.slice(2), 16);
 
-		return Number.isNaN(codePoint) ? null : String.fromCodePoint(codePoint);
+		// `fromCodePoint` throws a RangeError if the code point is invalid.
+		if (Number.isNaN(codePoint) || codePoint > 0x10ffff) {
+			return null;
+		}
+
+		return String.fromCodePoint(codePoint);
 	}
 
 	if (name.startsWith("#")) {
 		const codePoint = parseInt(name.slice(1), 10);
 
-		return Number.isNaN(codePoint) ? null : String.fromCodePoint(codePoint);
+		// `fromCodePoint` throws a RangeError if the code point is invalid.
+		if (Number.isNaN(codePoint) || codePoint > 0x10ffff) {
+			return null;
+		}
+
+		return String.fromCodePoint(codePoint);
 	}
 
 	return XML_PREDEFINED_ENTITIES[name] ?? null;

@@ -307,6 +307,14 @@ describe("Tokenizer", () => {
 			expect(string?.type).toBe(TokenType.STRING);
 			expect(string?.content).toBe("<strong>");
 		});
+		it("should not crash on an out-of-range numeric character reference", () => {
+			const tokenizer = new Tokenizer(`<p>&#x200000;</p>`);
+			tokenizer.nextToken(); // <p>
+			const string = tokenizer.nextToken();
+
+			expect(string?.type).toBe(TokenType.STRING);
+			expect(string?.content).toBe("&#x200000;");
+		});
 	});
 
 	describe("String token (DATA state)", () => {
