@@ -268,6 +268,10 @@ function inferPositionAlignmentByTextAlignment(textAlignment: TextAlignment): Po
 			return "line-right";
 		}
 
+		case "center": {
+			return "center";
+		}
+
 		case "start":
 		case "end": {
 			/**
