@@ -195,7 +195,9 @@ export function deriveRegionFromCueSettings(
 	const regionWidth = getRegionWidthByComputedCueSettings(position, positionAlignment, size);
 	const regionLeftOffset = getRegionLeftOffsetByComputedCueSettings(position, positionAlignment);
 
-	derivedRegion.width = regionWidth ? `${regionWidth}%` : region?.width || "100%";
+	derivedRegion.width =
+		typeof regionWidth === "number" ? `${regionWidth}%` : region?.width || "100%";
+
 	derivedRegion.viewportanchor = [
 		regionLeftOffset ?? region?.viewportanchor?.[0] ?? DEFAULT_VIEWPORT_ANCHOR_X,
 		region?.viewportanchor?.[1] ?? DEFAULT_VIEWPORT_ANCHOR_Y,
