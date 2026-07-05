@@ -7,7 +7,6 @@ main {
 	margin: 20px;
 	display: grid;
 	grid-template-columns: 1fr 2fr;
-	justify-items: center;
 	column-gap: 20px;
 }
 
@@ -46,13 +45,11 @@ select#load-default-track {
 
 #video-container {
 	position: relative;
-	height: 400px;
+	max-width: 50vw;
 	border: 1px solid #000;
 	display: flex;
 	flex-direction: column;
 	aspect-ratio: 16 / 9;
-	resize: both;
-	overflow: hidden;
 }
 
 #renderer-settings h4 {
