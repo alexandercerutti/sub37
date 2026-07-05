@@ -69,3 +69,42 @@ select#load-default-track {
 	border: 1px solid #ccc;
 	border-radius: 3px;
 }
+
+#renderer-settings .settings-columns {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 12px;
+	align-items: start;
+	margin-bottom: 0;
+}
+
+#renderer-settings .settings-column {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	margin-bottom: 0;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child {
+	display: grid;
+	grid-template-columns: max-content auto auto;
+	justify-content: start;
+	align-items: center;
+	column-gap: 6px;
+	row-gap: 4px;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child input[type="range"] {
+	width: 150px;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child > div {
+	display: contents;
+}
+
+#renderer-settings .settings-column input[type="text"] {
+	flex: 1;
+	padding: 2px 4px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+}

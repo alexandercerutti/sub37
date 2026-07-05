@@ -35,17 +35,58 @@
 			</form>
 			<form id="renderer-settings">
 				<h4>Renderer settings:</h4>
-				<div>
-					<label for="lines">Lines:</label>
-					<input type="number" id="lines" name="lines" value="2" min="1" />
-				</div>
-				<div>
-					<input type="checkbox" id="shiftDownFirstLine" name="shiftDownFirstLine" />
-					<label for="shiftDownFirstLine">Shift down first line</label>
-				</div>
-				<div>
-					<input type="checkbox" id="snapHeightToLineGrid" name="snapHeightToLineGrid" checked />
-					<label for="snapHeightToLineGrid">Snap height to line grid</label>
+				<div class="settings-columns">
+					<div class="settings-column">
+						<div>
+							<label for="lines">Lines:</label>
+							<input type="number" id="lines" name="lines" value="2" min="1" />
+						</div>
+						<div>
+							<input type="checkbox" id="shiftDownFirstLine" name="shiftDownFirstLine" />
+							<label for="shiftDownFirstLine">Shift down first line</label>
+						</div>
+						<div>
+							<input type="checkbox" id="snapHeightToLineGrid" name="snapHeightToLineGrid" checked />
+							<label for="snapHeightToLineGrid">Snap height to line grid</label>
+						</div>
+					</div>
+					<div class="settings-column">
+						<div>
+							<label for="css-text-color">Text color</label>
+							<input type="color" id="css-text-color" name="--sub37-text-color" />
+							<button type="button" data-css-var="--sub37-text-color">Reset</button>
+						</div>
+						<div>
+							<label for="css-text-bg-color">Text BG color</label>
+							<input type="color" id="css-text-bg-color" name="--sub37-text-bg-color" />
+							<button type="button" data-css-var="--sub37-text-bg-color">Reset</button>
+						</div>
+						<div>
+							<label for="css-region-bg-color">Region BG color</label>
+							<input type="color" id="css-region-bg-color" name="--sub37-region-bg-color" />
+							<button type="button" data-css-var="--sub37-region-bg-color">Reset</button>
+						</div>
+						<div>
+							<label for="css-region-area-bg-color">Region area BG color</label>
+							<input type="color" id="css-region-area-bg-color" name="--sub37-region-area-bg-color" />
+							<button type="button" data-css-var="--sub37-region-area-bg-color">Reset</button>
+						</div>
+						<div>
+							<label for="css-bottom-spacing">Bottom spacing</label>
+							<input type="range" id="css-bottom-spacing" name="--sub37-bottom-spacing" min="0" max="100" value="0" data-unit="px" />
+							<button type="button" data-css-var="--sub37-bottom-spacing">Reset</button>
+						</div>
+						<div>
+							<label for="css-bottom-transition">Bottom transition</label>
+							<input type="range" id="css-bottom-transition" name="--sub37-bottom-transition" min="0" max="100" value="0" data-unit="ms" />
+							<button type="button" data-css-var="--sub37-bottom-transition">Reset</button>
+						</div>
+						<div>
+							<label for="css-span-padding-x">Span padding X</label>
+							<input type="range" id="css-span-padding-x" name="--sub37-span-padding-x" min="0" max="100" value="15" data-unit="px" />
+							<button type="button" data-css-var="--sub37-span-padding-x">Reset</button>
+						</div>
+					</div>
 				</div>
 			</form>
 		</main>

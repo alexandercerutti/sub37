@@ -272,6 +272,49 @@ function applyRendererSettings() {
 	}
 }
 
-document.forms["renderer-settings"].addEventListener("change", applyRendererSettings);
+document.forms["renderer-settings"].addEventListener("change", (e) => {
+	if (e.target.name?.startsWith("--")) {
+		return;
+	}
+
+	applyRendererSettings();
+});
+
+document.forms["renderer-settings"].addEventListener("input", (e) => {
+	const input = e.target;
+
+	if (!input.name?.startsWith("--")) {
+		return;
+	}
+
+	const value = input.value.trim();
+	const unit = input.dataset.unit ?? "";
+
+	if (value) {
+		presenter.style.setProperty(input.name, value + unit);
+	} else {
+		presenter.style.removeProperty(input.name);
+	}
+});
+
+document.forms["renderer-settings"].addEventListener("click", (e) => {
+	const button = e.target.closest("button[data-css-var]");
+
+	if (!button) {
+		return;
+	}
+
+	const varName = button.dataset.cssVar;
+	const input = document.forms["renderer-settings"].elements[varName];
+	presenter.style.removeProperty(varName);
+
+	if (input.type === "color") {
+		input.value = "#000000";
+	} else if (input.type === "range") {
+		input.value = input.min || "0";
+	} else {
+		input.value = "";
+	}
+});
 
 applyRendererSettings();
