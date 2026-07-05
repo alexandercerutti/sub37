@@ -273,17 +273,42 @@ function applyRendererSettings() {
 }
 
 document.forms["renderer-settings"].addEventListener("change", (e) => {
-	if (e.target.name?.startsWith("--")) {
+	if (e.target.name?.startsWith("--") || e.target.dataset.alphaFor) {
 		return;
 	}
 
 	applyRendererSettings();
 });
 
+function hexToRgba(hex, alpha) {
+	const r = parseInt(hex.slice(1, 3), 16);
+	const g = parseInt(hex.slice(3, 5), 16);
+	const b = parseInt(hex.slice(5, 7), 16);
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 document.forms["renderer-settings"].addEventListener("input", (e) => {
 	const input = e.target;
 
+	/* Alpha slider for a color input */
+	if (input.dataset.alphaFor) {
+		const varName = input.dataset.alphaFor;
+		const colorInput = document.forms["renderer-settings"].elements[varName];
+		presenter.style.setProperty(varName, hexToRgba(colorInput.value, input.value));
+		return;
+	}
+
 	if (!input.name?.startsWith("--")) {
+		return;
+	}
+
+	/* Color input — combine with paired alpha slider */
+	if (input.type === "color") {
+		const alphaInput = document.forms["renderer-settings"].querySelector(
+			`[data-alpha-for="${input.name}"]`,
+		);
+		const alpha = alphaInput?.value ?? "1";
+		presenter.style.setProperty(input.name, hexToRgba(input.value, alpha));
 		return;
 	}
 
@@ -310,6 +335,12 @@ document.forms["renderer-settings"].addEventListener("click", (e) => {
 
 	if (input.type === "color") {
 		input.value = "#000000";
+		const alphaInput = document.forms["renderer-settings"].querySelector(
+			`[data-alpha-for="${varName}"]`,
+		);
+		if (alphaInput) {
+			alphaInput.value = "1";
+		}
 	} else if (input.type === "range") {
 		input.value = input.min || "0";
 	} else {

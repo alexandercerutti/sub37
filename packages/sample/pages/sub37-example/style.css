@@ -98,6 +98,14 @@ select#load-default-track {
 	width: 150px;
 }
 
+#renderer-settings .color-with-alpha {
+	margin-bottom: 0;
+}
+
+#renderer-settings .color-with-alpha input[type="range"] {
+	width: 80px;
+}
+
 #renderer-settings .settings-columns > .settings-column:last-child > div {
 	display: contents;
 }
