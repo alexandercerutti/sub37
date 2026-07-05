@@ -220,7 +220,9 @@ export default class WebVTTAdapter extends BaseAdapter {
 							...globalStylesEntities,
 							...stylesById,
 							Entities.createLineStyleEntity({
-								"text-align": parsedCue.settings["align"] ?? "center",
+								"text-align": Parser.isTextAlignmentStandard(parsedCue.settings["align"])
+									? parsedCue.settings["align"]
+									: "center",
 							}),
 						];
 

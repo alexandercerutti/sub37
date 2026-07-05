@@ -299,7 +299,7 @@ function isPositionAlignmentStandard(
 
 type TextAlignment = "start" | "left" | "center" | "right" | "end";
 
-function isTextAlignmentStandard(alignment: string | undefined): alignment is TextAlignment {
+export function isTextAlignmentStandard(alignment: string | undefined): alignment is TextAlignment {
 	return ["start", "left", "center", "right", "end"].includes(alignment as TextAlignment);
 }
 
