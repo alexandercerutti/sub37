@@ -68,6 +68,11 @@ export default class TreeOrchestrator {
 
 	private insertionRootElement: HTMLElement;
 
+	private parent: HTMLElement | null = null;
+	private regionItem: Region | null = null;
+	private trackRenderingModifiers: RenderingModifiers | null = null;
+	private renderedCues: CueNode[] = [];
+
 	private settings: OrchestratorSettings;
 	private shiftDownFirstLine: boolean = false;
 	private animatedElements: HTMLElement[] = [];
@@ -100,6 +105,10 @@ export default class TreeOrchestrator {
 		region?: Region,
 		trackRenderingModifiers?: RenderingModifiers,
 	): void {
+		this.parent = parent;
+		this.regionItem = region ?? null;
+		this.trackRenderingModifiers = trackRenderingModifiers ?? null;
+
 		let [originX, originY] = region?.getOrigin(parent.offsetWidth, parent.offsetHeight) ?? [
 			"0%",
 			"70%",
@@ -185,7 +194,30 @@ export default class TreeOrchestrator {
 		this.animatedElements = [];
 	}
 
+	public updateSettings(updatedSettings: Partial<OrchestratorSettings>): void {
+		Object.assign(this.settings, updatedSettings);
+
+		if (!this.parent) {
+			/**
+			 * This regions has never been painted yet.
+			 */
+			return;
+		}
+
+		this.wipeTree();
+
+		this.paint(
+			this.parent!,
+			this.regionItem ?? undefined,
+			this.trackRenderingModifiers ?? undefined,
+		);
+
+		this.renderCuesToHTML(this.renderedCues);
+	}
+
 	public renderCuesToHTML(cueNodes: CueNode[]): void {
+		this.renderedCues = cueNodes;
+
 		const cues: CueNode[] = [];
 
 		for (let i = 0; i < cueNodes.length; i++) {

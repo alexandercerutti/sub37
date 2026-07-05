@@ -145,6 +145,12 @@ sub37-region div > p.line-block > span {
 
 	public setRegionProperties(props: Partial<OrchestratorSettings>): void {
 		this.regionsProperties = props;
+
+		for (const regionId in this.activeRegions) {
+			const region = this.activeRegions[regionId]!;
+
+			region.updateSettings(props);
+		}
 	}
 
 	/**

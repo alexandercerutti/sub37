@@ -261,7 +261,6 @@ function applyRendererSettings() {
 	const snapHeightToLineGrid = form.elements["snapHeightToLineGrid"].checked;
 
 	presenter.setRegionProperties({ lines, shiftDownFirstLine, snapHeightToLineGrid });
-	presenter.setCue();
 
 	/**
 	 * Random amount, we expect it to be enough to see the effect of
