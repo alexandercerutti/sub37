@@ -138,13 +138,13 @@ export class WebVTTRegion implements Region {
 		 * > (i.e. the bottom left corner of the video viewport).
 		 */
 		const [
-			regionAnchorWidth = DEFAULT_VIEWPORT_ANCHOR_X,
-			regionAnchorHeight = DEFAULT_VIEWPORT_ANCHOR_Y,
+			regionAnchorWidth = DEFAULT_REGION_ANCHOR_X,
+			regionAnchorHeight = DEFAULT_REGION_ANCHOR_Y,
 		] = this.regionanchor || [];
 
 		const [
-			viewportAnchorWidth = DEFAULT_REGION_ANCHOR_X,
-			viewportAnchorHeight = DEFAULT_REGION_ANCHOR_Y,
+			viewportAnchorWidth = DEFAULT_VIEWPORT_ANCHOR_X,
+			viewportAnchorHeight = DEFAULT_VIEWPORT_ANCHOR_Y,
 		] = this.viewportanchor || [];
 
 		/**
