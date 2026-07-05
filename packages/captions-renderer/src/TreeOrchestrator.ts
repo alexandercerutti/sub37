@@ -367,9 +367,9 @@ export default class TreeOrchestrator {
 			const visibleLines = this.settings.lines;
 
 			/**
-			 * When we have two or more lines available and only one children (one line),
-			 * we can apply the offset, which increases (1) or doesn't alter (0) the number of lines
-			 * to be scrolled.
+			 * When we have two or more visible lines available and only one child (one line),
+			 * we can apply an offset that increases (1) or leaves unchanged (0) the number of
+			 * lines to scroll.
 			 */
 			const shiftDownOffset = Number(
 				this.shiftDownFirstLine && childrenAmount === 1 && visibleLines > 1,
