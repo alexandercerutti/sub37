@@ -8,7 +8,7 @@
 		"@sub37/adapter-utils": "workspace:^"
 	},
 	"scripts": {
-		"build": "rm -rf lib && pnpm tsc --build --force",
+		"build": "rm -rf lib && pnpm tsc --build",
 		"test": "pnpm build && pnpm --prefix ../.. test",
 		"prepublishOnly": "pnpm build"
 	},

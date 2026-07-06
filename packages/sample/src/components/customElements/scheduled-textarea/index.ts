@@ -13,7 +13,7 @@ textarea {
 	padding: 10px;
 	width: 100%;
 	outline-color: rgb(197, 66, 6);
-	height: 500px;
+	height: 100%;
 	font-size: inherit;
 	resize: none;
 	font-weight: 300;

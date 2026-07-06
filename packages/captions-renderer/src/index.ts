@@ -62,12 +62,9 @@ class Renderer extends HTMLElement {
 main#caption-window {
 	position: relative;
 	width: 100%;
-	/**
-	 * Positive calculations because people might want
-	 * to pull up the rendering area and not push it down
-	 */
-	height: calc(100% - var(${CSSVAR_BOTTOM_SPACING}, 0px));
-	transition: height var(${CSSVAR_BOTTOM_TRANSITION}, 0s linear);
+	height: 100%;
+	transition: bottom var(${CSSVAR_BOTTOM_TRANSITION}, 0s linear);
+	bottom: var(${CSSVAR_BOTTOM_SPACING}, 0px);
 	overflow: hidden;
 }
 
@@ -145,6 +142,12 @@ sub37-region div > p.line-block > span {
 
 	public setRegionProperties(props: Partial<OrchestratorSettings>): void {
 		this.regionsProperties = props;
+
+		for (const regionId in this.activeRegions) {
+			const region = this.activeRegions[regionId]!;
+
+			region.updateSettings(props);
+		}
 	}
 
 	/**

@@ -65,7 +65,7 @@ export function parseAttributeValue<Syntax extends GrammarDefinition>(
 	while (tokens.length) {
 		const token = tokens.shift();
 
-		if (!token) {
+		if (token === undefined) {
 			break;
 		}
 

@@ -14,7 +14,11 @@ export class ProcessorSelectorElement extends HTMLFormElement {
 
 		if (childrenInputs.length) {
 			const currentSelectedElement = this.preferenceStorer.get();
-			childrenInputs.find((e) => e.id === currentSelectedElement)?.setAttribute("checked", "true");
+			const found = childrenInputs.find((e) => e.id === currentSelectedElement);
+
+			if (found) {
+				found.checked = true;
+			}
 		}
 	}
 }

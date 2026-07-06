@@ -7,7 +7,6 @@ main {
 	margin: 20px;
 	display: grid;
 	grid-template-columns: 1fr 2fr;
-	justify-items: center;
 	column-gap: 20px;
 }
 
@@ -46,13 +45,11 @@ select#load-default-track {
 
 #video-container {
 	position: relative;
-	height: 400px;
+	max-width: 50vw;
 	border: 1px solid #000;
 	display: flex;
 	flex-direction: column;
 	aspect-ratio: 16 / 9;
-	resize: both;
-	overflow: hidden;
 }
 
 #renderer-settings h4 {
@@ -68,6 +65,53 @@ select#load-default-track {
 
 #renderer-settings input[type="number"] {
 	width: 4em;
+	padding: 2px 4px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+}
+
+#renderer-settings .settings-columns {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 12px;
+	align-items: start;
+	margin-bottom: 0;
+}
+
+#renderer-settings .settings-column {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	margin-bottom: 0;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child {
+	display: grid;
+	grid-template-columns: max-content auto auto;
+	justify-content: start;
+	align-items: center;
+	column-gap: 6px;
+	row-gap: 4px;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child input[type="range"] {
+	width: 150px;
+}
+
+#renderer-settings .color-with-alpha {
+	margin-bottom: 0;
+}
+
+#renderer-settings .color-with-alpha input[type="range"] {
+	width: 80px;
+}
+
+#renderer-settings .settings-columns > .settings-column:last-child > div {
+	display: contents;
+}
+
+#renderer-settings .settings-column input[type="text"] {
+	flex: 1;
 	padding: 2px 4px;
 	border: 1px solid #ccc;
 	border-radius: 3px;
