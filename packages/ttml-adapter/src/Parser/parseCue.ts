@@ -35,20 +35,12 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 
 	const rootIntervals = getCueTemporalIntervalSegments(scope);
 	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime, attrs, activeEntities]) => {
-		let region: TTMLRegion | undefined;
+		let region = activeEntities.find((entity) => entity instanceof TTMLRegion);
 
-		if (attrs & ActiveTemporalEntities.REGION) {
-			region = activeEntities.find((entity) => entity instanceof TTMLRegion);
+		const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
 
-			const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
-
-			if (region && Object.keys(specialSemanticsStyles).length) {
-				region = createDerivedRegionWithSpecialSemanticsStyles(
-					region,
-					specialSemanticsStyles,
-					scope,
-				);
-			}
+		if (Object.keys(specialSemanticsStyles).length) {
+			region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles, scope);
 		}
 
 		const rootCue = new CueNode({
@@ -683,12 +675,21 @@ function getSpecialSemanticsStylesFromAnchestors(
  * the cue's active interval.
  *
  * @see https://www.w3.org/TR/ttml2/#layout-vocabulary-region-special-inline-animation-semantics
+ *
+ * @param baseRegion The base region to derive from. Might be undefined if track doesn't define any region (default region applies)
+ * @param specialSemanticsStyles The styles to override on the base region.
+ * @param scope The scope of the cue, used to compute the geometry styles.
+ * @returns A new region with the special semantics styles applied.
  */
 function createDerivedRegionWithSpecialSemanticsStyles(
-	baseRegion: TTMLRegion,
+	baseRegion: TTMLRegion | undefined,
 	specialSemanticsStyles: Record<string, string>,
 	scope: Scope,
 ): TTMLRegion {
+	if (!baseRegion) {
+		baseRegion = new TTMLRegion("default", scope, undefined);
+	}
+
 	const overriddenAttributes: StyleContainerContextState = Object.create(specialSemanticsStyles, {
 		"xml:id": {
 			value: `derived:${baseRegion.id}`,
