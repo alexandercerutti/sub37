@@ -3,7 +3,6 @@
 	"version": "2.0.1",
 	"description": "A caption renderer written with Web Components",
 	"main": "lib/index.js",
-	"module": "lib/index.js",
 	"type": "module",
 	"peerDependencies": {
 		"@sub37/adapter-utils": "workspace:*",
