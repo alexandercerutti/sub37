@@ -13,7 +13,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rm -rf lib && pnpm tsc --build --force",
+		"build": "rm -rf lib && pnpm tsc --build",
 		"test": "pnpm build && pnpm test:e2e",
 		"test:e2e": "pnpm playwright test -c \"playwright.config.js\"",
 		"prepublishOnly": "pnpm run build"
