@@ -1,5 +1,12 @@
 # @sub37/captions-renderer
 
+## **2.0.2** (06 Jul 2026)
+
+- Fixed regions vertical spacing reducing between each other when changing bottom-spacing (#29)
+- Fixed multiple lines disappearing when too many lines were rendered (#31)
+
+---
+
 ## **2.0.1** (30 Jun 2026)
 
 - Fixed the support to new lines for TTML, when a `<br />` is placed between two `<span />`s (#19)
