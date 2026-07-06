@@ -349,6 +349,8 @@ export default class TreeOrchestrator {
 
 			/**
 			 * We need to obtain the number of rows we should scroll of.
+			 * When we are exceeding visible lines, the number will be
+			 * negative.
 			 *
 			 * (-CHILDREN_AMOUNT + VISIBLE_LINES)
 			 *
@@ -364,24 +366,27 @@ export default class TreeOrchestrator {
 
 			const visibleLines = this.settings.lines;
 
-			const upperBoundLimit = Number(
+			/**
+			 * When we have two or more visible lines available and only one child (one line),
+			 * we can apply an offset that increases (1) or leaves unchanged (0) the number of
+			 * lines to scroll.
+			 */
+			const shiftDownOffset = Number(
 				this.shiftDownFirstLine && childrenAmount === 1 && visibleLines > 1,
 			);
 
-			const linesToBeScrolled = Math.min(upperBoundLimit, -childrenAmount + visibleLines);
+			const linesToBeScrolled = Math.min(shiftDownOffset, -childrenAmount + visibleLines);
 
-			const lineHeightPx = this.insertionRootElement.offsetHeight ?? 0;
-
-			if (this.settings.snapHeightToLineGrid && lineHeightPx > 0) {
-				const wholeLines = Math.round(this.root.offsetHeight / lineHeightPx);
+			if (this.settings.snapHeightToLineGrid && latestHeight > 0) {
+				const wholeLines = Math.round(this.root.offsetHeight / latestHeight);
 
 				if (wholeLines > 0) {
-					this.root.style.height = `${wholeLines * lineHeightPx}px`;
+					this.root.style.height = `${wholeLines * latestHeight}px`;
 				}
 			}
 
 			const translateStep =
-				lineHeightPx > 0 ? `${lineHeightPx * linesToBeScrolled}px` : `${1.5 * linesToBeScrolled}em`;
+				latestHeight > 0 ? `${latestHeight * linesToBeScrolled}px` : `${1.5 * linesToBeScrolled}em`;
 
 			this.insertionRootElement.style.transform = `translateY(${translateStep})`;
 

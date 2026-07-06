@@ -23,13 +23,7 @@ scroll:up
 <v Bill>Hi, I’m Bill
 
 00:00:05.000 --> 00:00:25.000 region:fred align:left
-<v Fred>Would
-<00:00:05.250>you
-<00:00:05.500>like
-<00:00:05.750>to
-<00:00:06.000>get
-<00:00:06.250>a
-<00:00:06.500>coffee?
+<v Fred>Would<00:00:05.250>you<00:00:05.500>like<00:00:05.750>to<00:00:06.000>get<00:00:06.250>a<00:00:06.500>coffee?
 
 00:00:07.500 --> 00:00:27.500 region:bill align:right
 <v Bill>Sure! I’ve only had one today.

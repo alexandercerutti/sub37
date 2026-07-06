@@ -437,6 +437,63 @@ WEBVTT
 		expect(bgColor).toBe("rgb(0, 0, 255)");
 	});
 
+	test("A cue with timestamp-separated lines renders each word on its own line and keeps them within the region", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		/**
+		 * Bare text after each timestamp (no closing tag before the next timestamp)
+		 * means the \x0A is accumulated into currentCue.text before it is flushed.
+		 * That makes splitCueNodeByBreakpoints assign different variation IDs to each
+		 * sub-cue, so every word becomes its own p.line-block.
+		 *
+		 * At second 22, four sub-cues are active (16 s, 18 s, 20 s, 22 s) which
+		 * produces four line blocks in a region whose default visible height is two
+		 * lines.  The translateY scroll must shift the content up by exactly two
+		 * line-heights so that the last two words remain visible — not by a multiple
+		 * of the total scroll-root height, which would push everything out of the
+		 * overflow:hidden clip.
+		 */
+		const TEST_WEBVTT_TRACK = `
+WEBVTT
+
+00:00:16.000 --> 00:00:24.000
+<00:00:16.000>This
+<00:00:18.000>can
+<00:00:20.000>match
+<00:00:22.000>:past/:future
+<00:00:24.000>
+`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(22);
+
+		const lineBlocks = page.locator("captions-renderer > main > sub37-region p.line-block");
+		expect(await lineBlocks.count()).toBe(4);
+
+		const regionTop = await page
+			.locator("captions-renderer > main > sub37-region")
+			.evaluate((el) => el.getBoundingClientRect().top);
+
+		const lastLineTop = await lineBlocks
+			.last()
+			.evaluate((el) => el.getBoundingClientRect().top);
+
+		/*
+		 * The last line must be at or below the top edge of the region.
+		 * A broken translateY (multiplied by total scroll-root height instead
+		 * of a single line height) would push all content above regionTop.
+		 */
+		expect(lastLineTop).toBeGreaterThanOrEqual(regionTop);
+	});
+
 	test("A STYLE block override for a class should take precedence over the default class color", async ({
 		page,
 		waitForEvent,
