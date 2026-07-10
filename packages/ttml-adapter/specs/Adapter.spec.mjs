@@ -3629,6 +3629,43 @@ describe("Style inheritance", () => {
 		expect(styles?.["color"]).toBe("red");
 		expect(styles?.["font-size"]).toBe("12px");
 	});
+
+	it("should allow a region to inherit from a global style via its own style attribute", () => {
+		const adapter = new TTMLAdapter();
+		const { data: cues } = parseResult(
+			adapter,
+			`
+			<tt xml:lang="en">
+				<head>
+					<styling>
+						<style xml:id="sShared" tts:origin="10% 10%" tts:extent="30% 20%" />
+					</styling>
+					<layout>
+						<region xml:id="r1" style="sShared" />
+					</layout>
+				</head>
+				<body>
+					<div region="r1">
+						<p begin="0s" end="1s">Hello</p>
+					</div>
+				</body>
+			</tt>
+		`,
+		);
+
+		const cue = cues.find((c) => c.content.trim() === "Hello");
+		const region = cue?.region;
+
+		/**
+		 * tts:origin/tts:extent only apply to "region" (not "p"/"span"), so this
+		 * can only be satisfied by the region container itself picking up its
+		 * own referenced style, not by the (correct, separate) cascade of
+		 * shared properties onto cue content.
+		 */
+		expect(region?.getOrigin()).toEqual(["10%", "10%"]);
+		expect(region?.width).toBe("30%");
+		expect(region?.height).toBe("20%");
+	});
 });
 // #endregion
 
