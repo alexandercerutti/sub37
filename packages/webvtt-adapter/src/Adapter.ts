@@ -7,7 +7,7 @@ import * as Parser from "./Parser/index.js";
 import { parseMs } from "./Parser/Timestamps.utils.js";
 
 const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT/;
-const X_TIMESTAMP_MAP_REGEX = /X-TIMESTAMP-MAP=(.*),\s*(.*)/;
+const X_TIMESTAMP_MAP_REGEX = /^X-TIMESTAMP-MAP=([^,\r\n]*),\s*([^,\r\n]*)/;
 const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*(?<payload>[\w\W]*)/;
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>[^\n\t]*)\s+)?(?<starttime>(?:(?:\d\d:)?(?:\d\d:)(?:\d\d)\.\d{3}))\s-->\s(?<endtime>(?:(?:\d\d:)?(?:\d\d:)(?:\d\d)\.\d{3}))\s*?(?:(?<attributes>[^\r\n]*?)\s*)[\r\n]+\s*(?<text>(?:.+\s*)+)/;
