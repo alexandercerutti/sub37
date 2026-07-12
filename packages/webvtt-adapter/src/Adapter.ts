@@ -437,7 +437,16 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 					}
 
 					if (key === "LOCAL") {
-						localTime = parseMs(value);
+						try {
+							localTime = parseMs(value);
+						} catch (err) {
+							/**
+							 * @TODO this should be treated as non-critical error but we don't have a way to report it yet.
+							 * For now, we just set the localTime to 0 and continue.
+							 */
+							localTime = 0;
+						}
+
 						continue;
 					}
 
