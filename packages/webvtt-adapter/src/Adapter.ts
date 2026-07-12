@@ -378,16 +378,15 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 		let offsetMs = 0;
 
 		for (const line of headerLines) {
-			if (line.startsWith("NOTE")) {
-				continue;
-			}
-
 			const trimmedLine = line.trim();
 
 			if (!trimmedLine.length) {
 				continue;
 			}
 
+			if (trimmedLine.startsWith("NOTE")) {
+				continue;
+			}
 			/**
 			 * @TODO From down here, error handling might be improved by creating one
 			 * error type per issue.
