@@ -415,6 +415,16 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 				let mpegtsTime: number | undefined = undefined;
 
 				for (const item of [itemOne, itemTwo]) {
+					/**
+					 * @TODO when we'll have a way to report non-critical errors here,
+					 * we should report an error when the key is not LOCAL or MPEGTS or
+					 * when the offsetMs has already been set because of duplicated key.
+					 *
+					 * if (offsetMs > 0) {
+					 * 	...
+					 * }
+					 */
+
 					const firstColonIndex = item.indexOf(":");
 					const key = item.substring(0, firstColonIndex).trim();
 					const value = item.substring(firstColonIndex + 1).trim();
@@ -437,7 +447,7 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 					}
 				}
 
-				if (typeof localTime !== "number" || typeof mpegtsTime !== "number") {
+				if (!isXTimestampMapValueValue(localTime) || !isXTimestampMapValueValue(mpegtsTime)) {
 					return new InvalidFormatError(
 						"WEBVTT_HEADER_X_TIMESTAMP_MAP_INVALID",
 						content.substring(start, end),
@@ -539,4 +549,8 @@ function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 
 function isError(evaluation: BlockTuple | Error): evaluation is Error {
 	return !Array.isArray(evaluation) && evaluation instanceof Error;
+}
+
+function isXTimestampMapValueValue(value: number | undefined): value is number {
+	return Number.isFinite(value);
 }
