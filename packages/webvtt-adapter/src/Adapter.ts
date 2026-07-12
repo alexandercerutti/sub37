@@ -463,6 +463,10 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 			}
 		}
 
+		if (!webvttHeaderFound) {
+			return new InvalidFormatError("WEBVTT_HEADER_MISSING", content.substring(start, end));
+		}
+
 		return [BlockType.HEADER, { offsetMs }];
 	}
 
