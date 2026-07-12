@@ -384,9 +384,6 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 				continue;
 			}
 
-			if (trimmedLine.startsWith("NOTE")) {
-				continue;
-			}
 			/**
 			 * @TODO From down here, error handling might be improved by creating one
 			 * error type per issue.
