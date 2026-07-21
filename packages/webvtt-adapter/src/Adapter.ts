@@ -4,8 +4,10 @@ import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
 import * as Parser from "./Parser/index.js";
+import { parseMs } from "./Parser/Timestamps.utils.js";
 
-const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT(?:\n(.+))?/;
+const WEBVTT_HEADER_SECTION = /^(?:[\uFEFF\n\s]*)?WEBVTT/;
+const X_TIMESTAMP_MAP_REGEX = /^X-TIMESTAMP-MAP=([^,\r\n]*),\s*([^,\r\n]*)/;
 const BLOCK_MATCH_REGEX = /(?<blocktype>(?:REGION|STYLE|NOTE))[\s\r\n]*(?<payload>[\w\W]*)/;
 const CUE_MATCH_REGEX =
 	/(?:(?<cueid>[^\n\t]*)\s+)?(?<starttime>(?:(?:\d\d:)?(?:\d\d:)(?:\d\d)\.\d{3}))\s-->\s(?<endtime>(?:(?:\d\d:)?(?:\d\d:)(?:\d\d)\.\d{3}))\s*?(?:(?<attributes>[^\r\n]*?)\s*)[\r\n]+\s*(?<text>(?:.+\s*)+)/;
@@ -42,6 +44,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 		const cueIdsList: Set<string> = new Set();
 		const cues: CueNode[] = [];
 		const content = String(rawContent).replace(/\r?\n/g, "\n");
+		let cuesOffsetMs = 0;
 		const block = {
 			start: 0,
 			cursor: 0,
@@ -95,6 +98,14 @@ export default class WebVTTAdapter extends BaseAdapter {
 				 * According to WebVTT standard, Region and style blocks should be
 				 * placed above the cues. So we try to ignore them if they are mixed.
 				 */
+
+				if (isHeader(blockEvaluationResult) && latestBlockPhase & BlockType.HEADER) {
+					const [, payload] = blockEvaluationResult;
+
+					if (payload.offsetMs) {
+						cuesOffsetMs = payload.offsetMs;
+					}
+				}
 
 				const shouldProcessNonCues =
 					latestBlockPhase & (BlockType.REGION | BlockType.STYLE | BlockType.HEADER);
@@ -194,8 +205,8 @@ export default class WebVTTAdapter extends BaseAdapter {
 
 						const cue = CueNode.from(latestRootCue, {
 							id: parsedCue.id || `cue-${block.start}-${block.cursor}`,
-							startTime: parsedCue.startTime,
-							endTime: parsedCue.endTime,
+							startTime: parsedCue.startTime + cuesOffsetMs,
+							endTime: parsedCue.endTime + cuesOffsetMs,
 							content: parsedCue.text,
 							renderingModifiers: parsedCue.renderingModifiers,
 						});
@@ -336,8 +347,16 @@ export default class WebVTTAdapter extends BaseAdapter {
 	}
 }
 
+interface HeaderInfoPayload {
+	/**
+	 * The offset in milliseconds to be applied to all cues in the file.
+	 * Computed through HLS's X-TIMESTAMP-MAP header, considering both local and MPEGTS timestamps.
+	 */
+	offsetMs?: number;
+}
+
 type CueBlockTuple = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
-type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: undefined];
+type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: HeaderInfoPayload];
 type RegionBlockTuple = [blockType: BlockType.REGION, payload: Region];
 type StyleBlockTuple = [blockType: BlockType.STYLE, payload: Parser.Style];
 type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
@@ -350,16 +369,107 @@ type BlockTuple =
 	| IgnoredBlockTuple;
 
 function evaluateBlock(content: string, start: number, end: number): BlockTuple | Error {
+	const contentSection = content.substring(start, end);
+
 	if (start === 0) {
-		/** Parsing Headers */
-		if (!WEBVTT_HEADER_SECTION.test(content)) {
-			throw new InvalidFormatError("WEBVTT_HEADER_MISSING", content.substring(start, end));
+		const headerLines = contentSection.split("\n");
+
+		let webvttHeaderFound = false;
+		let offsetMs = 0;
+
+		for (const line of headerLines) {
+			const trimmedLine = line.trim();
+
+			if (!trimmedLine.length) {
+				continue;
+			}
+
+			/**
+			 * @TODO From down here, error handling might be improved by creating one
+			 * error type per issue.
+			 */
+
+			if (!webvttHeaderFound && !WEBVTT_HEADER_SECTION.test(trimmedLine)) {
+				throw new InvalidFormatError("WEBVTT_HEADER_MISSING", content.substring(start, end));
+			}
+
+			webvttHeaderFound = true;
+
+			const xTimestampMapMatch = trimmedLine.match(X_TIMESTAMP_MAP_REGEX);
+
+			if (xTimestampMapMatch !== null) {
+				const [, itemOne, itemTwo] = xTimestampMapMatch;
+
+				if (!itemOne || !itemTwo) {
+					return new InvalidFormatError(
+						"WEBVTT_HEADER_X_TIMESTAMP_MAP_INVALID",
+						content.substring(start, end),
+					);
+				}
+
+				let localTime: number | undefined = undefined;
+				let mpegtsTime: number | undefined = undefined;
+
+				for (const item of [itemOne, itemTwo]) {
+					/**
+					 * @TODO when we'll have a way to report non-critical errors here,
+					 * we should report an error when the key is not LOCAL or MPEGTS or
+					 * when the offsetMs has already been set because of duplicated key.
+					 *
+					 * if (offsetMs > 0) {
+					 * 	...
+					 * }
+					 */
+
+					const firstColonIndex = item.indexOf(":");
+					const key = item.substring(0, firstColonIndex).trim();
+					const value = item.substring(firstColonIndex + 1).trim();
+
+					if (!value) {
+						return new InvalidFormatError(
+							"WEBVTT_HEADER_X_TIMESTAMP_MAP_INVALID",
+							content.substring(start, end),
+						);
+					}
+
+					if (key === "LOCAL") {
+						try {
+							localTime = parseMs(value);
+						} catch (err) {
+							/**
+							 * @TODO this should be treated as non-critical error but we don't have a way to report it yet.
+							 * For now, we just set the localTime to 0 and continue.
+							 */
+							localTime = 0;
+						}
+
+						continue;
+					}
+
+					if (key === "MPEGTS") {
+						mpegtsTime = parseInt(value, 10);
+						continue;
+					}
+				}
+
+				if (!isXTimestampMapValueValue(localTime) || !isXTimestampMapValueValue(mpegtsTime)) {
+					return new InvalidFormatError(
+						"WEBVTT_HEADER_X_TIMESTAMP_MAP_INVALID",
+						content.substring(start, end),
+					);
+				}
+
+				offsetMs = (mpegtsTime / 90000) * 1000 - localTime;
+			}
 		}
 
-		return [BlockType.HEADER, undefined];
+		if (!webvttHeaderFound) {
+			return new InvalidFormatError("WEBVTT_HEADER_MISSING", content.substring(start, end));
+		}
+
+		return [BlockType.HEADER, { offsetMs }];
 	}
 
-	const contentSection = content.substring(start, end);
 	const blockMatch = contentSection.match(BLOCK_MATCH_REGEX);
 
 	if (blockMatch?.groups!["blocktype"]) {
@@ -422,6 +532,10 @@ function evaluateBlock(content: string, start: number, end: number): BlockTuple 
 	return [BlockType.CUE, cueParsingResult];
 }
 
+function isHeader(evaluation: BlockTuple): evaluation is HeaderBlockTuple {
+	return Boolean(evaluation[0] & BlockType.HEADER);
+}
+
 function isRegion(evalutation: BlockTuple): evalutation is RegionBlockTuple {
 	return Boolean(evalutation[0] & BlockType.REGION);
 }
@@ -444,4 +558,8 @@ function isCue(evaluation: BlockTuple): evaluation is CueBlockTuple {
 
 function isError(evaluation: BlockTuple | Error): evaluation is Error {
 	return !Array.isArray(evaluation) && evaluation instanceof Error;
+}
+
+function isXTimestampMapValueValue(value: number | undefined): value is number {
+	return Number.isFinite(value);
 }

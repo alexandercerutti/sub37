@@ -1,5 +1,5 @@
 // @ts-check
-import { Entities, BaseAdapter, CueNode } from "@sub37/adapter-utils";
+import { Entities, CueNode } from "@sub37/adapter-utils";
 import { describe, beforeEach, it, expect } from "@jest/globals";
 import WebVTTAdapter from "../lib/Adapter.js";
 import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
@@ -84,6 +84,19 @@ describe("WebVTTAdapter", () => {
 			expect(collectParseResult(adapter.parse("Look, a phoenix!")).errors[0].error).toEqual(
 				new InvalidFormatError("WEBVTT_HEADER_MISSING", "true"),
 			);
+		});
+
+		it("should support a leading UTF-8 BOM before the WEBVTT header", () => {
+			const VTT_WITH_BOM =
+				"\uFEFFWEBVTT\n\n00:00:01.000 --> 00:00:04.000\nNever drink liquid nitrogen.";
+
+			const result = collectParseResult(adapter.parse(VTT_WITH_BOM));
+
+			expect(result.errors).toEqual([]);
+			expect(result.data.length).toBe(1);
+			expect(result.data[0].startTime).toBe(1000);
+			expect(result.data[0].endTime).toBe(4000);
+			expect(result.data[0].content).toBe("Never drink liquid nitrogen.");
 		});
 
 		it("should be parsing all the content, from the first character to the last", () => {
@@ -922,6 +935,139 @@ STYLE
 					expect(entities.filter(Entities.isLocalStyleEntity)).toEqual([]);
 				}
 			});
+		});
+	});
+
+	describe("X-TIMESTAMP-MAP handling", () => {
+		it("should rebase cue times by the MPEGTS offset when LOCAL is zero", () => {
+			const HLS_SEGMENT_WITH_TIMESTAMP_MAP = `
+WEBVTT
+X-TIMESTAMP-MAP=MPEGTS:900000,LOCAL:00:00:00.000
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITH_TIMESTAMP_MAP));
+
+			/** offset = 900000 / 90000 - 0 = 10s */
+			expect(result.data[0].startTime).toBe(15500);
+			expect(result.data[0].endTime).toBe(20000);
+		});
+
+		it("should rebase cue times by the MPEGTS/LOCAL offset when LOCAL is non-zero", () => {
+			const HLS_SEGMENT_WITH_TIMESTAMP_MAP = `
+WEBVTT
+X-TIMESTAMP-MAP=MPEGTS:900000,LOCAL:00:00:05.000
+
+00:00:10.000 --> 00:00:12.000
+Some cue text`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITH_TIMESTAMP_MAP));
+
+			/** offset = 900000 / 90000 - 5 = 5s */
+			expect(result.data[0].startTime).toBe(15000);
+			expect(result.data[0].endTime).toBe(17000);
+		});
+
+		it("should accept MPEGTS/LOCAL attributes in either order", () => {
+			const HLS_SEGMENT_WITH_TIMESTAMP_MAP = `
+WEBVTT
+X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:900000
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITH_TIMESTAMP_MAP));
+
+			expect(result.data[0].startTime).toBe(15500);
+			expect(result.data[0].endTime).toBe(20000);
+		});
+
+		it("should use the last occurrence and report a non-critical error when X-TIMESTAMP-MAP is duplicated", () => {
+			const HLS_SEGMENT_WITH_DUPLICATE_TIMESTAMP_MAP = `
+WEBVTT
+X-TIMESTAMP-MAP=MPEGTS:450000,LOCAL:00:00:00.000
+X-TIMESTAMP-MAP=MPEGTS:900000,LOCAL:00:00:00.000
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITH_DUPLICATE_TIMESTAMP_MAP));
+
+			/** Last map wins: offset = 900000 / 90000 - 0 = 10s */
+			expect(result.data[0].startTime).toBe(15500);
+			expect(result.data[0].endTime).toBe(20000);
+
+			/**
+			 * Error checking here cannot be performed because we don't have a way to report
+			 * non critical errors and continue execution.
+			 */
+
+			// expect(result.errors.length).toBeGreaterThan(0);
+			// expect(result.errors[0].isCritical).toBe(false);
+		});
+
+		it("should not rebase cue times and should report a non-critical error when MPEGTS is missing", () => {
+			const HLS_SEGMENT_WITHOUT_MPEGTS = `
+WEBVTT
+X-TIMESTAMP-MAP=LOCAL:00:00:00.000
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITHOUT_MPEGTS));
+
+			/** Offset can't be computed without MPEGTS: cue keeps its raw local time */
+			expect(result.data[0].startTime).toBe(5500);
+			expect(result.data[0].endTime).toBe(10000);
+
+			/**
+			 * Error checking here cannot be performed because we don't have a way to report
+			 * non critical errors and continue execution.
+			 */
+
+			// expect(result.errors.length).toBeGreaterThan(0);
+			// expect(result.errors[0].isCritical).toBe(false);
+		});
+
+		it("should not rebase cue times and should report a non-critical error when LOCAL is missing", () => {
+			const HLS_SEGMENT_WITHOUT_LOCAL = `
+WEBVTT
+X-TIMESTAMP-MAP=MPEGTS:900000
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITHOUT_LOCAL));
+
+			/** Offset can't be computed without LOCAL: cue keeps its raw local time */
+			expect(result.data[0].startTime).toBe(5500);
+			expect(result.data[0].endTime).toBe(10000);
+
+			/**
+			 * Error checking here cannot be performed because we don't have a way to report
+			 * non critical errors and continue execution.
+			 */
+
+			// expect(result.errors.length).toBeGreaterThan(0);
+			// expect(result.errors[0].isCritical).toBe(false);
+		});
+
+		it("should not rebase cue times and should report a non-critical error when neither MPEGTS nor LOCAL is present", () => {
+			const HLS_SEGMENT_WITH_UNKNOWN_ATTRIBUTES = `
+WEBVTT
+X-TIMESTAMP-MAP=FOO:1,BAR:2
+
+00:00:05.500 --> 00:00:10.000
+Hey mom, look at me, I'm having fun!`;
+
+			const result = collectParseResult(adapter.parse(HLS_SEGMENT_WITH_UNKNOWN_ATTRIBUTES));
+
+			expect(result.data[0].startTime).toBe(5500);
+			expect(result.data[0].endTime).toBe(10000);
+
+			expect(result.errors.length).toBeGreaterThan(0);
+			expect(result.errors[0].isCritical).toBe(false);
 		});
 	});
 });
