@@ -1015,6 +1015,32 @@ describe("Regions", () => {
 		expect(region.getOrigin()).toEqual(["10%", "20%"]);
 		expect(region.width).toBe("80%");
 	});
+
+	it("should create a derived region when tts:extent and tts:origin are on <div>, not <p> (special semantics from ancestor)", () => {
+		const adapter = new TTMLAdapter();
+		const { data: cues } = parseResult(
+			adapter,
+			`
+			<tt xml:lang="en"
+				xmlns="http://www.w3.org/ns/ttml"
+				xmlns:tts="http://www.w3.org/ns/ttml#styling"
+			>
+				<body>
+					<div tts:origin="10% 20%" tts:extent="80% 60%">
+						<p begin="0s" end="5s">Hello</p>
+					</div>
+				</body>
+			</tt>
+		`,
+		);
+
+		expect(cues.length).toBeGreaterThan(0);
+		const region = cues[0].region;
+
+		expect(region).toBeDefined();
+		expect(region.getOrigin()).toEqual(["10%", "20%"]);
+		expect(region.width).toBe("80%");
+	});
 });
 // #endregion
 
