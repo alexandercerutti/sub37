@@ -2,7 +2,11 @@
  * When VTT file doesn't start with WEBVTT format
  */
 
-type Reason = "WEBVTT_HEADER_MISSING" | "UNKNOWN_BLOCK_ENTITY" | "INVALID_CUE_FORMAT";
+type Reason =
+	| "WEBVTT_HEADER_MISSING"
+	| "UNKNOWN_BLOCK_ENTITY"
+	| "INVALID_CUE_FORMAT"
+	| "WEBVTT_HEADER_X_TIMESTAMP_MAP_INVALID";
 
 export class InvalidFormatError extends Error {
 	constructor(reason: Reason, dataBlock: string) {
