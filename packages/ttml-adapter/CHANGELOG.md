@@ -1,6 +1,6 @@
 # @sub37/ttml-adapter
 
-## **1.0.2** (01 Aug 2026)
+## **1.0.3** (01 Aug 2026)
 
 - Fixed region styles not being refencially-inherited. A style attribute applied to `region` element wasn't letting styles passing through cues flowed in it (#33)
 
