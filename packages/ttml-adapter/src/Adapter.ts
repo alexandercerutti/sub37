@@ -1164,7 +1164,7 @@ function getOutOfLineStylesByIDREFS(
 	}
 
 	const idrefsStyleList = attributes["style"]!.split(/\s+/);
-	const referencialStyles: TTMLStyle[] = [];
+	const referentialStyles: TTMLStyle[] = [];
 
 	for (const idref of idrefsStyleList) {
 		const style = styleContext.getStyleByIDRef(idref);
@@ -1179,10 +1179,10 @@ function getOutOfLineStylesByIDREFS(
 			continue;
 		}
 
-		referencialStyles.push(style);
+		referentialStyles.push(style);
 	}
 
-	return referencialStyles;
+	return referentialStyles;
 }
 
 // ********************************************** //

@@ -206,7 +206,7 @@ function validateOutOfLineStyleIDREFS(idrefs: string | undefined, scope: Scope):
 	}
 
 	const idrefsStyleList = idrefs!.split(/\s+/);
-	const referencialStyles: string[] = [];
+	const referentialStyles: string[] = [];
 
 	for (const idref of idrefsStyleList) {
 		const style = styleContext.getStyleByIDRef(idref);
@@ -222,10 +222,10 @@ function validateOutOfLineStyleIDREFS(idrefs: string | undefined, scope: Scope):
 			continue;
 		}
 
-		referencialStyles.push(idref);
+		referentialStyles.push(idref);
 	}
 
-	return referencialStyles;
+	return referentialStyles;
 }
 
 // ***************************** //
@@ -285,11 +285,11 @@ function createTTMLRegion(
 		}) ||
 		undefined;
 
-	const referencialStyles = validateOutOfLineStyleIDREFS(attributes["style"], sourceScope);
+	const referentialStyles = validateOutOfLineStyleIDREFS(attributes["style"], sourceScope);
 	const nestedStyles = extractNestedStylesChildren(children);
 	const inlineStyles = extractInlineStyles(attributes);
 
-	const styleIds = [...referencialStyles, nestedStyles["xml:id"], inlineStyles["xml:id"]];
+	const styleIds = [...referentialStyles, nestedStyles["xml:id"], inlineStyles["xml:id"]];
 
 	const animations = extractNestedAnimationsChildren(children);
 
