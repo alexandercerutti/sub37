@@ -34,16 +34,16 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	 */
 
 	const rootIntervals = getCueTemporalIntervalSegments(scope);
-	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime, attrs, activeEntities]) => {
-		let region = activeEntities.find((entity) => entity instanceof TTMLRegion);
+	const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
 
-		const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
+	let region: TTMLRegion | undefined = temporalActiveContext?.region;
 
-		if (Object.keys(specialSemanticsStyles).length) {
-			region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles, scope);
-		}
+	if (Object.keys(specialSemanticsStyles).length) {
+		region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles, scope);
+	}
 
-		const rootCue = new CueNode({
+	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime]) => {
+		return new CueNode({
 			id: parentId,
 			content: "",
 			startTime,
@@ -51,8 +51,6 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 			region,
 			entities: lineEntity ? [lineEntity] : [],
 		});
-
-		return rootCue;
 	});
 
 	return processChildren(node, parentId, node.content[nodeScopeSymbol], rootCues);
