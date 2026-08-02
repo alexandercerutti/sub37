@@ -4,7 +4,10 @@ import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import type { ComputedCssProperties } from "./Scope/TemporalActiveContext.js";
-import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Scope/AnimationContainerContext.js";
 import { computeRegionGeometryStylesByScope, TTMLRegion } from "./Scope/RegionContainerContext.js";
@@ -702,6 +705,9 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 		//
 		scope,
 		createStyleContainerContext([overriddenAttributes]),
+		createTemporalActiveContext({
+			stylesIDRefs: [`derived:${baseRegion.id}`],
+		}),
 	);
 
 	const newGeometryStyles = Object.assign(
