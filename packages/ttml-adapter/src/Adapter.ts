@@ -6,6 +6,7 @@ import type { Scope, ContextFactory } from "./Parser/Scope/Scope.js";
 import { createTimeContext } from "./Parser/Scope/TimeContext.js";
 import {
 	createStyleContainerContext,
+	extractStyleAttributes,
 	readScopeStyleContainerContext,
 } from "./Parser/Scope/StyleContainerContext.js";
 import type {
@@ -1133,8 +1134,13 @@ function extractInlineStylesFromToken(
 	token: Token,
 ): (Record<string, string> & UniquelyAnnotatedNode & { kind: "inline" }) | undefined {
 	const { attributes } = token;
+	const inlineStyles: Record<string, string> = extractStyleAttributes(attributes);
 
-	return Object.create(attributes, {
+	if (!Object.keys(inlineStyles).length) {
+		return undefined;
+	}
+
+	return Object.create(inlineStyles, {
 		"xml:id": {
 			value: attributes["xml:id"] || generateSyntheticId("in:style"),
 			enumerable: true,
@@ -1164,7 +1170,7 @@ function getOutOfLineStylesByIDREFS(
 	}
 
 	const idrefsStyleList = attributes["style"]!.split(/\s+/);
-	const referencialStyles: TTMLStyle[] = [];
+	const referentialStyles: TTMLStyle[] = [];
 
 	for (const idref of idrefsStyleList) {
 		const style = styleContext.getStyleByIDRef(idref);
@@ -1179,10 +1185,10 @@ function getOutOfLineStylesByIDREFS(
 			continue;
 		}
 
-		referencialStyles.push(style);
+		referentialStyles.push(style);
 	}
 
-	return referencialStyles;
+	return referentialStyles;
 }
 
 // ********************************************** //

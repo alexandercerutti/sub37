@@ -354,7 +354,7 @@ function createTTMLStyle(
 	};
 }
 
-function extractStyleAttributes(
+export function extractStyleAttributes(
 	attributes: Record<string, string>,
 ): Record<StyleAttributeString, string> {
 	const validAttributes: Record<StyleAttributeString, string> = {};

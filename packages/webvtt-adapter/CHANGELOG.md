@@ -1,5 +1,11 @@
 # @sub37/webvtt-adapter
 
+## **2.2.0** (1 Aug 2026)
+
+- Added support to HLS extension `X-TIMESTAMP-MAP` header (#35)
+
+---
+
 ## **2.1.0** (30 Jun 2026)
 
 - Added support to default class names to make color appear (#20)

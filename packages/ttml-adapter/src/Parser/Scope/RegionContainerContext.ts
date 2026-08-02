@@ -20,7 +20,11 @@ import {
 	createAnimationContainerContext,
 	readScopeAnimationContext,
 } from "./AnimationContainerContext.js";
-import { createTemporalActiveContext } from "./TemporalActiveContext.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./TemporalActiveContext.js";
+import { readScopeErrorContext } from "./ErrorContext.js";
 
 const regionContextSymbol = Symbol("region");
 
@@ -178,6 +182,52 @@ function extractNestedStylesChildren(
 	});
 }
 
+/**
+ * Styles referenced by region must be already defined in the scope chain and in the document.
+ * Therefore we do not need to extract them and duplicate them. We just need to check them.
+ */
+function validateOutOfLineStyleIDREFS(idrefs: string | undefined, scope: Scope): string[] {
+	if (!idrefs?.length) {
+		return [];
+	}
+
+	const styleContext = readScopeStyleContainerContext(scope);
+	const errorContext = readScopeErrorContext(scope)!;
+
+	if (!styleContext) {
+		errorContext.report(
+			new Error(
+				`Region referenced style(s) '${idrefs}', but no out-of-line styles were defined in this document. Ignored.`,
+			),
+			false,
+		);
+
+		return [];
+	}
+
+	const idrefsStyleList = idrefs!.split(/\s+/);
+	const referentialStyles: string[] = [];
+
+	for (const idref of idrefsStyleList) {
+		const style = styleContext.getStyleByIDRef(idref);
+
+		if (!style) {
+			errorContext.report(
+				new Error(
+					`Region referenced style '${idref}', but no such out-of-line style was defined in this document. Ignored.`,
+				),
+				false,
+			);
+
+			continue;
+		}
+
+		referentialStyles.push(idref);
+	}
+
+	return referentialStyles;
+}
+
 // ***************************** //
 // *** ANIMATIONS EXTRACTION *** //
 // ***************************** //
@@ -235,10 +285,11 @@ function createTTMLRegion(
 		}) ||
 		undefined;
 
-	const inlineStyles = extractInlineStyles(attributes);
+	const referentialStyles = validateOutOfLineStyleIDREFS(attributes["style"], sourceScope);
 	const nestedStyles = extractNestedStylesChildren(children);
+	const inlineStyles = extractInlineStyles(attributes);
 
-	const styleIds = [inlineStyles["xml:id"], nestedStyles["xml:id"]];
+	const styleIds = [...referentialStyles, nestedStyles["xml:id"], inlineStyles["xml:id"]];
 
 	const animations = extractNestedAnimationsChildren(children);
 
@@ -349,7 +400,15 @@ function getRegionStylesByScope(scope: Scope): TTMLStyle[] {
 	return styleContext.styles;
 }
 
-const REGION_GEOMETRY_ATTRIBUTES = new Set(["tts:origin", "tts:extent", "tts:position"]);
+const REGION_GEOMETRY_CSS_PROPERTIES = new Set([
+	"x",
+	"y",
+	"left",
+	"top",
+	"width",
+	"height",
+	"position",
+]);
 
 export class TTMLRegion implements Region {
 	public id: string;
@@ -386,61 +445,28 @@ export class TTMLRegion implements Region {
 	}
 }
 
-function computeRegionVisualStylesByScope(scope: Scope): Record<string, string> {
-	const styleContext = isolateContext(readScopeStyleContainerContext(scope));
+function computeRegionStylesByScope(scope: Scope): Record<string, string> {
+	const temporalActiveContext = isolateContext(readScopeTemporalActiveContext(scope));
 
-	if (!styleContext) {
+	if (!temporalActiveContext) {
 		return {};
 	}
 
-	const { styles } = styleContext;
+	return temporalActiveContext.computeStylesForElement("region");
+}
 
-	return styles
-		.filter((s) => s.kind === "nested")
-		.concat(styles.filter((s) => s.kind === "inline"))
-		.reduce<Record<string, string>>((acc, style) => {
-			const visualStyleAttributes: Record<string, string> = {};
+function computeRegionVisualStylesByScope(scope: Scope): Record<string, string> {
+	const styles = computeRegionStylesByScope(scope);
 
-			for (const attr in style.styleAttributes) {
-				if (!REGION_GEOMETRY_ATTRIBUTES.has(attr)) {
-					visualStyleAttributes[attr] = style.styleAttributes[attr]!;
-				}
-			}
-
-			const filteredStyle: TTMLStyle = Object.create(style, {
-				styleAttributes: {
-					value: visualStyleAttributes,
-					enumerable: true,
-				},
-			});
-
-			return Object.assign(acc, filteredStyle.apply("region"));
-		}, {});
+	return Object.fromEntries(
+		Object.entries(styles).filter(([attr]) => !REGION_GEOMETRY_CSS_PROPERTIES.has(attr)),
+	);
 }
 
 export function computeRegionGeometryStylesByScope(scope: Scope): Record<string, string> {
-	const styleContext = isolateContext(readScopeStyleContainerContext(scope));
+	const styles = computeRegionStylesByScope(scope);
 
-	if (!styleContext) {
-		return {};
-	}
-
-	const { styles } = styleContext;
-
-	return styles
-		.filter((s) => s.kind === "nested")
-		.concat(styles.filter((s) => s.kind === "inline"))
-		.reduce<Record<string, string>>((acc, style) => {
-			const filtered = Object.fromEntries(
-				Object.entries(style.styleAttributes).filter(([attr]) =>
-					REGION_GEOMETRY_ATTRIBUTES.has(attr),
-				),
-			);
-
-			const filteredStyle = Object.create(style, {
-				styleAttributes: { value: filtered, enumerable: true },
-			});
-
-			return Object.assign(acc, filteredStyle.apply("region"));
-		}, {});
+	return Object.fromEntries(
+		Object.entries(styles).filter(([attr]) => REGION_GEOMETRY_CSS_PROPERTIES.has(attr)),
+	);
 }

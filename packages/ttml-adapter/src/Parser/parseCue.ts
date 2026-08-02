@@ -4,7 +4,10 @@ import { TokenType, type Token } from "./Token.js";
 import { type Scope, createScope, isolateContext } from "./Scope/Scope.js";
 import { createTimeContext, readScopeTimeContext } from "./Scope/TimeContext.js";
 import type { ComputedCssProperties } from "./Scope/TemporalActiveContext.js";
-import { readScopeTemporalActiveContext } from "./Scope/TemporalActiveContext.js";
+import {
+	createTemporalActiveContext,
+	readScopeTemporalActiveContext,
+} from "./Scope/TemporalActiveContext.js";
 import { nodeScopeSymbol, type NodeWithScope } from "../Adapter.js";
 import type { Animation } from "./Scope/AnimationContainerContext.js";
 import { computeRegionGeometryStylesByScope, TTMLRegion } from "./Scope/RegionContainerContext.js";
@@ -34,16 +37,16 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 	 */
 
 	const rootIntervals = getCueTemporalIntervalSegments(scope);
-	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime, attrs, activeEntities]) => {
-		let region = activeEntities.find((entity) => entity instanceof TTMLRegion);
+	const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
 
-		const specialSemanticsStyles = getSpecialSemanticsStylesFromAnchestors(node);
+	let region: TTMLRegion | undefined = temporalActiveContext?.region;
 
-		if (Object.keys(specialSemanticsStyles).length) {
-			region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles, scope);
-		}
+	if (Object.keys(specialSemanticsStyles).length) {
+		region = createDerivedRegionWithSpecialSemanticsStyles(region, specialSemanticsStyles, scope);
+	}
 
-		const rootCue = new CueNode({
+	const rootCues: CueNode[] = rootIntervals.map(([startTime, endTime]) => {
+		return new CueNode({
 			id: parentId,
 			content: "",
 			startTime,
@@ -51,8 +54,6 @@ export function parseCue(node: NodeWithRelationship<Token & NodeWithScope>): Cue
 			region,
 			entities: lineEntity ? [lineEntity] : [],
 		});
-
-		return rootCue;
 	});
 
 	return processChildren(node, parentId, node.content[nodeScopeSymbol], rootCues);
@@ -704,6 +705,9 @@ function createDerivedRegionWithSpecialSemanticsStyles(
 		//
 		scope,
 		createStyleContainerContext([overriddenAttributes]),
+		createTemporalActiveContext({
+			stylesIDRefs: [`derived:${baseRegion.id}`],
+		}),
 	);
 
 	const newGeometryStyles = Object.assign(
