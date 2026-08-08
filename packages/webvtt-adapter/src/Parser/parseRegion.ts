@@ -203,7 +203,7 @@ export function deriveRegionFromCueSettings(
 		region?.viewportanchor?.[1] ?? DEFAULT_VIEWPORT_ANCHOR_Y,
 	];
 
-	derivedRegion.id = `derived:${region?.id ?? "default"}`;
+	derivedRegion.id = `derived:${region?.id ?? "default"}:${Math.floor(Math.random() * (500 - 100) + 100)}`;
 	derivedRegion.lines = region?.lines ?? derivedRegion.lines;
 	derivedRegion.scroll = region?.scroll ?? derivedRegion.scroll;
 	derivedRegion.regionanchor = region?.regionanchor ?? derivedRegion.regionanchor;
