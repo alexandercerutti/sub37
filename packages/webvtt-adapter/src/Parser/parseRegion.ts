@@ -4,7 +4,7 @@ import type { Entities, Region } from "@sub37/adapter-utils";
  * @param rawRegionData
  */
 
-export function parseRegion(rawRegionData: string | undefined): Region | undefined {
+export function parseRegion(rawRegionData: string | undefined): WebVTTRegion | undefined {
 	if (!rawRegionData) {
 		return undefined;
 	}
@@ -94,7 +94,13 @@ export function parseRegion(rawRegionData: string | undefined): Region | undefin
 
 const VH_LINE_HEIGHT = 5.33;
 
-class WebVTTRegion implements Region {
+const DEFAULT_VIEWPORT_ANCHOR_X = 0;
+const DEFAULT_VIEWPORT_ANCHOR_Y = 100;
+
+const DEFAULT_REGION_ANCHOR_X = 0;
+const DEFAULT_REGION_ANCHOR_Y = 100;
+
+export class WebVTTRegion implements Region {
 	public id: string = "";
 
 	public entities: Entities.AllEntities[] = [];
@@ -121,8 +127,25 @@ class WebVTTRegion implements Region {
 	public getOrigin(): [x: string, y: string] {
 		const height = VH_LINE_HEIGHT * this.lines;
 
-		const [regionAnchorWidth = 0, regionAnchorHeight = 0] = this.regionanchor || [];
-		const [viewportAnchorWidth = 0, viewportAnchorHeight = 0] = this.viewportanchor || [];
+		/**
+		 * §4.3
+		 * > If no WebVTT region anchor setting is given, the anchor defaults to 0%, 100%
+		 * > (i.e. the bottom left corner).
+		 *
+		 * and
+		 *
+		 * > If no region viewport anchor is given, it defaults to 0%, 100%
+		 * > (i.e. the bottom left corner of the video viewport).
+		 */
+		const [
+			regionAnchorWidth = DEFAULT_REGION_ANCHOR_X,
+			regionAnchorHeight = DEFAULT_REGION_ANCHOR_Y,
+		] = this.regionanchor || [];
+
+		const [
+			viewportAnchorWidth = DEFAULT_VIEWPORT_ANCHOR_X,
+			viewportAnchorHeight = DEFAULT_VIEWPORT_ANCHOR_Y,
+		] = this.viewportanchor || [];
 
 		/**
 		 * It is still not very clear to me why we base on current width and height, but
@@ -136,5 +159,350 @@ class WebVTTRegion implements Region {
 		const originY = `${viewportAnchorHeight - topOffset}%`;
 
 		return [originX, originY];
+	}
+}
+
+export function deriveRegionFromCueSettings(
+	region: WebVTTRegion | undefined,
+	cueSettings: Record<string, string>,
+): Region | undefined {
+	const derivedRegion = new WebVTTRegion();
+
+	/**
+	 * CueBox size expressed in percentage.
+	 */
+	let size: number = 100;
+
+	if (cueSettings["size"] && cueSettings["size"].endsWith("%")) {
+		const integerSize = parseInt(cueSettings["size"]) || NaN;
+
+		if (!Number.isNaN(integerSize)) {
+			size = Math.min(Math.max(0, integerSize), 100);
+		}
+	}
+
+	let textAlignment: TextAlignment = "center";
+
+	if (cueSettings["align"] && isTextAlignmentStandard(cueSettings["align"])) {
+		textAlignment = cueSettings["align"];
+	}
+
+	const [position, positionAlignment] = getPositionAndAlignmentFromCueSettings(
+		cueSettings,
+		textAlignment,
+	);
+
+	const regionWidth = getRegionWidthByComputedCueSettings(position, positionAlignment, size);
+	const regionLeftOffset = getRegionLeftOffsetByComputedCueSettings(position, positionAlignment);
+
+	derivedRegion.width =
+		typeof regionWidth === "number" ? `${regionWidth}%` : region?.width || "100%";
+
+	derivedRegion.viewportanchor = [
+		regionLeftOffset ?? region?.viewportanchor?.[0] ?? DEFAULT_VIEWPORT_ANCHOR_X,
+		region?.viewportanchor?.[1] ?? DEFAULT_VIEWPORT_ANCHOR_Y,
+	];
+
+	derivedRegion.id = `derived:${region?.id ?? "default"}:${Math.floor(Math.random() * (500 - 100) + 100)}`;
+	derivedRegion.lines = region?.lines ?? derivedRegion.lines;
+	derivedRegion.scroll = region?.scroll ?? derivedRegion.scroll;
+	derivedRegion.regionanchor = region?.regionanchor ?? derivedRegion.regionanchor;
+	derivedRegion.entities = region?.entities ?? [];
+
+	return derivedRegion;
+}
+
+/**
+ * @see https://www.w3.org/TR/webvtt1/#webvtt-cue-position
+ */
+
+function getPositionAndAlignmentFromCueSettings(
+	cueSettings: Record<string, string>,
+	computedTextAlignment: TextAlignment,
+): [number, PositionAlignment] {
+	const position = cueSettings["position"] || "auto";
+
+	let positionAlignment: PositionAlignment | "auto" = "auto";
+
+	/** e.g. position:30%,line-left */
+	const [pos, posAlignment] = position.split(",");
+
+	if (isPositionAlignmentStandard(posAlignment)) {
+		positionAlignment = posAlignment;
+	} else {
+		positionAlignment = inferPositionAlignmentByTextAlignment(computedTextAlignment);
+	}
+
+	if (!pos || pos === "auto") {
+		switch (computedTextAlignment) {
+			case "left": {
+				return [0, positionAlignment];
+			}
+
+			case "right": {
+				return [100, positionAlignment];
+			}
+
+			default: {
+				return [50, positionAlignment];
+			}
+		}
+	}
+
+	const integerPosition = (pos.endsWith("%") && parseInt(pos)) || NaN;
+
+	if (!Number.isNaN(integerPosition)) {
+		return [Math.min(Math.max(0, integerPosition), 100), positionAlignment];
+	}
+
+	return [0, positionAlignment];
+}
+
+function inferPositionAlignmentByTextAlignment(textAlignment: TextAlignment): PositionAlignment {
+	switch (textAlignment) {
+		case "left": {
+			return "line-left";
+		}
+
+		case "right": {
+			return "line-right";
+		}
+
+		case "center": {
+			return "center";
+		}
+
+		case "start":
+		case "end": {
+			/**
+			 * @TODO to implement based on base direction
+			 * base direction is detected with
+			 *
+			 * U+200E LEFT-TO-RIGHT MARK   ---> start: "line-left", end: "line-right"
+			 * U+200F RIGHT-TO-LEFT MARK   ---> start: "line-right", end: "line-left"
+			 */
+
+			return "line-left";
+		}
+	}
+
+	return "line-left";
+}
+
+type PositionAlignment = "line-left" | "center" | "line-right";
+
+function isPositionAlignmentStandard(
+	alignment: string | undefined,
+): alignment is PositionAlignment {
+	return ["line-left", "center", "line-right"].includes(alignment as PositionAlignment);
+}
+
+type TextAlignment = "start" | "left" | "center" | "right" | "end";
+
+export function isTextAlignmentStandard(alignment: string | undefined): alignment is TextAlignment {
+	return ["start", "left", "center", "right", "end"].includes(alignment as TextAlignment);
+}
+
+/**
+ * Width, and hence cuebox left offset, calculation is
+ * highly influenced by the alignment.
+ *
+ * In fact, we need to apply different formulas based on
+ * the point we start and the direction we want to proceed.
+ *
+ * In the same way, also leftOffset is influenced by alignment
+ * and highly tied to width.
+ */
+
+function getRegionWidthByComputedCueSettings(
+	position: number,
+	positionAlignment: PositionAlignment,
+	size: number,
+): number | undefined {
+	switch (positionAlignment) {
+		case "line-left": {
+			/**
+			 * Cuebox's left edge matches at position
+			 * point and ends at 100%.
+			 *
+			 * @example scheme, 60%
+			 * Calculation starts from right edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |                             |----|----|----|----|
+			 * |         Left Offset         |    |--te|xt--|    |
+			 * |                             |----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			return Math.min(size, 100 - position);
+		}
+
+		case "center": {
+			/**
+			 * Cuebox center matches the position point
+			 * and spans in both direction.
+			 *
+			 * Based on the position point, we need to change
+			 * the formula to begin calculating the width
+			 * starting from one edge or the other.
+			 *
+			 * @example scheme, point < 50%
+			 * Calculation start from left edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |              |                                  |
+			 * |----|----|----|----|----|----|                   |
+			 * |         |--te|xt--|         |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |              |                                  |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			if (position <= 50) {
+				return Math.min(size, position * 2);
+			}
+
+			/**
+			 * @example scheme, point > 50%
+			 * Calculation starts from right edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |  Left   |----|----|----|----|----|----|----|----|
+			 * |    -    |              |--te|xt--|              |
+			 * |  Offset |----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			return Math.min(size, (100 - position) * 2);
+		}
+
+		case "line-right": {
+			/**
+			 * Cuebox's right edge matches the position point
+			 * and spans the available space on the left
+			 * (to 0%)
+			 *
+			 * @example scheme, 60%
+			 * Calculation starts from left edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |         |--te|xt--|         |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			return Math.min(size, position);
+		}
+	}
+}
+
+/**
+ * Width, and hence cuebox left offset, calculation is
+ * highly influenced by the alignment.
+ *
+ * In fact, we need to apply different formulas based on
+ * the point we start and the direction we want to proceed.
+ *
+ * In the same way, also leftOffset is influenced by alignment
+ * and highly tied to width.
+ */
+function getRegionLeftOffsetByComputedCueSettings(
+	position: number,
+	positionAlignment: PositionAlignment,
+): number | undefined {
+	switch (positionAlignment) {
+		case "line-left": {
+			/**
+			 * Cuebox's left edge matches at position
+			 * point and ends at 100%.
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |                             |----|----|----|----|
+			 * |         Left Offset         |    |--te|xt--|    |
+			 * |                             |----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			return position;
+		}
+
+		case "center": {
+			/**
+			 * Cuebox center matches the position point
+			 * and spans in both direction.
+			 *
+			 * Based on the position point, we need to change
+			 * the formula to begin calculating the width,
+			 * and hence the leftOffset, starting from one
+			 * edge or the other.
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |              |                                  |
+			 * |----|----|----|----|----|----|                   |
+			 * |         |--te|xt--|         |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |              |                                  |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			if (position <= 50) {
+				return 0;
+			}
+
+			/**
+			 * @example scheme, point > 50%
+			 * Calculation starts from right edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |  Left   |----|----|----|----|----|----|----|----|
+			 * |    -    |              |--te|xt--|              |
+			 * |  Offset |----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			const width = (100 - position) * 2;
+			return 100 - width;
+		}
+
+		case "line-right": {
+			/**
+			 * Cuebox's right edge matches the position point
+			 * and spans the available space on the left
+			 * (to 0%)
+			 *
+			 * @example scheme, 60%
+			 * Calculation starts from left edge
+			 *
+			 * 0%  10%  20%  30%  40%  50%  60%  70%  80%  90%  100%
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |         |--te|xt--|         |                   |
+			 * |----|----|----|----|----|----|                   |
+			 * |                             |                   |
+			 * |----|----|----|----|----|----|----|----|----|----|
+			 */
+
+			return 0;
+		}
 	}
 }

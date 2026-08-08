@@ -103,6 +103,10 @@ export default class TreeOrchestrator {
 	public paint(
 		parent: HTMLElement,
 		region?: Region,
+
+		/**
+		 * @deprecated Use `region` instead and assign it the right properties
+		 */
 		trackRenderingModifiers?: RenderingModifiers,
 	): void {
 		this.parent = parent;

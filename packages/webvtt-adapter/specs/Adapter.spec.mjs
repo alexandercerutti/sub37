@@ -451,6 +451,38 @@ Alberto, come to look at Marcello!
 			});
 		});
 
+		it("should derive different region ids when cue settings imply different geometry", () => {
+			const REGION_WITH_COLLIDING_DERIVED_ID = `
+WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+scroll:up
+
+00:00:05.000 --> 00:00:20.000 region:fred align:left position:10%,line-left size:30%
+This cue should stay left.
+
+00:00:06.000 --> 00:00:21.000 region:fred align:right position:90%,line-right size:20%
+This cue should stay right.
+`;
+
+			const parsingResult = collectParseResult(adapter.parse(REGION_WITH_COLLIDING_DERIVED_ID));
+
+			expect(parsingResult.errors).toEqual([]);
+			expect(parsingResult.data).toHaveLength(2);
+
+			const firstCueRegion = parsingResult.data[0].region;
+			const secondCueRegion = parsingResult.data[1].region;
+
+			expect(firstCueRegion).toBeDefined();
+			expect(secondCueRegion).toBeDefined();
+			expect(firstCueRegion?.id).not.toEqual(secondCueRegion?.id);
+		});
+
 		describe("styles", () => {
 			describe("should correctly apply styles to tag entities and apply them to cues", () => {
 				it("should add global style", () => {

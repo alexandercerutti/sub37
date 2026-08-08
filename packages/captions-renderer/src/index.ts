@@ -302,6 +302,8 @@ sub37-region div > p.line-block > span {
  * @param r2
  * @param cueIndex
  * @returns
+ *
+ * @deprecated Use Regions instead and assign them the right properties in the adapters.
  */
 
 function getRegionModifierId(

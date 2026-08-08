@@ -1,5 +1,5 @@
 import { BaseAdapter, CueNode, Entities } from "@sub37/adapter-utils";
-import type { ParseGenerator, Region } from "@sub37/adapter-utils";
+import type { ParseGenerator } from "@sub37/adapter-utils";
 import { EmptyStyleDeclarationError } from "./EmptyStyleDeclarationError.js";
 import { InvalidFormatError } from "./InvalidFormatError.js";
 import { MissingContentError } from "@sub37/adapter-utils/MissingContentError";
@@ -50,7 +50,7 @@ export default class WebVTTAdapter extends BaseAdapter {
 			cursor: 0,
 		};
 
-		const regions: { [id: string]: Region } = Object.create(null);
+		const regions: { [id: string]: Parser.WebVTTRegion } = Object.create(null);
 		const styles: Parser.Style[] = [];
 
 		/**
@@ -203,17 +203,19 @@ export default class WebVTTAdapter extends BaseAdapter {
 							cueIdsList.add(parsedCue.id);
 						}
 
+						const regionName = parsedCue.settings["region"];
+						const resolvedRegion = Parser.deriveRegionFromCueSettings(
+							regionName ? regions[regionName] : undefined,
+							parsedCue.settings,
+						);
+
 						const cue = CueNode.from(latestRootCue, {
 							id: parsedCue.id || `cue-${block.start}-${block.cursor}`,
 							startTime: parsedCue.startTime + cuesOffsetMs,
 							endTime: parsedCue.endTime + cuesOffsetMs,
 							content: parsedCue.text,
-							renderingModifiers: parsedCue.renderingModifiers,
+							region: resolvedRegion,
 						});
-
-						if (parsedCue.renderingModifiers?.regionIdentifier) {
-							cue.region = regions[parsedCue.renderingModifiers.regionIdentifier];
-						}
 
 						if (!latestRootCue) {
 							latestRootCue = cue;
@@ -225,7 +227,15 @@ export default class WebVTTAdapter extends BaseAdapter {
 							)
 							.map((style) => Entities.createLineStyleEntity(style.styleString));
 
-						const entities: Entities.AllEntities[] = [...globalStylesEntities, ...stylesById];
+						const entities: Entities.AllEntities[] = [
+							...globalStylesEntities,
+							...stylesById,
+							Entities.createLineStyleEntity({
+								"text-align": Parser.isTextAlignmentStandard(parsedCue.settings["align"])
+									? parsedCue.settings["align"]
+									: "center",
+							}),
+						];
 
 						for (const tag of parsedCue.tags) {
 							const originalEntity: Entities.TagEntity = Object.getPrototypeOf(tag);
@@ -357,7 +367,7 @@ interface HeaderInfoPayload {
 
 type CueBlockTuple = [blockType: BlockType.CUE, payload: Parser.CueParsedData[]];
 type HeaderBlockTuple = [blockType: BlockType.HEADER, payload: HeaderInfoPayload];
-type RegionBlockTuple = [blockType: BlockType.REGION, payload: Region];
+type RegionBlockTuple = [blockType: BlockType.REGION, payload: Parser.WebVTTRegion];
 type StyleBlockTuple = [blockType: BlockType.STYLE, payload: Parser.Style];
 type IgnoredBlockTuple = [blockType: BlockType.IGNORED, payload: undefined];
 
