@@ -1,5 +1,13 @@
 # @sub37/webvtt-adapter
 
+## **2.2.1** (17 Nov 2026)
+
+- Fixed support to hours timestamp greater than 99 (#36);
+- Fixed support to multiple spaces around cue timings arrow (#36);
+- Tightened supported whitespaces around cue timings arrow. As per the standard, now only U+0020 SPACE and U+0009 CHARACTER TABULATION are supported;
+
+---
+
 ## **2.2.0** (1 Aug 2026)
 
 - Added support to HLS extension `X-TIMESTAMP-MAP` header (#35)
