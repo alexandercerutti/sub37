@@ -143,6 +143,65 @@ NOTE EndTime is on purpose with hours. This test should also allow mixed units b
 			expect(parseResult.data[1].endTime).toBe(669000);
 		});
 
+		it("should accept cues with more than two digits for hours", () => {
+			const GENERIC_RAW_VTT_CONTENT = `
+WEBVTT
+
+100:00:00.000 --> 100:00:01.000
+Long`;
+
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
+
+			expect(parseResult.errors.length).toBe(0);
+			expect(parseResult.data.length).toBe(1);
+			expect(parseResult.data[0].startTime).toBe(360000000);
+			expect(parseResult.data[0].endTime).toBe(360001000);
+			expect(parseResult.data[0].content).toBe("Long");
+		});
+
+		it("should accept cues with multiple spaces or tabs around the arrow", () => {
+			const GENERIC_RAW_VTT_CONTENT = `
+WEBVTT
+
+00:00.000  -->  00:01.000
+Two spaces
+
+00:01.000\t\t-->\t \t00:02.000
+Tabs and spaces`;
+
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
+
+			expect(parseResult.errors.length).toBe(0);
+			expect(parseResult.data.length).toBe(2);
+			expect(parseResult.data[0].startTime).toBe(0);
+			expect(parseResult.data[0].endTime).toBe(1000);
+			expect(parseResult.data[0].content).toBe("Two spaces");
+			expect(parseResult.data[1].startTime).toBe(1000);
+			expect(parseResult.data[1].endTime).toBe(2000);
+			expect(parseResult.data[1].content).toBe("Tabs and spaces");
+		});
+
+		it("should exclude cues with line terminators around the arrow", () => {
+			const GENERIC_RAW_VTT_CONTENT = `
+WEBVTT
+
+00:00.000
+-->
+00:01.000
+Split arrow
+
+00:01.000 --> 00:02.000
+Valid`;
+
+			const parseResult = collectParseResult(adapter.parse(GENERIC_RAW_VTT_CONTENT));
+
+			expect(parseResult.data.length).toBe(1);
+			expect(parseResult.data[0].content).toBe("Valid");
+			expect(parseResult.errors.length).toBe(1);
+			expect(parseResult.errors[0].isCritical).toBe(false);
+			expect(parseResult.errors[0].error).toBeInstanceOf(InvalidFormatError);
+		});
+
 		it("should exclude cues with the same start time and end time", () => {
 			const SAME_START_END_TIMES_CONTENT = `
 WEBVTT

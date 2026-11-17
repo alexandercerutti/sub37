@@ -1,5 +1,5 @@
 const TIME_REGEX =
-	/(?<hours>(\d{2})?):?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/;
+	/(?:(?<hours>(\d{2,})):)?(?<minutes>(\d{2})):(?<seconds>(\d{2}))(?:\.(?<milliseconds>(\d{0,3})))?/;
 
 export function parseMs(timestring: string): number {
 	const timeMatch = timestring.match(TIME_REGEX);
