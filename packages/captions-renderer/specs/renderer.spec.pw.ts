@@ -532,6 +532,145 @@ STYLE
 		 */
 		expect(textColor).toBe("rgb(0, 255, 255)");
 	});
+
+	/**
+	 * The following tests assert that WebVTT cue settings (position, size, align)
+	 * are reflected as geometry on `sub37-region` itself — not on an inner
+	 * rendering-modifier div
+	 */
+
+	test("WebVTT cue with line-left position:30% size:50% should produce a region with width 50% and left 30%", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		const TEST_WEBVTT_TRACK = `WEBVTT
+
+00:00:00.000 --> 00:00:20.000 position:30%,line-left size:50%
+Hello`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const region = page.locator("captions-renderer > main > sub37-region");
+
+		const [width, left] = await Promise.all([
+			region.evaluate((el) => el.style.width),
+			region.evaluate((el) => el.style.left),
+		]);
+
+		expect(width).toBe("50%");
+		expect(left).toBe("30%");
+	});
+
+	test("WebVTT cue with center position:70% size:80% should produce a region with width 60% and left 40%", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		/*
+		 * position=70 > 50, center alignment:
+		 *   width    = min(size=80, (100-70)*2) = min(80, 60) = 60%
+		 *   leftOffset = 100 - 60 = 40%
+		 */
+		const TEST_WEBVTT_TRACK = `WEBVTT
+
+00:00:00.000 --> 00:00:20.000 position:70%,center size:80%
+Hello`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const region = page.locator("captions-renderer > main > sub37-region");
+
+		const [width, left] = await Promise.all([
+			region.evaluate((el) => el.style.width),
+			region.evaluate((el) => el.style.left),
+		]);
+
+		expect(width).toBe("60%");
+		expect(left).toBe("40%");
+	});
+
+	test("WebVTT cue with align:right should produce a region with text-align right", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		/*
+		 * align:right → auto position = 100, positionAlignment = line-right
+		 * width = min(100, position=100) = 100%, leftOffset = 0%
+		 * text-align comes from a LineStyleEntity on the cue, applied to p.line-block.
+		 */
+		const TEST_WEBVTT_TRACK = `WEBVTT
+
+00:00:00.000 --> 00:00:20.000 align:right
+Hello`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const lineBlock = page.locator("captions-renderer > main > sub37-region .line-block");
+		const textAlign = await lineBlock.evaluate((el) => el.style.textAlign);
+
+		expect(textAlign).toBe("right");
+	});
+
+	test("WebVTT cue with position:10%,line-left size:40% align:left should produce a region with width 40% and left 10%", async ({
+		page,
+		waitForEvent,
+		pauseServing,
+		seekToSecond,
+	}) => {
+		/*
+		 * positionAlignment=line-left (explicit), position=10, size=40
+		 * width = min(40, 100-10) = min(40, 90) = 40%
+		 * leftOffset = 10%
+		 */
+		const TEST_WEBVTT_TRACK = `WEBVTT
+
+00:00:00.000 --> 00:00:20.000 position:10%,line-left size:40% align:left
+Hello`;
+
+		await Promise.all([
+			waitForEvent("playing"),
+			page.getByRole("textbox", { name: "WEBVTT..." }).fill(TEST_WEBVTT_TRACK),
+		]);
+
+		await pauseServing();
+		await seekToSecond(3);
+
+		const region = page.locator("captions-renderer > main > sub37-region");
+		const lineBlock = page.locator("captions-renderer > main > sub37-region .line-block");
+
+		const [width, left, textAlign] = await Promise.all([
+			region.evaluate((el) => el.style.width),
+			region.evaluate((el) => el.style.left),
+			lineBlock.evaluate((el) => el.style.textAlign),
+		]);
+
+		expect(width).toBe("40%");
+		expect(left).toBe("10%");
+		expect(textAlign).toBe("left");
+	});
 }); // WebVTT
 
 test.describe("TTML", () => {

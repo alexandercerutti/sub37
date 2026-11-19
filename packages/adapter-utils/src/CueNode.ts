@@ -10,7 +10,12 @@ interface CueProps {
 	startTime: number;
 	endTime: number;
 	content: string;
+
+	/**
+	 * @deprecated Create or derive a region instead and assign it the right properties
+	 */
 	renderingModifiers?: RenderingModifiers;
+
 	entities?: Entities.AllEntities[];
 	region?: Region;
 }
@@ -40,6 +45,10 @@ export class CueNode implements CueProps {
 	public endTime: number;
 	public id: string;
 	public content: string;
+
+	/**
+	 * @deprecated Create or derive a region instead and assign it the right properties
+	 */
 	public renderingModifiers?: RenderingModifiers;
 
 	private [regionSymbol]?: Region;
